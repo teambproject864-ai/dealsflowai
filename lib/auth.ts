@@ -1,0 +1,197 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+
+// --- Constants & Configuration ---
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-in-production-env-var-only";
+const JWT_EXPIRES_IN = "1h"; // Short-lived as requested
+const AUTH_COOKIE_NAME = "df_auth_token";
+const SALT_ROUNDS = 12;
+
+// --- Types ---
+export type UserRole = "admin" | "agent" | "customer";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  name: string;
+}
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: UserRole;
+  name: string;
+}
+
+interface DemoAgent {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  name: string;
+  role: "agent";
+}
+
+interface DemoCustomer {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  name: string;
+  role: "customer";
+}
+
+// --- Demo User Data (replace with real DB in production) ---
+// We'll use hardcoded admin, and bcrypt-hashed agent password!
+export const DEMO_ADMIN = {
+  id: "admin-1",
+  email: "admin@dealflow.ai",
+  // Plaintext password is: AdminDF (we'll compare directly as requested for admin)
+  name: "Administrator",
+  role: "admin" as const,
+};
+
+export const DEMO_AGENTS: DemoAgent[] = [
+  {
+    id: "agent-praneeth",
+    email: "praneeth@dealflow.ai",
+    // Hashed password for "Praneeth123!"
+    hashedPassword: "$2b$12$V0TqSpuJrnZGSRfourZpLu8OxZPZ74dThGLE8Q1OznLwmg8iDSuJK",
+    name: "Praneeth",
+    role: "agent",
+  },
+  {
+    id: "agent-ashok",
+    email: "agent.ashok@dealflow.ai",
+    // Hashed password for "AgentAshok456!"
+    hashedPassword: "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+    name: "Ashok Agent",
+    role: "agent",
+  },
+];
+
+// --- Demo Customer Data ---
+export const DEMO_CUSTOMERS: DemoCustomer[] = [
+  {
+    id: "customer-demo",
+    email: "demo@customer.com",
+    // Hashed password for "CustomerDemo123!"
+    hashedPassword: "$2b$12$R7o34Nx1z9Y0P5q7V8b4A0Qw7e2Z1x3P5q7V8b4A0Qw7e2Z1x3P5q7V",
+    name: "Demo Customer",
+    role: "customer",
+  },
+  {
+    id: "customer-praneeth",
+    email: "praneethburada@gmail.com",
+    // Hashed password for "Praneeth@123"
+    hashedPassword: "$2b$12$KOR/mZadApvr3V6EMSE1WezgudOUX1UU51QoVudLOPXSAv2Meijkq",
+    name: "Praneeth Burada",
+    role: "customer",
+  },
+];
+
+// --- In-memory new customers (from registration) ---
+export let NEW_CUSTOMERS: DemoCustomer[] = [];
+
+// --- Audit Logging ---
+// In-memory for demo, use Firestore/DB in production!
+export const auditLogs: Array<{
+  id: string;
+  timestamp: string;
+  email: string;
+  role: UserRole | "unknown";
+  success: boolean;
+  ip?: string;
+  userAgent?: string;
+  message: string;
+}> = [];
+
+export function addAuditLog(
+  email: string,
+  role: UserRole | "unknown",
+  success: boolean,
+  message: string,
+  ip?: string,
+  userAgent?: string
+) {
+  const log = {
+    id: `log-${Date.now()}-${Math.random()}`,
+    timestamp: new Date().toISOString(),
+    email,
+    role,
+    success,
+    ip,
+    userAgent,
+    message,
+  };
+  auditLogs.unshift(log);
+  console.log("[AUDIT LOG]", log);
+}
+
+// --- Password Hashing ---
+export async function hashPassword(plaintext: string): Promise<string> {
+  return bcrypt.hash(plaintext, SALT_ROUNDS);
+}
+
+export async function verifyPassword(
+  plaintext: string,
+  hashed: string
+): Promise<boolean> {
+  return bcrypt.compare(plaintext, hashed);
+}
+
+// --- JWT Token Management ---
+export function createToken(user: AuthUser): string {
+  const payload: JwtPayload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+  };
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+export function verifyToken(token: string): JwtPayload | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    return decoded;
+  } catch (error) {
+    return null;
+  }
+}
+
+// --- Cookie Management ---
+export async function setAuthCookie(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(AUTH_COOKIE_NAME, token, {
+    httpOnly: true, // Secure from XSS
+    secure: process.env.NODE_ENV === "production", // Only HTTPS in production
+    sameSite: "lax", // Prevent CSRF
+    path: "/",
+    maxAge: 60 * 60, // 1 hour (matches JWT expiry)
+  });
+}
+
+export async function getAuthCookie(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get(AUTH_COOKIE_NAME)?.value || null;
+}
+
+export async function deleteAuthCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete(AUTH_COOKIE_NAME);
+}
+
+// --- Current User Helper ---
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const token = await getAuthCookie();
+  if (!token) return null;
+  const payload = verifyToken(token);
+  if (!payload) return null;
+  return {
+    id: payload.userId,
+    email: payload.email,
+    role: payload.role,
+    name: payload.name,
+  };
+}

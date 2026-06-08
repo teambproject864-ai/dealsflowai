@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#0E1236" />
+      <stop offset="100%" stop-color="#050515" />
+    </radialGradient>
+
+    <!-- Glowing Halo Border Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF" />
+      <stop offset="50%" stop-color="#6C3BFF" />
+      <stop offset="100%" stop-color="#9D4BFF" />
+    </linearGradient>
+
+    <!-- Cyan Icon Gradient -->
+    <linearGradient id="iconCyan" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF" />
+      <stop offset="100%" stop-color="#00A8FF" />
+    </linearGradient>
+
+    <!-- Purple Icon Gradient -->
+    <linearGradient id="iconPurple" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CFF" />
+      <stop offset="100%" stop-color="#5524E0" />
+    </linearGradient>
+
+    <!-- Dot Shadow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle with Glowing Halo Border -->
+  <circle cx="128" cy="128" r="120" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="4.5" />
+
+  <!-- Three-Dots Options Menu Indicator (Top Section) -->
+  <g filter="url(#glow)">
+    <circle cx="100" cy="62" r="6" fill="url(#borderGrad)" />
+    <circle cx="128" cy="62" r="6" fill="url(#borderGrad)" />
+    <circle cx="156" cy="62" r="6" fill="url(#borderGrad)" />
+  </g>
+
+  <!-- Glassmorphic Dock Tray (Bottom Section) -->
+  <rect x="24" y="108" width="208" height="96" rx="24" fill="rgba(255, 255, 255, 0.03)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
+
+  <!-- Icons horizontal track inside the Tray -->
+  <!-- 1. Camera (Video) Icon at Slot 1 (cx = 53, cy = 156) -->
+  <g transform="translate(0, 2)">
+    <rect x="33" y="144" width="40" height="24" rx="4" fill="url(#iconPurple)" />
+    <circle cx="53" cy="156" r="9" fill="#050515" stroke="#00D4FF" stroke-width="2" />
+    <circle cx="53" cy="156" r="4" fill="#00D4FF" />
+    <rect x="62" y="148" width="6" height="3" rx="1.5" fill="#00D4FF" />
+  </g>
+
+  <!-- 2. Voice (Microphone) Icon at Slot 2 (cx = 103, cy = 156) -->
+  <g transform="translate(0, 2)">
+    <rect x="95" y="138" width="16" height="26" rx="8" fill="url(#iconCyan)" />
+    <path d="M89,150 v3 a14,14 0 0,0 28,0 v-3" stroke="#00D4FF" stroke-width="2.5" fill="none" stroke-linecap="round" />
+    <path d="M103,167 v7" stroke="#00D4FF" stroke-width="2.5" fill="none" stroke-linecap="round" />
+    <path d="M95,174 h16" stroke="#00D4FF" stroke-width="2.5" fill="none" stroke-linecap="round" />
+  </g>
+
+  <!-- 3. Screen Share Icon at Slot 3 (cx = 153, cy = 156) -->
+  <g transform="translate(0, 2)">
+    <rect x="133" y="140" width="40" height="26" rx="4" fill="url(#iconPurple)" stroke="#00D4FF" stroke-width="1.5" />
+    <path d="M153,166 v6" stroke="#00D4FF" stroke-width="2.5" fill="none" stroke-linecap="round" />
+    <path d="M145,172 h16" stroke="#00D4FF" stroke-width="2.5" fill="none" stroke-linecap="round" />
+    <!-- Upward Share Arrow -->
+    <path d="M153,157 v-9 M149,152 l4,-4 l4,4" stroke="#00D4FF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- 4. Chat (Message) Icon at Slot 4 (cx = 203, cy = 156) -->
+  <g transform="translate(0, 2)">
+    <rect x="183" y="140" width="40" height="26" rx="5" fill="url(#iconCyan)" />
+    <path d="M189,166 l-6,6 v-6" fill="url(#iconCyan)" />
+    <!-- Message Line Cutouts -->
+    <path d="M191,148 h24" stroke="#050515" stroke-width="2" stroke-linecap="round" />
+    <path d="M191,156 h16" stroke="#050515" stroke-width="2" stroke-linecap="round" />
+  </g>
+</svg>

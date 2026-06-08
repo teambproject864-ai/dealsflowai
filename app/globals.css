@@ -1,0 +1,430 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Corporate revenue stack: deep navy surfaces, teal growth primary, warm gold KPI accent */
+    --background: 220 45% 6%;
+    --foreground: 210 35% 97%;
+    --card: 220 42% 8%;
+    --card-foreground: 210 35% 97%;
+    --popover: 220 42% 8%;
+    --popover-foreground: 210 35% 97%;
+    --primary: 168 55% 42%;
+    --primary-foreground: 186 100% 97%;
+    --secondary: 217 28% 16%;
+    --secondary-foreground: 210 35% 97%;
+    --muted: 217 26% 14%;
+    --muted-foreground: 215 18% 62%;
+    --accent: 38 88% 52%;
+    --accent-foreground: 220 45% 8%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 26% 18%;
+    --input: 217 26% 18%;
+    --ring: 168 55% 42%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv02";
+  }
+
+  /* Skip to content for accessibility */
+  .skip-to-content {
+    @apply fixed top-0 left-0 z-[9999] px-6 py-3 bg-teal-500 text-white font-semibold text-sm rounded-br-xl -translate-y-full focus:translate-y-0 transition-transform duration-200;
+  }
+
+  /* Focus visible ring — WCAG 2.1 AA */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-teal-400;
+  }
+}
+
+@layer utilities {
+  /* ─── Glass utilities ─────────────────────────── */
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+  }
+  .glass-teal {
+    @apply bg-teal-900/20 backdrop-blur-xl border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.15)];
+  }
+  .glass-panel {
+    @apply bg-dealflow-ink/80 backdrop-blur-2xl border border-white/5 shadow-2xl;
+  }
+
+  /* ─── Section layout ──────────────────────────── */
+  .section-container {
+    @apply mx-auto max-w-7xl px-6;
+  }
+  .section-padding {
+    @apply py-20 sm:py-28;
+  }
+
+  /* ─── Card styles ─────────────────────────────── */
+  .df-card {
+    @apply rounded-2xl border border-white/8 bg-white/3 transition-all duration-300;
+  }
+  .df-card-hover {
+    @apply hover:bg-white/5 hover:border-white/15 hover:-translate-y-0.5;
+  }
+
+  /* ─── Eyebrow badges ──────────────────────────── */
+  .eyebrow-teal {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 text-xs font-semibold uppercase tracking-wider;
+  }
+  .eyebrow-violet {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-semibold uppercase tracking-wider;
+  }
+  .eyebrow-amber {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-semibold uppercase tracking-wider;
+  }
+
+  /* ─── Gradient text ───────────────────────────── */
+  .gradient-text-teal {
+    @apply bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-300 bg-clip-text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .gradient-text-violet {
+    @apply bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .gradient-text-hero {
+    background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* ─── Next-Gen Immersive Experience Styles ──────── */
+:root {
+  --df-font-scale: 1;
+}
+
+[data-contrast="high"] {
+  --background: 220 50% 2% !important;
+  --foreground: 0 0% 100% !important;
+  --border: 0 0% 100% !important;
+  --primary: 240 100% 60% !important;
+  --accent: 40 100% 50% !important;
+}
+
+[data-contrast="inverted"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+[data-colorblind="protanopia"] {
+  filter: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><filter id="protanopia"><feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0, 0.558, 0.442, 0, 0, 0, 0, 0.242, 0.758, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#protanopia');
+}
+[data-colorblind="deuteranopia"] {
+  filter: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0, 0.7, 0.3, 0, 0, 0, 0, 0.3, 0.7, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#deuteranopia');
+}
+[data-colorblind="tritanopia"] {
+  filter: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><filter id="tritanopia"><feColorMatrix type="matrix" values="0.95, 0.05,  0, 0, 0, 0,  0.433, 0.567, 0, 0, 0,  0.475, 0.525, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#tritanopia');
+}
+
+html {
+  font-size: calc(16px * var(--df-font-scale, 1)) !important;
+}
+
+.font-dyslexic {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+}
+
+/* Reduced motion support — WCAG 2.1 AA */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduce-motion-force *,
+.reduce-motion-force *:before,
+.reduce-motion-force *:after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  scroll-behavior: auto !important;
+  transform: none !important;
+}
+
+/* ─── Background patterns ───────────────────────── */
+.cosmic-bg {
+  background-color: #060612;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(108, 59, 255, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(8, 8, 24, 1) 0%, #060612 100%);
+}
+
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+.aurora-mesh {
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(108, 59, 255, 0.18) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(0, 255, 178, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(0, 212, 255, 0.14) 0%, transparent 50%);
+  filter: blur(80px);
+}
+
+/* ─── Glass effects ─────────────────────────────── */
+.df-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  /* Layer 4: Depth shadow system + Layer 1: inner shadow */
+  box-shadow: 
+    0 2px 2px rgba(0, 0, 0, 0.3),
+    0 12px 12px rgba(0, 0, 0, 0.2),
+    0 40px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: backdrop-filter 0.3s, background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Layer 2: Refraction overlay simulating light bending */
+.df-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.08) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Layer 3: Iridescent Edge Shimmer */
+.df-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg, 
+    #7c3aed 0%, 
+    #06b6d4 33%,
+    #f59e0b 66%,
+    #e11d48 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+  animation: shimmerRotate 6s linear infinite;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+@keyframes shimmerRotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* Specular Highlight tracking layer */
+.df-specular {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.3;
+  transition: opacity 0.3s, transform 0.3s;
+  background: radial-gradient(
+    circle at var(--light-x, 50%) var(--light-y, 50%), 
+    rgba(255, 255, 255, 0.15) 0%, 
+    transparent 55%
+  );
+}
+
+/* On hover: Glass heats */
+.df-glass:hover {
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.30);
+  box-shadow: 
+    0 4px 4px rgba(0, 0, 0, 0.35),
+    0 16px 16px rgba(0, 0, 0, 0.25),
+    0 50px 50px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.df-glass:hover .df-specular {
+  opacity: 0.55;
+  transform: scale(1.05);
+}
+
+.immersive-glass-neuro {
+  /* Inherits df-glass styles */
+  @extend .df-glass;
+}
+
+/* ─── Glow effects ──────────────────────────────── */
+.immersive-glow-primary {
+  box-shadow: 
+    0 0 20px rgba(108, 59, 255, 0.25),
+    inset 0 0 12px rgba(108, 59, 255, 0.15);
+  border-color: rgba(108, 59, 255, 0.35);
+}
+
+.immersive-glow-accent {
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.25),
+    inset 0 0 12px rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.35);
+}
+
+.glow-teal {
+  box-shadow: 0 0 30px rgba(20, 184, 166, 0.2), 0 0 60px rgba(20, 184, 166, 0.1);
+}
+
+/* ─── Animations ────────────────────────────────── */
+.df-predictive-pulse {
+  animation: predictivePulse 2.5s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7);
+}
+
+@keyframes predictivePulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.6); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 212, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.df-facet-active {
+  background: linear-gradient(135deg, #6C3BFF 0%, #00D4FF 100%);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+}
+
+.immersive-breathe-idle {
+  animation: breatheIdle 6s ease-in-out infinite alternate;
+}
+
+@keyframes breatheIdle {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.01); }
+}
+
+.immersive-touch-press {
+  transition: transform 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.immersive-touch-press:active {
+  transform: scale(0.94);
+}
+
+/* ─── Text shimmer ──────────────────────────────── */
+.immersive-holo-text {
+  background: linear-gradient(135deg, #ffffff 10%, #C8B8FF 50%, #00D4FF 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.immersive-text-shimmer {
+  background-size: 200% auto;
+  animation: textShimmer 4s linear infinite;
+  background-image: linear-gradient(
+    120deg,
+    #ffffff 20%,
+    #C8B8FF 40%,
+    #00D4FF 60%,
+    #C8B8FF 80%,
+    #ffffff 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes textShimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ─── Performance ───────────────────────────────── */
+.gpu-accelerated {
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+
+/* ─── Scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(6, 6, 18, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(20, 184, 166, 0.25);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 184, 166, 0.45);
+}
+
+/* ─── Table utilities ───────────────────────────── */
+.df-table-row {
+  @apply border-b border-white/5 hover:bg-white/[0.02] transition-colors;
+}
+
+/* ─── Depth helpers for 3D immersive ────────────── */
+.immersive-depth-back { transform: translateZ(-30px); }
+.immersive-depth-mid  { transform: translateZ(0); }
+.immersive-depth-front { transform: translateZ(30px); }

@@ -1,0 +1,22 @@
+{
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "args": [
+        "-NoLogo",
+        "-NoExit",
+        "-Command",
+        "$env:Path = 'C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs;' + $env:Path"
+      ]
+    },
+    "Windows PowerShell": {
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoLogo",
+        "-NoExit",
+        "-Command",
+        "$env:Path = 'C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs;' + $env:Path"
+      ]
+    }
+  }
+}

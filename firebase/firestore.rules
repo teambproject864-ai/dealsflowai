@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ─────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isValidEmail(email) {
+      return email.matches('.*@.*\\..*');
+    }
+
+    // ─── Leads ────────────────────────────────────────────────
+    // Writes only via server Admin SDK (server-side API routes
+    // that verify the Firebase ID token and write with Admin SDK).
+    // Reads are scoped to the owning UID.
+    match /leads/{leadId} {
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── GTM Progress ─────────────────────────────────────────
+    match /gtm_progress/{progressId} {
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── Sales Pipeline ───────────────────────────────────────
+    match /sales_pipeline/{pipelineId} {
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── Marketing Campaigns ──────────────────────────────────
+    match /marketing_campaigns/{campaignId} {
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── ALMA Memories ────────────────────────────────────────
+    match /alma_memory/{memoryId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── Features (public read-only) ─────────────────────────
+    match /features/{featureId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ─── Audit Log (append-only, server-write only) ───────────
+    match /audit_log/{logId} {
+      allow read: if false;  // Admin console only
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── User Consent (GDPR) ─────────────────────────────────
+    match /user_consent/{userId} {
+      allow read:  if isOwner(userId);
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── User Profiles ────────────────────────────────────────
+    match /users/{userId} {
+      allow read:  if isOwner(userId);
+      allow write: if false;
+    }
+
+    // ─── Catch-all: deny everything else ─────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
