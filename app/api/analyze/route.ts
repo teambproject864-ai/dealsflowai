@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { analysisGraph } from "@/lib/agents/analysisGraph";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads, getInMemoryAnalyses } from "@/lib/memory-storage";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -10,6 +11,19 @@ const inMemoryLeads = getInMemoryLeads();
 const inMemoryAnalyses = getInMemoryAnalyses();
 
 export async function POST(req: Request) {
+  // Check rate limit first
+  const rateLimitCheck = await checkRateLimit(req);
+  if (!rateLimitCheck.allowed) {
+    const headers = new Headers();
+    if (rateLimitCheck.msBeforeNext) {
+      headers.set('Retry-After', Math.ceil(rateLimitCheck.msBeforeNext / 1000).toString());
+    }
+    return NextResponse.json(
+      { success: false, error: "Too many requests, please try again later" },
+      { status: 429, headers }
+    );
+  }
+
   try {
     const { leadId, companyData: providedData } = await req.json();
 

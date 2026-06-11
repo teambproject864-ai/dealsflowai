@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform, AnimatePresence, useInView, useMotionValue, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
   ArrowRight,
   Zap,
@@ -13,23 +13,25 @@ import {
   Users,
   BarChart3,
   CheckCircle2,
-  Star,
-  Play,
   ChevronRight,
   Sparkles,
   Target,
-  Lock,
   Activity,
-  Globe,
   Database,
   Cpu,
   GitBranch,
   Layers,
   MessageSquare,
   ArrowUpRight,
-
+  Cylinder,
+  Network,
+  LineChart,
+  UserCheck,
+  PlayCircle,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
+import { IntakeForm } from "@/components/IntakeForm";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
 function AnimatedCounter({ value, suffix = "", prefix = "", duration = 2 }: {
@@ -79,6 +81,145 @@ function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: num
   );
 }
 
+// ─── Holographic GTM Interactive Component ───────────────────────────────────
+function HolographicGTM() {
+  const [activeSection, setActiveSection] = useState<number>(0);
+  const sections = [
+    {
+      title: "ICP Definition",
+      description: "Identify your ideal customer profile with precision targeting parameters",
+      icon: Target,
+      color: "text-cyan-400",
+    },
+    {
+      title: "Pipeline Analysis",
+      description: "Deep dive into your sales funnel with real-time metrics and trends",
+      icon: LineChart,
+      color: "text-teal-400",
+    },
+    {
+      title: "Agent Assignment",
+      description: "Orchestrate specialized AI agents with defined roles and permissions",
+      icon: UserCheck,
+      color: "text-violet-400",
+    },
+    {
+      title: "Execution Engine",
+      description: "Deploy autonomous workflows for outreach, follow-ups, and qualification",
+      icon: Zap,
+      color: "text-amber-400",
+    },
+  ];
+
+  return (
+    <div className="relative group">
+      {/* Hologram outer ring glow */}
+      <div className="absolute inset-0 rounded-3xl border border-teal-500/20 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.05),transparent)]" />
+      <div className="absolute inset-1 rounded-[22px] border border-white/5" />
+
+      {/* Animated scan lines */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+        <motion.div
+          className="w-full h-1 bg-gradient-to-r from-transparent via-teal-500/30 to-transparent"
+          animate={{ y: [0, 300] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+
+      <div className="relative z-10 p-8">
+        {/* Holographic core visualization */}
+        <div className="mb-8 flex items-center justify-center">
+          <div className="relative w-48 h-48">
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-teal-500/30"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+            />
+            <motion.div
+              className="absolute inset-4 rounded-full border border-cyan-500/40"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 15, ease: "linear", repeat: Infinity }}
+            />
+            <motion.div
+              className="absolute inset-8 rounded-full border border-violet-500/30"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 10, ease: "linear", repeat: Infinity }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Network className="w-16 h-16 text-teal-400 drop-shadow-[0_0_15px_rgba(20,184,166,0.6)]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Section navigation */}
+        <div className="grid grid-cols-2 gap-3">
+          {sections.map((section, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveSection(i)}
+              className={`group/btn relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 text-left ${
+                activeSection === i
+                  ? "border-teal-500/50 bg-teal-500/10"
+                  : "border-white/8 bg-white/3 hover:border-white/15 hover:bg-white/5"
+              }`}
+            >
+              <section.icon
+                className={`w-5 h-5 mt-0.5 ${section.color} ${
+                  activeSection === i ? "drop-shadow-[0_0_8px_currentColor]" : ""
+                }`}
+              />
+              <div>
+                <div className="font-semibold text-white text-sm mb-1">{section.title}</div>
+                <div className="text-xs text-slate-400">{section.description}</div>
+              </div>
+              {activeSection === i && (
+                <motion.div
+                  layoutId="active-holo-indicator"
+                  className="absolute -right-2 -top-2 w-2 h-2 rounded-full bg-teal-400"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Active section details */}
+        <motion.div
+          key={activeSection}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mt-6 pt-6 border-t border-white/5"
+        >
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <PlayCircle className="w-4 h-4 text-teal-400" />
+            <span>Live {sections[activeSection].title} Engine</span>
+          </div>
+          <div className="mt-3 h-20 bg-black/20 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden">
+            <motion.div
+              className="flex gap-2"
+              animate={{ x: [0, -150] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            >
+              {[
+                "Analyzing ICP fit",
+                "Scoring leads",
+                "Prioritizing outreach",
+                "Drafting follow-ups",
+                "Updating CRM",
+                "Generating reports",
+              ].map((text, i) => (
+                <span key={i} className="text-xs font-mono text-slate-400 px-3 py-1 rounded bg-teal-500/10 border border-teal-500/20">
+                  {text}
+                </span>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Feature Card ─────────────────────────────────────────────────────────────
 function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
   icon: any;
@@ -98,7 +239,6 @@ function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
       transition={{ duration: 0.6, delay, ease: "easeOut" }}
       className="group relative p-6 rounded-2xl border border-white/8 bg-gradient-to-b from-white/5 to-white/[0.01] hover:from-white/10 hover:to-white/5 hover:border-teal-500/30 transition-all duration-500 overflow-hidden cursor-default shadow-lg hover:shadow-teal-500/5 hover:-translate-y-1"
     >
-      {/* Hover glow */}
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl ${gradient} blur-2xl scale-75`} />
       
       <div className="relative z-10">
@@ -136,8 +276,6 @@ function StatCard({ value, label, sublabel, color, delay = 0 }: {
     </motion.div>
   );
 }
-
-
 
 // ─── Pricing Card ─────────────────────────────────────────────────────────────
 function PricingCard({ plan, price, description, features, highlighted = false, delay = 0 }: {
@@ -200,34 +338,19 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  // A/B test variant: Toggle with useSearchParams or localStorage for testing
-  const [abVariant, setAbVariant] = useState<"A" | "B">("A");
+  const [abVariant] = useState<"A" | "B">("A");
   const [formCompleted, setFormCompleted] = useState(false);
 
-  // Redirect if leadId param
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const leadId = params.get("leadId");
       if (leadId) router.replace(`/analysis?leadId=${leadId}`);
-
-      // Set A/B test variant (for future use)
-      const savedVariant = localStorage.getItem("df_ab_variant");
-      if (savedVariant === "A" || savedVariant === "B") {
-        setAbVariant(savedVariant);
-      } else {
-        const newVariant = Math.random() < 0.5 ? "A" : "B";
-        setAbVariant(newVariant);
-        localStorage.setItem("df_ab_variant", newVariant);
-      }
     }
   }, [router]);
 
-  // Scroll boundary logic
   useEffect(() => {
     if (typeof window === "undefined" || !formCompleted) return;
-
-    // Track the max scroll position we should allow (bottom of intake section)
     let maxScrollY = 0;
     const calculateMaxScroll = () => {
       if (intakeSectionRef.current) {
@@ -239,27 +362,22 @@ export default function HomePage() {
     calculateMaxScroll();
 
     const preventScrollBeyond = (e: WheelEvent | TouchEvent) => {
-      // Get current scroll position and direction
       const currentScrollY = window.scrollY;
       let scrollingDown = false;
 
-      if (e.type === "wheel") {
-        scrollingDown = (e as WheelEvent).deltaY > 0;
-      } else if (e.type === "touchmove") {
+      if (e.type === "wheel") scrollingDown = (e as WheelEvent).deltaY > 0;
+      else if (e.type === "touchmove") {
         const touch = (e as TouchEvent).touches[0];
         const prevTouch = (e as TouchEvent).changedTouches[0];
         scrollingDown = touch.clientY < prevTouch.clientY;
       }
-
       if (scrollingDown && currentScrollY >= maxScrollY) {
         e.preventDefault();
         e.stopPropagation();
-        // Snap to max scroll position
         window.scrollTo(0, maxScrollY);
       }
     };
 
-    // Also handle keyboard down (arrow down, page down)
     const preventKeyDownBeyond = (e: KeyboardEvent) => {
       const currentScrollY = window.scrollY;
       const isDownKey = ["ArrowDown", "PageDown", "Space"].includes(e.key);
@@ -269,7 +387,6 @@ export default function HomePage() {
       }
     };
 
-    // Add listeners
     window.addEventListener("wheel", preventScrollBeyond, { passive: false });
     window.addEventListener("touchmove", preventScrollBeyond, { passive: false });
     window.addEventListener("keydown", preventKeyDownBeyond, { passive: false });
@@ -284,42 +401,12 @@ export default function HomePage() {
   }, [formCompleted]);
 
   const features = [
-    {
-      icon: Brain,
-      title: "Memory OS (Hermes)",
-      description: "Unified memory management OS that retains deal context, buyer signals, and pipeline state across every interaction.",
-      gradient: "bg-gradient-to-br from-violet-600/20 to-purple-800/20",
-    },
-    {
-      icon: Database,
-      title: "MEM Palace",
-      description: "Centralized, structured memory storage layer. Every insight, meeting note, and signal is catalogued and instantly retrievable.",
-      gradient: "bg-gradient-to-br from-teal-600/20 to-cyan-800/20",
-    },
-    {
-      icon: Cpu,
-      title: "ALMA",
-      description: "Agent Learning & Memory Architecture — enables continuous agent improvement through adaptive memory refinement and context-aware decisions.",
-      gradient: "bg-gradient-to-br from-blue-600/20 to-indigo-800/20",
-    },
-    {
-      icon: Shield,
-      title: "Clawpatrol",
-      description: "Agent Security Firewall that monitors, audits, and controls every AI action — ensuring compliance and preventing unauthorized operations.",
-      gradient: "bg-gradient-to-br from-rose-600/20 to-red-800/20",
-    },
-    {
-      icon: TrendingUp,
-      title: "GTM Intelligence",
-      description: "Real-time pipeline analysis that identifies stall points, prioritizes opportunities, and surfaces the next best action for every deal.",
-      gradient: "bg-gradient-to-br from-amber-600/20 to-orange-800/20",
-    },
-    {
-      icon: GitBranch,
-      title: "Multi-Agent Framework",
-      description: "Orchestrate a fleet of specialized AI revenue agents — each with defined roles, permissions, and memory scopes that collaborate autonomously.",
-      gradient: "bg-gradient-to-br from-emerald-600/20 to-green-800/20",
-    },
+    { icon: Brain, title: "Memory OS (Hermes)", description: "Unified memory management OS that retains deal context, buyer signals, and pipeline state across every interaction.", gradient: "bg-gradient-to-br from-violet-600/20 to-purple-800/20" },
+    { icon: Database, title: "MEM Palace", description: "Centralized, structured memory storage layer. Every insight, meeting note, and signal is cataloged and instantly retrievable.", gradient: "bg-gradient-to-br from-teal-600/20 to-cyan-800/20" },
+    { icon: Cpu, title: "ALMA", description: "Agent Learning & Memory Architecture — enables continuous agent improvement through adaptive memory refinement and context-aware decisions.", gradient: "bg-gradient-to-br from-blue-600/20 to-indigo-800/20" },
+    { icon: Shield, title: "Clawpatrol", description: "Agent Security Firewall that monitors, audits, and controls every AI action — ensuring compliance and preventing unauthorized operations.", gradient: "bg-gradient-to-br from-rose-600/20 to-red-800/20" },
+    { icon: TrendingUp, title: "GTM Intelligence", description: "Real-time pipeline analysis that identifies stall points, prioritizes opportunities, and surfaces the next best action for every deal.", gradient: "bg-gradient-to-br from-amber-600/20 to-orange-800/20" },
+    { icon: GitBranch, title: "Multi-Agent Framework", description: "Orchestrate a fleet of specialized AI revenue agents — each with defined roles, permissions, and memory scopes that collaborate autonomously.", gradient: "bg-gradient-to-br from-emerald-600/20 to-green-800/20" },
   ];
 
   const stats = [
@@ -329,64 +416,18 @@ export default function HomePage() {
     { value: 99, label: "Uptime SLA", sublabel: "Enterprise reliability", color: "from-emerald-400 to-green-400" },
   ];
 
-
-
   const pricingPlans = [
-    {
-      plan: "Starter",
-      price: "$499/mo",
-      description: "For growing revenue teams ready to bring AI into their workflow.",
-      features: [
-        "Up to 5 AI Revenue Agents",
-        "Memory OS (Hermes) — 30-day context",
-        "MEM Palace — 10k records",
-        "GTM Pipeline Analysis",
-        "Standard Integrations (Salesforce, HubSpot)",
-        "Email & chat support",
-      ],
-    },
-    {
-      plan: "Growth",
-      price: "$1,299/mo",
-      description: "For teams scaling their GTM motion with advanced AI orchestration.",
-      features: [
-        "Up to 25 AI Revenue Agents",
-        "Full Memory OS (Hermes) — unlimited context",
-        "MEM Palace — 100k records + semantic search",
-        "ALMA — continuous agent learning",
-        "Clawpatrol Security Firewall",
-        "Multi-Agent Framework",
-        "All integrations + webhook support",
-        "Priority support + CSM",
-      ],
-      highlighted: true,
-    },
-    {
-      plan: "Enterprise",
-      price: "Custom",
-      description: "For large organizations requiring bespoke AI infrastructure and compliance.",
-      features: [
-        "Unlimited AI Revenue Agents",
-        "Full platform — all features",
-        "Custom memory architecture",
-        "On-premise / VPC deployment",
-        "SOC 2 Type II & HIPAA compliance",
-        "Custom integrations & APIs",
-        "Dedicated infrastructure",
-        "24/7 support + SLA",
-      ],
-    },
+    { plan: "Starter", price: "$499/mo", description: "For growing revenue teams ready to bring AI into their workflow.", features: ["Up to 5 AI Revenue Agents", "Memory OS (Hermes) — 30-day context", "MEM Palace — 10k records", "GTM Pipeline Analysis", "Standard Integrations (Salesforce, HubSpot)", "Email & chat support"] },
+    { plan: "Growth", price: "$1,299/mo", description: "For teams scaling their GTM motion with advanced AI orchestration.", features: ["Up to 25 AI Revenue Agents", "Full Memory OS (Hermes) — unlimited context", "MEM Palace — 100k records + semantic search", "ALMA — continuous agent learning", "Clawpatrol Security Firewall", "Multi-Agent Framework", "All integrations + webhook support", "Priority support + CSM"], highlighted: true },
+    { plan: "Enterprise", price: "Custom", description: "For large organizations requiring bespoke AI infrastructure and compliance.", features: ["Unlimited AI Revenue Agents", "Full platform — all features", "Custom memory architecture", "On-premise / VPC deployment", "SOC 2 Type II & HIPAA compliance", "Custom integrations & APIs", "Dedicated infrastructure", "24/7 support + SLA"] },
   ];
 
-  const integrations = [
-    "Salesforce", "HubSpot", "Outreach", "Gong", "Chorus", "Slack",
-    "Linear", "Notion", "Apollo", "ZoomInfo", "Looker", "Snowflake",
-  ];
+  const integrations = ["Salesforce", "HubSpot", "Outreach", "Gong", "Chorus", "Slack", "Linear", "Notion", "Apollo", "ZoomInfo", "Looker", "Snowflake"];
 
   return (
     <main className="min-h-screen text-white overflow-x-hidden" style={{ background: "#060612" }}>
       
-      {/* ── HERO SECTION ──────────────────────────────────────────────────── */}
+      {/* ── HERO SECTION WITH HOLOGRAPHIC GTM ────────────────────────────────────── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         
         {/* Ambient background */}
@@ -395,16 +436,8 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_80%_50%,rgba(108,59,255,0.08),transparent)]" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_70%,rgba(0,212,255,0.06),transparent)]" />
           
-          {/* Grid overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
-              backgroundSize: "80px 80px",
-            }}
-          />
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
           
-          {/* Floating orbs */}
           <FloatingOrb className="w-96 h-96 bg-teal-500 top-1/4 -left-20" delay={0} />
           <FloatingOrb className="w-80 h-80 bg-violet-600 top-1/3 right-0" delay={2} />
           <FloatingOrb className="w-64 h-64 bg-cyan-500 bottom-1/4 left-1/3" delay={4} />
@@ -412,77 +445,85 @@ export default function HomePage() {
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="relative z-10 mx-auto max-w-7xl px-6 py-20 text-center"
+          className="relative z-10 mx-auto max-w-7xl px-6 py-20"
         >
-          {/* Eyebrow badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 text-sm font-semibold backdrop-blur-sm"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
-            </span>
-            Now with ALMA + MEM Palace — Adaptive Agent Intelligence
-            <ChevronRight className="w-4 h-4" />
-          </motion.div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Hero text */}
+            <div className="text-center lg:text-left">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 text-sm font-semibold backdrop-blur-sm"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+                </span>
+                DealFlow AI GTM Engine
+                <ChevronRight className="w-4 h-4" />
+              </motion.div>
 
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.05] mb-8"
-          >
-            <span className="text-white">The AI Operating</span>
-            <br />
-            <span
-              className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text"
-              style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-            >
-              System for Revenue
-            </span>
-          </motion.h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1 }}
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-8"
+              >
+                The AI Operating
+                <br />
+                <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  System for Revenue
+                </span>
+              </motion.h1>
 
-          {/* Subheadline */}
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="max-w-3xl mx-auto text-lg sm:text-xl text-slate-400 leading-relaxed mb-10"
-          >
-            DealFlow AI gives your revenue team a unified intelligence layer — with persistent memory, autonomous agents, and real-time GTM analysis that turns pipeline data into closed deals.
-          </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="max-w-xl mx-auto lg:mx-0 text-lg sm:text-xl text-slate-400 leading-relaxed mb-10"
+              >
+                DealFlow AI gives your revenue team a unified intelligence layer — with persistent memory, autonomous agents, and real-time GTM analysis that turns pipeline data into closed deals.
+              </motion.p>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-4 mb-16"
-          >
-            <Link
-              href="/#intake"
-              onClick={() => trackEvent("cta_start_analysis", { surface: "hero_v2", abVariant })}
-              className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-4"
+              >
+                <Link
+                  href="/#intake"
+                  onClick={() => trackEvent("cta_start_analysis", { surface: "hero_v3", abVariant })}
+                  className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
+                >
+                  Start Pipeline Analysis
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/book-demo"
+                  onClick={() => trackEvent("cta_book_demo", { surface: "hero_v3", abVariant })}
+                  className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  Book a Demo
+                  <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Right: Holographic GTM Component */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 30 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="relative"
             >
-              Start Pipeline Analysis
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/book-demo"
-              onClick={() => trackEvent("cta_book_demo", { surface: "hero_v2", abVariant })}
-              className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"
-            >
-              Book a Demo
-              <ArrowUpRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
+              <div className="absolute -inset-8 bg-gradient-to-br from-teal-500/10 via-violet-500/5 to-cyan-500/10 rounded-[2.5rem] blur-3xl" />
+              <HolographicGTM />
+            </motion.div>
+          </div>
         </motion.div>
 
-        {/* Hero scroll indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
           animate={{ y: [0, 8, 0] }}
@@ -494,7 +535,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ── STATS BAR ─────────────────────────────────────────────────────── */}
+      {/* ── STATS BAR ──────────────────────────────────────────────────────────── */}
       <section className="relative border-y border-white/6 bg-white/2 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-6 py-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -505,7 +546,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PLATFORM SECTION ──────────────────────────────────────────────── */}
+      {/* ── PLATFORM SECTION ───────────────────────────────────────────────────── */}
       <section className="relative py-28 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(20,184,166,0.05),transparent)] pointer-events-none" />
         
@@ -551,168 +592,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
-      <section className="relative py-28 border-t border-white/6">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_0%_50%,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
-
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            {/* Left: Steps */}
-            <div>
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-6">
-                  <Activity className="w-3.5 h-3.5" />
-                  How It Works
-                </div>
-                <h2 className="text-4xl sm:text-5xl font-bold text-white mb-8">
-                  From first signal
-                  <br />
-                  to closed deal
-                </h2>
-              </motion.div>
-
-              <div className="space-y-8">
-                {[
-                  {
-                    step: "01",
-                    title: "Ingest & Memorize",
-                    description: "Connect your CRM, call recordings, and email. Memory OS (Hermes) instantly indexes and stores every buyer signal with full context.",
-                    icon: Database,
-                    color: "text-teal-400",
-                  },
-                  {
-                    step: "02",
-                    title: "Analyze & Prioritize",
-                    description: "ALMA agents process your pipeline in real time — identifying stall points, risk factors, and the highest-leverage next actions.",
-                    icon: BarChart3,
-                    color: "text-violet-400",
-                  },
-                  {
-                    step: "03",
-                    title: "Act & Orchestrate",
-                    description: "Deploy autonomous AI agents with defined roles. Clawpatrol ensures every action is audited, compliant, and within guardrails.",
-                    icon: Zap,
-                    color: "text-amber-400",
-                  },
-                  {
-                    step: "04",
-                    title: "Learn & Improve",
-                    description: "Every outcome feeds back into MEM Palace and ALMA's learning loop — your agents get smarter with every deal cycle.",
-                    icon: TrendingUp,
-                    color: "text-emerald-400",
-                  },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className="flex gap-5"
-                  >
-                    <div className="flex-shrink-0 flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
-                        <item.icon className={`w-5 h-5 ${item.color}`} />
-                      </div>
-                      {i < 3 && <div className="w-px flex-1 bg-gradient-to-b from-white/10 to-transparent mt-3" />}
-                    </div>
-                    <div className="pb-8">
-                      <div className="text-xs font-mono text-slate-600 mb-1">{item.step}</div>
-                      <h3 className="text-white font-semibold mb-2">{item.title}</h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">{item.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Live Pipeline Dashboard Preview */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-violet-500/10 rounded-3xl blur-3xl" />
-              <div className="relative p-6 rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md space-y-4">
-                {/* Dashboard header */}
-                <div className="flex justify-between items-center pb-3 border-b border-white/8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Live Pipeline Intelligence</span>
-                  </div>
-                  <span className="text-[10px] text-slate-600 font-mono">Updated just now</span>
-                </div>
-
-                {/* Pipeline stages */}
-                {[
-                  { stage: "Awareness", deals: 42, value: "$2.1M", color: "bg-slate-600", pct: 85, trend: "+12%" },
-                  { stage: "Qualification", deals: 28, value: "$5.4M", color: "bg-blue-500", pct: 68, trend: "+8%" },
-                  { stage: "Proposal", deals: 14, value: "$3.8M", color: "bg-violet-500", pct: 45, trend: "+3%" },
-                  { stage: "Negotiation", deals: 7, value: "$2.2M", color: "bg-teal-500", pct: 28, trend: "+15%" },
-                  { stage: "Closed Won", deals: 3, value: "$890K", color: "bg-emerald-500", pct: 15, trend: "+22%" },
-                ].map((stage, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.4 + i * 0.1 }}
-                  >
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-slate-300 font-medium">{stage.stage}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500">{stage.deals} deals</span>
-                        <span className="text-xs text-slate-300 font-mono">{stage.value}</span>
-                        <span className="text-[10px] text-emerald-400 font-semibold">{stage.trend}</span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-full ${stage.color}`}
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${stage.pct}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.5 + i * 0.1, ease: "easeOut" }}
-                      />
-                    </div>
-                  </motion.div>
-                ))}
-
-                {/* Agent activity */}
-                <div className="pt-3 border-t border-white/8 space-y-2.5">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Agent Activity</div>
-                  {[
-                    { agent: "Prospect Agent", action: "Identified 3 new ICP matches from LinkedIn", time: "2s ago", status: "running" },
-                    { agent: "Deal Analyst", action: "Flagged TechCorp deal — buyer went silent 12d", time: "45s ago", status: "alert" },
-                    { agent: "Sequence Agent", action: "Drafted personalized follow-up for Acme Inc", time: "2m ago", status: "done" },
-                  ].map((activity, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
-                        activity.status === "running" ? "bg-teal-400 animate-pulse" :
-                        activity.status === "alert" ? "bg-amber-400" : "bg-slate-600"
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[11px] font-semibold text-slate-300">{activity.agent}: </span>
-                        <span className="text-[11px] text-slate-500">{activity.action}</span>
-                      </div>
-                      <span className="text-[10px] text-slate-600 flex-shrink-0">{activity.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── INTEGRATIONS ──────────────────────────────────────────────────── */}
+      {/* ── INTEGRATIONS ───────────────────────────────────────────────────────── */}
       <section className="relative py-20 border-t border-white/6 overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 text-center">
           <motion.p
@@ -740,7 +620,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PRICING ───────────────────────────────────────────────────────── */}
+      {/* ── PRICING ─────────────────────────────────────────────────────────────── */}
       <section className="relative py-28 border-t border-white/6" id="pricing">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_80%,rgba(20,184,166,0.05),transparent)] pointer-events-none" />
 
@@ -783,9 +663,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CTA SECTION ───────────────────────────────────────────────────── */}
+      {/* ── CTA SECTION ─────────────────────────────────────────────────────────── */}
       <section className="relative py-28 border-t border-white/6 overflow-hidden">
-        {/* Big glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,rgba(20,184,166,0.12),transparent)] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_50%_50%,rgba(108,59,255,0.08),transparent)] pointer-events-none" />
 
@@ -804,10 +683,7 @@ export default function HomePage() {
             <h2 className="text-5xl sm:text-6xl font-bold text-white leading-tight">
               Ready to close deals
               <br />
-              <span
-                className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text"
-                style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-              >
+              <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 at AI speed?
               </span>
             </h2>
@@ -817,7 +693,7 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/#intake"
-                onClick={() => trackEvent("cta_start_analysis", { surface: "bottom_cta", abVariant })}
+                onClick={() => trackEvent("cta_start_analysis", { surface: "bottom_cta_v3", abVariant })}
                 className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-bold text-lg transition-all duration-300 shadow-xl shadow-teal-500/30 hover:shadow-teal-400/40 hover:-translate-y-0.5"
               >
                 Get Started Free
@@ -825,7 +701,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/book-demo"
-                onClick={() => trackEvent("cta_talk_sales", { surface: "bottom_cta", abVariant })}
+                onClick={() => trackEvent("cta_talk_sales", { surface: "bottom_cta_v3", abVariant })}
                 className="inline-flex items-center gap-2 px-10 py-4 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-bold text-lg transition-all duration-300 hover:-translate-y-0.5"
               >
                 <MessageSquare className="w-5 h-5" />
@@ -839,7 +715,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── INTAKE FORM SECTION ───────────────────────────────────────────── */}
+      {/* ── INTAKE FORM SECTION (ORIGINAL) ───────────────────────────────────────── */}
       <section id="intake" ref={intakeSectionRef} className="relative py-20 border-t border-white/6 scroll-mt-16">
         <div className="mx-auto max-w-4xl px-6">
           <div className="text-center mb-10">
@@ -861,48 +737,11 @@ export default function HomePage() {
               Two minutes to align on ICP, funnel volume, and revenue goals — we return a structured GTM readout.
             </motion.p>
           </div>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="relative p-8 sm:p-12 rounded-3xl border border-white/8 bg-white/3 backdrop-blur-md overflow-hidden"
-          >
-            <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-teal-500/8 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-violet-500/6 blur-3xl" />
-            {/* Lazy-load IntakeForm to keep hero fast */}
-            <IntakeFormWrapper onComplete={() => setFormCompleted(true)} />
-          </motion.div>
+          <ErrorBoundary>
+            <IntakeForm />
+          </ErrorBoundary>
         </div>
       </section>
     </main>
   );
-}
-
-// ─── Lazy IntakeForm wrapper ──────────────────────────────────────────────────
-function IntakeFormWrapper({ onComplete }: { onComplete?: () => void }) {
-  const [mounted, setMounted] = useState(false);
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-200px" });
-
-  useEffect(() => {
-    if (inView) setMounted(true);
-  }, [inView]);
-
-  return (
-    <div ref={ref} className="relative z-10">
-      {mounted ? (
-        <IntakeFormDynamic onComplete={onComplete} />
-      ) : (
-        <div className="h-64 flex items-center justify-center">
-          <div className="text-slate-500 text-sm animate-pulse">Loading intake form...</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function IntakeFormDynamic({ onComplete }: { onComplete?: () => void }) {
-  const { IntakeForm } = require("@/components/IntakeForm");
-  return <IntakeForm onComplete={onComplete} />;
 }

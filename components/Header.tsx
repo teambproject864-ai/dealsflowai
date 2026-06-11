@@ -240,15 +240,15 @@ export function Header() {
     },
   ];
 
-  const handleGetStarted = (e: React.MouseEvent) => {
+  const handleGetStarted = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     console.log("Get Started button clicked!");
-  };
+  }, []);
 
-  const handleBookMeeting = (e: React.MouseEvent) => {
+  const handleBookMeeting = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     window.dispatchEvent(new CustomEvent("open-voice-call"));
-  };
+  }, []);
 
   // Scroll handler for header transformation
   useEffect(() => {
@@ -270,6 +270,7 @@ export function Header() {
   // Close dropdowns on path change
   useEffect(() => {
     setOpenDropdown(null);
+    setIsMenuOpen(false);
   }, [pathname]);
 
   const headerClasses = isScrolled
@@ -278,6 +279,13 @@ export function Header() {
 
   return (
     <header className={headerClasses}>
+      {/* Skip-to-content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[1000] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-teal-600 focus:text-white focus:font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+      >
+        Skip to main content
+      </a>
       <div
         className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 transition-all duration-300 ${
           isScrolled ? "h-14" : "h-16"

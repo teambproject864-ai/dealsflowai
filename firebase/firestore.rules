@@ -76,6 +76,38 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ─── Calls & Meetings ─────────────────────────────────────
+    match /calls/{callId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── Call Summaries ───────────────────────────────────────
+    match /summaries/{summaryId} {
+      allow read: if true; // Publicly viewable call summary pages
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ─── Agent Sessions & Messages ────────────────────────────
+    match /agentSessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // ─── Agent Notifications ──────────────────────────────────
+    match /agent_notifications/{notificationId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ─── Analytics Events ─────────────────────────────────────
+    match /analytics_events/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if true; // Public event logging
+    }
+
     // ─── Catch-all: deny everything else ─────────────────────
     match /{document=**} {
       allow read, write: if false;

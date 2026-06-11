@@ -7,15 +7,21 @@ import { BookingWidget } from "@/components/BookingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Download, WifiOff } from "lucide-react";
+import { Download, WifiOff, Loader2, CheckCircle2 } from "lucide-react";
 import {
   IconAlertObjection,
   IconCheckCircle,
   IconRefreshPipeline,
+  IconArrowLeft,
+  IconArrowRight,
 } from "@/components/gtm/GtmIcons";
-import type { AnalysisResult } from "@/lib/types";
+import { type AnalysisResult, getRevenueAgentCatalog } from "@/lib/types";
 import { generateICPDocument, formatICPDocument } from "@/lib/icp-document-generator";
 import { getLeadOffline, saveLeadOffline } from "@/lib/offlineStore";
+import { GlassPanel } from "@/components/immersive";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 
 function generateMockupAnalysis(companyName: string, data: any): AnalysisResult {
   return {
@@ -55,7 +61,35 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
   const [showICPDocument, setShowICPDocument] = useState(false);
   const [isOfflineData, setIsOfflineData] = useState(false);
 
+  // Agent Assignment & Onboarding States
+  const [assignedAgent, setAssignedAgent] = useState<any | null>(null);
+  const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [postSubmissionStep, setPostSubmissionStep] = useState<number | null>(null);
+  const [isSubmittingAgent, setIsSubmittingAgent] = useState(false);
+  const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
+
   useEffect(() => {
+    async function fetchAssignment() {
+      if (leadId) {
+        try {
+          const assignmentRes = await fetch(`/api/agent-assignments?leadId=${leadId}`);
+          const assignmentData = await assignmentRes.json();
+          if (assignmentData.success && assignmentData.assignments && assignmentData.assignments.length > 0) {
+            setAssignedAgent(assignmentData.assignments[0]);
+            setPostSubmissionStep(null);
+          } else {
+            setPostSubmissionStep(0);
+          }
+        } catch (e) {
+          console.error("Failed to fetch agent assignments:", e);
+          setPostSubmissionStep(0);
+        }
+      } else {
+        setPostSubmissionStep(0);
+      }
+    }
+
     async function runAnalysis() {
       try {
         const stored = loadLeadContext();
@@ -72,6 +106,10 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
             if (cachedLead.readout) {
               setAnalysis(cachedLead.readout);
               setIsOfflineData(!cachedLead.synced);
+              
+              const emailVal = companyData?.emailPersonal || companyData?.contactEmail || "";
+              setCredentials(c => ({ ...c, email: emailVal }));
+              await fetchAssignment();
               setLoading(false);
               return;
             }
@@ -109,6 +147,10 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         if (leadId) {
           await saveLeadOffline(leadId, companyData as any, data, true);
         }
+        
+        const emailVal = companyData?.emailPersonal || companyData?.contactEmail || "";
+        setCredentials(c => ({ ...c, email: emailVal }));
+        await fetchAssignment();
       } catch (err: unknown) {
         // Fallback to offline mockup generation
         console.warn("Analysis API call failed or offline. Generating mockup analysis:", err);
@@ -128,6 +170,10 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
           if (leadId) {
             await saveLeadOffline(leadId, fallbackData, mockup, false);
           }
+          
+          const emailVal = fallbackData.emailPersonal || fallbackData.contactEmail || "";
+          setCredentials(c => ({ ...c, email: emailVal }));
+          await fetchAssignment();
         } else {
           setError(err instanceof Error ? err.message : "An unexpected error occurred.");
         }
@@ -369,6 +415,256 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
             </Card>
           )}
         </motion.div>
+      </motion.div>
+
+      {/* ─── AI REVENUE AGENT SECTION ─────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-16 pt-16 border-t border-white/10"
+      >
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-semibold text-white mb-4 font-display tracking-tight sm:text-4xl">
+            Autonomous AI Revenue Agents
+          </h2>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+            Assign a specialized AI agent to execute your go-to-market plan and start qualifying leads.
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-2xl">
+          {/* Agent Onboarding Flow */}
+          {postSubmissionStep === 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-teal-300/90">
+                    Step 1 of 2
+                  </p>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Select Your Agent</h3>
+                </div>
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+                  <span className="h-1.5 w-3.5 rounded-full bg-white/10" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                {getRevenueAgentCatalog().map((agent) => (
+                  <GlassPanel
+                    key={agent.key}
+                    tilt={false}
+                    onClick={() => setSelectedAgentKey(agent.key)}
+                    className={`border-slate-700/50 cursor-pointer transition-all ${
+                      selectedAgentKey === agent.key
+                        ? "border-teal-500/70 bg-teal-500/10 shadow-lg shadow-teal-500/20"
+                        : "hover:border-teal-500/30 hover:bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 p-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-purple-600 flex items-center justify-center shrink-0">
+                        <span className="text-white font-bold text-lg">{agent.name.charAt(0)}</span>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <h4 className="text-lg font-semibold text-white">{agent.name}</h4>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {agent.expertise.join(", ")}
+                        </p>
+                      </div>
+                      {selectedAgentKey === agent.key && (
+                        <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                      )}
+                    </div>
+                  </GlassPanel>
+                ))}
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  disabled={!selectedAgentKey || isSubmittingAgent}
+                  onClick={async () => {
+                    if (!leadId) return;
+                    setIsSubmittingAgent(true);
+                    try {
+                      const res = await fetch("/api/agent-assignments", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ leadId, agentKey: selectedAgentKey }),
+                      });
+                      const result = await res.json();
+                      if (result.success) {
+                        setAssignedAgent(result.assignment);
+                        setPostSubmissionStep(1);
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setIsSubmittingAgent(false);
+                    }
+                  }}
+                  className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
+                >
+                  {isSubmittingAgent ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Assigning...
+                    </>
+                  ) : (
+                    <>
+                      Continue <IconArrowRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {postSubmissionStep === 1 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-teal-300/90">
+                    Step 2 of 2
+                  </p>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Create Your Account</h3>
+                </div>
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+                  <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+                </div>
+              </div>
+
+              <GlassPanel tilt={false} className="border-slate-700/50 p-6 text-left">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="creds-email">Email Address</Label>
+                    <Input
+                      id="creds-email"
+                      type="email"
+                      value={credentials.email}
+                      onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                      placeholder="you@company.com"
+                      className="bg-black/20 border-white/10 text-white placeholder-slate-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="creds-password">Password</Label>
+                    <Input
+                      id="creds-password"
+                      type="password"
+                      value={credentials.password}
+                      onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                      placeholder="Create a password"
+                      className="bg-black/20 border-white/10 text-white placeholder-slate-500"
+                    />
+                  </div>
+                </div>
+              </GlassPanel>
+
+              <div className="flex justify-between gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPostSubmissionStep(0);
+                  }}
+                  className="border-white/10 bg-white/5 hover:bg-white/10 text-white px-4 h-11 rounded-xl"
+                >
+                  <IconArrowLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+                <Button
+                  disabled={!credentials.email || !credentials.password || isSubmittingCreds}
+                  onClick={async () => {
+                    if (!leadId) return;
+                    setIsSubmittingCreds(true);
+                    try {
+                      await fetch("/api/customer-credentials", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          leadId,
+                          email: credentials.email,
+                          password: credentials.password,
+                        }),
+                      });
+                      setPostSubmissionStep(null);
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setIsSubmittingCreds(false);
+                    }
+                  }}
+                  className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
+                >
+                  {isSubmittingCreds ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...
+                    </>
+                  ) : (
+                    <>
+                      Complete Setup & Launch Agent <IconArrowRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Assigned Agent View */}
+          {postSubmissionStep === null && assignedAgent && (
+            <GlassPanel tilt={false} className="border-slate-700/50 p-6 text-left">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/10">
+                    <span className="text-white font-bold text-2xl">
+                      {assignedAgent.agentName?.charAt(0) || "A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold uppercase tracking-wider border border-teal-500/20 mb-1">
+                      Active Agent
+                    </span>
+                    <h3 className="text-xl font-bold text-white tracking-tight">
+                      {assignedAgent.agentName || "Assigned Agent"}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      GTM & Lead Qualification Operations
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Operational Focus
+                    </h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {((getRevenueAgentCatalog().find(a => a.key === assignedAgent.agentKey)?.expertise) || ["GTM Strategy", "Outbound Campaign", "Lead Nurturing"]).map((exp) => (
+                        <span key={exp} className="text-xs font-medium px-2.5 py-1 rounded-md bg-white/5 text-slate-300 border border-white/5">
+                          {exp}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-teal-500/5 border border-teal-500/10 rounded-xl p-4 text-sm text-slate-300">
+                    <p className="font-semibold text-teal-400 mb-1">Status: Active & Live</p>
+                    Your agent has been assigned and is ready to run campaigns based on your GTM plan. Logs, task tracking, and chat features are active.
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Link
+                      href="/portal/customer"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold text-sm transition-all duration-300 shadow-md shadow-teal-500/20 hover:shadow-teal-400/30 hover:-translate-y-0.5"
+                    >
+                      Go to Customer Portal
+                      <IconArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </GlassPanel>
+          )}
+        </div>
       </motion.div>
 
       <motion.div

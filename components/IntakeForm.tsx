@@ -3,7 +3,11 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { intakeSchema, type IntakeFormData } from "@/lib/types";
+import {
+  intakeSchema,
+  type IntakeFormData,
+  getRevenueAgentCatalog,
+} from "@/lib/types";
 import { saveLeadContext } from "@/lib/lead-context";
 import { saveLeadOffline } from "@/lib/offlineStore";
 import { Button } from "@/components/ui/button";
@@ -18,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Upload, File, X } from "lucide-react";
+import { Loader2, Upload, File, X, CheckCircle2 } from "lucide-react";
 import { IconArrowLeft, IconArrowRight } from "@/components/gtm/GtmIcons";
+import { GlassPanel } from "@/components/immersive";
 
 // --- Custom field options as per user's request ---
 const certificationOptions = [
@@ -155,6 +160,15 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
+  
+  // New state for post-submission flow
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [postSubmissionStep, setPostSubmissionStep] = useState<number | null>(null);
+  const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
+  const [assignedAgent, setAssignedAgent] = useState<any | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; password: string }>({ email: "", password: "" });
+  const [isSubmittingAgent, setIsSubmittingAgent] = useState(false);
+  const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
   // Helper: Toggle array items (for checkboxes)
   function toggleArrayItem(key: string, item: string) {
@@ -208,8 +222,8 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       if (!data.giftCard) e.giftCard = "Please select your answer";
     } else if (step === 4) {
       if (!data.icpDescription?.trim()) e.icpDescription = "Please describe your ICP";
-      if (data.targetIndustries.length === 0) e.targetIndustries = "Select at least one industry";
-      if (data.targetCompanySizes.length === 0) e.targetCompanySizes = "Select at least one company size";
+      if ((data.targetIndustries || []).length === 0) e.targetIndustries = "Select at least one industry";
+      if ((data.targetCompanySizes || []).length === 0) e.targetCompanySizes = "Select at least one company size";
       if (!data.targetGeographicRegionsText?.trim()) e.targetGeographicRegionsText = "Please specify target geographic regions";
       if (data.decisionMakers.length === 0) e.decisionMakers = "Select at least one decision maker";
     }
@@ -293,9 +307,7 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       await saveLeadOffline(tempLeadId, fullValidation.data, null, false);
       router.push(`/analysis?leadId=${tempLeadId}`);
     } finally {
-      if (!router.pathname?.includes("/analysis")) {
-        setSubmitting(false);
-      }
+      setSubmitting(false);
     }
   }
 
@@ -340,7 +352,11 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       </div>
 
       {schemaErrors.length > 0 && (
-        <div className="bg-red-900/30 border border-red-500/50 p-3 mb-4 rounded-xl text-xs text-red-200 relative z-10">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="bg-red-900/30 border border-red-500/50 p-3 mb-4 rounded-xl text-xs text-red-200 relative z-10"
+        >
           <p className="font-semibold mb-1">Validation issues:</p>
           <ul className="list-disc pl-4">
             {schemaErrors.map((e, i) => (
@@ -373,8 +389,18 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   placeholder="John Doe"
                   className="bg-black/20 border-white/10 text-white placeholder-slate-500"
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
                 />
-                {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
+                {errors.name && (
+                  <p
+                    id="name-error"
+                    role="alert"
+                    className="text-xs text-red-400"
+                  >
+                    {errors.name}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -450,19 +476,36 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <Label>Upload Supporting Case Study Documents</Label>
-                <div 
+                <Label htmlFor="case-study-upload">Upload Supporting Case Study Documents</Label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Click to upload case study documents"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-white/10 hover:border-teal-500/50 bg-black/20 rounded-xl p-4 text-center cursor-pointer transition-all hover:bg-white/[0.02]"
                 >
-                  <Upload className="mx-auto h-8 w-8 text-teal-400 mb-2" />
+                  <Upload className="mx-auto h-8 w-8 text-teal-400 mb-2" aria-hidden="true" />
                   <p className="text-sm font-semibold text-white">Drag & drop files here or click to browse</p>
                   <p className="text-xs text-slate-500 mt-1">Supports PDF, DOCX, PNG, MP4 up to 50MB</p>
-                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} multiple className="hidden" />
+                  <input
+                    id="case-study-upload"
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    multiple
+                    className="sr-only"
+                    aria-describedby="file-upload-description"
+                  />
                 </div>
-                {data.uploadedDocuments?.length > 0 && (
+                {(data.uploadedDocuments || []).length > 0 && (
                   <div className="space-y-1.5 mt-2 max-h-[100px] overflow-y-auto">
-                    {data.uploadedDocuments.map((doc: string, idx: number) => (
+                    {(data.uploadedDocuments || []).map((doc: string, idx: number) => (
                       <div key={idx} className="flex items-center justify-between bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-slate-300">
                         <div className="flex items-center gap-2 truncate">
                           <File className="h-3.5 w-3.5 text-teal-400 flex-shrink-0" />
@@ -915,24 +958,213 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-8 flex justify-between gap-4 relative z-10">
-        <Button variant="outline" onClick={back} disabled={step === 0} className="border-white/10 bg-white/5 hover:bg-white/10 text-white disabled:opacity-40 px-4 h-11 rounded-xl">
-          <IconArrowLeft className="h-4 w-4 mr-2" /> Back
-        </Button>
-        <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
-          {submitting ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
-            </>
-          ) : step === stepTitles.length - 1 ? (
-            "Submit"
-          ) : (
-            <>
-              Next <IconArrowRight className="h-4 w-4 ml-2" />
-            </>
-          )}
-        </Button>
-      </div>
+      {/* --- Post-submission screens --- */}
+      {postSubmissionStep === 0 && (
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-teal-300/90">
+                Step 1 of 2
+              </p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Select Your Agent</h2>
+            </div>
+            <div className="flex gap-1">
+              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+              <span className="h-1.5 w-3.5 rounded-full bg-white/10" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-3">
+            {getRevenueAgentCatalog().map((agent) => (
+              <GlassPanel
+                key={agent.key}
+                tilt={false}
+                onClick={() => setSelectedAgentKey(agent.key)}
+                className={`border-slate-700/50 cursor-pointer transition-all ${
+                  selectedAgentKey === agent.key
+                    ? "border-teal-500/70 bg-teal-500/10 shadow-lg shadow-teal-500/20"
+                    : "hover:border-teal-500/30 hover:bg-white/[0.02]"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-purple-600 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-lg">{agent.name.charAt(0)}</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white">{agent.name}</h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {agent.expertise.join(", ")}
+                    </p>
+                  </div>
+                  {selectedAgentKey === agent.key && (
+                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                  )}
+                </div>
+              </GlassPanel>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPostSubmissionStep(null);
+              }}
+              className="border-white/10 bg-white/5 hover:bg-white/10 text-white px-4 h-11 rounded-xl"
+            >
+              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Button>
+            <Button
+              disabled={!selectedAgentKey || isSubmittingAgent}
+              onClick={async () => {
+                if (!leadId) return;
+                setIsSubmittingAgent(true);
+                try {
+                  const res = await fetch("/api/agent-assignments", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leadId, agentKey: selectedAgentKey }),
+                  });
+                  const result = await res.json();
+                  if (result.success) {
+                    setAssignedAgent(result.assignment);
+                    setPostSubmissionStep(1);
+                  }
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmittingAgent(false);
+                }
+              }}
+              className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
+            >
+              {isSubmittingAgent ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Assigning...
+                </>
+              ) : (
+                <>
+                  Continue <IconArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {postSubmissionStep === 1 && (
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-teal-300/90">
+                Step 2 of 2
+              </p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Create Your Account</h2>
+            </div>
+            <div className="flex gap-1">
+              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+            </div>
+          </div>
+
+          <GlassPanel tilt={false} className="border-slate-700/50">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="creds-email">Email Address</Label>
+                <Input
+                  id="creds-email"
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                  placeholder="you@company.com"
+                  className="bg-black/20 border-white/10 text-white placeholder-slate-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="creds-password">Password</Label>
+                <Input
+                  id="creds-password"
+                  type="password"
+                  value={credentials.password}
+                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  placeholder="Create a password"
+                  className="bg-black/20 border-white/10 text-white placeholder-slate-500"
+                />
+              </div>
+            </div>
+          </GlassPanel>
+
+          <div className="flex justify-between gap-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPostSubmissionStep(0);
+              }}
+              className="border-white/10 bg-white/5 hover:bg-white/10 text-white px-4 h-11 rounded-xl"
+            >
+              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Button>
+            <Button
+              disabled={!credentials.email || !credentials.password || isSubmittingCreds}
+              onClick={async () => {
+                if (!leadId) return;
+                setIsSubmittingCreds(true);
+                try {
+                  await fetch("/api/customer-credentials", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      leadId,
+                      email: credentials.email,
+                      password: credentials.password,
+                    }),
+                  });
+                  // Success! Redirect to /analysis as before!
+                  if (onComplete) onComplete();
+                  router.push(`/analysis?leadId=${leadId}`);
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmittingCreds(false);
+                }
+              }}
+              className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
+            >
+              {isSubmittingCreds ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...
+                </>
+              ) : (
+                <>
+                  Complete & Continue <IconArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* --- Regular step navigation only when not in post-submission flow --- */}
+      {postSubmissionStep === null && (
+        <div className="mt-8 flex justify-between gap-4 relative z-10">
+          <Button variant="outline" onClick={back} disabled={step === 0} className="border-white/10 bg-white/5 hover:bg-white/10 text-white disabled:opacity-40 px-4 h-11 rounded-xl">
+            <IconArrowLeft className="h-4 w-4 mr-2" /> Back
+          </Button>
+          <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+              </>
+            ) : step === stepTitles.length - 1 ? (
+              "Submit"
+            ) : (
+              <>
+                Next <IconArrowRight className="h-4 w-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

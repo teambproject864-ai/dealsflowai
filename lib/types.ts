@@ -328,6 +328,10 @@ export function getRevenueAgentCatalog(): RevenueAgentProfile[] {
   }));
 }
 
+export function getAgentByKey(key: keyof typeof AGENT_FULL_NAMES): RevenueAgentProfile | undefined {
+  return getRevenueAgentCatalog().find(agent => agent.key === key);
+}
+
 export interface AgentSession {
   id?: string;
   agentKey: string;
@@ -392,12 +396,16 @@ export interface Task {
 
 export interface ChatMessage {
   id: string;
-  taskId: string;
+  taskId?: string;
+  sessionId?: string;
   senderId: string;
   senderName: string;
   senderRole: UserRole;
   content: string;
   createdAt: string;
+  timestamp?: string;
+  read?: boolean;
+  attachments?: FileAttachment[];
 }
 
 export interface SharedFile {
@@ -435,19 +443,6 @@ export interface FileAttachment {
   url: string;
   uploadedAt: string;
   uploadedBy: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  sessionId?: string;
-  taskId?: string;
-  senderId: string;
-  senderName: string;
-  senderRole: UserRole;
-  content: string;
-  timestamp: string;
-  read?: boolean;
-  attachments?: FileAttachment[];
 }
 
 export interface PortalCallRecord {
@@ -499,4 +494,84 @@ export interface AgentCredits {
     description: string;
     createdAt: string;
   }>;
+}
+
+// --- HeyGen Types ---
+export interface HeyGenAvatar {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  gender?: string;
+  language?: string;
+}
+
+export interface HeyGenTemplate {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+}
+
+export type HeyGenVideoStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface HeyGenVideo {
+  id: string;
+  status: HeyGenVideoStatus;
+  title?: string;
+  prompt?: string;
+  avatarId?: string;
+  templateId?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
+}
+
+export interface HeyGenSettings {
+  apiKey?: string;
+}
+
+export interface HeyGenError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
+// --- New Features: Page Locking ---
+export interface PageLockState {
+  id?: string;
+  leadId: string;
+  pageIndex: number;
+  locked: boolean;
+  lockedAt: string;
+  lockedBy: string;
+}
+
+// --- New Features: Agent Assignment ---
+export interface AgentAssignment {
+  id: string;
+  leadId: string;
+  agentKey: keyof typeof AGENT_FULL_NAMES;
+  agentName: string;
+  customerId?: string;
+  assignedAt: string;
+  status: "pending" | "active" | "completed";
+}
+
+// --- New Features: Customer Credentials ---
+export interface CustomerCredentials {
+  id: string;
+  leadId: string;
+  email: string;
+  passwordHash?: string;
+  createdAt: string;
+  isVerified: boolean;
+}
+
+// --- Extend existing interfaces ---
+export interface ExtendedLeadRecord extends LeadRecord {
+  assignedAgentKey?: keyof typeof AGENT_FULL_NAMES;
+  pageLocks?: number[];
+  customerCredentialsId?: string;
+  agentAssignmentId?: string;
 }
