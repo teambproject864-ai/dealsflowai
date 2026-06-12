@@ -166,9 +166,16 @@ export async function hfInferJSON(
 
   let raw1 = "";
   try {
-    raw1 = await hfInfer(prompt, jsonSystem, jsonOpts);
+    if (typeof options === "function") {
+      raw1 = await options();
+    } else {
+      raw1 = await hfInfer(prompt, jsonSystem, jsonOpts);
+    }
     return parseLenient(raw1);
   } catch (e1) {
+    if (typeof options === "function") {
+      throw e1; // If it's a test mock, we don't want to attempt fallbacks using real API calls
+    }
     const candidate = repairJson(extractJsonCandidate(stripFences(String(raw1 || ""))));
     const clipped = candidate.length > 6000 ? candidate.slice(0, 6000) : candidate;
     try {

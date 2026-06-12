@@ -205,7 +205,7 @@ app.post('/navigate', async (req: Request, res: Response) => {
 // --- Screenshot Endpoint ---
 app.get('/screenshot/:callId', async (req: Request, res: Response) => {
   try {
-    const { callId } = req.params;
+    const callId = req.params.callId as string;
     const session = sessions.get(callId);
     
     if (!session) {
@@ -244,7 +244,7 @@ app.get('/screenshot/:callId', async (req: Request, res: Response) => {
 
 // --- Display Endpoint (Simple HTML) ---
 app.get('/display/:callId', async (req: Request, res: Response) => {
-  const { callId } = req.params;
+  const callId = req.params.callId as string;
   try {
     await getOrCreateSession(callId); // Ensure session exists
     res.send(`
@@ -281,7 +281,7 @@ app.get('/display/:callId', async (req: Request, res: Response) => {
 
 // --- Delete Session Endpoint ---
 app.delete('/session/:callId', async (req: Request, res: Response) => {
-  const { callId } = req.params;
+  const callId = req.params.callId as string;
   try {
     await closeSession(callId);
     res.status(200).json({
