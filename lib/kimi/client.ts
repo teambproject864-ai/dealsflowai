@@ -1,10 +1,9 @@
-import { RateLimiterMemory } from "rate-limiter-flexible";
 import { KimiChatCompletionRequest, KimiChatCompletionResponse, KimiApiCallLog } from "./types";
 
 export class KimiClient {
   private apiKey: string;
   private baseUrl: string;
-  private rateLimiter: RateLimiterMemory;
+  private rateLimiter: any;
   private cache: Map<string, { response: KimiChatCompletionResponse; expires: number }>;
   private logs: KimiApiCallLog[];
   private cacheTTL: number;
@@ -15,12 +14,18 @@ export class KimiClient {
     this.cacheTTL = cacheTTL;
     this.cache = new Map();
     this.logs = [];
-    
-    // Rate limiting: 60 requests per minute
-    this.rateLimiter = new RateLimiterMemory({
-      points: 60,
-      duration: 60,
-    });
+    this.rateLimiter = null;
+  }
+
+  private async getRateLimiter() {
+    if (!this.rateLimiter) {
+      const { RateLimiterMemory } = await import("rate-limiter-flexible");
+      this.rateLimiter = new RateLimiterMemory({
+        points: 60,
+        duration: 60,
+      });
+    }
+    return this.rateLimiter;
   }
 
   private getCacheKey(request: KimiChatCompletionRequest): string {
@@ -46,7 +51,8 @@ export class KimiClient {
       }
 
       // Rate limiting
-      await this.rateLimiter.consume("kimi-api", 1);
+      const limiter = await this.getRateLimiter();
+      await limiter.consume("kimi-api", 1);
 
       // Make API call
       const response = await fetch(`${this.baseUrl}/chat/completions`, {

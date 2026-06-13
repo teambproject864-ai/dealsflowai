@@ -3,9 +3,9 @@ import { getInMemoryLeads } from "@/lib/memory-storage";
 import { db } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 
-const inMemoryLeads = getInMemoryLeads();
-
 export const dynamic = "force-dynamic";
+
+const inMemoryLeads = getInMemoryLeads();
 
 export async function GET(
   req: Request,

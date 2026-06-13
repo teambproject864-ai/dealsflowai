@@ -6,15 +6,24 @@ import {
 import { CustomerCredentials } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/firebase-admin";
-import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import * as admin from "firebase-admin";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  // ── Authentication ─────────────────────────────────────────
-  const { errorResponse } = await requireAuth(req);
-  if (errorResponse) return errorResponse;
+  // Check rate limit first
+  const rateLimitCheck = await checkRateLimit(req);
+  if (!rateLimitCheck.allowed) {
+    const headers = new Headers();
+    if (rateLimitCheck.msBeforeNext) {
+      headers.set('Retry-After', Math.ceil(rateLimitCheck.msBeforeNext / 1000).toString());
+    }
+    return NextResponse.json(
+      { success: false, error: "Too many requests, please try again later" },
+      { status: 429, headers }
+    );
+  }
 
   try {
     const body = await req.json();

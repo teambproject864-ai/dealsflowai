@@ -3,14 +3,12 @@ import {
   CustomerCredentials,
   PageLockState,
   HeyGenVideo,
+  ExtendedLeadRecord,
+  AnalysisResult,
 } from "./types";
-import { LRUCache } from "lru-cache";
 
-let inMemoryLeads = new LRUCache<string, any>({
-  max: 1000,
-  ttl: 1000 * 60 * 15 // 15 minutes TTL
-});
-let inMemoryAnalyses: Map<string, any> = new Map();
+let inMemoryLeads: Map<string, ExtendedLeadRecord> = new Map();
+let inMemoryAnalyses: Map<string, AnalysisResult> = new Map();
 let inMemoryAgentAssignments: Map<string, AgentAssignment> = new Map();
 let inMemoryCustomerCredentials: Map<string, CustomerCredentials> = new Map();
 let inMemoryPageLocks: Map<string, PageLockState[]> = new Map();

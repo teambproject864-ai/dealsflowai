@@ -6,7 +6,7 @@ import { db } from "./firebase-admin";
 import { logger } from "./logger";
 
 // --- Constants & Configuration ---
-const JWT_SECRET = (() => {
+function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
@@ -15,7 +15,7 @@ const JWT_SECRET = (() => {
     return "your-secret-key-in-production-env-var-only";
   }
   return secret;
-})();
+}
 const JWT_EXPIRES_IN = "1h"; // Short-lived as requested
 const AUTH_COOKIE_NAME = "df_auth_token";
 const SALT_ROUNDS = 12;
@@ -164,12 +164,12 @@ export function createToken(user: AuthUser): string {
     role: user.role,
     name: user.name,
   };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as JwtPayload;
     return decoded;
   } catch (error) {
     return null;

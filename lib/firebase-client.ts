@@ -28,13 +28,11 @@ let _db: Firestore | null = null;
 let _storage: FirebaseStorage | null = null;
 let _auth: Auth | null = null;
 
-function getApp(): FirebaseApp {
+function getApp(): FirebaseApp | null {
   if (!_app) {
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-      throw new Error(
-        '[Firebase] NEXT_PUBLIC_FIREBASE_API_KEY / PROJECT_ID are not set. ' +
-        'Copy your Firebase config values into .env.local.'
-      );
+      console.warn('[Firebase] NEXT_PUBLIC_FIREBASE_API_KEY / PROJECT_ID are not set. Using demo mode.');
+      return null;
     }
     _app = getApps().length === 0
       ? initializeApp(firebaseConfig)
@@ -43,18 +41,39 @@ function getApp(): FirebaseApp {
   return _app;
 }
 
-export function getDb(): Firestore {
-  if (!_db) _db = getFirestore(getApp());
+export function getDb(): Firestore | null {
+  if (!_db) {
+    const app = getApp();
+    if (app) {
+      _db = getFirestore(app);
+    } else {
+      return null;
+    }
+  }
   return _db;
 }
 
-export function getClientStorage(): FirebaseStorage {
-  if (!_storage) _storage = getStorage(getApp());
+export function getClientStorage(): FirebaseStorage | null {
+  if (!_storage) {
+    const app = getApp();
+    if (app) {
+      _storage = getStorage(app);
+    } else {
+      return null;
+    }
+  }
   return _storage;
 }
 
-export function getClientAuth(): Auth {
-  if (!_auth) _auth = getAuth(getApp());
+export function getClientAuth(): Auth | null {
+  if (!_auth) {
+    const app = getApp();
+    if (app) {
+      _auth = getAuth(app);
+    } else {
+      return null;
+    }
+  }
   return _auth;
 }
 
@@ -65,21 +84,34 @@ export function getClientAuth(): Auth {
 /** Firestore client DB — call inside useEffect / event handlers / API helpers */
 export const db: Firestore = new Proxy({} as Firestore, {
   get(_t, prop) {
-    return (getDb() as any)[prop];
+    const firestore = getDb();
+    if (!firestore) {
+      // Return a mock function that does nothing for all properties accessed
+      return () => {};
+    }
+    return (firestore as any)[prop];
   },
 });
 
 /** Firebase Storage client */
 export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
   get(_t, prop) {
-    return (getClientStorage() as any)[prop];
+    const firebaseStorage = getClientStorage();
+    if (!firebaseStorage) {
+      return () => {};
+    }
+    return (firebaseStorage as any)[prop];
   },
 });
 
 /** Firebase Auth instance — obtained lazily */
 export const auth: Auth = new Proxy({} as Auth, {
   get(_t, prop) {
-    return (getClientAuth() as any)[prop];
+    const firebaseAuth = getClientAuth();
+    if (!firebaseAuth) {
+      return () => {};
+    }
+    return (firebaseAuth as any)[prop];
   },
 });
 

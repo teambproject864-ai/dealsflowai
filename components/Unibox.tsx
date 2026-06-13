@@ -13,7 +13,6 @@ import {
   Send,
   Loader2,
   FileText,
-  MoreVertical,
   Settings,
   Users,
   Upload,
@@ -22,15 +21,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { demoChatMessages, demoUsers } from "@/lib/portal-demo-data";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { FileAttachment } from "@/lib/types";
 
-type UniboxTab = "chat" | "call" | "notes";
+type UniboxTab = "chat" | "call";
 
 export function Unibox() {
   const { user } = useCurrentUser();
@@ -43,7 +41,6 @@ export function Unibox() {
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [chatMessages, setChatMessages] = useState([...demoChatMessages]);
-  const [notes, setNotes] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +122,6 @@ export function Unibox() {
   const tabs = [
     { id: "chat" as const, label: "Chat", icon: MessageSquare },
     { id: "call" as const, label: "Call", icon: Phone },
-    { id: "notes" as const, label: "Notes", icon: FileText },
   ];
 
   if (!isOpen) {
@@ -409,26 +405,6 @@ export function Unibox() {
                       </div>
                     </>
                   )}
-                </div>
-              )}
-
-              {activeTab === "notes" && (
-                <div className="p-4 flex flex-col h-full">
-                  <h3 className="text-white font-semibold text-sm mb-3">Call Notes</h3>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add your notes from the call here..."
-                    className="flex-1 bg-slate-800/80 border border-white/10 rounded-xl p-3 text-sm text-slate-200 resize-none focus:outline-none focus:border-teal-500/50"
-                  />
-                  <div className="mt-3 flex gap-2">
-                    <Button className="flex-1 bg-teal-600 hover:bg-teal-500">
-                      Save Notes
-                    </Button>
-                    <Button variant="outline" className="border-slate-600 hover:bg-slate-700/50">
-                      Clear
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
