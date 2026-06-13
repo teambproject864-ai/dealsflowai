@@ -32,9 +32,10 @@ import {
 import { trackEvent } from "@/lib/analytics";
 import { IntakeForm } from "@/components/IntakeForm";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import HomeFooter from "@/components/HomeFooter";
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
-function AnimatedCounter({ value, suffix = "", prefix = "", duration = 2 }: {
+const AnimatedCounter = React.memo(function AnimatedCounter({ value, suffix = "", prefix = "", duration = 2 }: {
   value: number; suffix?: string; prefix?: string; duration?: number;
 }) {
   const [count, setCount] = useState(0);
@@ -59,10 +60,10 @@ function AnimatedCounter({ value, suffix = "", prefix = "", duration = 2 }: {
   }, [inView, value, duration]);
 
   return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>;
-}
+});
 
 // ─── Floating Orb ────────────────────────────────────────────────────────────
-function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: number }) {
+const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: number }) {
   return (
     <motion.div
       className={`absolute rounded-full blur-3xl opacity-20 pointer-events-none ${className}`}
@@ -79,10 +80,10 @@ function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: num
       }}
     />
   );
-}
+});
 
 // ─── Holographic GTM Interactive Component ───────────────────────────────────
-function HolographicGTM() {
+const HolographicGTM = React.memo(function HolographicGTM() {
   const [activeSection, setActiveSection] = useState<number>(0);
   const sections = [
     {
@@ -218,10 +219,10 @@ function HolographicGTM() {
       </div>
     </div>
   );
-}
+});
 
 // ─── Feature Card ─────────────────────────────────────────────────────────────
-function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
+const FeatureCard = React.memo(function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
   icon: any;
   title: string;
   description: string;
@@ -250,10 +251,10 @@ function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
       </div>
     </motion.div>
   );
-}
+});
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ value, label, sublabel, color, delay = 0 }: {
+const StatCard = React.memo(function StatCard({ value, label, sublabel, color, delay = 0 }: {
   value: number; label: string; sublabel: string; color: string; suffix?: string; delay?: number;
 }) {
   const ref = useRef(null);
@@ -275,10 +276,10 @@ function StatCard({ value, label, sublabel, color, delay = 0 }: {
       <div className="text-slate-500 text-xs mt-1">{sublabel}</div>
     </motion.div>
   );
-}
+});
 
 // ─── Pricing Card ─────────────────────────────────────────────────────────────
-function PricingCard({ plan, price, description, features, highlighted = false, delay = 0 }: {
+const PricingCard = React.memo(function PricingCard({ plan, price, description, features, highlighted = false, delay = 0 }: {
   plan: string; price: string; description: string; features: string[]; highlighted?: boolean; delay?: number;
 }) {
   const ref = useRef(null);
@@ -328,7 +329,7 @@ function PricingCard({ plan, price, description, features, highlighted = false, 
       </Link>
     </motion.div>
   );
-}
+});
 
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function HomePage() {
@@ -400,29 +401,29 @@ export default function HomePage() {
     };
   }, [formCompleted]);
 
-  const features = [
+  const features = React.useMemo(() => [
     { icon: Brain, title: "Memory OS (Hermes)", description: "Unified memory management OS that retains deal context, buyer signals, and pipeline state across every interaction.", gradient: "bg-gradient-to-br from-violet-600/20 to-purple-800/20" },
     { icon: Database, title: "MEM Palace", description: "Centralized, structured memory storage layer. Every insight, meeting note, and signal is cataloged and instantly retrievable.", gradient: "bg-gradient-to-br from-teal-600/20 to-cyan-800/20" },
     { icon: Cpu, title: "ALMA", description: "Agent Learning & Memory Architecture — enables continuous agent improvement through adaptive memory refinement and context-aware decisions.", gradient: "bg-gradient-to-br from-blue-600/20 to-indigo-800/20" },
     { icon: Shield, title: "Clawpatrol", description: "Agent Security Firewall that monitors, audits, and controls every AI action — ensuring compliance and preventing unauthorized operations.", gradient: "bg-gradient-to-br from-rose-600/20 to-red-800/20" },
     { icon: TrendingUp, title: "GTM Intelligence", description: "Real-time pipeline analysis that identifies stall points, prioritizes opportunities, and surfaces the next best action for every deal.", gradient: "bg-gradient-to-br from-amber-600/20 to-orange-800/20" },
     { icon: GitBranch, title: "Multi-Agent Framework", description: "Orchestrate a fleet of specialized AI revenue agents — each with defined roles, permissions, and memory scopes that collaborate autonomously.", gradient: "bg-gradient-to-br from-emerald-600/20 to-green-800/20" },
-  ];
+  ], []);
 
-  const stats = [
+  const stats = React.useMemo(() => [
     { value: 142, label: "Pipeline Analyses", sublabel: "Completed this month", color: "from-teal-400 to-cyan-400" },
     { value: 87, label: "Win Rate Improvement", sublabel: "Avg. across customers", color: "from-violet-400 to-purple-400" },
     { value: 3200, label: "Deals Tracked", sublabel: "Across all organizations", color: "from-amber-400 to-orange-400" },
     { value: 99, label: "Uptime SLA", sublabel: "Enterprise reliability", color: "from-emerald-400 to-green-400" },
-  ];
+  ], []);
 
-  const pricingPlans = [
+  const pricingPlans = React.useMemo(() => [
     { plan: "Starter", price: "$499/mo", description: "For growing revenue teams ready to bring AI into their workflow.", features: ["Up to 5 AI Revenue Agents", "Memory OS (Hermes) — 30-day context", "MEM Palace — 10k records", "GTM Pipeline Analysis", "Standard Integrations (Salesforce, HubSpot)", "Email & chat support"] },
     { plan: "Growth", price: "$1,299/mo", description: "For teams scaling their GTM motion with advanced AI orchestration.", features: ["Up to 25 AI Revenue Agents", "Full Memory OS (Hermes) — unlimited context", "MEM Palace — 100k records + semantic search", "ALMA — continuous agent learning", "Clawpatrol Security Firewall", "Multi-Agent Framework", "All integrations + webhook support", "Priority support + CSM"], highlighted: true },
     { plan: "Enterprise", price: "Custom", description: "For large organizations requiring bespoke AI infrastructure and compliance.", features: ["Unlimited AI Revenue Agents", "Full platform — all features", "Custom memory architecture", "On-premise / VPC deployment", "SOC 2 Type II & HIPAA compliance", "Custom integrations & APIs", "Dedicated infrastructure", "24/7 support + SLA"] },
-  ];
+  ], []);
 
-  const integrations = ["Salesforce", "HubSpot", "Outreach", "Gong", "Chorus", "Slack", "Linear", "Notion", "Apollo", "ZoomInfo", "Looker", "Snowflake"];
+  const integrations = React.useMemo(() => ["Salesforce", "HubSpot", "Outreach", "Gong", "Chorus", "Slack", "Linear", "Notion", "Apollo", "ZoomInfo", "Looker", "Snowflake"], []);
 
   return (
     <main className="min-h-screen text-white overflow-x-hidden" style={{ background: "#060612" }}>
@@ -742,6 +743,7 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+      <HomeFooter />
     </main>
   );
 }
