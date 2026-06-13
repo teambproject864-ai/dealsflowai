@@ -341,17 +341,22 @@ export default function HomePage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const [abVariant] = useState<"A" | "B">("A");
   const [formCompleted, setFormCompleted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
       const params = new URLSearchParams(window.location.search);
       const leadId = params.get("leadId");
       if (leadId) router.replace(`/analysis?leadId=${leadId}`);
     }
-  }, [router]);
+  }, [router, isClient]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !formCompleted) return;
+    if (!isClient || !formCompleted) return;
     let maxScrollY = 0;
     const calculateMaxScroll = () => {
       if (intakeSectionRef.current) {
@@ -399,7 +404,7 @@ export default function HomePage() {
       window.removeEventListener("keydown", preventKeyDownBeyond);
       window.removeEventListener("resize", calculateMaxScroll);
     };
-  }, [formCompleted]);
+  }, [isClient, formCompleted]);
 
   const features = React.useMemo(() => [
     { icon: Brain, title: "Memory OS (Hermes)", description: "Unified memory management OS that retains deal context, buyer signals, and pipeline state across every interaction.", gradient: "bg-gradient-to-br from-violet-600/20 to-purple-800/20" },
