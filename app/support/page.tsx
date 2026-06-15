@@ -71,8 +71,12 @@ export default function SupportPage() {
   };
 
   return (
-    <main className="min-h-screen bg-dealflow-ink py-16 px-6">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen bg-background py-20 px-6 relative overflow-hidden">
+      {/* Decorative gradients */}
+      <div className="absolute top-[10%] left-[-15%] w-[35rem] h-[35rem] rounded-full bg-teal-600/5 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[40%] right-[-15%] w-[35rem] h-[35rem] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none" />
+      
+      <div className="max-w-6xl mx-auto relative z-10">
         <div className="mb-12">
           <Link
             href="/"

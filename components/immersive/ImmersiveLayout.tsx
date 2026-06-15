@@ -3,9 +3,6 @@
 import { type ReactNode } from "react";
 import { ImmersiveProvider } from "./ImmersiveProvider";
 import { PageTransition3D } from "./PageTransition3D";
-import { ClientImmersiveBackground } from "./ClientImmersiveBackground";
-import { GestureManager } from "./GestureManager";
-import { OfflineIndicator } from "./OfflineIndicator";
 import { ExperienceChrome } from "@/components/experience/ExperienceChrome";
 
 export function ImmersiveLayout({
@@ -21,9 +18,11 @@ export function ImmersiveLayout({
     <ImmersiveProvider>
       <ExperienceChrome>
         <div className="immersive-root relative min-h-screen flex flex-col">
-          <ClientImmersiveBackground />
-          <GestureManager />
-          <OfflineIndicator />
+          {/* CSS base space mesh */}
+          <div className="fixed inset-0 z-0 cosmic-bg pointer-events-none" aria-hidden="true">
+            <div className="aurora-mesh absolute inset-0 opacity-55" aria-hidden="true" />
+            <div className="grid-pattern absolute inset-0 opacity-20" aria-hidden="true" />
+          </div>
           <div className="immersive-vignette pointer-events-none fixed inset-0 z-[2]" aria-hidden />
           <div
             className="immersive-light-layer pointer-events-none fixed inset-0 z-[1]"

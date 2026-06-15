@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,6 +25,7 @@ import {
 import { Loader2, Upload, File, X, CheckCircle2 } from "lucide-react";
 import { IconArrowLeft, IconArrowRight } from "@/components/gtm/GtmIcons";
 import { GlassPanel } from "@/components/immersive";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // --- Custom field options as per user's request ---
 const certificationOptions = [
@@ -170,6 +171,18 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   const [isSubmittingAgent, setIsSubmittingAgent] = useState(false);
   const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
+  const { user } = useCurrentUser();
+
+  useEffect(() => {
+    if (user) {
+      setData((prev) => ({
+        ...prev,
+        name: prev.name || user.name || "",
+        emailPersonal: prev.emailPersonal || user.email || "",
+      }));
+    }
+  }, [user]);
+
   // Helper: Toggle array items (for checkboxes)
   function toggleArrayItem(key: string, item: string) {
     setData((prev) => {
@@ -295,7 +308,8 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       if (result.success && result.leadId) {
         saveLeadContext(fullValidation.data, null);
         await saveLeadOffline(result.leadId, fullValidation.data, null, true);
-        router.push(`/analysis?leadId=${result.leadId}`);
+        setLeadId(result.leadId);
+        setPostSubmissionStep(0);
       } else {
         alert(result.error || "Failed to save lead");
         setSubmitting(false);
@@ -975,6 +989,32 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
           </div>
           
           <div className="grid grid-cols-1 gap-3">
+            <GlassPanel
+              key="automatic"
+              tilt={false}
+              onClick={() => setSelectedAgentKey("automatic")}
+              className={`border-slate-700/50 cursor-pointer transition-all ${
+                selectedAgentKey === "automatic"
+                  ? "border-teal-500/70 bg-teal-500/10 shadow-lg shadow-teal-500/20"
+                  : "hover:border-teal-500/30 hover:bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 via-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
+                  <span className="text-white font-bold text-lg">A</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white">Automatically Assign Agent</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    The system will match the best available qualified agent to your requirement.
+                  </p>
+                </div>
+                {selectedAgentKey === "automatic" && (
+                  <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                )}
+              </div>
+            </GlassPanel>
+
             {getRevenueAgentCatalog().map((agent) => (
               <GlassPanel
                 key={agent.key}
@@ -1028,7 +1068,15 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                   const result = await res.json();
                   if (result.success) {
                     setAssignedAgent(result.assignment);
-                    setPostSubmissionStep(1);
+                    if (user) {
+                      if (onComplete) {
+                        onComplete();
+                      } else {
+                        router.push(`/analysis?leadId=${leadId}`);
+                      }
+                    } else {
+                      setPostSubmissionStep(1);
+                    }
                   }
                 } catch (e) {
                   console.error(e);
@@ -1119,9 +1167,12 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                       password: credentials.password,
                     }),
                   });
-                  // Success! Redirect to /analysis as before!
-                  if (onComplete) onComplete();
-                  router.push(`/analysis?leadId=${leadId}`);
+                  // Success! Redirect to /analysis as before or trigger onComplete!
+                  if (onComplete) {
+                    onComplete();
+                  } else {
+                    router.push(`/analysis?leadId=${leadId}`);
+                  }
                 } catch (e) {
                   console.error(e);
                 } finally {

@@ -4,27 +4,49 @@
 
 @layer base {
   :root {
-    /* Corporate revenue stack: deep navy surfaces, teal growth primary, warm gold KPI accent */
-    --background: 220 45% 6%;
+    --background: 220 50% 4%;
     --foreground: 210 35% 97%;
-    --card: 220 42% 8%;
+    --card: 220 42% 7%;
     --card-foreground: 210 35% 97%;
-    --popover: 220 42% 8%;
+    --popover: 220 42% 7%;
     --popover-foreground: 210 35% 97%;
-    --primary: 168 55% 42%;
-    --primary-foreground: 186 100% 97%;
-    --secondary: 217 28% 16%;
+    --primary: 262 88% 62%;
+    --primary-foreground: 210 35% 97%;
+    --secondary: 217 32% 12%;
     --secondary-foreground: 210 35% 97%;
-    --muted: 217 26% 14%;
-    --muted-foreground: 215 18% 62%;
-    --accent: 38 88% 52%;
-    --accent-foreground: 220 45% 8%;
-    --destructive: 0 62% 50%;
+    --muted: 217 26% 10%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 174 86% 45%;
+    --accent-foreground: 220 50% 4%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 26% 18%;
-    --input: 217 26% 18%;
-    --ring: 168 55% 42%;
-    --radius: 0.5rem;
+    --border: 217 26% 15%;
+    --input: 217 26% 15%;
+    --ring: 262 88% 62%;
+    --radius: 0.75rem;
+    --scroll-progress: 0%;
+  }
+
+  .light {
+    --background: 40 20% 98%;
+    --foreground: 220 40% 12%;
+    --card: 40 15% 94%;
+    --card-foreground: 220 40% 12%;
+    --popover: 40 15% 94%;
+    --popover-foreground: 220 40% 12%;
+    --primary: 262 80% 50%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 220 40% 12%;
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 15% 42%;
+    --accent: 262 80% 50%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 15% 85%;
+    --input: 220 15% 85%;
+    --ring: 262 80% 50%;
   }
 }
 
@@ -33,18 +55,19 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased transition-colors duration-300;
     font-feature-settings: "ss01", "cv02";
   }
 
   /* Skip to content for accessibility */
   .skip-to-content {
-    @apply fixed top-0 left-0 z-[9999] px-6 py-3 bg-teal-500 text-white font-semibold text-sm rounded-br-xl -translate-y-full focus:translate-y-0 transition-transform duration-200;
+    @apply fixed top-0 left-0 z-[9999] px-6 py-3 bg-violet-600 text-white font-semibold text-sm rounded-br-xl -translate-y-full focus:translate-y-0 transition-transform duration-200;
   }
 
   /* Focus visible ring — WCAG 2.1 AA */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-teal-400;
+    outline: 2px solid hsl(var(--accent));
+    outline-offset: 2px;
   }
 }
 
@@ -91,11 +114,13 @@
   .gradient-text-teal {
     @apply bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-300 bg-clip-text;
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .gradient-text-violet {
     @apply bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text;
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .gradient-text-hero {
@@ -188,7 +213,7 @@ html {
 }
 
 /* ─── Glass effects ─────────────────────────────── */
-.df-glass {
+.df-glass, .immersive-glass-neuro {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
@@ -205,7 +230,7 @@ html {
 }
 
 /* Layer 2: Refraction overlay simulating light bending */
-.df-glass::after {
+.df-glass::after, .immersive-glass-neuro::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -215,7 +240,7 @@ html {
 }
 
 /* Layer 3: Iridescent Edge Shimmer */
-.df-glass::before {
+.df-glass::before, .immersive-glass-neuro::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -229,6 +254,7 @@ html {
     #e11d48 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -259,7 +285,7 @@ html {
 }
 
 /* On hover: Glass heats */
-.df-glass:hover {
+.df-glass:hover, .immersive-glass-neuro:hover {
   backdrop-filter: blur(40px) saturate(220%);
   -webkit-backdrop-filter: blur(40px) saturate(220%);
   background: rgba(255, 255, 255, 0.10);
@@ -271,14 +297,9 @@ html {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.df-glass:hover .df-specular {
+.df-glass:hover .df-specular, .immersive-glass-neuro:hover .df-specular {
   opacity: 0.55;
   transform: scale(1.05);
-}
-
-.immersive-glass-neuro {
-  /* Inherits df-glass styles */
-  @extend .df-glass;
 }
 
 /* ─── Glow effects ──────────────────────────────── */
@@ -428,3 +449,46 @@ html {
 .immersive-depth-back { transform: translateZ(-30px); }
 .immersive-depth-mid  { transform: translateZ(0); }
 .immersive-depth-front { transform: translateZ(30px); }
+
+/* ─── Redesign & Header Helpers ─────────────────── */
+html[data-banner-dismissed="true"] .announcement-banner {
+  display: none !important;
+}
+
+.scroll-progress-bar {
+  width: var(--scroll-progress, 0%);
+  transition: width 0.05s ease-out;
+}
+
+/* ─── 3D Overflow Containment & Page Boundaries ─── */
+.immersive-page-scene {
+  overflow: clip !important;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* ─── Page Snapping & Viewport Locking ──────────── */
+.snap-container {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  max-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+}
+
+.snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Page Break Utilities ──────────────────────── */
+.page-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+

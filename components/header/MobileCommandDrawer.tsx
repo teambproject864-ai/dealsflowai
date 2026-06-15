@@ -160,6 +160,12 @@ export function MobileCommandDrawer({
                             <div className="flex items-center gap-3">
                               {Icon && <Icon className={`h-5 w-5 ${isActive ? "text-teal-400" : "text-slate-500"}`} />}
                               <span className="font-semibold text-sm">{link.name}</span>
+                              {link.name === "Portal" && (
+                                <span className="relative flex h-1.5 w-1.5 ml-0.5" aria-hidden="true">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+                                </span>
+                              )}
                             </div>
                             <ChevronDown
                               className={`h-4.5 w-4.5 transition-all duration-300 ${

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MousePointer2, Mic, MicOff, Camera, Settings } from "lucide-react";
+import { MousePointer2, Mic, MicOff, Camera } from "lucide-react";
 import { useExperience } from "./ExperienceProvider";
 import { useRouter } from "next/navigation";
 import { SPRING_SNAPPY, SPRING_SOFT } from "@/lib/immersive3d/motion";
@@ -236,21 +236,7 @@ export function MultimodalControlDock() {
             transition={SPRING_SNAPPY}
             className="flex flex-col items-end gap-2.5 mb-1"
           >
-            {/* 1. Settings (Accessibility) Button */}
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSelectA11y}
-              className={`df-glass flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 shadow-md ${
-                a11yOpen
-                  ? "border border-violet-500 bg-violet-600/30 text-violet-300 shadow-[0_0_15px_rgba(108,59,255,0.4)]"
-                  : "text-slate-400 hover:text-white border-white/5 hover:bg-white/5"
-              }`}
-              aria-label="Accessibility Settings Panel"
-              aria-pressed={a11yOpen}
-            >
-              <Settings className="h-5 w-5" />
-            </motion.button>
+
 
             {/* 2. AR Camera Button */}
             <motion.button

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,18 +44,21 @@ import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { Unibox } from "@/components/Unibox";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { generateICPDocument } from "@/lib/icp-document-generator";
 
 const tabs = [
+  { id: "requirements", label: "Requirements", icon: Users },
   { id: "tasks", label: "Tasks", icon: CheckCircle2 },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "calls", label: "Calls", icon: Phone },
+  { id: "playbook", label: "ICP Playbook", icon: FileText },
   { id: "metrics", label: "My Metrics", icon: Star },
   { id: "credits", label: "Credits", icon: Zap },
 ] as const;
 
 function AgentPortalContent() {
   const { user, isLoading: userLoading } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("tasks");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("requirements");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [newNote, setNewNote] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -71,6 +74,40 @@ function AgentPortalContent() {
     message: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [leads, setLeads] = useState<any[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [playbookContent, setPlaybookContent] = useState<string>("");
+
+  useEffect(() => {
+    async function loadLeads() {
+      try {
+        const res = await fetch("/api/leads");
+        const data = await res.json();
+        if (data.success) {
+          setLeads(data.leads);
+          if (data.leads.length > 0) {
+            setSelectedLeadId(data.leads[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load leads:", err);
+      }
+    }
+    async function loadPlaybook() {
+      try {
+        const res = await fetch("/api/playbook");
+        const data = await res.json();
+        if (data.success) {
+          setPlaybookContent(data.content);
+        }
+      } catch (err) {
+        console.error("Failed to load playbook:", err);
+      }
+    }
+    loadLeads();
+    loadPlaybook();
+  }, []);
 
   // Determine current agent ID based on authenticated user
   const currentAgentId = user?.id || "agent-vijay";
@@ -314,6 +351,221 @@ function AgentPortalContent() {
 
         {/* Tab Content */}
         <div className="mt-6">
+          {activeTab === "requirements" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Requirements List */}
+              <div className="lg:col-span-1 space-y-4">
+                <h3 className="text-xl font-semibold text-slate-100">Assigned Requirements</h3>
+                <div className="space-y-3">
+                  {leads.length === 0 ? (
+                    <GlassPanel tilt={false} className="border-slate-700/50">
+                      <CardContent className="py-10 text-center">
+                        <Users className="h-12 w-12 text-slate-700 mx-auto mb-3" />
+                        <p className="text-slate-400 font-medium">No requirements assigned</p>
+                      </CardContent>
+                    </GlassPanel>
+                  ) : (
+                    leads.map((lead) => (
+                      <GlassPanel
+                        key={lead.id}
+                        tilt={true}
+                        className={cn(
+                          "cursor-pointer border-slate-700/50 hover:border-teal-500/50 transition-all duration-200 hover:shadow-md",
+                          selectedLeadId === lead.id ? "border-teal-500 shadow-lg shadow-teal-500/20" : ""
+                        )}
+                        onClick={() => setSelectedLeadId(lead.id)}
+                      >
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg text-slate-100 font-bold">{lead.companyName}</CardTitle>
+                          <p className="text-xs text-teal-400 mt-1">{lead.websiteUrl || lead.website}</p>
+                          <p className="text-xs text-slate-500 mt-1">Submitted by: {lead.name}</p>
+                        </CardHeader>
+                      </GlassPanel>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Requirement Details & Matched ICP */}
+              <div className="lg:col-span-2">
+                {selectedLeadId ? (
+                  (() => {
+                    const lead = leads.find((l) => l.id === selectedLeadId);
+                    if (!lead) return null;
+                    return (
+                      <GlassPanel tilt={false} className="border-slate-700/50 space-y-6">
+                        <CardHeader className="border-b border-slate-800 pb-4">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-2xl text-slate-100 font-bold">{lead.companyName}</CardTitle>
+                            {(lead.websiteUrl || lead.website) && (
+                              <a
+                                href={lead.websiteUrl || lead.website}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-sm text-teal-400 hover:underline flex items-center gap-1"
+                              >
+                                Visit Website <ChevronRight className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-400 mt-1">Contact: {lead.name} ({lead.emailPersonal})</p>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="text-md font-semibold text-teal-400 mb-2">Offer Promise & Pain Point</h4>
+                              <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
+                                <p className="text-sm text-slate-200"><strong>Promise:</strong> {lead.offerPromise || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Pain Point:</strong> {lead.painPoint || "Not specified"}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-md font-semibold text-teal-400 mb-2">Ideal Customer Profile (ICP)</h4>
+                              <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
+                                <p className="text-sm text-slate-200"><strong>Description:</strong> {lead.icpDescription || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Target Industries:</strong> {Array.isArray(lead.targetIndustries) ? lead.targetIndustries.join(", ") : lead.targetIndustries || "Not specified"}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <h4 className="text-md font-semibold text-teal-400">Targeting Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 text-center">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider">Company Sizes</p>
+                                <p className="text-sm text-slate-200 font-semibold mt-1">
+                                  {Array.isArray(lead.targetCompanySizes) ? lead.targetCompanySizes.join(", ") : lead.targetCompanySizes || "Not specified"}
+                                </p>
+                              </div>
+                              <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 text-center">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider">Decision Makers</p>
+                                <p className="text-sm text-slate-200 font-semibold mt-1">
+                                  {Array.isArray(lead.decisionMakers) ? lead.decisionMakers.join(", ") : lead.decisionMakers || "Not specified"}
+                                </p>
+                              </div>
+                              <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 text-center">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider">Geographics</p>
+                                <p className="text-sm text-slate-200 font-semibold mt-1">
+                                  {lead.targetGeographicRegionsText || (Array.isArray(lead.targetGeographics) ? lead.targetGeographics.join(", ") : "Not specified")}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-4 space-y-3">
+                            <h4 className="text-md font-semibold text-teal-400">Credibility & Case Studies</h4>
+                            <p className="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+                              {lead.caseStudies || lead.successStories || "No case studies provided."}
+                            </p>
+                          </div>
+
+                          {/* Dynamic GTM Blueprint Section */}
+                          {(() => {
+                            try {
+                              const blueprint = generateICPDocument(lead as any);
+                              return (
+                                <div className="border-t border-slate-800 pt-6 space-y-4">
+                                  <h4 className="text-md font-semibold text-teal-400 flex items-center gap-2">
+                                    <Zap className="h-5 w-5 text-teal-400 animate-pulse" />
+                                    Dynamic GTM Blueprint (Technical Integration)
+                                  </h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Memory OS (Hermes) Alignment</p>
+                                      <p className="text-xs text-slate-300 leading-relaxed">
+                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Memory OS (Hermes) Alignment"] || "Aligning memory parameters..."}
+                                      </p>
+                                    </div>
+                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Agent Security (Clawpatrol) Alignment</p>
+                                      <p className="text-xs text-slate-300 leading-relaxed">
+                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Agent Security Firewall (Clawpatrol) Alignment"] || "Applying compliance firewalls..."}
+                                      </p>
+                                    </div>
+                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Multi-Agent Framework Alignment</p>
+                                      <p className="text-xs text-slate-300 leading-relaxed">
+                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Multi-Agent Framework Alignment"] || "Orchestrating agent collaboration..."}
+                                      </p>
+                                    </div>
+                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">TAM & Competitor Estimates</p>
+                                      <p className="text-xs text-slate-300 leading-relaxed">
+                                        <strong>TAM 2026:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["TAM 2026 Consensus"]}<br/>
+                                        <strong>CAGR:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Consensus Growth CAGR"]}<br/>
+                                        <strong>Competitors:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Competitor Market Shares"]}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Consensus Validation Log</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                      <div>
+                                        <span className="text-slate-500 block text-[10px] uppercase">Status:</span>
+                                        <span className="text-green-400 font-semibold">{blueprint["Consensus Validation Log"]?.["Verification Status"]}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 block text-[10px] uppercase">CoV Check:</span>
+                                        <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Coefficient of Variation Check"]}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 block text-[10px] uppercase">MoE Check:</span>
+                                        <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Margin of Error (95%) Check"]}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 block text-[10px] uppercase">Audit Stamp:</span>
+                                        <span className="text-slate-300 font-mono text-[10px]">{blueprint["Consensus Validation Log"]?.["Audit Integrity Stamp"]}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            } catch (e) {
+                              console.error("Failed to render dynamic GTM blueprint:", e);
+                              return null;
+                            }
+                          })()}
+                        </CardContent>
+                      </GlassPanel>
+                    );
+                  })()
+                ) : (
+                  <GlassPanel tilt={false} className="border-slate-700/50">
+                    <CardContent className="py-16 text-center">
+                      <Users className="h-20 w-20 text-slate-700 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-slate-300 mb-1">Select a requirement</h3>
+                      <p className="text-slate-500">Choose a requirement from the list to view its matched ICP details</p>
+                    </CardContent>
+                  </GlassPanel>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "playbook" && (
+            <GlassPanel tilt={false} className="border-slate-700/50">
+              <CardHeader className="border-b border-slate-800 pb-4 flex flex-row items-center justify-between flex-wrap gap-4">
+                <div>
+                  <CardTitle className="text-2xl text-slate-100 font-bold">ICP Playbook</CardTitle>
+                  <p className="text-slate-400 text-sm mt-1">Read the official DealFlow ICP Playbook guidelines</p>
+                </div>
+                <a
+                  href="/docs/DealFlow-ICP-Playbook-FINAL.pdf"
+                  download
+                  className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </a>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="prose prose-invert max-w-none bg-slate-950/50 border border-slate-800/80 p-6 md:p-8 rounded-2xl max-h-[600px] overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-300">
+                  {playbookContent || "Loading playbook content..."}
+                </div>
+              </CardContent>
+            </GlassPanel>
+          )}
+
           {activeTab === "tasks" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Task List */}

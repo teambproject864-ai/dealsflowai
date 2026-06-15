@@ -18,5 +18,7 @@
         "$env:Path = 'C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs;' + $env:Path"
       ]
     }
-  }
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore"
 }

@@ -29,10 +29,12 @@ import {
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { IntakeForm } from "@/components/IntakeForm";
 
 const tabs = [
   { id: "tasks", label: "Tasks", icon: CheckCircle2 },
   { id: "credits", label: "Credits", icon: Plus },
+  { id: "submit-requirement", label: "Submit Requirement", icon: FileText },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "feedback", label: "Feedback", icon: Star },
@@ -264,6 +266,19 @@ function CustomerPortalContent() {
                 </GlassPanel>
               </>
             )}
+          </div>
+        )}
+
+        {activeTab === "submit-requirement" && (
+          <div className="space-y-6">
+            <GlassPanel tilt={false} className="border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-xl text-slate-100 font-bold">Submit New Requirement</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <IntakeForm onComplete={() => setActiveTab("tasks")} />
+              </CardContent>
+            </GlassPanel>
           </div>
         )}
 

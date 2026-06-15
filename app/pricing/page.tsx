@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, ChevronRight, HelpCircle, Sparkles, ArrowRight, Shield, Award, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -313,19 +313,21 @@ export default function PricingPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {featureCategories.map((category) => (
-                  <tr key={category.name} className="bg-[#070715]/40 text-sm">
-                    <td colSpan={4} className="py-4 px-6 font-bold text-teal-400 bg-white/[0.01] uppercase tracking-wider text-xs border-b border-white/5">
-                      {category.name}
-                    </td>
-                  </tr>
-                ))}
-                {featureCategories.flatMap((cat) => cat.items).map((item) => (
-                  <tr key={item.name} className="hover:bg-white/[0.01] transition-colors text-sm">
-                    <td className="py-4.5 px-6 text-slate-300 font-medium">{item.name}</td>
-                    <td className="py-4.5 px-6 text-slate-400 text-xs">{item.starter}</td>
-                    <td className="py-4.5 px-6 text-slate-200 text-xs font-semibold">{item.growth}</td>
-                    <td className="py-4.5 px-6 text-teal-300 text-xs font-semibold">{item.enterprise}</td>
-                  </tr>
+                  <Fragment key={category.name}>
+                    <tr className="bg-[#070715]/40 text-sm">
+                      <td colSpan={4} className="py-4 px-6 font-bold text-teal-400 bg-white/[0.01] uppercase tracking-wider text-xs border-b border-white/5">
+                        {category.name}
+                      </td>
+                    </tr>
+                    {category.items.map((item) => (
+                      <tr key={item.name} className="hover:bg-white/[0.01] transition-colors text-sm">
+                        <td className="py-4.5 px-6 text-slate-300 font-medium">{item.name}</td>
+                        <td className="py-4.5 px-6 text-slate-400 text-xs">{item.starter}</td>
+                        <td className="py-4.5 px-6 text-slate-200 text-xs font-semibold">{item.growth}</td>
+                        <td className="py-4.5 px-6 text-teal-300 text-xs font-semibold">{item.enterprise}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

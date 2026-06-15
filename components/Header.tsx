@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
@@ -16,6 +16,7 @@ import {
 import { NotificationCenter } from "./header/NotificationCenter";
 import { AccountMenu } from "./header/AccountMenu";
 import { MobileCommandDrawer } from "./header/MobileCommandDrawer";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavLink {
   name: string;
@@ -100,6 +101,7 @@ function NavDropdown({
       onFocus={handleFocus}
       onBlur={handleBlur}
     >
+      {/* Nav button */}
       <button
         ref={buttonRef}
         onClick={onToggle}
@@ -112,6 +114,12 @@ function NavDropdown({
         aria-haspopup="true"
       >
         {link.name}
+        {link.name === "Portal" && (
+          <span className="relative flex h-1.5 w-1.5 select-none" aria-hidden="true">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+          </span>
+        )}
         <ChevronDown
           className={`h-4 w-4 transition-all duration-300 ${
             isOpen ? "rotate-180 text-teal-300" : "text-slate-500 group-hover:text-slate-400"
@@ -183,6 +191,7 @@ function NavDropdown({
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -200,18 +209,30 @@ export function Header() {
       ],
     },
     {
-      name: "Features",
-      href: "/features",
-      icon: IconShieldCompliance,
-      subOptions: [
-        { name: "AI Revenue Agents", href: "/ai-revenue-agents", description: "Autonomous sales agents" },
-        { name: "RAG Analysis", href: "/rag", description: "Intelligent document analysis" },
-        { name: "Meeting Intelligence", href: "/meeting-agent/live", description: "Real-time meeting insights" },
-      ],
+      name: "How it works",
+      href: "/#how-it-works",
     },
     {
-      name: "GTM Analysis",
-      href: "/analysis/new",
+      name: "Features",
+      href: "/features",
+    },
+    {
+      name: "Pricing",
+      href: "/#pricing",
+    },
+    {
+      name: "Support",
+      href: "/support",
+    },
+    {
+      name: "Portal",
+      href: "/portal",
+      icon: Users,
+      subOptions: [
+        { name: "Customer Portal", href: "/portal/customer/login", description: "Access client dashboard and metrics" },
+        { name: "Agent Portal", href: "/portal/agent/login", description: "Workspace for AI Revenue Agents" },
+        { name: "Admin Portal", href: "/portal/admin/login", description: "System administrators control center" },
+      ],
     },
   ];
 
@@ -247,8 +268,8 @@ export function Header() {
 
   const handleGetStarted = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Get Started button clicked!");
-  }, []);
+    router.push("/portal/customer/login?signup=true");
+  }, [router]);
 
   const handleBookMeeting = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -358,6 +379,9 @@ export function Header() {
           <div className="hidden sm:block">
             <NotificationCenter />
           </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Streamlined Account management menu (Tablet & Desktop) */}
           <div className="hidden sm:block">

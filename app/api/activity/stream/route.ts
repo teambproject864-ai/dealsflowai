@@ -1,5 +1,3 @@
-import { db } from '@/lib/firebase-admin';
-
 export const dynamic = 'force-dynamic';
 
 const companyNames = [

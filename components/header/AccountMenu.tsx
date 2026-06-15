@@ -153,33 +153,33 @@ export function AccountMenu() {
                 <div className="space-y-1.5">
                   <Link
                     ref={firstFocusableRef}
-                    href="/portal"
+                    href="/portal/settings"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-300 hover:text-white hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-white/10"
-                    role="menuitem"
-                  >
-                    <User className="h-4.5 w-4.5 text-slate-400" />
-                    <span className="font-semibold">Portal Home</span>
-                  </Link>
-                  <Link
-                    href={`/portal/${user.role === "admin" ? "admin" : user.role === "agent" ? "agent" : "customer"}`}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-300 hover:text-white hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-white/10"
+                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-700 dark:text-slate-300 hover:text-violet-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
                     role="menuitem"
                   >
                     <Settings className="h-4.5 w-4.5 text-slate-400" />
-                    <span className="font-semibold">Dashboard Panel</span>
+                    <span className="font-semibold">Account Settings</span>
+                  </Link>
+                  <Link
+                    href="/portal/saved"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-700 dark:text-slate-300 hover:text-violet-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+                    role="menuitem"
+                  >
+                    <User className="h-4.5 w-4.5 text-slate-400" />
+                    <span className="font-semibold">Saved Items</span>
                   </Link>
                 </div>
 
                 {/* Logout */}
-                <div className="border-t border-white/10 pt-3">
+                <div className="border-t border-slate-100 dark:border-white/10 pt-3">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300 text-left border border-transparent hover:border-red-500/20"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-red-600 dark:text-red-400 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 text-left border border-transparent hover:border-red-500/20"
                     role="menuitem"
                   >
-                    <LogOut className="h-4.5 w-4.5 text-red-400" />
+                    <LogOut className="h-4.5 w-4.5 text-red-500 dark:text-red-400" />
                     <span className="font-semibold">Logout</span>
                   </button>
                 </div>

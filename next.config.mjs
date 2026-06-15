@@ -8,6 +8,15 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/exit',
+        destination: 'https://dealsflowai.vercel.app/',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     if (process.env.NODE_ENV === 'development') {
       return [];

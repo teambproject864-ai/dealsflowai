@@ -41,10 +41,11 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
-import type { AgentSession, AgentAssignmentNotification } from "@/lib/types";
+import { type AgentSession, type AgentAssignmentNotification, getRevenueAgentCatalog, AGENT_FULL_NAMES } from "@/lib/types";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: Activity },
+  { id: "requirements", label: "Requirements", icon: FileText },
   { id: "agents", label: "Agents", icon: Users },
   { id: "interactions", label: "Interactions", icon: MessageSquare },
   { id: "reports", label: "Reports", icon: BarChart3 },
@@ -79,6 +80,89 @@ function AdminPortalContent() {
     email: "",
     password: "",
   });
+
+  const [leads, setLeads] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [reassignLeadId, setReassignLeadId] = useState<string | null>(null);
+  const [reassigning, setReassigning] = useState(false);
+  const [selectedNewAgentKey, setSelectedNewAgentKey] = useState<string>("");
+  
+  // Search & Filters state
+  const [reqSearch, setReqSearch] = useState("");
+  const [filterIndustry, setFilterIndustry] = useState("all");
+  const [filterCompanySize, setFilterCompanySize] = useState("all");
+  const [filterAgent, setFilterAgent] = useState("all");
+
+  const fetchLeads = async () => {
+    try {
+      const res = await fetch("/api/leads");
+      const data = await res.json();
+      if (data.success) {
+        setLeads(data.leads);
+      }
+    } catch (error) {
+      console.error("Failed to load leads:", error);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await fetch("/api/admin/audit-logs");
+      const data = await res.json();
+      if (data.success) {
+        setAuditLogs(data.logs);
+      }
+    } catch (error) {
+      console.error("Failed to load audit logs:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+    fetchAuditLogs();
+  }, []);
+
+  const handleReassign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reassignLeadId || !selectedNewAgentKey) return;
+    setReassigning(true);
+    try {
+      const res = await fetch("/api/admin/reassign-agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: reassignLeadId, newAgentKey: selectedNewAgentKey }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotification({
+          type: "success",
+          title: "Agent Reassigned",
+          message: `Successfully reassigned to ${data.newAgentName}`,
+        });
+        setShowReassignModal(false);
+        setReassignLeadId(null);
+        setSelectedNewAgentKey("");
+        fetchLeads();
+        fetchAuditLogs();
+      } else {
+        setNotification({
+          type: "error",
+          title: "Reassignment Failed",
+          message: data.error || "Failed to reassign agent",
+        });
+      }
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "Failed to connect to server for reassignment",
+      });
+    } finally {
+      setReassigning(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
 
   // Load real-time agent notifications from Firebase
   useEffect(() => {
@@ -331,6 +415,40 @@ function AdminPortalContent() {
 
         {activeTab === "dashboard" && (
           <div className="space-y-8">
+            {/* Real-time Audit logs */}
+            {auditLogs.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-teal-400" />
+                  Recent System Activity & Audit Trail
+                </h2>
+                <div className="space-y-3 max-h-72 overflow-y-auto pr-2 mb-6">
+                  {auditLogs.slice(0, 10).map((log) => (
+                    <GlassPanel key={log.id} tilt={false} className="border-slate-800 bg-slate-900/40">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-white">
+                              {log.message}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-1">
+                              By: {log.email} ({log.role}) • IP: {log.ip} • {new Date(log.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold",
+                            log.success ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                          )}>
+                            {log.success ? "Success" : "Failed"}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </GlassPanel>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Recent Agent Assignments */}
             {agentAssignments.length > 0 && (
               <div>
@@ -474,6 +592,201 @@ function AdminPortalContent() {
                 </CardContent>
               </GlassPanel>
             </div>
+          </div>
+        )}
+
+        {activeTab === "requirements" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-2xl font-bold text-slate-100">Customer Requirements & Leads</h2>
+              
+              {/* Search and Filters */}
+              <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
+                <div className="relative flex-1 md:w-64">
+                  <Input
+                    value={reqSearch}
+                    onChange={(e) => setReqSearch(e.target.value)}
+                    placeholder="Search by company or customer..."
+                    className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                  />
+                </div>
+                <select
+                  value={filterIndustry}
+                  onChange={(e) => setFilterIndustry(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="all">All Industries</option>
+                  {Array.from(new Set(leads.flatMap(l => l.targetIndustries || []))).map(ind => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterCompanySize}
+                  onChange={(e) => setFilterCompanySize(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="all">All Company Sizes</option>
+                  {Array.from(new Set(leads.flatMap(l => l.targetCompanySizes || []))).map(sz => (
+                    <option key={sz} value={sz}>{sz}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterAgent}
+                  onChange={(e) => setFilterAgent(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="all">All Agents</option>
+                  {Object.entries(AGENT_FULL_NAMES).map(([key, name]) => (
+                    <option key={key} value={key}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Leads Listing */}
+            <div className="grid grid-cols-1 gap-4">
+              {leads
+                .filter(lead => {
+                  const searchMatches = 
+                    lead.companyName?.toLowerCase().includes(reqSearch.toLowerCase()) ||
+                    lead.name?.toLowerCase().includes(reqSearch.toLowerCase());
+                  
+                  const industryMatches = 
+                    filterIndustry === "all" || 
+                    (Array.isArray(lead.targetIndustries) && lead.targetIndustries.includes(filterIndustry)) ||
+                    lead.targetIndustries === filterIndustry;
+                    
+                  const companySizeMatches = 
+                    filterCompanySize === "all" || 
+                    (Array.isArray(lead.targetCompanySizes) && lead.targetCompanySizes.includes(filterCompanySize)) ||
+                    lead.targetCompanySizes === filterCompanySize;
+                    
+                  const agentMatches = 
+                    filterAgent === "all" || 
+                    lead.assignedAgentKey === filterAgent;
+
+                  return searchMatches && industryMatches && companySizeMatches && agentMatches;
+                })
+                .map((lead) => (
+                  <GlassPanel key={lead.id} tilt={false} className="border-slate-700/50">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex justify-between items-start flex-wrap gap-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-100">{lead.companyName}</h3>
+                          <p className="text-sm text-teal-400 mt-0.5">{lead.websiteUrl || lead.website || "No website specified"}</p>
+                          <p className="text-xs text-slate-400 mt-2">
+                            Contact: <strong>{lead.name}</strong> ({lead.emailPersonal})
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="bg-slate-800 border border-slate-750 px-4 py-2 rounded-xl text-right">
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Assigned Agent</p>
+                            <p className="text-sm font-semibold text-slate-200 mt-0.5">
+                              {AGENT_FULL_NAMES[lead.assignedAgentKey as keyof typeof AGENT_FULL_NAMES] || "Unassigned"}
+                            </p>
+                          </div>
+                          <ExtrudedButton
+                            className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
+                            onClick={() => {
+                              setReassignLeadId(lead.id);
+                              setSelectedNewAgentKey(lead.assignedAgentKey || "");
+                              setShowReassignModal(true);
+                            }}
+                          >
+                            Reassign Agent
+                          </ExtrudedButton>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-800 pt-4 text-sm">
+                        <div>
+                          <strong className="text-slate-400">Offer Promise:</strong>
+                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">{lead.offerPromise || "Not specified"}</p>
+                        </div>
+                        <div>
+                          <strong className="text-slate-400">ICP Description:</strong>
+                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">{lead.icpDescription || "Not specified"}</p>
+                        </div>
+                        <div>
+                          <strong className="text-slate-400">Targeting details:</strong>
+                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">
+                            Industries: {Array.isArray(lead.targetIndustries) ? lead.targetIndustries.join(", ") : lead.targetIndustries || "None"}<br/>
+                            Company Sizes: {Array.isArray(lead.targetCompanySizes) ? lead.targetCompanySizes.join(", ") : lead.targetCompanySizes || "None"}<br/>
+                            Geographics: {lead.targetGeographicRegionsText || (Array.isArray(lead.targetGeographics) ? lead.targetGeographics.join(", ") : "None")}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </GlassPanel>
+                ))}
+            </div>
+
+            {/* Reassign Agent Modal */}
+            {showReassignModal && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-700 shadow-2xl">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-xl text-slate-100 font-bold">Reassign Agent</CardTitle>
+                    <button
+                      className="text-slate-400 hover:text-white p-1"
+                      onClick={() => {
+                        setShowReassignModal(false);
+                        setReassignLeadId(null);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleReassign} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="new-agent-select" className="text-slate-300">Select Qualified Agent</Label>
+                        <select
+                          id="new-agent-select"
+                          value={selectedNewAgentKey}
+                          onChange={(e) => setSelectedNewAgentKey(e.target.value)}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          required
+                        >
+                          <option value="">Select Agent...</option>
+                          {getRevenueAgentCatalog().map((agent) => (
+                            <option key={agent.key} value={agent.key}>
+                              {agent.name} ({agent.expertise.join(", ")})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <ExtrudedButton
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setShowReassignModal(false);
+                            setReassignLeadId(null);
+                          }}
+                        >
+                          Cancel
+                        </ExtrudedButton>
+                        <ExtrudedButton
+                          type="submit"
+                          className="flex-1 bg-teal-600 hover:bg-teal-700 gap-2"
+                          disabled={reassigning || !selectedNewAgentKey}
+                        >
+                          {reassigning ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                          {reassigning ? "Saving..." : "Confirm Reassign"}
+                        </ExtrudedButton>
+                      </div>
+                    </form>
+                  </CardContent>
+                </GlassPanel>
+              </div>
+            )}
           </div>
         )}
 

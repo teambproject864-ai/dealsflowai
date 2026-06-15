@@ -1,10 +1,30 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, LineChart, MessageSquare, Phone, ShieldCheck } from "lucide-react";
+import { Users, LineChart, MessageSquare, Phone, ShieldCheck, Loader2 } from "lucide-react";
 import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function PortalLanding() {
+  const { user, isLoading } = useCurrentUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push(`/portal/${user.role}`);
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+      </div>
+    );
+  }
+
   return (
     <StaggerReveal className="max-w-4xl mx-auto py-8">
       <div className="text-center mb-12">

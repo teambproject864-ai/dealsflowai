@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import * as admin from "firebase-admin";
+import { requireAuth } from "@/lib/auth";
+import { sendEmail } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +38,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const agentProfile = getAgentByKey(agentKey as any);
+    // Resolve automatic assignment
+    let finalAgentKey = agentKey;
+    if (agentKey === "automatic") {
+      const { assignRandomAgent } = await import("@/lib/revenue-agents");
+      const randResult = await assignRandomAgent();
+      finalAgentKey = randResult.agentKey;
+      console.log(`[AgentAssignment] Resolved 'automatic' selection to randomly assigned agent: ${finalAgentKey}`);
+    }
+
+    const agentProfile = getAgentByKey(finalAgentKey as any);
     if (!agentProfile) {
       return NextResponse.json(
-        { success: false, error: "Agent not found" },
+        { success: false, error: `Agent not found for key: ${finalAgentKey}` },
         { status: 404 }
       );
     }
@@ -47,7 +58,7 @@ export async function POST(req: Request) {
     const assignment: AgentAssignment = {
       id: uuidv4(),
       leadId,
-      agentKey: agentKey as any,
+      agentKey: finalAgentKey as any,
       agentName: agentProfile.name,
       assignedAt: new Date().toISOString(),
       status: "active",
@@ -74,13 +85,85 @@ export async function POST(req: Request) {
     if (lead) {
       const updatedLead = {
         ...lead,
-        assignedAgentKey: agentKey,
+        assignedAgentKey: finalAgentKey,
         agentAssignmentId: assignment.id,
       };
       leadsMap.set(leadId, updatedLead);
       if (db) {
         await db.collection("leads").doc(leadId).set(updatedLead);
       }
+    }
+
+    // Send instant in-app notifications
+    const nowStr = new Date().toISOString();
+    const companyName = lead?.companyName || "a new company";
+    const customerName = lead?.name || "Customer";
+    const customerEmail = lead?.emailPersonal || "";
+
+    if (db) {
+      // Notification for assigned agent
+      await db.collection("in_app_notifications").add({
+        id: uuidv4(),
+        userId: finalAgentKey,
+        role: "agent",
+        title: "New Requirement Assigned",
+        description: `You have been assigned to ${companyName}'s requirement request.`,
+        type: "success",
+        createdAt: nowStr,
+        unread: true,
+      });
+
+      // Notification for admin team
+      await db.collection("in_app_notifications").add({
+        id: uuidv4(),
+        userId: "admin",
+        role: "admin",
+        title: "New Requirement Submitted",
+        description: `Lead "${companyName}" submitted by ${customerName} and assigned to ${agentProfile.name}.`,
+        type: "info",
+        createdAt: nowStr,
+        unread: true,
+      });
+    }
+
+    // Send instant email notifications to the assigned agent and admin team
+    try {
+      const agentEmail = `${finalAgentKey}@dealflow.ai`; // Mock/determined agent email
+      const adminEmail = "admin@dealflow.ai";
+
+      // Notify Agent
+      await sendEmail({
+        to: agentEmail,
+        subject: `[DealFlow] New Assignment: ${companyName}`,
+        body: `
+          <h3>Hello ${agentProfile.name},</h3>
+          <p>You have been assigned to a new customer requirement request:</p>
+          <ul>
+            <li><strong>Company:</strong> ${companyName}</li>
+            <li><strong>Customer Name:</strong> ${customerName}</li>
+            <li><strong>Customer Email:</strong> ${customerEmail}</li>
+          </ul>
+          <p>Please log in to your Agent Portal to view the Ideal Customer Profiles and full playbook.</p>
+        `
+      });
+
+      // Notify Admin
+      await sendEmail({
+        to: adminEmail,
+        subject: `[DealFlow] New Requirement Submitted: ${companyName}`,
+        body: `
+          <h3>Hello Admin Team,</h3>
+          <p>A new customer requirement has been submitted and assigned:</p>
+          <ul>
+            <li><strong>Company:</strong> ${companyName}</li>
+            <li><strong>Customer:</strong> ${customerName} (${customerEmail})</li>
+            <li><strong>Assigned Agent:</strong> ${agentProfile.name} (${finalAgentKey})</li>
+          </ul>
+          <p>You can manage this requirement and reassign the agent from your Admin Dashboard.</p>
+        `
+      });
+    } catch (emailError: any) {
+      console.warn("[AgentAssignment Notification] Email delivery skipped/failed:", emailError.message);
     }
 
     return NextResponse.json({ success: true, assignment });

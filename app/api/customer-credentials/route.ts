@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import * as admin from "firebase-admin";
+import { requireAuth, hashPassword } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -36,14 +37,19 @@ export async function POST(req: Request) {
       );
     }
 
+    // Hash the password with bcrypt for password persistence
+    let hashedPassword = "";
+    if (password) {
+      hashedPassword = await hashPassword(password);
+    }
+
     const credentials: CustomerCredentials = {
       id: uuidv4(),
       leadId,
       email,
-      // Hashed for real application
-      passwordHash: password ? `hashed_${password}` : undefined,
+      passwordHash: hashedPassword,
       createdAt: new Date().toISOString(),
-      isVerified: false,
+      isVerified: true,
     };
 
     const credsMap = getInMemoryCustomerCredentials();
@@ -54,7 +60,7 @@ export async function POST(req: Request) {
       await db.collection("customer_credentials").doc(credentials.id).set(credentials);
     }
 
-    // Also update lead record in Firestore and cache
+    // Also update lead record in Firestore and cache, and create user account
     const leadsMap = getInMemoryLeads();
     let lead = leadsMap.get(leadId);
     if (!lead && db) {
@@ -64,9 +70,24 @@ export async function POST(req: Request) {
       }
     }
 
+    const customerId = `customer-${Date.now()}`;
+    const newUser = {
+      id: customerId,
+      email,
+      hashedPassword,
+      name: lead?.name || "Customer",
+      role: "customer" as const,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (db) {
+      await db.collection("users").doc(customerId).set(newUser);
+    }
+
     if (lead) {
       const updatedLead = {
         ...lead,
+        customerId,
         customerCredentialsId: credentials.id,
       };
       leadsMap.set(leadId, updatedLead);

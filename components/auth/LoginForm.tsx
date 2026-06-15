@@ -29,6 +29,13 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || `/portal/${role}`;
 
+  // Set initial screen based on query parameter
+  useEffect(() => {
+    if (searchParams.get("signup") === "true") {
+      setIsLogin(false);
+    }
+  }, [searchParams]);
+
   // Reset error when switching between login/register
   useEffect(() => {
     setError(null);
