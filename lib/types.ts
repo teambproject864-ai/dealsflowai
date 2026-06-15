@@ -668,3 +668,74 @@ export interface ExtendedLeadRecord extends LeadRecord {
   customerCredentialsId?: string;
   agentAssignmentId?: string;
 }
+
+// --- Multi-Agent RAG System Types ---
+export type AgentRole = "Retrieval" | "ContextSynthesis" | "ResponseGeneration" | "Verification" | "Audit" | "Graph" | "Equip" | "Network" | "Track" | "Influence" | "Convert";
+
+export interface AgentTask {
+  id: string;
+  role: AgentRole;
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "in-progress" | "completed" | "failed" | "reassigned";
+  input: Record<string, any>;
+  output?: Record<string, any>;
+  assignedTo?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  retries: number;
+  maxRetries: number;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  content: string;
+  vector?: number[];
+  metadata: {
+    source: string;
+    pageNumber?: number;
+    chunkIndex: number;
+    documentType: "text" | "manual" | "research" | "other";
+    [key: string]: any;
+  };
+}
+
+export interface VectorSearchResult {
+  chunk: DocumentChunk;
+  score: number;
+}
+
+export interface AgentMessage {
+  id: string;
+  from: AgentRole;
+  to?: AgentRole | "all";
+  type: "task" | "data" | "status" | "error" | "completion";
+  content: any;
+  timestamp: string;
+}
+
+// --- A.G.E.N.T.I.C. Framework Types ---
+export interface AgenticContext {
+  conversationId: string;
+  tasks: AgentTask[];
+  messages: AgentMessage[];
+  contextualMemory: Record<string, any>;
+  timestamp: string;
+}
+
+export interface FrameworkMetrics {
+  totalTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  averageLatency: number;
+  uptime: number;
+  agentLoad: Record<AgentRole, number>;
+}
+
+export interface FrameworkConfig {
+  maxConcurrentTasks: number;
+  defaultTimeoutMs: number;
+  selfHealingEnabled: boolean;
+  retryBackoffMs: number;
+}

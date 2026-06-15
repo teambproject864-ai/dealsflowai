@@ -3,11 +3,10 @@ import {
   getInMemoryCustomerCredentials,
   getInMemoryLeads,
 } from "@/lib/memory-storage";
-import { CustomerCredentials } from "@/lib/types";
+import { CustomerCredentials, ExtendedLeadRecord } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limiter";
-import * as admin from "firebase-admin";
 import { requireAuth, hashPassword } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +65,7 @@ export async function POST(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data();
+        lead = doc.data() as ExtendedLeadRecord;
       }
     }
 
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
       id: customerId,
       email,
       hashedPassword,
-      name: lead?.name || "Customer",
+      name: lead?.contactName || "Customer",
       role: "customer" as const,
       createdAt: new Date().toISOString(),
     };
