@@ -77,6 +77,13 @@ function CustomerPortalContent() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [gtmRegion, setGtmRegion] = useState('All');
   const [gtmSegment, setGtmSegment] = useState('All');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [documents, setDocuments] = useState<Array<{id: string, name: string, type: string, size: string, date: string}>>([
+    { id: '1', name: 'Q4 2024 GTM Strategy.pdf', type: 'pdf', size: '2.4 MB', date: '2024-12-01' },
+    { id: '2', name: 'Competitor Analysis.xlsx', type: 'xlsx', size: '1.1 MB', date: '2024-11-28' },
+  ]);
+  const [chatMessages, setChatMessages] = useState([...demoChatMessages.filter(m => m.sessionId === 'session-1')]);
+  const [newMessage, setNewMessage] = useState('');
 
   const customerId = user?.id || 'customer-demo';
   const customerCredits = demoCustomerCredits.find((c) => c.customerId === customerId) || demoCustomerCredits[0];
@@ -133,24 +140,69 @@ function CustomerPortalContent() {
     setNotificationPrefs({ ...notificationPrefs, [key]: value });
   };
 
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    const newMsg = {
+      id: `msg-${Date.now()}`,
+      sessionId: 'session-1',
+      senderId: customerId,
+      senderName: customerName,
+      senderRole: 'customer' as const,
+      content: newMessage,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      read: false,
+    };
+    setChatMessages([...chatMessages, newMsg]);
+    setNewMessage('');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200">
-      <div className="container mx-auto px-4 py-8">
-        <GlassPanel className="mb-8 border-slate-700">
-          <CardHeader className="flex flex-row items-center justify-between">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">
                 Welcome back, {customerName}!
-              </CardTitle>
-              <p className="text-slate-400 mt-1">Manage your GTM strategy, support tickets, and account settings</p>
+              </h1>
+              <p className="text-slate-400 text-sm">Manage your GTM strategy, support tickets, and account settings</p>
             </div>
             <div className="flex items-center gap-4">
-              <Bell className="h-6 w-6 text-slate-300 cursor-pointer hover:text-teal-400 transition-colors" />
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-xl text-slate-300 hover:text-teal-400 hover:bg-slate-800 transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
               <LogoutButton />
             </div>
-          </CardHeader>
-        </GlassPanel>
+          </div>
+        </div>
+      </div>
 
+      {/* Notification Dropdown */}
+      {showNotifications && (
+        <div className="absolute top-20 right-4 z-50 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl">
+          <div className="p-4 border-b border-slate-700">
+            <h3 className="font-semibold text-slate-200">Notifications</h3>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <p className="text-sm text-slate-200">New GTM report available</p>
+              <p className="text-xs text-slate-400">2 minutes ago</p>
+            </div>
+            <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <p className="text-sm text-slate-200">Your ticket #123 has been updated</p>
+              <p className="text-xs text-slate-400">1 hour ago</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap gap-2 mb-8 border-b border-slate-800 pb-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -747,38 +799,39 @@ function CustomerPortalContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="max-h-96 overflow-y-auto space-y-4">
-                    {demoChatMessages
-                      .filter(m => m.sessionId === 'session-1')
-                      .map((message) => (
+                    {chatMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          'flex flex-col max-w-[80%]',
+                          message.senderRole === 'customer' ? 'ml-auto items-end' : 'mr-auto items-start'
+                        )}
+                      >
                         <div
-                          key={message.id}
                           className={cn(
-                            'flex flex-col max-w-[80%]',
-                            message.senderRole === 'customer' ? 'ml-auto items-end' : 'mr-auto items-start'
+                            'px-4 py-3 rounded-2xl',
+                            message.senderRole === 'customer'
+                              ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white'
+                              : 'bg-slate-800 text-slate-200 border border-slate-700'
                           )}
                         >
-                          <div
-                            className={cn(
-                              'px-4 py-3 rounded-2xl',
-                              message.senderRole === 'customer'
-                                ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white'
-                                : 'bg-slate-800 text-slate-200 border border-slate-700'
-                            )}
-                          >
-                            <p>{message.content}</p>
-                          </div>
-                          <span className="text-xs text-slate-500 mt-1">
-                            {new Date(message.timestamp).toLocaleTimeString()}
-                          </span>
+                          <p>{message.content}</p>
                         </div>
-                      ))}
+                        <span className="text-xs text-slate-500 mt-1">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                   <div className="flex gap-2 mt-4">
                     <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                       placeholder="Type your message..."
                       className="bg-slate-800 border-slate-700 text-slate-200"
                     />
-                    <ExtrudedButton className="bg-gradient-to-r from-teal-600 to-cyan-600">
+                    <ExtrudedButton onClick={handleSendMessage} className="bg-gradient-to-r from-teal-600 to-cyan-600">
                       <MessageSquare className="h-4 w-4" />
                     </ExtrudedButton>
                   </div>
@@ -790,17 +843,38 @@ function CustomerPortalContent() {
           {activeTab === 'documents' && (
             <div className="space-y-8">
               <GlassPanel tilt={false} className="border-slate-700">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-2xl font-bold text-slate-100">Your Documents</CardTitle>
+                  <ExtrudedButton className="bg-gradient-to-r from-purple-600 to-pink-600">
+                    <Upload className="h-4 w-4 mr-2" /> Upload Documents
+                  </ExtrudedButton>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-slate-400">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No documents uploaded yet</p>
-                    <ExtrudedButton className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600">
-                      <Upload className="h-4 w-4 mr-2" /> Upload Documents
-                    </ExtrudedButton>
-                  </div>
+                <CardContent className="space-y-4">
+                  {documents.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No documents uploaded yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-slate-700/50 rounded-lg">
+                              <FileText className="h-5 w-5 text-slate-300" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-200">{doc.name}</p>
+                              <p className="text-xs text-slate-400">{doc.size} • {doc.date}</p>
+                            </div>
+                          </div>
+                          <ExtrudedButton variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-1" /> Download
+                          </ExtrudedButton>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </GlassPanel>
             </div>

@@ -251,6 +251,8 @@ function AgentPortalContent() {
     );
   }
 
+  const selectedLead = leads.find((l) => l.id === selectedLeadId);
+
   return (
     <div className="min-h-screen bg-slate-950 text-white relative">
       {/* Notification Toast */}
@@ -289,43 +291,52 @@ function AgentPortalContent() {
         </div>
       )}
 
-      <div className="container mx-auto px-6 py-8 space-y-8">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold text-slate-100 tracking-tight">
-              Agent Workspace
-            </h1>
-            <p className="text-slate-400 mt-2 text-lg">
-              Welcome back, <span className="text-teal-400 font-semibold">{currentAgentName}</span>!
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Quick Stats */}
-            <div className="bg-slate-800 border border-slate-700 px-5 py-3 rounded-xl flex items-center gap-6">
-              <div className="text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-wider">Tasks</p>
-                <p className="text-2xl font-bold text-teal-400">{agentTasks.length}</p>
-              </div>
-              <div className="h-10 w-px bg-slate-700" />
-              <div className="text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-wider">Rating</p>
-                <p className="text-2xl font-bold text-amber-400">
-                  {agentMetrics?.averageRating.toFixed(1) || "0"}
-                </p>
-              </div>
-              {agentCredits && (
-                <>
-                  <div className="h-10 w-px bg-slate-700" />
-                  <div className="text-center">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">Credits</p>
-                    <p className="text-2xl font-bold text-violet-400">{agentCredits.balance}</p>
-                  </div>
-                </>
-              )}
+      {/* Agent Portal Header */}
+      <div className="sticky top-0 z-40 bg-gradient-to-b from-slate-950 to-slate-950/90 backdrop-blur-xl border-b border-slate-800">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500/20 to-cyan-500/10 flex items-center justify-center border border-teal-500/20">
+                  <Users className="h-5 w-5 text-teal-400" />
+                </div>
+                Agent Workspace
+              </h1>
+              <p className="text-slate-400 mt-1 text-sm">
+                Welcome back, <span className="text-teal-400 font-semibold">{currentAgentName}</span>!
+              </p>
             </div>
-            <LogoutButton />
+            <div className="flex items-center gap-4">
+              {/* Quick Stats */}
+              <div className="bg-slate-800/50 border border-slate-700/50 px-5 py-3 rounded-2xl flex items-center gap-5 shadow-xl">
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest">Tasks</p>
+                  <p className="text-xl font-bold text-teal-400">{agentTasks.length}</p>
+                </div>
+                <div className="h-8 w-px bg-slate-700" />
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest">Rating</p>
+                  <p className="text-xl font-bold text-amber-400">
+                    {agentMetrics?.averageRating.toFixed(1) || "0"}
+                  </p>
+                </div>
+                {agentCredits && (
+                  <>
+                    <div className="h-8 w-px bg-slate-700" />
+                    <div className="text-center">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">Credits</p>
+                      <p className="text-xl font-bold text-violet-400">{agentCredits.balance}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <LogoutButton />
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8 space-y-8">
 
         {/* Tab Navigation */}
         <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl flex flex-wrap gap-2">
@@ -459,69 +470,130 @@ function AgentPortalContent() {
                             </p>
                           </div>
 
-                          {/* Dynamic GTM Blueprint Section */}
+                          {/* Assigned Requirements Section */}
                           {(() => {
                             try {
                               const blueprint = generateICPDocument(lead as any);
                               return (
-                                <div className="border-t border-slate-800 pt-6 space-y-4">
+                                <div className="border-t border-slate-800 pt-6 space-y-6">
                                   <h4 className="text-md font-semibold text-teal-400 flex items-center gap-2">
-                                    <Zap className="h-5 w-5 text-teal-400 animate-pulse" />
-                                    Dynamic GTM Blueprint (Technical Integration)
+                                    <FileText className="h-5 w-5 text-teal-400" />
+                                    Assigned Requirements
                                   </h4>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Memory OS (Hermes) Alignment</p>
-                                      <p className="text-xs text-slate-300 leading-relaxed">
-                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Memory OS (Hermes) Alignment"] || "Aligning memory parameters..."}
-                                      </p>
-                                    </div>
-                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Agent Security (Clawpatrol) Alignment</p>
-                                      <p className="text-xs text-slate-300 leading-relaxed">
-                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Agent Security Firewall (Clawpatrol) Alignment"] || "Applying compliance firewalls..."}
-                                      </p>
-                                    </div>
-                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Multi-Agent Framework Alignment</p>
-                                      <p className="text-xs text-slate-300 leading-relaxed">
-                                        {blueprint["Technical Product Value Proposition Alignment"]?.["Multi-Agent Framework Alignment"] || "Orchestrating agent collaboration..."}
-                                      </p>
-                                    </div>
-                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">TAM & Competitor Estimates</p>
-                                      <p className="text-xs text-slate-300 leading-relaxed">
-                                        <strong>TAM 2026:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["TAM 2026 Consensus"]}<br/>
-                                        <strong>CAGR:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Consensus Growth CAGR"]}<br/>
-                                        <strong>Competitors:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Competitor Market Shares"]}
-                                      </p>
+
+                                  {/* Customer Profile Summary */}
+                                  <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80 space-y-3">
+                                    <h5 className="text-sm font-semibold text-slate-200">Customer Profile Summary</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div>
+                                        <p className="text-xs text-slate-500">Company Name</p>
+                                        <p className="text-sm text-slate-200 font-medium">{blueprint["Assigned Requirements"]["Customer Profile Summary"].companyName}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500">Website</p>
+                                        <a href={blueprint["Assigned Requirements"]["Customer Profile Summary"].websiteUrl} target="_blank" rel="noreferrer" className="text-sm text-teal-400 hover:underline">
+                                          {blueprint["Assigned Requirements"]["Customer Profile Summary"].websiteUrl}
+                                        </a>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500">Contact</p>
+                                        <p className="text-sm text-slate-200">{blueprint["Assigned Requirements"]["Customer Profile Summary"].contactName} ({blueprint["Assigned Requirements"]["Customer Profile Summary"].contactEmail})</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500">Primary Challenge</p>
+                                        <p className="text-sm text-slate-200">{blueprint["Assigned Requirements"]["Customer Profile Summary"].primaryChallenge}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500">Target Industries</p>
+                                        <p className="text-sm text-slate-200">{blueprint["Assigned Requirements"]["Customer Profile Summary"].targetIndustries.join(", ")}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500">Current Tools</p>
+                                        <p className="text-sm text-slate-200">{blueprint["Assigned Requirements"]["Customer Profile Summary"].currentTools.join(", ")}</p>
+                                      </div>
                                     </div>
                                   </div>
-                                  <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Consensus Validation Log</p>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                                      <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase">Status:</span>
-                                        <span className="text-green-400 font-semibold">{blueprint["Consensus Validation Log"]?.["Verification Status"]}</span>
+
+                                  {/* Technical Execution Playbook */}
+                                  <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80 space-y-4">
+                                    <h5 className="text-sm font-semibold text-slate-200">Technical Execution Playbook</h5>
+                                    {Object.entries(blueprint["Assigned Requirements"]["Technical Execution Playbook"]).map(([phase, steps]) => (
+                                      <div key={phase} className="space-y-2">
+                                        <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">{phase}</p>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {steps.map((step, i) => (
+                                            <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                                              <div className="mt-1 h-4 w-4 rounded-full border border-teal-500/50 flex items-center justify-center">
+                                                <div className="h-2 w-2 rounded-full bg-teal-500" />
+                                              </div>
+                                              <p>{step}</p>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
-                                      <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase">CoV Check:</span>
-                                        <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Coefficient of Variation Check"]}</span>
+                                    ))}
+                                  </div>
+
+                                  {/* Dynamic GTM Blueprint (Technical Integration) */}
+                                  <div className="space-y-4">
+                                    <h5 className="text-md font-semibold text-teal-400 flex items-center gap-2">
+                                      <Zap className="h-5 w-5 text-teal-400 animate-pulse" />
+                                      Dynamic GTM Blueprint (Technical Integration)
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Memory OS (Hermes) Alignment</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">
+                                          {blueprint["Technical Product Value Proposition Alignment"]?.["Memory OS (Hermes) Alignment"] || "Aligning memory parameters..."}
+                                        </p>
                                       </div>
-                                      <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase">MoE Check:</span>
-                                        <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Margin of Error (95%) Check"]}</span>
+                                      <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Agent Security (Clawpatrol) Alignment</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">
+                                          {blueprint["Technical Product Value Proposition Alignment"]?.["Agent Security Firewall (Clawpatrol) Alignment"] || "Applying compliance firewalls..."}
+                                        </p>
                                       </div>
-                                      <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase">Audit Stamp:</span>
-                                        <span className="text-slate-300 font-mono text-[10px]">{blueprint["Consensus Validation Log"]?.["Audit Integrity Stamp"]}</span>
+                                      <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Multi-Agent Framework Alignment</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">
+                                          {blueprint["Technical Product Value Proposition Alignment"]?.["Multi-Agent Framework Alignment"] || "Orchestrating agent collaboration..."}
+                                        </p>
+                                      </div>
+                                      <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">TAM & Competitor Estimates</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">
+                                          <strong>TAM 2026:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["TAM 2026 Consensus"]}<br/>
+                                          <strong>CAGR:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Consensus Growth CAGR"]}<br/>
+                                          <strong>Competitors:</strong> {blueprint["Market Sizing & Competitor Estimates"]?.["Competitor Market Shares"]}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Consensus Validation Log</p>
+                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                        <div>
+                                          <span className="text-slate-500 block text-[10px] uppercase">Status:</span>
+                                          <span className="text-green-400 font-semibold">{blueprint["Consensus Validation Log"]?.["Verification Status"]}</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-slate-500 block text-[10px] uppercase">CoV Check:</span>
+                                          <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Coefficient of Variation Check"]}</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-slate-500 block text-[10px] uppercase">MoE Check:</span>
+                                          <span className="text-slate-300">{blueprint["Consensus Validation Log"]?.["Margin of Error (95%) Check"]}</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-slate-500 block text-[10px] uppercase">Audit Stamp:</span>
+                                          <span className="text-slate-300 font-mono text-[10px]">{blueprint["Consensus Validation Log"]?.["Audit Integrity Stamp"]}</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
                               );
                             } catch (e) {
-                              console.error("Failed to render dynamic GTM blueprint:", e);
+                              console.error("Failed to render assigned requirements:", e);
                               return null;
                             }
                           })()}
@@ -546,22 +618,152 @@ function AgentPortalContent() {
             <GlassPanel tilt={false} className="border-slate-700/50">
               <CardHeader className="border-b border-slate-800 pb-4 flex flex-row items-center justify-between flex-wrap gap-4">
                 <div>
-                  <CardTitle className="text-2xl text-slate-100 font-bold">ICP Playbook</CardTitle>
-                  <p className="text-slate-400 text-sm mt-1">Read the official DealFlow ICP Playbook guidelines</p>
+                  <CardTitle className="text-2xl text-slate-100 font-bold flex items-center gap-3">
+                    {selectedLead ? `${selectedLead.companyName} ICP Playbook` : "ICP Playbook"}
+                    {selectedLead && (
+                      <span className="text-xs font-semibold text-teal-400 border border-teal-500/30 bg-teal-500/15 px-2.5 py-1 rounded-full">
+                        Custom
+                      </span>
+                    )}
+                  </CardTitle>
+                  <p className="text-slate-400 text-sm mt-1">
+                    {selectedLead 
+                      ? `Dynamic ICP Playbook for ${selectedLead.companyName}` 
+                      : "Read the official DealFlow ICP Playbook guidelines"}
+                  </p>
                 </div>
-                <a
-                  href="/docs/DealFlow-ICP-Playbook-FINAL.pdf"
-                  download
-                  className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-teal-600/20"
-                >
-                  <Download className="h-4 w-4" />
-                  Download PDF
-                </a>
+                <div className="flex items-center gap-3">
+                  {selectedLead && (
+                    <ExtrudedButton
+                      className="bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold"
+                      onClick={() => {
+                        try {
+                          const content = generateICPDocument(selectedLead as any);
+                          const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${selectedLead.companyName.replace(/\s+/g, '-')}-icp-playbook.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } catch (e) {
+                          console.error('Failed to download:', e);
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Playbook
+                    </ExtrudedButton>
+                  )}
+                  <a
+                    href="/docs/DealFlow-ICP-Playbook-FINAL.pdf"
+                    download
+                    className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </a>
+                </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="prose prose-invert max-w-none bg-slate-950/50 border border-slate-800/80 p-6 md:p-8 rounded-2xl max-h-[600px] overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-300">
-                  {playbookContent || "Loading playbook content..."}
-                </div>
+                {selectedLead ? (
+                  <div className="space-y-6">
+                    {/* Dynamic GTM Blueprint */}
+                    {(() => {
+                      try {
+                        const content = generateICPDocument(selectedLead as any);
+                        return (
+                          <div className="space-y-4">
+                            <div className="bg-gradient-to-br from-slate-900/70 to-slate-950/80 border border-slate-700/60 rounded-2xl p-6 space-y-5">
+                              <div className="flex items-center gap-2">
+                                <Zap className="h-5 w-5 text-teal-400 animate-pulse" />
+                                <h3 className="text-lg font-bold text-slate-100">Dynamic ICP & GTM Blueprint</h3>
+                              </div>
+                              
+                              {/* Technical Alignment */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Memory OS (Hermes)</h4>
+                                  <p className="text-sm text-slate-300 leading-relaxed">
+                                    {content["Technical Product Value Proposition Alignment"]?.["Memory OS (Hermes) Alignment"] || "Aligning memory parameters..."}
+                                  </p>
+                                </div>
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Agent Security</h4>
+                                  <p className="text-sm text-slate-300 leading-relaxed">
+                                    {content["Technical Product Value Proposition Alignment"]?.["Agent Security Firewall (Clawpatrol) Alignment"] || "Applying compliance firewalls..."}
+                                  </p>
+                                </div>
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Multi-Agent Framework</h4>
+                                  <p className="text-sm text-slate-300 leading-relaxed">
+                                    {content["Technical Product Value Proposition Alignment"]?.["Multi-Agent Framework Alignment"] || "Orchestrating agent collaboration..."}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Market Analysis */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">TAM Estimates</h4>
+                                  <p className="text-sm text-slate-300">
+                                    <strong>TAM 2026:</strong> {content["Market Sizing & Competitor Estimates"]?.["TAM 2026 Consensus"] || "Calculating..."}<br/>
+                                    <strong>CAGR:</strong> {content["Market Sizing & Competitor Estimates"]?.["Consensus Growth CAGR"] || "Analyzing..."}<br/>
+                                    <strong>Competitors:</strong> {content["Market Sizing & Competitor Estimates"]?.["Competitor Market Shares"] || "Identifying..."}
+                                  </p>
+                                </div>
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Consensus Validation</h4>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <span className="text-slate-500 block text-[10px] uppercase">Status</span>
+                                      <span className="text-green-400 font-semibold">{content["Consensus Validation Log"]?.["Verification Status"] || "Pending"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500 block text-[10px] uppercase">CoV Check</span>
+                                      <span className="text-slate-300">{content["Consensus Validation Log"]?.["Coefficient of Variation Check"] || "N/A"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500 block text-[10px] uppercase">MoE Check</span>
+                                      <span className="text-slate-300">{content["Consensus Validation Log"]?.["Margin of Error (95%) Check"] || "N/A"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500 block text-[10px] uppercase">Audit Stamp</span>
+                                      <span className="text-slate-300 font-mono text-[10px]">{content["Consensus Validation Log"]?.["Audit Integrity Stamp"] || "Pending"}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Company Info */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              <div className="bg-slate-900/40 border border-slate-700/60 rounded-2xl p-5 space-y-3">
+                                <h4 className="text-md font-semibold text-teal-400">Company Overview</h4>
+                                <p className="text-sm text-slate-200"><strong>Offer:</strong> {selectedLead.offerPromise || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Pain Point:</strong> {selectedLead.painPoint || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Website:</strong> {selectedLead.websiteUrl || selectedLead.website || "Not provided"}</p>
+                              </div>
+                              <div className="bg-slate-900/40 border border-slate-700/60 rounded-2xl p-5 space-y-3">
+                                <h4 className="text-md font-semibold text-teal-400">Target Profile</h4>
+                                <p className="text-sm text-slate-200"><strong>Industries:</strong> {Array.isArray(selectedLead.targetIndustries) ? selectedLead.targetIndustries.join(", ") : selectedLead.targetIndustries || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Company Sizes:</strong> {Array.isArray(selectedLead.targetCompanySizes) ? selectedLead.targetCompanySizes.join(", ") : selectedLead.targetCompanySizes || "Not specified"}</p>
+                                <p className="text-sm text-slate-200"><strong>Decision Makers:</strong> {Array.isArray(selectedLead.decisionMakers) ? selectedLead.decisionMakers.join(", ") : selectedLead.decisionMakers || "Not specified"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } catch (e) {
+                        console.error(e);
+                        return <div className="text-slate-400">Failed to generate dynamic playbook</div>;
+                      }
+                    })()}
+                  </div>
+                ) : (
+                  <div className="prose prose-invert max-w-none bg-slate-950/50 border border-slate-800/80 p-6 md:p-8 rounded-2xl max-h-[600px] overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-300">
+                    {playbookContent || "Select a company from the Requirements tab to view their custom ICP Playbook, or view the general guidelines below."}
+                  </div>
+                )}
               </CardContent>
             </GlassPanel>
           )}

@@ -14,6 +14,26 @@ export interface ICPDocumentData {
     "Context Loss & Hallucinations": string;
     "Security & Jailbreak Vulnerabilities": string;
   };
+  "Assigned Requirements": {
+    "Customer Profile Summary": {
+      companyName: string;
+      websiteUrl: string;
+      contactName: string;
+      contactEmail: string;
+      targetIndustries: string[];
+      targetCompanySizes: string[];
+      targetRevenues: string[];
+      currentTools: string[];
+      primaryChallenge: string;
+    };
+    "Technical Execution Playbook": {
+      "Phase 1: Integration & Onboarding": string[];
+      "Phase 2: Memory OS Configuration": string[];
+      "Phase 3: Security Firewall Deployment": string[];
+      "Phase 4: Multi-Agent Pipeline Activation": string[];
+      "Phase 5: Validation & Go-Live": string[];
+    };
+  };
   "Technical Product Value Proposition Alignment": {
     "Memory OS (Hermes) Alignment": string;
     "Agent Security Firewall (Clawpatrol) Alignment": string;
@@ -74,6 +94,52 @@ export function generateICPDocument(formData: IntakeFormData): ICPDocumentData {
       "Security & Jailbreak Vulnerabilities": `Unprotected LLMs are highly susceptible to malicious prompt injection scripts (jailbreaks) and random leakages of PII (emails, card numbers, phone credentials).`,
     },
 
+    "Assigned Requirements": {
+      "Customer Profile Summary": {
+        companyName: companyName,
+        websiteUrl: formData.websiteUrl || formData.website || "https://example.com",
+        contactName: formData.contactName || "John Doe",
+        contactEmail: formData.contactEmail || "contact@example.com",
+        targetIndustries: industries,
+        targetCompanySizes: companySizes,
+        targetRevenues: formData.targetRevenues || ["$10M - $50M"],
+        currentTools: formData.currentTools || crms.concat(outreach),
+        primaryChallenge: formData.challenges?.[0] || "Scaling outbound without manual overhead"
+      },
+      "Technical Execution Playbook": {
+        "Phase 1: Integration & Onboarding": [
+          "1.1: Establish secure OAuth 2.0 connection with customer CRM systems (Salesforce/HubSpot)",
+          "1.2: Import historical lead data and outreach sequences into platform",
+          "1.3: Configure admin roles and permission levels (Agent, Admin, Customer)",
+          "1.4: Run initial platform health check and security scan"
+        ],
+        "Phase 2: Memory OS Configuration": [
+          "2.1: Define 4-tier memory architecture: Working Memory (60s), Short-Term (24h), Long-Term (90d), Archival (1y+)",
+          "2.2: Enable AES-256 encryption for all stored PII and lead data",
+          "2.3: Configure LRU caching with 100ms SLA for lead property retrieval",
+          "2.4: Set up automated memory archival policies and backup routines"
+        ],
+        "Phase 3: Security Firewall Deployment": [
+          "3.1: Activate Clawpatrol prompt injection detection (15+ attack vectors)",
+          "3.2: Configure PII redaction rules for outbound communications (email, SMS, voice)",
+          "3.3: Enable behavior anomaly monitoring for both inbound and outbound prompts",
+          "3.4: Perform initial security audit and penetration test"
+        ],
+        "Phase 4: Multi-Agent Pipeline Activation": [
+          "4.1: Deploy Research Agent pool for website scraping and enrichment",
+          "4.2: Configure Analysis Agent to calculate GTM fit scores",
+          "4.3: Activate Fact-Checking Agent to validate prospect claims",
+          "4.4: Set up Synthesis Agent to compile final reports and recommendations"
+        ],
+        "Phase 5: Validation & Go-Live": [
+          "5.1: Run pilot sequence with 10% of lead volume",
+          "5.2: Validate conversion metrics and pipeline velocity improvements",
+          "5.3: Conduct full SOC2 compliance review",
+          "5.4: Schedule go-live date and train customer team"
+        ]
+      }
+    },
+
     "Technical Product Value Proposition Alignment": {
       "Memory OS (Hermes) Alignment": `Hermes Memory OS provides a 4-tier memory architecture (working, short-term, long-term, archival) backed by AES-256 block encryption and LRU caching. Leads with custom properties (such as ${crms.join("/")} and ${outreach.join("/")} configurations) are retrieved in under 100ms, eliminating context loss during automated sales interactions.`,
       "Agent Security Firewall (Clawpatrol) Alignment": `Clawpatrol inspects all inbound prompts to block 15+ injection styles and checks behavior anomalies. On outbound queries, Clawpatrol dynamically redacts phone numbers, emails, and base64 hashes, guaranteeing full compliance during outbound calls.`,
@@ -124,23 +190,43 @@ export function formatICPDocument(documentData: ICPDocumentData): string {
   output += `- **Context Loss & Hallucinations**: ${documentData["Key Pain Point Mapping"]["Context Loss & Hallucinations"]}\n`;
   output += `- **Security & Jailbreak Vulnerabilities**: ${documentData["Key Pain Point Mapping"]["Security & Jailbreak Vulnerabilities"]}\n\n`;
 
-  output += `## 4. Technical Product Value Proposition Alignment\n`;
+  output += `## 4. Assigned Requirements\n`;
+  output += `### 4.1 Customer Profile Summary\n`;
+  output += `- **Company Name**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].companyName}\n`;
+  output += `- **Website**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].websiteUrl}\n`;
+  output += `- **Contact**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].contactName} (${documentData["Assigned Requirements"]["Customer Profile Summary"].contactEmail})\n`;
+  output += `- **Target Industries**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].targetIndustries.join(", ")}\n`;
+  output += `- **Target Company Sizes**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].targetCompanySizes.join(", ")}\n`;
+  output += `- **Target Revenues**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].targetRevenues.join(", ")}\n`;
+  output += `- **Current Tools**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].currentTools.join(", ")}\n`;
+  output += `- **Primary Challenge**: ${documentData["Assigned Requirements"]["Customer Profile Summary"].primaryChallenge}\n\n`;
+
+  output += `### 4.2 Technical Execution Playbook\n`;
+  Object.entries(documentData["Assigned Requirements"]["Technical Execution Playbook"]).forEach(([phase, steps]) => {
+    output += `#### ${phase}\n`;
+    steps.forEach(step => {
+      output += `- ${step}\n`;
+    });
+    output += `\n`;
+  });
+
+  output += `## 5. Technical Product Value Proposition Alignment\n`;
   output += `- **Memory OS (Hermes)**: ${documentData["Technical Product Value Proposition Alignment"]["Memory OS (Hermes) Alignment"]}\n`;
   output += `- **Agent Security Firewall (Clawpatrol)**: ${documentData["Technical Product Value Proposition Alignment"]["Agent Security Firewall (Clawpatrol) Alignment"]}\n`;
   output += `- **Multi-Agent Framework**: ${documentData["Technical Product Value Proposition Alignment"]["Multi-Agent Framework Alignment"]}\n\n`;
 
-  output += `## 5. Use Case Prioritization Grid\n`;
+  output += `## 6. Use Case Prioritization Grid\n`;
   output += `- **Priority 1: Live Voice Calls**: ${documentData["Use Case Prioritization Grid"]["Priority 1: Live Voice Call Conduits"]}\n`;
   output += `- **Priority 2: Automated Scraping**: ${documentData["Use Case Prioritization Grid"]["Priority 2: Automated Lead Site Scraping"]}\n`;
   output += `- **Priority 3: Multi-Agent Synthesis**: ${documentData["Use Case Prioritization Grid"]["Priority 3: Multi-Agent Consensus Syntheses"]}\n`;
   output += `- **Priority 4: Voice Confirmations**: ${documentData["Use Case Prioritization Grid"]["Priority 4: Compliance-Checked Confirmations"]}\n\n`;
 
-  output += `## 6. Market Sizing & Competitor Estimates\n`;
+  output += `## 7. Market Sizing & Competitor Estimates\n`;
   output += `- **Consensus TAM 2026**: ${documentData["Market Sizing & Competitor Estimates"]["TAM 2026 Consensus"]}\n`;
   output += `- **Growth CAGR**: ${documentData["Market Sizing & Competitor Estimates"]["Consensus Growth CAGR"]}\n`;
   output += `- **Competitor Landscape**: ${documentData["Market Sizing & Competitor Estimates"]["Competitor Market Shares"]}\n\n`;
 
-  output += `## 7. Consensus Validation Log\n`;
+  output += `## 8. Consensus Validation Log\n`;
   output += `- **Verification Status**: ${documentData["Consensus Validation Log"]["Verification Status"]}\n`;
   output += `- **Coefficient of Variation**: ${documentData["Consensus Validation Log"]["Coefficient of Variation Check"]}\n`;
   output += `- **Margin of Error (95% CI)**: ${documentData["Consensus Validation Log"]["Margin of Error (95%) Check"]}\n`;

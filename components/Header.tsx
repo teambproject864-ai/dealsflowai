@@ -300,7 +300,7 @@ export function Header() {
   }, [pathname]);
 
   const headerClasses = isScrolled
-    ? "sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-b from-[#060612]/95 to-[#050510]/92 df-glass backdrop-blur-3xl !overflow-visible"
+    ? "sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-b from-[#060612]/95 to-[#050510]/92 df-glass backdrop-blur-3xl !overflow-visible shadow-xl shadow-black/20"
     : "sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl !overflow-visible";
 
   return (
@@ -313,26 +313,26 @@ export function Header() {
         Skip to main content
       </a>
       <div
-        className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-5 transition-all duration-500 ${
-          isScrolled ? "h-16" : "h-18"
+        className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 sm:gap-5 transition-all duration-500 ${
+          isScrolled ? "h-16" : "h-20"
         }`}
       >
         {/* Left Side: Logo & Main Navigation Links */}
-        <div className="flex items-center gap-7 xl:gap-9 flex-shrink-0">
+        <div className="flex items-center gap-5 md:gap-7 xl:gap-9 flex-shrink-0">
           <Link
             href="/"
             className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl"
             aria-label="Go to DealFlow.AI homepage"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-cyan-500/15 to-teal-400/10 backdrop-blur-md border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.2)] transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_35px_rgba(20,184,166,0.35)]">
-              <IconDealflowLogo className="h-6.5 w-6.5" aria-hidden />
+            <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-cyan-500/15 to-teal-400/10 backdrop-blur-md border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.2)] transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_35px_rgba(20,184,166,0.35)] group-active:scale-95">
+              <IconDealflowLogo className="h-5.5 sm:h-6.5 w-5.5 sm:w-6.5" aria-hidden />
             </div>
-            <span className="font-display text-xl font-bold tracking-tight text-white hidden sm:inline-block">
+            <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white hidden sm:inline-block">
               DealFlow<span className="text-teal-300">.AI</span>
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-2" aria-label="Main navigation">
+          <nav className="hidden md:flex lg:flex items-center gap-1.5 md:gap-2" aria-label="Main navigation">
             {navLinks.map((link) => {
               if (link.subOptions) {
                 return (
@@ -353,9 +353,9 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-4.5 py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
+                  className={`relative px-3 sm:px-4.5 py-2.5 sm:py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
                     isActive
-                      ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20"
+                      ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20 shadow-md shadow-teal-500/10"
                       : "text-slate-400 hover:text-teal-300 hover:bg-white/8 border border-transparent hover:border-white/15"
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50`}
                   aria-current={isActive ? "page" : undefined}
@@ -374,7 +374,7 @@ export function Header() {
         </div>
 
         {/* Right Side: Quick Access Icons, Actions, Profile */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
           {/* Notifications Center (Tablet & Desktop) */}
           <div className="hidden sm:block">
             <NotificationCenter />
@@ -388,19 +388,20 @@ export function Header() {
             <AccountMenu />
           </div>
 
-          {/* Action CTAs (Desktop Only) */}
-          <div className="hidden xl:flex items-center gap-3 pl-3 border-l border-white/10">
+          {/* Action CTAs (Tablet & Desktop) */}
+          <div className="hidden md:flex items-center gap-2 md:gap-3 pl-0 md:pl-3 md:border-l md:border-white/10">
             <ExtrudedButton
               variant="outline"
-              className="border-teal-500/30 bg-gradient-to-r from-teal-500/15 to-cyan-500/10 hover:from-teal-500/25 hover:to-cyan-500/20 text-teal-300 font-semibold px-5 py-2.5 h-10 flex items-center gap-2.5 shadow-[0_0_20px_rgba(20,184,166,0.15)] text-xs rounded-2xl"
+              className="border-teal-500/30 bg-gradient-to-r from-teal-500/15 to-cyan-500/10 hover:from-teal-500/25 hover:to-cyan-500/20 text-teal-300 font-semibold px-3 md:px-5 py-2 h-9 md:h-10 flex items-center gap-2 md:gap-2.5 shadow-[0_0_20px_rgba(20,184,166,0.15)] text-xs rounded-2xl"
               onClick={handleBookMeeting}
             >
-              <Calendar className="h-4.5 w-4.5" />
-              Book Meeting
+              <Calendar className="h-4 w-4 md:h-4.5 md:w-4.5" />
+              <span className="hidden md:inline">Book Meeting</span>
+              <span className="md:hidden">Book</span>
             </ExtrudedButton>
 
             <ExtrudedButton
-              className="bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-semibold px-6 py-2.5 h-10 shadow-xl shadow-teal-600/35 transition-all duration-300 hover:shadow-teal-500/50 text-xs rounded-2xl"
+              className="bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 h-9 md:h-10 shadow-xl shadow-teal-600/35 transition-all duration-300 hover:shadow-teal-500/50 text-xs rounded-2xl"
               onClick={handleGetStarted}
             >
               Get Started
@@ -410,12 +411,12 @@ export function Header() {
           {/* Mobile hamburger triggers full command drawer */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="lg:hidden p-3 rounded-2xl border border-white/15 bg-white/6 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+            className="md:hidden p-2.5 rounded-2xl border border-white/15 bg-white/6 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
             aria-label="Open main menu"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-drawer"
           >
-            <Menu className="h-5.5 w-5.5" />
+            <Menu className="h-5 w-5" />
           </button>
         </div>
       </div>
