@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   Zap,
@@ -48,130 +48,247 @@ const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0 }: { 
 // ─── Holographic GTM Interactive Component ───────────────────────────────────
 const HolographicGTM = React.memo(function HolographicGTM() {
   const [activeSection, setActiveSection] = useState<number>(0);
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  
   const sections = [
     {
       title: "ICP Definition",
-      description: "Identify your ideal customer profile with precision targeting parameters",
+      description: "Precision targeting filters",
       icon: Target,
-      color: "text-violet-400",
+      color: "text-teal-400",
+      glowColor: "rgba(20, 184, 166, 0.4)",
     },
     {
       title: "Pipeline Analysis",
-      description: "Deep dive into your sales funnel with real-time metrics and trends",
+      description: "Funnel drop-off triage",
       icon: TrendingUp,
-      color: "text-violet-400",
+      color: "text-cyan-400",
+      glowColor: "rgba(6, 182, 212, 0.4)",
     },
     {
       title: "Agent Assignment",
-      description: "Orchestrate specialized AI agents with defined roles and permissions",
+      description: "Specialized AI roles",
       icon: Cpu,
       color: "text-violet-400",
+      glowColor: "rgba(124, 58, 237, 0.4)",
     },
     {
       title: "Execution Engine",
-      description: "Deploy autonomous workflows for outreach, follow-ups, and qualification",
+      description: "Autonomous workflows",
       icon: Zap,
-      color: "text-violet-400",
+      color: "text-amber-400",
+      glowColor: "rgba(245, 158, 11, 0.4)",
     },
   ];
 
-  return (
-    <div className="relative group">
-      <div className="absolute inset-0 rounded-3xl border border-violet-500/20 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.05),transparent)]" />
-      <div className="absolute inset-1 rounded-[22px] border border-slate-200/5 dark:border-white/5" />
+  // Console simulation for Execution Engine tab
+  useEffect(() => {
+    if (activeSection !== 3) return;
+    const phrases = [
+      "→ Initializing outbound workflow...",
+      "✔ Matched lead: Acme Corp (98% ICP Fit)",
+      "→ Dispatching Agent Persona: Praneeth Assist",
+      "→ Drafted hyper-personalized email payload",
+      "✔ Sequence updated: Email 1 sent successfully",
+      "→ Syncing lead context with Salesforce CRM...",
+      "✔ Salesforce opportunity created (ID: 0068V000)",
+      "→ Analyzing response sentiment... Positive",
+      "→ Initiating voice confirmation call scheduler",
+    ];
+    let idx = 0;
+    setConsoleLogs([phrases[0]]);
+    const interval = setInterval(() => {
+      idx = (idx + 1) % phrases.length;
+      setConsoleLogs((prev) => [...prev.slice(-4), phrases[idx]]);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [activeSection]);
 
-      {/* Animated scan lines */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+  const activeColor = sections[activeSection].color;
+  const activeGlow = sections[activeSection].glowColor;
+
+  return (
+    <div className="relative group rounded-3xl overflow-hidden df-glass border-white/10 shadow-2xl transition-all duration-500">
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-teal-500/5 pointer-events-none" />
+      <div className="df-specular" />
+
+      {/* Animated Scanline overlay */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          className="w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent"
-          animate={{ y: [0, 300] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="w-full h-0.5 bg-gradient-to-r from-transparent via-violet-500/10 to-transparent"
+          animate={{ y: [0, 480] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         />
       </div>
 
-      <div className="relative z-10 p-8">
-        <div className="mb-8 flex items-center justify-center">
-          <div className="relative w-48 h-48">
-            <motion.div
-              className="absolute inset-0 rounded-full border-2 border-violet-500/30"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-            />
-            <motion.div
-              className="absolute inset-4 rounded-full border border-violet-500/40"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 15, ease: "linear", repeat: Infinity }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Network className="w-16 h-16 text-violet-500 dark:text-violet-400 drop-shadow-[0_0_15px_rgba(108,59,255,0.6)]" />
-            </div>
+      <div className="relative z-10 p-6 sm:p-8 space-y-6">
+        {/* Top Header Row */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+            </span>
+            <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+              Control Panel v3.5
+            </span>
+          </div>
+          <div className="flex gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500/30 border border-red-500/50" />
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/30 border border-yellow-500/50" />
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500/30 border border-green-500/50" />
           </div>
         </div>
 
-        {/* Section navigation */}
+        {/* Dynamic Display Area */}
+        <div className="min-h-[220px] rounded-2xl bg-black/40 border border-white/5 p-5 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-violet-950/5 pointer-events-none" />
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="h-full flex flex-col justify-between flex-1 gap-4"
+            >
+              {/* Tab Content Header */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    {React.createElement(sections[activeSection].icon, { className: `w-4 h-4 ${activeColor}` })}
+                    {sections[activeSection].title} Readout
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{sections[activeSection].description}</p>
+                </div>
+                <div className={`px-2 py-0.5 rounded-md border text-[9px] font-mono bg-white/5 border-white/10 ${activeColor}`}>
+                  SYSTEM ACTIVE
+                </div>
+              </div>
+
+              {/* Graphical Visualizations based on Selected Tab */}
+              <div className="flex-grow flex items-center justify-center min-h-[110px]">
+                {/* 1. ICP Definition Visual */}
+                {activeSection === 0 && (
+                  <div className="w-full grid grid-cols-3 gap-2.5">
+                    <div className="p-3 rounded-xl border border-teal-500/20 bg-teal-500/5 text-center">
+                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Fit Score</span>
+                      <span className="text-lg font-mono font-bold text-teal-400">98.4%</span>
+                    </div>
+                    <div className="p-3 rounded-xl border border-white/5 bg-white/5 text-center">
+                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Geography</span>
+                      <span className="text-[11px] font-mono font-bold text-white">US / EMEA</span>
+                    </div>
+                    <div className="p-3 rounded-xl border border-white/5 bg-white/5 text-center">
+                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Industry</span>
+                      <span className="text-[11px] font-mono font-bold text-white">B2B SaaS</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Pipeline Analysis Visual (Line Chart) */}
+                {activeSection === 1 && (
+                  <div className="w-full h-24 relative flex items-end">
+                    <svg className="w-full h-full" viewBox="0 0 200 80">
+                      {/* Grid Lines */}
+                      <line x1="0" y1="20" x2="200" y2="20" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
+                      <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
+                      
+                      {/* Gradient for fill */}
+                      <defs>
+                        <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0 60 Q 30 50 60 35 T 120 45 T 180 15 L 200 10 L 200 80 L 0 80 Z" fill="url(#chart-glow)" />
+                      <path d="M 0 60 Q 30 50 60 35 T 120 45 T 180 15 L 200 10" fill="none" stroke="#00D4FF" strokeWidth="2.5" />
+                      
+                      {/* Glowing Points */}
+                      <circle cx="60" cy="35" r="3" fill="#ffffff" stroke="#00D4FF" strokeWidth="1.5" />
+                      <circle cx="120" cy="45" r="3" fill="#ffffff" stroke="#00D4FF" strokeWidth="1.5" />
+                      <circle cx="200" cy="10" r="3.5" fill="#ffffff" stroke="#00D4FF" strokeWidth="2" />
+                    </svg>
+                    <div className="absolute top-1 right-2 text-right">
+                      <span className="text-[9px] text-slate-400 block">Conversion Velocity</span>
+                      <span className="text-sm font-mono font-bold text-cyan-400">+34.8%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Agent Assignment Visual */}
+                {activeSection === 2 && (
+                  <div className="w-full space-y-2">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-3.5 h-3.5 text-violet-400" />
+                        <span className="text-[11px] font-medium text-white">Outbound Prep Agent</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-emerald-400 flex items-center gap-1 animate-pulse">
+                        ● ACTIVE
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-3.5 h-3.5 text-violet-400" />
+                        <span className="text-[11px] font-medium text-white">Triage Copilot</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-cyan-400 flex items-center gap-1">
+                        ● STANDBY
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Execution Engine Visual (Console logs) */}
+                {activeSection === 3 && (
+                  <div className="w-full font-mono text-[9px] text-amber-400 bg-[#0a0500]/60 p-2.5 rounded-lg border border-amber-500/10 space-y-1 overflow-hidden h-24">
+                    {consoleLogs.map((log, i) => (
+                      <div key={i} className="truncate select-none">
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Action Controls/Tabs Grid */}
         <div className="grid grid-cols-2 gap-3">
           {sections.map((section, i) => (
             <button
               key={i}
               onClick={() => setActiveSection(i)}
-              className={`group/btn relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 text-left ${
+              className={`group/btn relative flex items-start gap-3 p-3.5 rounded-2xl border transition-all duration-300 text-left ${
                 activeSection === i
-                  ? "border-violet-500/50 bg-violet-500/10"
+                  ? "border-violet-500/40 bg-violet-500/10"
                   : "border-slate-200/80 dark:border-white/8 bg-slate-50 dark:bg-white/3 hover:border-violet-500/15 hover:bg-slate-100 dark:hover:bg-white/5"
               }`}
+              style={{
+                boxShadow: activeSection === i ? `0 0 15px ${activeGlow}` : undefined,
+              }}
             >
               <section.icon
                 className={`w-5 h-5 mt-0.5 ${section.color} ${
                   activeSection === i ? "drop-shadow-[0_0_8px_currentColor]" : ""
                 }`}
               />
-              <div>
-                <div className="font-semibold text-slate-800 dark:text-white text-sm mb-1">{section.title}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{section.description}</div>
+              <div className="truncate">
+                <div className="font-semibold text-slate-800 dark:text-white text-xs mb-0.5">{section.title}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{section.description}</div>
               </div>
               {activeSection === i && (
                 <motion.div
                   layoutId="active-holo-indicator"
-                  className="absolute -right-2 -top-2 w-2 h-2 rounded-full bg-violet-400"
+                  className="absolute -right-1.5 -top-1.5 w-2.5 h-2.5 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa]"
                 />
               )}
             </button>
           ))}
         </div>
-
-        {/* Active section details */}
-        <motion.div
-          key={activeSection}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mt-6 pt-6 border-t border-slate-200 dark:border-white/5"
-        >
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <PlayCircle className="w-4 h-4 text-violet-500" />
-            <span>Live {sections[activeSection].title} Engine</span>
-          </div>
-          <div className="mt-3 h-20 bg-slate-100 dark:bg-black/20 rounded-lg border border-slate-200 dark:border-white/5 flex items-center justify-center overflow-hidden">
-            <motion.div
-              className="flex gap-2"
-              animate={{ x: [0, -150] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            >
-              {[
-                "Analyzing ICP fit",
-                "Scoring leads",
-                "Prioritizing outreach",
-                "Drafting follow-ups",
-                "Updating CRM",
-                "Consolidating memory",
-              ].map((text, i) => (
-                <span key={i} className="text-xs font-mono text-slate-600 dark:text-slate-400 px-3 py-1 rounded bg-violet-500/10 border border-violet-500/20">
-                  {text}
-                </span>
-              ))}
-            </motion.div>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
@@ -456,41 +573,105 @@ export default function HomePage() {
       </section>
 
       {/* ── WHY TEAMS CHOOSE DEALFLOW AI (OUTCOMES SECTION) ──────────────────────────────── */}
-      <section className="snap-section relative border-y border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] flex flex-col justify-center">
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-xl font-bold text-center text-slate-900 dark:text-white mb-10">
+      <section className="snap-section relative border-y border-slate-200 dark:border-white/5 bg-[#060612] flex flex-col justify-center py-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.03),transparent)] pointer-events-none" />
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-300 text-xs font-mono uppercase tracking-wider mb-4">
+              Value Delivery
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
               Why revenue leaders choose DealFlow AI
-            </h3>
-            <div className="grid md:grid-cols-2 gap-8 sm:gap-10">
-              {[
-                {
-                  title: "Eliminate CRM Drudgery",
-                  desc: "Agents update Salesforce and HubSpot automatically based on real meeting context and email threads, reclaiming 6+ hours per rep weekly.",
-                },
-                {
-                  title: "Resuscitate Stalled Pipeline",
-                  desc: "Get proactive alerts and autonomous re-engagement outreach sequences the moment a key decision maker goes quiet.",
-                },
-                {
-                  title: "Standardize Winning Playbooks",
-                  desc: "Instantly propagate your top rep's strategies to your entire fleet of agents for consistent, high-yield outbound and follow-up.",
-                },
-                {
-                  title: "Enterprise-Grade Security",
-                  desc: "Built on a secure firewall with persistent memory that keeps your proprietary deal data isolated, private, and SOC-2 compliant.",
-                },
-              ].map((item, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="h-7 w-7 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-white">{item.title}</h4>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mt-1">{item.desc}</p>
-                  </div>
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: CRM Drudgery (2 cols) */}
+            <div className="md:col-span-2 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent pointer-events-none" />
+              <div className="df-specular" />
+              <div>
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/15 text-teal-400 mb-4">
+                  <Database className="w-5 h-5" />
                 </div>
-              ))}
+                <h3 className="text-lg font-bold text-white mb-2">Eliminate CRM Drudgery</h3>
+                <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
+                  Agents update Salesforce and HubSpot automatically based on real meeting context and email threads, reclaiming 6+ hours per rep weekly.
+                </p>
+              </div>
+              <div className="mt-6 flex gap-3 items-center">
+                <span className="text-xs font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+                  ✓ Salesforce Synced
+                </span>
+                <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
+                  ✓ HubSpot Synced
+                </span>
+              </div>
+            </div>
+
+            {/* Card 2: Pipeline Alerts (1 col) */}
+            <div className="md:col-span-1 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent pointer-events-none" />
+              <div className="df-specular" />
+              <div>
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 mb-4">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Resuscitate Stalled Deals</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Get proactive alerts and autonomous re-engagement outreach sequences the moment a key decision maker goes quiet.
+                </p>
+              </div>
+              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                <span className="text-xs font-mono text-slate-400">Response Trigger:</span>
+                <span className="text-xs font-mono font-bold text-amber-400 animate-pulse">
+                  ● OUTREACH READY
+                </span>
+              </div>
+            </div>
+
+            {/* Card 3: Playbooks (1 col) */}
+            <div className="md:col-span-1 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent pointer-events-none" />
+              <div className="df-specular" />
+              <div>
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-violet-500/15 text-violet-400 mb-4">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Standardize Top Playbooks</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Instantly propagate your top rep&apos;s strategies to your entire fleet of agents for consistent, high-yield follow-up.
+                </p>
+              </div>
+              <div className="mt-6 border-t border-white/5 pt-4">
+                <span className="text-xs font-mono text-violet-400 bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full">
+                  Outbound Boost: +22%
+                </span>
+              </div>
+            </div>
+
+            {/* Card 4: Security (2 cols) */}
+            <div className="md:col-span-2 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
+              <div className="df-specular" />
+              <div>
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 mb-4">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Enterprise-Grade Security</h3>
+                <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
+                  Built on a secure firewall with persistent memory that keeps your proprietary deal data isolated, private, and SOC-2 compliant.
+                </p>
+              </div>
+              <div className="mt-6 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <span className="text-[10px] font-mono text-slate-400 border border-white/10 bg-white/5 px-2.5 py-1 rounded">SOC 2 Type II</span>
+                  <span className="text-[10px] font-mono text-slate-400 border border-white/10 bg-white/5 px-2.5 py-1 rounded">GDPR Compliant</span>
+                </div>
+                <span className="text-[10px] font-mono text-rose-400 flex items-center gap-1">
+                  🔒 End-to-End Encrypted
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -619,21 +800,57 @@ export default function HomePage() {
 
           <div className="space-y-4 max-w-6xl mx-auto">
             {/* Memory OS Wide Flagship Hero Card */}
-            <div className="p-8 rounded-3xl border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-gradient-to-b dark:from-white/5 dark:to-white/[0.01] hover:border-violet-500/30 transition-all duration-500 shadow-md">
-              <div className="flex flex-col md:flex-row gap-6 items-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-100 dark:bg-violet-600/20 text-violet-600 dark:text-violet-400 flex-shrink-0">
-                  <Brain className="w-8 h-8" />
+            <div className="p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-violet-950/20 via-[#08081b]/50 to-teal-950/10 hover:border-violet-500/40 transition-all duration-500 shadow-xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
+              <div className="df-specular" />
+              
+              <div className="grid md:grid-cols-12 gap-8 items-center relative z-10">
+                {/* Visual SVG Hub Column (4 cols) */}
+                <div className="md:col-span-4 flex items-center justify-center relative">
+                  <div className="w-40 h-40 relative flex items-center justify-center">
+                    {/* Spinning outer rings */}
+                    <motion.div
+                      className="absolute inset-0 rounded-full border border-dashed border-violet-500/30"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 24, ease: "linear", repeat: Infinity }}
+                    />
+                    <motion.div
+                      className="absolute inset-4 rounded-full border border-teal-500/25"
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 16, ease: "linear", repeat: Infinity }}
+                    />
+                    {/* Glowing center hub */}
+                    <div className="absolute w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 to-cyan-500 opacity-20 blur-md" />
+                    <div className="absolute w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/30 to-cyan-500/20 border border-violet-400/30 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform duration-500">
+                      <Brain className="w-7 h-7 text-violet-300 drop-shadow-[0_0_8px_#a78bfa]" />
+                    </div>
+                    {/* Dynamic connected nodes */}
+                    <span className="absolute top-2 left-6 w-2 h-2 rounded-full bg-violet-400 animate-ping" />
+                    <span className="absolute bottom-4 right-6 w-2 h-2 rounded-full bg-teal-400 animate-ping" style={{ animationDelay: "1s" }} />
+                  </div>
                 </div>
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-bold uppercase tracking-wider mb-2 select-none">
+
+                {/* Content Column (8 cols) */}
+                <div className="md:col-span-8 space-y-4">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-[10px] font-bold uppercase tracking-wider select-none">
                     Flagship Core
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
                     Agents that remember every deal, forever
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-4xl">
+                  <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">
                     Unified memory management system that retains deal context, buyer signals, and pipeline state across every interaction. Every meeting note, email thread, and deal constraint is cataloged and instantly retrievable.
                   </p>
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-xs text-slate-300 font-medium">Persistent Context Windows</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-xs text-slate-300 font-medium">Cross-Agent Synchronization</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -776,43 +993,46 @@ export default function HomePage() {
             </motion.p>
 
             {/* Annual billing toggle */}
-            <div className="flex items-center justify-center gap-3 mt-6">
-              <span className={`text-sm ${!isAnnual ? "text-slate-800 dark:text-white font-bold" : "text-slate-400"}`}>Monthly</span>
+            <div className="flex items-center justify-center gap-3 mt-8">
+              <span className={`text-sm font-semibold transition-colors ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-400"}`}>Monthly</span>
               <button
                 onClick={() => setIsAnnual(!isAnnual)}
-                className="relative w-12 h-6 bg-violet-600 rounded-full transition-colors flex items-center p-1"
+                className="relative w-14 h-7 bg-white/5 border border-white/10 rounded-full transition-colors flex items-center p-1 cursor-pointer"
                 aria-label="Toggle annual billing"
               >
-                <div
-                  className={`w-4 h-4 bg-white rounded-full transition-transform shadow-md ${
-                    isAnnual ? "translate-x-6" : "translate-x-0"
-                  }`}
+                <motion.div
+                  className="w-5 h-5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full shadow-md shadow-teal-500/20"
+                  animate={{ x: isAnnual ? 26 : 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 />
               </button>
-              <span className={`text-sm ${isAnnual ? "text-slate-800 dark:text-white font-bold" : "text-slate-400"} flex items-center gap-1.5`}>
+              <span className={`text-sm font-semibold transition-colors ${isAnnual ? "text-teal-400 font-bold" : "text-slate-400"} flex items-center gap-1.5`}>
                 Annually
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
-                  Save 20% annually
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                  Save 20%
                 </span>
               </span>
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
             {/* Starter Plan */}
-            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/8 bg-white dark:bg-gradient-to-b dark:from-white/5 dark:to-[#08081a] flex flex-col justify-between hover:border-slate-300 dark:hover:border-white/15 transition-all">
-              <div>
-                <div className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-2">Starter</div>
-                <div className="text-3xl font-bold text-slate-800 dark:text-white">{isAnnual ? "$399/mo" : "$499/mo"}</div>
-                <div className="text-[10px] text-slate-400 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-4 leading-relaxed">
+            <div className="relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] flex flex-col justify-between hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300">
+              <div className="space-y-6">
+                <div>
+                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Starter</div>
+                  <div className="text-3xl font-bold text-white font-mono">{isAnnual ? "$399/mo" : "$499/mo"}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">
                   For teams just starting to bring AI into their sales motion
                 </p>
-                <ul className="space-y-3 mt-6">
+                <div className="border-t border-white/5 my-4" />
+                <ul className="space-y-3">
                   {["Up to 5 AI Revenue Agents", "Memory OS — 30-day context", "GTM Pipeline Analysis", "Standard Integrations"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
-                      <span className="text-slate-600 dark:text-slate-300 text-xs">{f}</span>
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-teal-500 flex-shrink-0" />
+                      <span className="text-slate-300 text-xs">{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -820,35 +1040,38 @@ export default function HomePage() {
               <div className="mt-8">
                 <Link
                   href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold text-xs"
+                  className="w-full h-11 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition-colors"
                 >
                   Start free trial
                 </Link>
-                <span className="text-[10px] text-slate-400 text-center block mt-3 select-none">
+                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
                   No credit card required · Cancel anytime
                 </span>
               </div>
             </div>
 
             {/* Growth Plan */}
-            <div className="relative p-8 rounded-3xl border border-violet-500/60 bg-slate-50 dark:bg-gradient-to-b dark:from-[#0b1c1e] dark:to-[#070716] flex flex-col justify-between shadow-lg shadow-violet-500/5 hover:-translate-y-1 transition-all">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="px-3 py-1 rounded-full bg-violet-600 text-white text-[10px] font-bold uppercase tracking-wider">
+            <div className="relative p-8 rounded-3xl border border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] flex flex-col justify-between shadow-xl shadow-violet-500/5 hover:-translate-y-1 hover:border-violet-500/60 transition-all duration-300">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-violet-500/25">
                   Most Popular
                 </span>
               </div>
-              <div>
-                <div className="text-violet-600 dark:text-violet-400 text-xs font-semibold uppercase tracking-widest mb-2">Growth</div>
-                <div className="text-3xl font-bold text-slate-800 dark:text-white">{isAnnual ? "$999/mo" : "$1,299/mo"}</div>
-                <div className="text-[10px] text-slate-400 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-4 leading-relaxed">
+              <div className="space-y-6">
+                <div>
+                  <div className="text-violet-400 text-[10px] font-bold uppercase tracking-widest mb-1">Growth</div>
+                  <div className="text-3xl font-bold text-white font-mono">{isAnnual ? "$999/mo" : "$1,299/mo"}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">
                   For teams scaling a multi-rep GTM motion with advanced agent orchestration
                 </p>
-                <ul className="space-y-3 mt-6">
+                <div className="border-t border-violet-500/10 my-4" />
+                <ul className="space-y-3">
                   {["Up to 25 AI Revenue Agents", "Full Memory OS — unlimited context", "Continuous agent learning", "Multi-Agent Framework", "All integrations + webhook support"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-violet-600 dark:text-violet-400 flex-shrink-0" />
-                      <span className="text-slate-600 dark:text-slate-300 text-xs font-semibold">{f}</span>
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
+                      <span className="text-slate-300 text-xs font-semibold">{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -856,30 +1079,33 @@ export default function HomePage() {
               <div className="mt-8">
                 <Link
                   href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-md shadow-violet-500/20"
+                  className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-lg shadow-violet-500/20 transition-all"
                 >
                   Start free trial
                 </Link>
-                <span className="text-[10px] text-slate-400 text-center block mt-3 select-none">
+                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
                   No credit card required · Cancel anytime
                 </span>
               </div>
             </div>
 
             {/* Enterprise Plan */}
-            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/8 bg-white dark:bg-gradient-to-b dark:from-white/5 dark:to-[#08081a] flex flex-col justify-between hover:border-slate-300 dark:hover:border-white/15 transition-all">
-              <div>
-                <div className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-2">Enterprise</div>
-                <div className="text-3xl font-bold text-slate-800 dark:text-white">Custom</div>
-                <div className="text-[10px] text-slate-400 mt-1">Bespoke contract</div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-4 leading-relaxed">
+            <div className="relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] flex flex-col justify-between hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300">
+              <div className="space-y-6">
+                <div>
+                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Enterprise</div>
+                  <div className="text-3xl font-bold text-white font-mono">Custom</div>
+                  <div className="text-[10px] text-slate-500 mt-1">Bespoke contract</div>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">
                   For large orgs needing bespoke AI infrastructure, compliance, and dedicated support
                 </p>
-                <ul className="space-y-3 mt-6">
+                <div className="border-t border-white/5 my-4" />
+                <ul className="space-y-3">
                   {["Unlimited AI Revenue Agents", "Custom memory architecture", "On-premise / VPC deployment", "SOC 2 Type II compliance", "Custom integrations & SLA support"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
-                      <span className="text-slate-600 dark:text-slate-300 text-xs">{f}</span>
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-teal-500 flex-shrink-0" />
+                      <span className="text-slate-300 text-xs">{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -887,11 +1113,11 @@ export default function HomePage() {
               <div className="mt-8">
                 <Link
                   href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold text-xs"
+                  className="w-full h-11 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition-colors"
                 >
                   Contact Sales
                 </Link>
-                <span className="text-[10px] text-slate-400 text-center block mt-3 select-none">
+                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
                   No credit card required · Cancel anytime
                 </span>
               </div>
@@ -906,10 +1132,9 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA SECTION ─────────────────────────────────────────────────────────── */}
-      <section className="snap-section relative py-28 border-t border-slate-200 dark:border-white/5 overflow-hidden flex flex-col justify-center">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_50%_50%,rgba(108,59,255,0.04),transparent)] pointer-events-none" />
-
+      <section className="snap-section relative py-28 border-t border-slate-200 dark:border-white/5 overflow-hidden flex flex-col justify-center bg-[#05050e]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.08),transparent)] pointer-events-none" />
+        
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -918,25 +1143,25 @@ export default function HomePage() {
             transition={{ duration: 0.7 }}
             className="space-y-8"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
-              <Target className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-300 text-xs font-mono uppercase tracking-wider">
+              <Target className="w-3.5 h-3.5 text-teal-400" />
               Start Today
             </div>
-            <h2 className="text-5xl sm:text-6xl font-bold text-slate-900 dark:text-white leading-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
               Ready to close deals
               <br />
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 at AI speed?
               </span>
             </h2>
-            <p className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
               Deploy autonomous revenue agents with persistent memory to handle lead qualification, outbound, and meeting logistics.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <Link
                 href="/#how-it-works"
                 onClick={() => trackEvent("cta_start_analysis", { surface: "bottom_cta_v3", abVariant })}
-                className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-lg transition-all duration-300 shadow-xl shadow-violet-500/30 hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-bold text-base transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -944,13 +1169,13 @@ export default function HomePage() {
               <Link
                 href="/book-demo"
                 onClick={() => trackEvent("cta_talk_sales", { surface: "bottom_cta_v3", abVariant })}
-                className="inline-flex items-center gap-2 px-10 py-4 rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold text-lg transition-all duration-300 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-base transition-all duration-300 hover:-translate-y-0.5"
               >
                 Talk to Sales
               </Link>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              14-day free trial · No credit card · Cancel anytime
+            <p className="text-slate-500 text-xs">
+              14-day free trial · No credit card required · Cancel anytime
             </p>
           </motion.div>
         </div>
