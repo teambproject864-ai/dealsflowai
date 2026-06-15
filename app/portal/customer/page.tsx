@@ -1,656 +1,843 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import React, { useState, useEffect } from 'react';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { GlassPanel, ExtrudedButton } from '@/components/immersive';
 import {
-  Users,
   CheckCircle2,
-  Phone,
   MessageSquare,
   Star,
   FileText,
   Upload,
-  XCircle,
   Download,
   Plus,
-} from "lucide-react";
-import type { FileAttachment } from "@/lib/types";
-import { cn } from "@/lib/utils";
+  Settings,
+  Bell,
+  Calendar,
+  TrendingUp,
+  ShieldCheck,
+  Ticket as TicketIcon,
+  CreditCard,
+  BarChart2,
+  Check,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { gtmPortalConfig } from '@/lib/config';
 import {
-  demoTasks,
   demoChatMessages,
-  demoCustomerFeedback,
   demoUsers,
-} from "@/lib/portal-demo-data";
-import AuthProvider from "@/components/auth/AuthProvider";
-import LogoutButton from "@/components/auth/LogoutButton";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { IntakeForm } from "@/components/IntakeForm";
+  demoCustomerCredits,
+  demoGTMReports,
+  demoCustomerGTMData,
+  demoScheduledReports,
+  demoTickets,
+  demoNotificationPreferences,
+} from '@/lib/portal-demo-data';
+import type {
+  Ticket,
+  ScheduledReport,
+  NotificationPreferences,
+  GTMReportMetric,
+} from '@/lib/portal-types';
+import AuthProvider from '@/components/auth/AuthProvider';
+import LogoutButton from '@/components/auth/LogoutButton';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const tabs = [
-  { id: "tasks", label: "Tasks", icon: CheckCircle2 },
-  { id: "credits", label: "Credits", icon: Plus },
-  { id: "submit-requirement", label: "Submit Requirement", icon: FileText },
-  { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "documents", label: "Documents", icon: FileText },
-  { id: "feedback", label: "Feedback", icon: Star },
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
+  { id: 'gtm-analysis', label: 'GTM Analysis', icon: FileText },
+  { id: 'tickets', label: 'Support Tickets', icon: TicketIcon },
+  { id: 'billing', label: 'Billing & Credits', icon: CreditCard },
+  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'feedback', label: 'Feedback', icon: Star },
 ] as const;
-
-function CustomerPortalContent() {
-  const { user, isLoading } = useCurrentUser();
-  const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("credits");
-  const [newMessage, setNewMessage] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [chatMessages, setChatMessages] = useState([...demoChatMessages]);
-  const [tasks, setTasks] = useState([...demoTasks]);
-  const [showCreateTask, setShowCreateTask] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [newTaskDeadline, setNewTaskDeadline] = useState("");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [taskComments, setTaskComments] = useState<Record<string, string[]>>({});
-  const [newComment, setNewComment] = useState("");
-  const [credits, setCredits] = useState(10); // Demo credits
-  const [showChooseVector, setShowChooseVector] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const shouldShowVector = searchParams.get("showVector") === "true";
-    if (shouldShowVector) {
-      setShowChooseVector(true);
-      setActiveTab("credits");
-    }
-  }, [searchParams]);
-  
-  const customerId = user?.id || "customer-demo";
-  const customer = demoUsers.find((u) => u.id === customerId) || demoUsers.find((u) => u.id === "customer-demo");
-  const customerName = customer?.name || "Customer";
-  
-  const customerTasks = tasks.filter((t) => t.customerId === customerId);
-
-  // Convert File to FileAttachment (simulate upload for demo)
-  const fileToAttachment = (file: File): FileAttachment => ({
-    id: `file-${Date.now()}-${Math.random().toString(36)}`,
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type,
-    url: URL.createObjectURL(file),
-    uploadedAt: new Date().toISOString(),
-    uploadedBy: customerId,
-  });
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim() && selectedFiles.length === 0) return;
-    const attachments = selectedFiles.map(fileToAttachment);
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      sessionId: "session-1",
-      senderId: customerId,
-      senderName: customerName,
-      senderRole: "customer" as const,
-      content: newMessage,
-      attachments: attachments.length > 0 ? attachments : undefined,
-      timestamp: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    setChatMessages([...chatMessages, newMsg]);
-    setNewMessage("");
-    setSelectedFiles([]);
-  };
-  
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-  
-  const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-  
-  // Format file size
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-  };
-
-  // Create new task
-  const handleCreateTask = () => {
-    if (!newTaskTitle.trim()) return;
-    const newTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle,
-      description: newTaskDescription,
-      status: "todo" as const,
-      assignedAgentId: "agent-praneeth",
-      customerId,
-      customerName,
-      priority: "medium" as const,
-      progressNotes: [],
-      milestones: [
-        { id: `milestone-${Date.now()}-1`, title: "Task created", completed: true, completedAt: new Date().toISOString() }
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setTasks([...tasks, newTask]);
-    setShowCreateTask(false);
-    setNewTaskTitle("");
-    setNewTaskDescription("");
-    setNewTaskDeadline("");
-  };
-
-  // Add comment to task
-  const handleAddComment = () => {
-    if (!newComment.trim() || !selectedTaskId) return;
-    setTaskComments({
-      ...taskComments,
-      [selectedTaskId]: [...(taskComments[selectedTaskId] || []), newComment],
-    });
-    setNewComment("");
-  };
-
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold text-slate-100">Customer Portal</h1>
-          <p className="text-slate-400 mt-2">Welcome back! Track your progress here.</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <ExtrudedButton className="bg-purple-600 hover:bg-purple-700">
-            <Phone className="h-5 w-5 mr-2" />
-            Request Call
-          </ExtrudedButton>
-          <ExtrudedButton variant="outline" className="border-slate-600">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            Message Agent
-          </ExtrudedButton>
-          <LogoutButton />
-        </div>
-      </div>
-
-      {/* Tab Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <ExtrudedButton
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              onClick={() => setActiveTab(tab.id)}
-              className={activeTab === tab.id ? "bg-purple-600 hover:bg-purple-700" : ""}
-            >
-              <Icon className="h-4 w-4 mr-2" />
-              {tab.label}
-            </ExtrudedButton>
-          );
-        })}
-      </div>
-
-      {/* Tab Content */}
-      <div className="mt-6">
-        {activeTab === "credits" && (
-          <div className="space-y-6">
-            {showChooseVector ? (
-              <GlassPanel tilt={false} className="border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-xl text-slate-100 font-bold">Choose Consultation Vector</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-300">Select the type of consultation you&apos;d like:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { id: "gtm", name: "GTM Strategy", desc: "Review your go-to-market strategy" },
-                      { id: "sales", name: "Sales Pipeline", desc: "Optimize your sales process" },
-                      { id: "marketing", name: "Marketing Campaign", desc: "Plan your marketing initiatives" },
-                    ].map((v) => (
-                      <ExtrudedButton
-                        key={v.id}
-                        variant="outline"
-                        className="border-slate-600 hover:bg-purple-600 hover:border-purple-600 h-auto py-6 flex-col"
-                        onClick={() => {
-                          setShowChooseVector(false);
-                          alert(`Consultation vector "${v.name}" selected!`);
-                        }}
-                      >
-                        <div className="font-bold text-lg">{v.name}</div>
-                        <div className="text-xs text-slate-400 mt-1">{v.desc}</div>
-                      </ExtrudedButton>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <ExtrudedButton variant="outline" className="border-slate-600" onClick={() => setShowChooseVector(false)}>
-                      Back
-                    </ExtrudedButton>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-            ) : (
-              <>
-                <GlassPanel tilt={true} className="border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-slate-100 font-bold">Your Credit Balance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-6xl font-black text-purple-400">{credits}</div>
-                    <p className="text-slate-400 mt-2">Available credits</p>
-                  </CardContent>
-                </GlassPanel>
-
-                <GlassPanel tilt={true} className="border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-slate-100 font-bold">Create Credit</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex gap-2">
-                      <ExtrudedButton
-                        className="bg-purple-600 hover:bg-purple-700"
-                        onClick={() => {
-                          setCredits((prev) => prev + 5);
-                          setShowChooseVector(true);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add 5 Credits & Choose Consultation
-                      </ExtrudedButton>
-                    </div>
-                  </CardContent>
-                </GlassPanel>
-              </>
-            )}
-          </div>
-        )}
-
-        {activeTab === "submit-requirement" && (
-          <div className="space-y-6">
-            <GlassPanel tilt={false} className="border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-100 font-bold">Submit New Requirement</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <IntakeForm onComplete={() => setActiveTab("tasks")} />
-              </CardContent>
-            </GlassPanel>
-          </div>
-        )}
-
-        {activeTab === "tasks" && (
-          <div className="space-y-6">
-            {/* Create Task Button */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-100">Your Tasks</h2>
-              <ExtrudedButton
-                className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => setShowCreateTask(!showCreateTask)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Task
-              </ExtrudedButton>
-            </div>
-
-            {/* Create Task Form */}
-            {showCreateTask && (
-              <GlassPanel tilt={false} className="border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-xl text-slate-100 font-bold">Create New Task</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2">Task Title</label>
-                    <Input
-                      value={newTaskTitle}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                      placeholder="Enter task title"
-                      className="bg-slate-700 border-slate-600 rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2">Description</label>
-                    <textarea
-                      value={newTaskDescription}
-                      onChange={(e) => setNewTaskDescription(e.target.value)}
-                      placeholder="Enter task description"
-                      className="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-slate-100 resize-none"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <ExtrudedButton
-                      onClick={handleCreateTask}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      Create Task
-                    </ExtrudedButton>
-                    <ExtrudedButton
-                      variant="outline"
-                      className="border-slate-600"
-                      onClick={() => setShowCreateTask(false)}
-                    >
-                      Cancel
-                    </ExtrudedButton>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-            )}
-
-            {/* Tasks List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {customerTasks.map((task) => (
-                <GlassPanel
-                  key={task.id}
-                  tilt={true}
-                  className="cursor-pointer border-slate-700 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg"
-                  onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xl text-slate-100 font-bold">{task.title}</CardTitle>
-                      <span
-                        className={cn(
-                          "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                          task.status === "completed"
-                            ? "bg-green-500/15 text-green-400"
-                            : task.status === "in-progress"
-                            ? "bg-yellow-500/15 text-yellow-400"
-                            : "bg-slate-500/15 text-slate-400"
-                        )}
-                      >
-                        {task.status}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-slate-300 mb-4">{task.description}</p>
-                    <h4 className="text-sm font-semibold text-slate-200 mb-2">Milestones</h4>
-                    <div className="space-y-2">
-                      {task.milestones.map((milestone) => (
-                        <div
-                          key={milestone.id}
-                          className="flex items-center gap-3"
-                        >
-                          <div
-                            className={cn(
-                              "flex items-center justify-center h-5 w-5 rounded border-2",
-                              milestone.completed
-                                ? "bg-green-500 border-green-500"
-                                : "border-slate-500"
-                            )}
-                          >
-                            {milestone.completed && <CheckCircle2 className="h-3 w-3 text-white" />}
-                          </div>
-                          <span className={cn(
-                            "text-sm",
-                            milestone.completed ? "text-slate-400" : "text-slate-100"
-                          )}>
-                            {milestone.title}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Task Details (when expanded) */}
-                    {selectedTaskId === task.id && (
-                      <div className="mt-6 pt-6 border-t border-slate-700/50">
-                        <h4 className="text-sm font-semibold text-slate-200 mb-3">Comments</h4>
-                        <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                          {taskComments[task.id]?.map((comment, idx) => (
-                            <div key={idx} className="bg-slate-700 p-3 rounded-lg">
-                              <p className="text-sm text-slate-300">{comment}</p>
-                            </div>
-                          )) || <p className="text-slate-500 text-sm">No comments yet</p>}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Add a comment..."
-                            className="bg-slate-700 border-slate-600 flex-1 rounded-xl"
-                            onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                          />
-                          <ExtrudedButton
-                            onClick={handleAddComment}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            Post
-                          </ExtrudedButton>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </GlassPanel>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "chat" && (
-          <GlassPanel tilt={false} className="border-slate-700 h-[600px] flex flex-col">
-            <CardHeader className="border-b border-slate-700/50">
-              <CardTitle className="text-slate-100 font-bold">Chat with Your Agent</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex",
-                      msg.senderRole === "customer" ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[80%] p-3 rounded-lg",
-                        msg.senderRole === "customer"
-                          ? "bg-purple-600 text-white"
-                          : "bg-slate-700 text-slate-100"
-                      )}
-                    >
-                      <p className="font-semibold text-xs mb-1 opacity-80">{msg.senderName}</p>
-                      {msg.content && <p>{msg.content}</p>}
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div className="mt-2 space-y-2">
-                          {msg.attachments.map((attachment) => (
-                            <a
-                              key={attachment.id}
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={cn(
-                                "flex items-center gap-2 p-2 rounded-lg border",
-                                msg.senderRole === "customer"
-                                  ? "bg-purple-700 border-purple-500 hover:bg-purple-800"
-                                  : "bg-slate-800 border-slate-600 hover:bg-slate-900"
-                              )}
-                            >
-                              <FileText className="h-5 w-5" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium truncate">{attachment.fileName}</p>
-                                <p className="text-xs opacity-70">{formatFileSize(attachment.fileSize)}</p>
-                              </div>
-                              <Download className="h-4 w-4" />
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-xs mt-1 opacity-70 text-right">
-                        {new Date(msg.createdAt || msg.timestamp || "").toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Selected Files Preview */}
-              {selectedFiles.length > 0 && (
-                <div className="px-4 py-2 border-t border-slate-700/50 bg-slate-800/50">
-                  <div className="flex flex-wrap gap-2">
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-slate-700 px-3 py-1 rounded-full text-sm">
-                        <FileText className="h-4 w-4" />
-                        <span className="truncate max-w-[150px]">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className="text-slate-400 hover:text-white"
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Chat Input */}
-              <div className="p-4 border-t border-slate-700/50">
-                <div className="flex gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                  <ExtrudedButton
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Attach
-                  </ExtrudedButton>
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                    className="bg-slate-700 border-slate-600 flex-1 rounded-xl"
-                  />
-                  <ExtrudedButton onClick={handleSendMessage} className="bg-purple-600 hover:bg-purple-700">
-                    Send
-                  </ExtrudedButton>
-                </div>
-              </div>
-            </CardContent>
-          </GlassPanel>
-        )}
-
-        {activeTab === "documents" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <GlassPanel tilt={true} className="border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100 flex items-center gap-2 font-bold">
-                  <FileText className="h-6 w-6 text-purple-400" />
-                  GTM Analysis Report
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-300 mb-4">
-                  Comprehensive GTM strategy analysis based on your intake form.
-                </p>
-                <ExtrudedButton className="bg-purple-600 hover:bg-purple-700">
-                  Download Report
-                </ExtrudedButton>
-              </CardContent>
-            </GlassPanel>
-            <GlassPanel tilt={true} className="border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100 flex items-center gap-2 font-bold">
-                  <FileText className="h-6 w-6 text-purple-400" />
-                  Customer Onboarding Guide
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-300 mb-4">
-                  Step-by-step guide for getting started.
-                </p>
-                <ExtrudedButton variant="outline" className="border-slate-600">
-                  Download Guide
-                </ExtrudedButton>
-              </CardContent>
-            </GlassPanel>
-          </div>
-        )}
-
-        {activeTab === "feedback" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GlassPanel tilt={false} className="border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100 font-bold">Submit Feedback</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2">Your Rating</label>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} className="text-slate-600 hover:text-amber-400 transition-colors">
-                          <Star className="h-8 w-8" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2">Your Comments</label>
-                    <textarea
-                      className="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-slate-100"
-                      rows={4}
-                      placeholder="Tell us about your experience..."
-                    />
-                  </div>
-                  <ExtrudedButton className="bg-purple-600 hover:bg-purple-700 w-full">
-                    Submit Feedback
-                  </ExtrudedButton>
-                </div>
-              </CardContent>
-            </GlassPanel>
-
-            <GlassPanel tilt={false} className="border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100 font-bold">Your Past Feedback</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {demoCustomerFeedback.filter((f) => f.customerId === customerId).map((fb) => (
-                  <div key={fb.id} className="p-4 bg-slate-700/40 border border-slate-700/30 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={cn(
-                            "h-4 w-4",
-                            star <= fb.rating
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-slate-500"
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-slate-300">{fb.comment}</p>
-                    <p className="text-xs text-slate-500 mt-2">
-                      {new Date(fb.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </GlassPanel>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function CustomerPortal() {
   return (
-    <AuthProvider allowedRoles={["customer"]}>
+    <AuthProvider allowedRoles={['customer']}>
       <CustomerPortalContent />
     </AuthProvider>
+  );
+}
+
+function CustomerPortalContent() {
+  const { user } = useCurrentUser();
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]['id']>('dashboard');
+  const [customerGTMData] = useState(demoCustomerGTMData);
+  const [scheduledReports, setScheduledReports] = useState(demoScheduledReports);
+  const [tickets, setTickets] = useState(demoTickets);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(
+    demoNotificationPreferences['customer-demo']
+  );
+  const [gtmReports] = useState(demoGTMReports);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [gtmRegion, setGtmRegion] = useState('All');
+  const [gtmSegment, setGtmSegment] = useState('All');
+
+  const customerId = user?.id || 'customer-demo';
+  const customerCredits = demoCustomerCredits.find((c) => c.customerId === customerId) || demoCustomerCredits[0];
+  const customer = demoUsers.find((u) => u.id === customerId) || demoUsers.find((u) => u.id === 'customer-demo');
+  const customerName = customer?.name || 'Customer';
+
+  useEffect(() => {
+    if (customerId && demoNotificationPreferences[customerId]) {
+      setNotificationPrefs(demoNotificationPreferences[customerId]);
+    }
+  }, [customerId]);
+
+  const handleDownloadReport = (report: GTMReportMetric, format: 'pdf' | 'xlsx' | 'csv') => {
+    alert(`Downloading ${report.reportName} in ${format.toUpperCase()} format...`);
+  };
+
+  const handleScheduleReport = (frequency: 'daily' | 'weekly') => {
+    const newSchedule: ScheduledReport = {
+      id: `scheduled-${Date.now()}`,
+      customerId,
+      reportFrequency: frequency,
+      recipients: [customer?.email || ''],
+      fileFormats: ['pdf'],
+      enabled: true,
+      nextSendDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    setScheduledReports([...scheduledReports, newSchedule]);
+    alert(`${frequency.charAt(0).toUpperCase() + frequency.slice(1)} report scheduled!`);
+  };
+
+  const handleSubmitTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const newTicket: Ticket = {
+      id: `ticket-${Date.now()}`,
+      customerId,
+      requesterName: customerName,
+      requesterEmail: customer?.email || '',
+      category: formData.get('category') as any,
+      subject: formData.get('subject') as string,
+      description: formData.get('description') as string,
+      priority: formData.get('priority') as any,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setTickets([newTicket, ...tickets]);
+    alert('Ticket submitted successfully!');
+    (e.target as HTMLFormElement).reset();
+  };
+
+  const handleUpdateNotificationPrefs = (key: keyof NotificationPreferences, value: any) => {
+    setNotificationPrefs({ ...notificationPrefs, [key]: value });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200">
+      <div className="container mx-auto px-4 py-8">
+        <GlassPanel className="mb-8 border-slate-700">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">
+                Welcome back, {customerName}!
+              </CardTitle>
+              <p className="text-slate-400 mt-1">Manage your GTM strategy, support tickets, and account settings</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Bell className="h-6 w-6 text-slate-300 cursor-pointer hover:text-teal-400 transition-colors" />
+              <LogoutButton />
+            </div>
+          </CardHeader>
+        </GlassPanel>
+
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-slate-800 pb-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all',
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/20'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="space-y-8">
+          {activeTab === 'dashboard' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <GlassPanel className="border-slate-700">
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Credit Balance</div>
+                    <div className="text-4xl font-bold text-teal-400">{customerCredits.balance}</div>
+                  </CardContent>
+                </GlassPanel>
+                <GlassPanel className="border-slate-700">
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Open Tickets</div>
+                    <div className="text-4xl font-bold text-amber-400">
+                      {tickets.filter(t => t.customerId === customerId && t.status !== 'closed').length}
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+                <GlassPanel className="border-slate-700">
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Active Reports</div>
+                    <div className="text-4xl font-bold text-blue-400">
+                      {gtmReports.filter(r => r.customerId === customerId).length}
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+                <GlassPanel className="border-slate-700">
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Scheduled Reports</div>
+                    <div className="text-4xl font-bold text-purple-400">
+                      {scheduledReports.filter(r => r.customerId === customerId).length}
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <GlassPanel className="border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold text-slate-100">Recent Reports</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {gtmReports
+                      .filter(r => r.customerId === customerId)
+                      .slice(0, 3)
+                      .map(report => (
+                        <div key={report.id} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                          <div>
+                            <div className="font-semibold text-slate-200">{report.reportName}</div>
+                            <div className="text-xs text-slate-400">{new Date(report.createdAt).toLocaleString()}</div>
+                          </div>
+                          <div className="flex gap-2">
+                    <ExtrudedButton
+                      size="sm"
+                      onClick={() => handleDownloadReport(report, 'pdf')}
+                    >
+                      <Download className="h-4 w-4 mr-1" /> PDF
+                    </ExtrudedButton>
+                  </div>
+                        </div>
+                      ))}
+                  </CardContent>
+                </GlassPanel>
+
+                <GlassPanel className="border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold text-slate-100">Recent Tickets</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {tickets
+                      .filter(t => t.customerId === customerId)
+                      .slice(0, 3)
+                      .map(ticket => (
+                        <div key={ticket.id} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                          <div>
+                            <div className="font-semibold text-slate-200">{ticket.subject}</div>
+                            <div className="text-xs text-slate-400">{new Date(ticket.createdAt).toLocaleString()}</div>
+                          </div>
+                          <span
+                            className={cn(
+                              'px-3 py-1 rounded-full text-xs font-semibold capitalize',
+                              ticket.status === 'resolved'
+                                ? 'bg-green-500/15 text-green-400'
+                                : ticket.status === 'in-progress'
+                                ? 'bg-yellow-500/15 text-yellow-400'
+                                : 'bg-slate-500/15 text-slate-400'
+                            )}
+                          >
+                            {ticket.status}
+                          </span>
+                        </div>
+                      ))}
+                  </CardContent>
+                </GlassPanel>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'gtm-analysis' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">GTM Analysis Reports</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Region</Label>
+                    <select
+                      value={gtmRegion}
+                      onChange={(e) => setGtmRegion(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="All">All Regions</option>
+                      <option value="North America">North America</option>
+                      <option value="Europe">Europe</option>
+                      <option value="Asia Pacific">Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Segment</Label>
+                    <select
+                      value={gtmSegment}
+                      onChange={(e) => setGtmSegment(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="All">All Segments</option>
+                      <option value="Enterprise">Enterprise</option>
+                      <option value="Mid-Market">Mid-Market</option>
+                      <option value="SMB">SMB</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <ExtrudedButton
+                      onClick={() => handleScheduleReport('daily')}
+                      className="bg-gradient-to-r from-teal-600 to-cyan-600"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" /> Schedule Daily
+                    </ExtrudedButton>
+                    <ExtrudedButton
+                      onClick={() => handleScheduleReport('weekly')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" /> Schedule Weekly
+                    </ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+
+              {gtmPortalConfig.showAllCustomerGTMContent && (
+                <>
+                  <GlassPanel tilt={false} className="border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-slate-100">Your GTM Submission</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {customerGTMData
+                        .filter(d => d.customerId === customerId)
+                        .map(data => (
+                          <div key={data.id} className="space-y-3">
+                            {Object.entries(data.data).map(([key, value]) => (
+                              <div key={key} className="p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                                <p className="text-sm text-slate-400 capitalize mb-1">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                                <p className="text-slate-200 font-medium">
+                                  {Array.isArray(value) ? value.join(', ') : value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                    </CardContent>
+                  </GlassPanel>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {gtmReports
+                      .filter(r => r.customerId === customerId)
+                      .filter(r => gtmRegion === 'All' || r.region === gtmRegion)
+                      .filter(r => gtmSegment === 'All' || r.segment === gtmSegment)
+                      .map(report => (
+                        <GlassPanel
+                          key={report.id}
+                          tilt={true}
+                          className="cursor-pointer border-slate-700 hover:border-teal-500/50 transition-all duration-200"
+                          onClick={() => setSelectedReportId(selectedReportId === report.id ? null : report.id)}
+                        >
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-xl text-slate-100 font-bold">{report.reportName}</CardTitle>
+                              <span
+                                className={cn(
+                                  'px-3 py-1 rounded-full text-xs font-semibold',
+                                  report.reportFrequency === 'daily'
+                                    ? 'bg-blue-500/15 text-blue-400'
+                                    : 'bg-purple-500/15 text-purple-400'
+                                )}
+                              >
+                                {report.reportFrequency}
+                              </span>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="text-center">
+                                <p className="text-slate-400 text-xs uppercase tracking-wider">Lead Conversion</p>
+                                <p className="text-2xl font-bold text-green-400">{report.leadConversionRate}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-slate-400 text-xs uppercase tracking-wider">Market Penetration</p>
+                                <p className="text-2xl font-bold text-blue-400">{report.marketPenetration}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-slate-400 text-xs uppercase tracking-wider">Pipeline Value</p>
+                                <p className="text-2xl font-bold text-purple-400">${report.pipelineValue.toLocaleString()}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-slate-400 text-xs uppercase tracking-wider">Campaign ROI</p>
+                                <p className="text-2xl font-bold text-amber-400">{report.campaignEffectiveness}%</p>
+                              </div>
+                            </div>
+
+                            {selectedReportId === report.id && (
+                              <div className="border-t border-slate-700 pt-4 space-y-4">
+                                {report.actionableSuggestions.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                                      <TrendingUp className="h-4 w-4 text-teal-400" />
+                                      Actionable Suggestions
+                                    </h4>
+                                    <div className="space-y-3">
+                                      {report.actionableSuggestions.map(suggestion => (
+                                        <div key={suggestion.id} className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                          <div className="flex items-start justify-between mb-2">
+                                            <span className="font-semibold text-slate-200">{suggestion.title}</span>
+                                            <span
+                                              className={cn(
+                                                'px-2 py-1 rounded-full text-xs font-semibold',
+                                                suggestion.priority === 'high'
+                                                  ? 'bg-red-500/15 text-red-400'
+                                                  : suggestion.priority === 'medium'
+                                                  ? 'bg-yellow-500/15 text-yellow-400'
+                                                  : 'bg-green-500/15 text-green-400'
+                                              )}
+                                            >
+                                              {suggestion.priority}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-slate-300 mb-2">{suggestion.description}</p>
+                                          <p className="text-xs text-teal-400">Estimated impact: {suggestion.estimatedImpact}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                  <ExtrudedButton
+                                    className="bg-gradient-to-r from-teal-600 to-cyan-600"
+                                    onClick={() => handleDownloadReport(report, 'pdf')}
+                                  >
+                                    <Download className="h-4 w-4 mr-2" /> Download PDF
+                                  </ExtrudedButton>
+                                  <ExtrudedButton variant="outline" onClick={() => handleDownloadReport(report, 'xlsx')}>
+                                    <Download className="h-4 w-4 mr-2" /> Download Excel
+                                  </ExtrudedButton>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </GlassPanel>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'tickets' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Submit Support Ticket</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmitTicket} className="space-y-4">
+                    <div>
+                      <Label className="text-slate-300">Category</Label>
+                      <select
+                        name="category"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                      >
+                        <option value="technical-support">Technical Support</option>
+                        <option value="feature-request">Feature Request</option>
+                        <option value="billing">Billing Issue</option>
+                        <option value="general">General Inquiry</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-slate-300">Subject</Label>
+                      <Input
+                        type="text"
+                        name="subject"
+                        placeholder="Brief description of your issue"
+                        className="bg-slate-800 border-slate-700 text-slate-200"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-300">Priority</Label>
+                      <select
+                        name="priority"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-slate-300">Description</Label>
+                      <textarea
+                        name="description"
+                        placeholder="Please provide detailed information..."
+                        rows={4}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                      />
+                    </div>
+                    <ExtrudedButton type="submit" className="bg-gradient-to-r from-teal-600 to-cyan-600">
+                      <CheckCircle2 className="h-4 w-4 mr-2" /> Submit Ticket
+                    </ExtrudedButton>
+                  </form>
+                </CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-100">Your Tickets</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {tickets
+                    .filter(t => t.customerId === customerId)
+                    .map(ticket => (
+                      <div key={ticket.id} className="p-6 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                          <div>
+                            <h4 className="text-lg font-semibold text-slate-200">{ticket.subject}</h4>
+                            <p className="text-sm text-slate-400">Submitted {new Date(ticket.createdAt).toLocaleString()}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                'px-3 py-1 rounded-full text-xs font-semibold capitalize',
+                                ticket.priority === 'critical'
+                                  ? 'bg-red-500/15 text-red-400'
+                                  : ticket.priority === 'high'
+                                  ? 'bg-orange-500/15 text-orange-400'
+                                  : ticket.priority === 'medium'
+                                  ? 'bg-yellow-500/15 text-yellow-400'
+                                  : 'bg-green-500/15 text-green-400'
+                              )}
+                            >
+                              {ticket.priority}
+                            </span>
+                            <span
+                              className={cn(
+                                'px-3 py-1 rounded-full text-xs font-semibold capitalize',
+                                ticket.status === 'resolved'
+                                  ? 'bg-green-500/15 text-green-400'
+                                  : ticket.status === 'in-progress'
+                                  ? 'bg-yellow-500/15 text-yellow-400'
+                                  : 'bg-slate-500/15 text-slate-400'
+                              )}
+                            >
+                              {ticket.status}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-slate-300 mb-4">{ticket.description}</p>
+                        {ticket.assignedAgentName && (
+                          <p className="text-sm text-slate-400">
+                            Assigned to: <span className="text-slate-200 font-semibold">{ticket.assignedAgentName}</span>
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'billing' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={true} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Your Credits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="text-center p-6 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                      <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Current Balance</p>
+                      <p className="text-5xl font-bold text-teal-400">{customerCredits.balance}</p>
+                    </div>
+                    <div className="text-center p-6 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                      <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Total Purchased</p>
+                      <p className="text-5xl font-bold text-green-400">{customerCredits.totalPurchased}</p>
+                    </div>
+                    <div className="text-center p-6 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                      <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Total Used</p>
+                      <p className="text-5xl font-bold text-red-400">{customerCredits.totalSpent}</p>
+                    </div>
+                  </div>
+                  <ExtrudedButton
+                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    onClick={() => alert('Redirecting to payment page...')}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Credits
+                  </ExtrudedButton>
+                </CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-100">Transaction History</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {customerCredits.transactions.map(tx => (
+                    <div key={tx.id} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-200">{tx.description}</p>
+                        <p className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div
+                        className={cn(
+                          'text-xl font-bold',
+                          tx.amount > 0 ? 'text-green-400' : 'text-red-400'
+                        )}
+                      >
+                        {tx.amount > 0 ? `+${tx.amount}` : tx.amount}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Notification Preferences</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                    <div>
+                      <Label className="text-slate-200 font-medium">Email Notifications</Label>
+                      <p className="text-sm text-slate-400">Receive reports and updates via email</p>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateNotificationPrefs('emailNotifications', !notificationPrefs.emailNotifications)}
+                      className={cn(
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                        notificationPrefs.emailNotifications ? 'bg-teal-600' : 'bg-slate-700'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                          notificationPrefs.emailNotifications ? 'translate-x-6' : 'translate-x-1'
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                    <div>
+                      <Label className="text-slate-200 font-medium">In-App Notifications</Label>
+                      <p className="text-sm text-slate-400">Receive notifications within the portal</p>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateNotificationPrefs('inAppNotifications', !notificationPrefs.inAppNotifications)}
+                      className={cn(
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                        notificationPrefs.inAppNotifications ? 'bg-teal-600' : 'bg-slate-700'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                          notificationPrefs.inAppNotifications ? 'translate-x-6' : 'translate-x-1'
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-slate-300">Preferred Report Formats</Label>
+                      <select
+                        multiple
+                        value={notificationPrefs.preferredReportFormats}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value as any);
+                          handleUpdateNotificationPrefs('preferredReportFormats', selected);
+                        }}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200"
+                        size={3}
+                      >
+                        <option value="pdf">PDF</option>
+                        <option value="xlsx">Excel</option>
+                        <option value="csv">CSV</option>
+                      </select>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-slate-300">Daily Report Time</Label>
+                        <Input
+                          type="time"
+                          value={notificationPrefs.dailyReportTime}
+                          onChange={(e) => handleUpdateNotificationPrefs('dailyReportTime', e.target.value)}
+                          className="bg-slate-800 border-slate-700 text-slate-200"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-slate-300">Weekly Report Day</Label>
+                        <select
+                          value={notificationPrefs.weeklyReportDay}
+                          onChange={(e) => handleUpdateNotificationPrefs('weeklyReportDay', e.target.value as any)}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200"
+                        >
+                          <option value="monday">Monday</option>
+                          <option value="tuesday">Tuesday</option>
+                          <option value="wednesday">Wednesday</option>
+                          <option value="thursday">Thursday</option>
+                          <option value="friday">Friday</option>
+                          <option value="saturday">Saturday</option>
+                          <option value="sunday">Sunday</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-100">Security Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck className="h-6 w-6 text-teal-400" />
+                      <div>
+                        <h4 className="font-semibold text-slate-200">Two-Factor Authentication</h4>
+                        <p className="text-sm text-slate-400">Add an extra layer of security to your account</p>
+                      </div>
+                    </div>
+                    <ExtrudedButton variant="outline">Enable</ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+
+
+          {activeTab === 'chat' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Chat</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="max-h-96 overflow-y-auto space-y-4">
+                    {demoChatMessages
+                      .filter(m => m.sessionId === 'session-1')
+                      .map((message) => (
+                        <div
+                          key={message.id}
+                          className={cn(
+                            'flex flex-col max-w-[80%]',
+                            message.senderRole === 'customer' ? 'ml-auto items-end' : 'mr-auto items-start'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'px-4 py-3 rounded-2xl',
+                              message.senderRole === 'customer'
+                                ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white'
+                                : 'bg-slate-800 text-slate-200 border border-slate-700'
+                            )}
+                          >
+                            <p>{message.content}</p>
+                          </div>
+                          <span className="text-xs text-slate-500 mt-1">
+                            {new Date(message.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Input
+                      placeholder="Type your message..."
+                      className="bg-slate-800 border-slate-700 text-slate-200"
+                    />
+                    <ExtrudedButton className="bg-gradient-to-r from-teal-600 to-cyan-600">
+                      <MessageSquare className="h-4 w-4" />
+                    </ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'documents' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Your Documents</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-slate-400">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No documents uploaded yet</p>
+                    <ExtrudedButton className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600">
+                      <Upload className="h-4 w-4 mr-2" /> Upload Documents
+                    </ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'feedback' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Share Your Feedback</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Label className="text-slate-300">How would you rate your experience?</Label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button key={star} className="p-2">
+                          <Star className="h-8 w-8 text-slate-500 hover:text-amber-400 hover:fill-amber-400 cursor-pointer transition-colors" />
+                        </button>
+                      ))}
+                    </div>
+                    <Label className="text-slate-300">Additional Comments</Label>
+                    <textarea
+                      placeholder="Tell us what you think..."
+                      rows={4}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                    <ExtrudedButton className="bg-gradient-to-r from-teal-600 to-cyan-600">
+                      <Check className="h-4 w-4 mr-2" /> Submit Feedback
+                    </ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

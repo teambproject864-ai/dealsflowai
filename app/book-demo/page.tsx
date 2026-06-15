@@ -17,6 +17,8 @@ import {
   Users,
   ArrowLeft,
   XCircle,
+  ChevronRight,
+  Star,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -40,6 +42,19 @@ type ImmediateAvailability = {
   maxImmediateCalls: number;
   estimatedWaitMinutes: number;
 };
+
+const TESTIMONIALS = [
+  {
+    name: "Sarah Chen",
+    role: "VP Sales at TechCorp",
+    content: "DealFlow AI helped us close 30% more deals in the first quarter. The AI-driven insights are game-changing!",
+  },
+  {
+    name: "Marcus Johnson",
+    role: "CEO at GrowthLab",
+    content: "The automated meeting summaries save us 20+ hours a week. Our team is now focused on high-value activities.",
+  },
+];
 
 const BENEFITS = [
   { title: "Interactive Sandbox Tour", desc: "Explore the unified pipeline workspace loaded with live Firestore data." },
@@ -84,6 +99,7 @@ function BookDemoContent() {
   const [directCompanyName, setDirectCompanyName] = useState("");
   const [directName, setDirectName] = useState("");
   const [directEmail, setDirectEmail] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => {
     if (!analysisId) {
@@ -182,10 +198,11 @@ function BookDemoContent() {
       });
       const data = await res.json();
       if (data.callId) {
+        setFormSubmitted(true);
         if (skipAiAgent) {
-          router.push(`/`);
+          setTimeout(() => router.push("/"), 2000);
         } else {
-          router.push(`/meeting-agent/live?callId=${data.callId}`);
+          setTimeout(() => router.push(`/meeting-agent/live?callId=${data.callId}`), 2000);
         }
       }
     } catch (err) {
@@ -211,77 +228,119 @@ function BookDemoContent() {
     );
   }
 
+  if (formSubmitted) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-8 px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <CheckCircle2 className="h-24 w-24 text-emerald-500 mx-auto mb-6" />
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Demo Request Confirmed!</h1>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+            You&apos;ll receive a calendar invite and confirmation email shortly. Redirecting you to your next step...
+          </p>
+          <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto" />
+        </motion.div>
+      </div>
+    );
+  }
+
   if (skipMode) {
     return (
       <div className="space-y-12">
+        {/* Hero Section */}
         <Section>
           <header className="space-y-6 rounded-3xl border border-white/8 bg-white/3 p-8 md:p-12 backdrop-blur-md shadow-2xl relative overflow-hidden group">
-            {/* Background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-teal-500/8 transition-all duration-700" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500/4 rounded-full blur-3xl pointer-events-none" />
             
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-semibold text-teal-300 uppercase tracking-wider shadow-sm">
               <Calendar className="h-4 w-4" />
               <span>Direct Scheduling</span>
             </div>
             
-            {/* Heading */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
               Schedule Your DealFlow AI Demo
             </h1>
             
-            {/* Description */}
             <p className="text-base md:text-lg text-slate-400 max-w-3xl leading-relaxed">
-              Pick a time that works best for your team. You can provide technical and GTM stack details later — a confirmation calendar invite will be sent instantly.
+              Discover how our AI-powered GTM engine can transform your sales pipeline. Pick a time that works best for your team — we&apos;ll send a confirmation invite instantly.
             </p>
           </header>
         </Section>
 
+        {/* Trust Signals */}
         <Section delay={0.1}>
-          <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl">
-            <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 text-teal-300 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Attendee Context (Optional)
-            </h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="space-y-3">
-                <Label htmlFor="directCompany" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Company Name</Label>
-                <Input
-                  id="directCompany"
-                  value={directCompanyName}
-                  onChange={(e) => setDirectCompanyName(e.target.value)}
-                  placeholder="Acme Inc."
-                  className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <GlassPanel material="glass" depth="mid" className="p-6 border-white/8 shadow-xl">
+              <div className="flex items-center gap-3 mb-3">
+                {[1,2,3,4,5].map(i => <Star key={i} className="h-5 w-5 text-amber-400 fill-amber-400" />)}
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="directName" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</Label>
-                <Input
-                  id="directName"
-                  value={directName}
-                  onChange={(e) => setDirectName(e.target.value)}
-                  placeholder="John Doe"
-                  className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
-                />
+              <p className="text-sm text-slate-300 mb-4 italic">
+                &quot;DealFlow AI helped us close 30% more deals in the first quarter!&quot;
+              </p>
+              <div className="text-xs text-slate-500">
+                <strong className="text-slate-300">Sarah Chen</strong>
+                <div>VP Sales, TechCorp</div>
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="directEmail" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Work Email</Label>
-                <Input
-                  id="directEmail"
-                  type="email"
-                  value={directEmail}
-                  onChange={(e) => setDirectEmail(e.target.value)}
-                  placeholder="john@acme.com"
-                  className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
-                />
+            </GlassPanel>
+            <GlassPanel material="glass" depth="mid" className="p-6 border-white/8 shadow-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="h-6 w-6 text-teal-400" />
+                <h3 className="text-lg font-bold text-white">Enterprise Security</h3>
               </div>
-            </div>
-          </GlassPanel>
+              <p className="text-sm text-slate-400">SOC 2 compliant, GDPR ready, and PII encrypted</p>
+            </GlassPanel>
+            <GlassPanel material="glass" depth="mid" className="p-6 border-white/8 shadow-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="h-6 w-6 text-violet-400" />
+                <h3 className="text-lg font-bold text-white">Instant Setup</h3>
+              </div>
+              <p className="text-sm text-slate-400">Book in 30 seconds, get started in minutes</p>
+            </GlassPanel>
+          </div>
         </Section>
 
         <div className="grid gap-10 lg:grid-cols-[1fr,380px]">
           <div className="space-y-4">
+            {/* Essential Form Fields */}
+            <Section delay={0.15}>
+              <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl">
+                <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 text-teal-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Essential Information
+                </h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label htmlFor="directName" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name *</Label>
+                    <Input
+                      id="directName"
+                      value={directName}
+                      onChange={(e) => setDirectName(e.target.value)}
+                      placeholder="John Doe"
+                      className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="directEmail" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Work Email *</Label>
+                    <Input
+                      id="directEmail"
+                      type="email"
+                      value={directEmail}
+                      onChange={(e) => setDirectEmail(e.target.value)}
+                      placeholder="john@acme.com"
+                      className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
+                      required
+                    />
+                  </div>
+                </div>
+              </GlassPanel>
+            </Section>
+
+            {/* Scheduling Tool Selection */}
             <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="space-y-2">
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest">Preferred Scheduling Tool</h3>
@@ -329,7 +388,7 @@ function BookDemoContent() {
                   <Button
                     onClick={handleCustomMeetingSubmit}
                     disabled={isSubmittingCustom}
-                    className="w-full h-13 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold text-sm uppercase tracking-wider transition-all shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
+                    className="w-full h-13 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-semibold text-sm uppercase tracking-wider transition-all shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
                   >
                     {isSubmittingCustom ? (
                       <>
@@ -337,7 +396,10 @@ function BookDemoContent() {
                         Connecting...
                       </>
                     ) : (
-                      "Confirm Custom Booking"
+                      <>
+                        Confirm Custom Booking
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </>
                     )}
                   </Button>
                 </div>
@@ -356,7 +418,29 @@ function BookDemoContent() {
           </div>
 
           <aside className="space-y-8">
+            {/* Benefits */}
             <Section delay={0.3}>
+              <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl space-y-6">
+                <h3 className="text-sm font-bold text-white uppercase tracking-widest text-indigo-300 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 shrink-0" />
+                  What to Expect
+                </h3>
+                <ul className="space-y-5">
+                  {BENEFITS.map((benefit, i) => (
+                    <li key={i} className="flex gap-4">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-teal-400" />
+                      <div className="space-y-1">
+                        <strong className="text-white block text-sm">{benefit.title}</strong>
+                        <span className="text-xs text-slate-400 leading-relaxed">{benefit.desc}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </GlassPanel>
+            </Section>
+
+            {/* Session Settings */}
+            <Section delay={0.4}>
               <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl space-y-7">
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest text-teal-300 flex items-center gap-2">
                   <Clock className="h-5 w-5 shrink-0" />
@@ -390,26 +474,6 @@ function BookDemoContent() {
                     </Button>
                   </Link>
                 </div>
-              </GlassPanel>
-            </Section>
-
-            <Section delay={0.4}>
-              <GlassPanel material="glass" depth="mid" className="p-8 border-white/8 shadow-xl space-y-6">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest text-indigo-300 flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 shrink-0" />
-                  What to Expect
-                </h3>
-                <ul className="space-y-5">
-                  {BENEFITS.map((benefit, i) => (
-                    <li key={i} className="flex gap-4">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-teal-400" />
-                      <div className="space-y-1">
-                        <strong className="text-white block text-sm">{benefit.title}</strong>
-                        <span className="text-xs text-slate-400 leading-relaxed">{benefit.desc}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               </GlassPanel>
             </Section>
           </aside>
@@ -503,7 +567,7 @@ function BookDemoContent() {
                 </div>
                 <Button
                   onClick={handleCustomMeetingSubmit}
-                  className="w-full bg-teal-500 hover:bg-teal-400 h-13 text-sm font-semibold uppercase tracking-wider rounded-xl shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 transition-all hover:-translate-y-0.5"
+                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 h-13 text-sm font-semibold uppercase tracking-wider rounded-xl shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 transition-all hover:-translate-y-0.5"
                   disabled={isSubmittingCustom}
                 >
                   {isSubmittingCustom ? (

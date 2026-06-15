@@ -30,6 +30,9 @@ import {
   demoCallRecords,
   demoCustomerFeedback,
   demoAgentMetrics,
+  demoRequirements,
+  demoGTMReports,
+  demoCustomerGTMData,
 } from "@/lib/portal-demo-data";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -46,9 +49,9 @@ import { type AgentSession, type AgentAssignmentNotification, getRevenueAgentCat
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: Activity },
   { id: "requirements", label: "Requirements", icon: FileText },
+  { id: "gtm-reports", label: "GTM Reports", icon: BarChart3 },
   { id: "agents", label: "Agents", icon: Users },
   { id: "interactions", label: "Interactions", icon: MessageSquare },
-  { id: "reports", label: "Reports", icon: BarChart3 },
 ] as const;
 
 function AdminPortalContent() {
@@ -62,6 +65,11 @@ function AdminPortalContent() {
     title: string;
     message: string;
   } | null>(null);
+  const [requirements, setRequirements] = useState(demoRequirements);
+  const [gtmReports, setGtmReports] = useState(demoGTMReports);
+  const [customerGTMData, setCustomerGTMData] = useState(demoCustomerGTMData);
+  const [showReassignReqModal, setShowReassignReqModal] = useState(false);
+  const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
   
   // Get dynamic names from demo data
   const firstAgent = demoUsers.find(u => u.role === "agent");
@@ -90,9 +98,9 @@ function AdminPortalContent() {
   
   // Search & Filters state
   const [reqSearch, setReqSearch] = useState("");
-  const [filterIndustry, setFilterIndustry] = useState("all");
-  const [filterCompanySize, setFilterCompanySize] = useState("all");
-  const [filterAgent, setFilterAgent] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const fetchLeads = async () => {
     try {
@@ -160,6 +168,89 @@ function AdminPortalContent() {
       });
     } finally {
       setReassigning(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+
+  const handleReassignReq = (reqId: string) => {
+    setSelectedReqId(reqId);
+    setShowReassignReqModal(true);
+  };
+
+  const confirmReassignReq = (newAgentId: string) => {
+    const agent = agents.find(a => a.id === newAgentId);
+    setRequirements(requirements.map(req => {
+      if (req.id === selectedReqId) {
+        return {
+          ...req,
+          assignedAgentId: newAgentId,
+          assignedAgentName: agent?.name,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return req;
+    }));
+    setShowReassignReqModal(false);
+    setSelectedReqId(null);
+    setNotification({
+      type: "success",
+      title: "Agent Reassigned",
+      message: `Requirement reassigned to ${agent?.name}`,
+    });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  const handleUpdateReqStatus = (reqId: string, newStatus: string) => {
+    setRequirements(requirements.map(req => {
+      if (req.id === reqId) {
+        return { ...req, status: newStatus as any, updatedAt: new Date().toISOString() };
+      }
+      return req;
+    }));
+    setNotification({
+      type: "success",
+      title: "Status Updated",
+      message: "Requirement status has been updated",
+    });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  const autoAssignReq = (reqId: string) => {
+    // Auto-assign based on workload - pick the agent with the least requirements
+    const agentWorkloads = new Map();
+    agents.forEach(agent => {
+      const agentReqs = requirements.filter(r => r.assignedAgentId === agent.id);
+      agentWorkloads.set(agent.id, agentReqs.length);
+    });
+    
+    let bestAgent: typeof agents[0] | undefined;
+    let minWorkload = Infinity;
+    agents.forEach(agent => {
+      const workload = agentWorkloads.get(agent.id) || 0;
+      if (workload < minWorkload) {
+        minWorkload = workload;
+        bestAgent = agent;
+      }
+    });
+
+    if (bestAgent) {
+      setRequirements(requirements.map(req => {
+        if (req.id === reqId) {
+          return {
+            ...req,
+            assignedAgentId: bestAgent!.id,
+            assignedAgentName: bestAgent!.name,
+            status: "In Progress" as const,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return req;
+      }));
+      setNotification({
+        type: "success",
+        title: "Agent Assigned",
+        message: `Requirement auto-assigned to ${bestAgent.name}`,
+      });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -598,7 +689,7 @@ function AdminPortalContent() {
         {activeTab === "requirements" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-slate-100">Customer Requirements & Leads</h2>
+              <h2 className="text-2xl font-bold text-slate-100">Customer Requirements</h2>
               
               {/* Search and Filters */}
               <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
@@ -606,114 +697,152 @@ function AdminPortalContent() {
                   <Input
                     value={reqSearch}
                     onChange={(e) => setReqSearch(e.target.value)}
-                    placeholder="Search by company or customer..."
+                    placeholder="Search by customer or description..."
                     className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
                   />
                 </div>
                 <select
-                  value={filterIndustry}
-                  onChange={(e) => setFilterIndustry(e.target.value)}
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
                   className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="all">All Industries</option>
-                  {Array.from(new Set(leads.flatMap(l => l.targetIndustries || []))).map(ind => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
+                  <option value="all">All Categories</option>
+                  <option value="Technical Support">Technical Support</option>
+                  <option value="Feature Request">Feature Request</option>
+                  <option value="Billing Issue">Billing Issue</option>
+                  <option value="General Inquiry">General Inquiry</option>
                 </select>
                 <select
-                  value={filterCompanySize}
-                  onChange={(e) => setFilterCompanySize(e.target.value)}
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
                   className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="all">All Company Sizes</option>
-                  {Array.from(new Set(leads.flatMap(l => l.targetCompanySizes || []))).map(sz => (
-                    <option key={sz} value={sz}>{sz}</option>
-                  ))}
+                  <option value="all">All Priorities</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
                 </select>
                 <select
-                  value={filterAgent}
-                  onChange={(e) => setFilterAgent(e.target.value)}
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
                   className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="all">All Agents</option>
-                  {Object.entries(AGENT_FULL_NAMES).map(([key, name]) => (
-                    <option key={key} value={key}>{name}</option>
-                  ))}
+                  <option value="all">All Statuses</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
                 </select>
               </div>
             </div>
 
-            {/* Leads Listing */}
+            {/* Requirements Listing */}
             <div className="grid grid-cols-1 gap-4">
-              {leads
-                .filter(lead => {
+              {requirements
+                .filter(req => {
                   const searchMatches = 
-                    lead.companyName?.toLowerCase().includes(reqSearch.toLowerCase()) ||
-                    lead.name?.toLowerCase().includes(reqSearch.toLowerCase());
-                  
-                  const industryMatches = 
-                    filterIndustry === "all" || 
-                    (Array.isArray(lead.targetIndustries) && lead.targetIndustries.includes(filterIndustry)) ||
-                    lead.targetIndustries === filterIndustry;
-                    
-                  const companySizeMatches = 
-                    filterCompanySize === "all" || 
-                    (Array.isArray(lead.targetCompanySizes) && lead.targetCompanySizes.includes(filterCompanySize)) ||
-                    lead.targetCompanySizes === filterCompanySize;
-                    
-                  const agentMatches = 
-                    filterAgent === "all" || 
-                    lead.assignedAgentKey === filterAgent;
-
-                  return searchMatches && industryMatches && companySizeMatches && agentMatches;
+                    req.customerName?.toLowerCase().includes(reqSearch.toLowerCase()) ||
+                    req.description?.toLowerCase().includes(reqSearch.toLowerCase());
+                  const categoryMatches = filterCategory === "all" || req.category === filterCategory;
+                  const priorityMatches = filterPriority === "all" || req.priority === filterPriority;
+                  const statusMatches = filterStatus === "all" || req.status === filterStatus;
+                  return searchMatches && categoryMatches && priorityMatches && statusMatches;
                 })
-                .map((lead) => (
-                  <GlassPanel key={lead.id} tilt={false} className="border-slate-700/50">
+                .map((req) => (
+                  <GlassPanel key={req.id} tilt={false} className="border-slate-700/50">
                     <CardContent className="p-6 space-y-4">
                       <div className="flex justify-between items-start flex-wrap gap-4">
                         <div>
-                          <h3 className="text-xl font-bold text-slate-100">{lead.companyName}</h3>
-                          <p className="text-sm text-teal-400 mt-0.5">{lead.websiteUrl || lead.website || "No website specified"}</p>
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-slate-100">{req.category}</h3>
+                            <span
+                              className={cn(
+                                "px-3 py-1 rounded-full text-xs font-semibold",
+                                req.priority === "Critical"
+                                  ? "bg-red-500/15 text-red-400"
+                                  : req.priority === "High"
+                                  ? "bg-orange-500/15 text-orange-400"
+                                  : req.priority === "Medium"
+                                  ? "bg-yellow-500/15 text-yellow-400"
+                                  : "bg-green-500/15 text-green-400"
+                              )}
+                            >
+                              {req.priority}
+                            </span>
+                            <span
+                              className={cn(
+                                "px-3 py-1 rounded-full text-xs font-semibold capitalize",
+                                req.status === "Resolved"
+                                  ? "bg-green-500/15 text-green-400"
+                                  : req.status === "In Progress"
+                                  ? "bg-yellow-500/15 text-yellow-400"
+                                  : "bg-slate-500/15 text-slate-400"
+                              )}
+                            >
+                              {req.status}
+                            </span>
+                          </div>
                           <p className="text-xs text-slate-400 mt-2">
-                            Contact: <strong>{lead.name}</strong> ({lead.emailPersonal})
+                            Customer: <strong>{req.customerName}</strong> ({req.requesterEmail})<br/>
+                            Submitted: {new Date(req.createdAt).toLocaleString()}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <div className="bg-slate-800 border border-slate-750 px-4 py-2 rounded-xl text-right">
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Assigned Agent</p>
                             <p className="text-sm font-semibold text-slate-200 mt-0.5">
-                              {AGENT_FULL_NAMES[lead.assignedAgentKey as keyof typeof AGENT_FULL_NAMES] || "Unassigned"}
+                              {req.assignedAgentName || "Unassigned"}
                             </p>
                           </div>
-                          <ExtrudedButton
-                            className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
-                            onClick={() => {
-                              setReassignLeadId(lead.id);
-                              setSelectedNewAgentKey(lead.assignedAgentKey || "");
-                              setShowReassignModal(true);
-                            }}
-                          >
-                            Reassign Agent
-                          </ExtrudedButton>
+                          {!req.assignedAgentId && (
+                            <ExtrudedButton
+                              className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
+                              onClick={() => autoAssignReq(req.id)}
+                            >
+                              Auto-Assign
+                            </ExtrudedButton>
+                          )}
+                          {req.assignedAgentId && (
+                            <ExtrudedButton
+                              className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
+                              onClick={() => handleReassignReq(req.id)}
+                            >
+                              Reassign Agent
+                            </ExtrudedButton>
+                          )}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-800 pt-4 text-sm">
-                        <div>
-                          <strong className="text-slate-400">Offer Promise:</strong>
-                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">{lead.offerPromise || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <strong className="text-slate-400">ICP Description:</strong>
-                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">{lead.icpDescription || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <strong className="text-slate-400">Targeting details:</strong>
-                          <p className="text-slate-200 mt-1 text-xs leading-relaxed">
-                            Industries: {Array.isArray(lead.targetIndustries) ? lead.targetIndustries.join(", ") : lead.targetIndustries || "None"}<br/>
-                            Company Sizes: {Array.isArray(lead.targetCompanySizes) ? lead.targetCompanySizes.join(", ") : lead.targetCompanySizes || "None"}<br/>
-                            Geographics: {lead.targetGeographicRegionsText || (Array.isArray(lead.targetGeographics) ? lead.targetGeographics.join(", ") : "None")}
-                          </p>
+                      <div className="border-t border-slate-800 pt-4">
+                        <p className="text-slate-300 mb-4">{req.description}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {req.status !== "Resolved" && req.status !== "Closed" && (
+                            <>
+                              <ExtrudedButton
+                                className="bg-green-600 hover:bg-green-700 text-xs px-3 h-8 gap-1"
+                                onClick={() => handleUpdateReqStatus(req.id, "Resolved")}
+                              >
+                                Mark Resolved
+                              </ExtrudedButton>
+                              {req.status === "Open" && (
+                                <ExtrudedButton
+                                  className="bg-yellow-600 hover:bg-yellow-700 text-xs px-3 h-8 gap-1"
+                                  onClick={() => handleUpdateReqStatus(req.id, "In Progress")}
+                                >
+                                  Start Progress
+                                </ExtrudedButton>
+                              )}
+                            </>
+                          )}
+                          {req.status === "Resolved" && (
+                            <ExtrudedButton
+                              className="bg-blue-600 hover:bg-blue-700 text-xs px-3 h-8 gap-1"
+                              onClick={() => handleUpdateReqStatus(req.id, "Closed")}
+                            >
+                              Close
+                            </ExtrudedButton>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -721,8 +850,8 @@ function AdminPortalContent() {
                 ))}
             </div>
 
-            {/* Reassign Agent Modal */}
-            {showReassignModal && (
+            {/* Reassign Requirement Modal */}
+            {showReassignReqModal && selectedReqId && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
                 <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-700 shadow-2xl">
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -730,63 +859,165 @@ function AdminPortalContent() {
                     <button
                       className="text-slate-400 hover:text-white p-1"
                       onClick={() => {
-                        setShowReassignModal(false);
-                        setReassignLeadId(null);
+                        setShowReassignReqModal(false);
+                        setSelectedReqId(null);
                       }}
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleReassign} className="space-y-4">
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="new-agent-select" className="text-slate-300">Select Qualified Agent</Label>
+                        <Label className="text-slate-300">Select New Agent</Label>
                         <select
-                          id="new-agent-select"
-                          value={selectedNewAgentKey}
-                          onChange={(e) => setSelectedNewAgentKey(e.target.value)}
                           className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                          required
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              confirmReassignReq(e.target.value);
+                            }
+                          }}
                         >
                           <option value="">Select Agent...</option>
-                          {getRevenueAgentCatalog().map((agent) => (
-                            <option key={agent.key} value={agent.key}>
-                              {agent.name} ({agent.expertise.join(", ")})
-                            </option>
+                          {agents.map(agent => (
+                            <option key={agent.id} value={agent.id}>{agent.name}</option>
                           ))}
                         </select>
                       </div>
-
-                      <div className="flex gap-3 pt-4">
-                        <ExtrudedButton
-                          type="button"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setShowReassignModal(false);
-                            setReassignLeadId(null);
-                          }}
-                        >
-                          Cancel
-                        </ExtrudedButton>
-                        <ExtrudedButton
-                          type="submit"
-                          className="flex-1 bg-teal-600 hover:bg-teal-700 gap-2"
-                          disabled={reassigning || !selectedNewAgentKey}
-                        >
-                          {reassigning ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4" />
-                          )}
-                          {reassigning ? "Saving..." : "Confirm Reassign"}
-                        </ExtrudedButton>
-                      </div>
-                    </form>
+                      <ExtrudedButton
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setShowReassignReqModal(false);
+                          setSelectedReqId(null);
+                        }}
+                      >
+                        Cancel
+                      </ExtrudedButton>
+                    </div>
                   </CardContent>
                 </GlassPanel>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "gtm-reports" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-100">GTM Analysis Reports</h2>
+            
+            {/* Customer-Submitted GTM Data */}
+            <div>
+              <h3 className="text-lg font-bold text-slate-100 mb-4">Customer-Submitted GTM Data</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {customerGTMData.map((data) => (
+                  <GlassPanel key={data.id} tilt={true} className="border-slate-700">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl text-slate-100 font-bold">
+                          {demoUsers.find(u => u.id === data.customerId)?.name || "Customer"}'s Submission
+                        </CardTitle>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Submitted by {data.submittedBy} on {new Date(data.submittedAt).toLocaleString()}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {Object.entries(data.data).map(([key, value]) => (
+                          <div key={key}>
+                            <p className="text-sm text-slate-400 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                            <p className="text-slate-200">
+                              {Array.isArray(value) ? value.join(", ") : value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </GlassPanel>
+                ))}
+              </div>
+            </div>
+
+            {/* All GTM Reports */}
+            <div>
+              <h3 className="text-lg font-bold text-slate-100 mb-4">All GTM Reports</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {gtmReports.map((report) => (
+                  <GlassPanel key={report.id} tilt={true} className="border-slate-700">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl text-slate-100 font-bold">
+                          {demoUsers.find(u => u.id === report.customerId)?.name || "Customer"} - {report.reportName}
+                        </CardTitle>
+                        <span
+                          className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold",
+                            report.reportType === "internal"
+                              ? "bg-blue-500/15 text-blue-400"
+                              : "bg-green-500/15 text-green-400"
+                          )}
+                        >
+                          {report.reportType}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {new Date(report.dateRange.start).toLocaleDateString()} - {new Date(report.dateRange.end).toLocaleDateString()}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="text-center">
+                          <p className="text-slate-400 text-xs uppercase tracking-wider">Lead Conversion</p>
+                          <p className="text-2xl font-bold text-green-400">{report.leadConversionRate}%</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-slate-400 text-xs uppercase tracking-wider">Market Penetration</p>
+                          <p className="text-2xl font-bold text-blue-400">{report.marketPenetration}%</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-slate-400 text-xs uppercase tracking-wider">Pipeline Value</p>
+                          <p className="text-2xl font-bold text-purple-400">${report.pipelineValue.toLocaleString()}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-slate-400 text-xs uppercase tracking-wider">Campaign Effectiveness</p>
+                          <p className="text-2xl font-bold text-amber-400">{report.campaignEffectiveness}%</p>
+                        </div>
+                      </div>
+                      {report.region && <p className="text-sm text-slate-400 mb-1"><strong>Region:</strong> {report.region}</p>}
+                      {report.segment && <p className="text-sm text-slate-400"><strong>Segment:</strong> {report.segment}</p>}
+                      <div className="flex gap-2 mt-4">
+                        <ExtrudedButton
+                          className="bg-teal-600 hover:bg-teal-700"
+                          onClick={() => {
+                            const csv = [
+                              ["Metric", "Value"],
+                              ["Report Name", report.reportName],
+                              ["Report Type", report.reportType],
+                              ["Lead Conversion Rate", `${report.leadConversionRate}%`],
+                              ["Market Penetration", `${report.marketPenetration}%`],
+                              ["Pipeline Value", `$${report.pipelineValue.toLocaleString()}`],
+                              ["Campaign Effectiveness", `${report.campaignEffectiveness}%`],
+                              ["Region", report.region || "N/A"],
+                              ["Segment", report.segment || "N/A"],
+                            ].map(row => row.join(",")).join("\n");
+                            const blob = new Blob([csv], { type: "text/csv" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${report.reportName.replace(/\s+/g, "_")}.csv`;
+                            a.click();
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export CSV
+                        </ExtrudedButton>
+                      </div>
+                    </CardContent>
+                  </GlassPanel>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -945,7 +1176,7 @@ function AdminPortalContent() {
                       </p>
                       <p className="text-sm text-slate-300 mt-1">{msg.content}</p>
                       <p className="text-xs text-slate-500 mt-2">
-                        {new Date(msg.createdAt || msg.timestamp || "").toLocaleString()}
+                        {new Date(msg.timestamp || "").toLocaleString()}
                       </p>
                     </div>
                   ))}
@@ -955,61 +1186,7 @@ function AdminPortalContent() {
           </div>
         )}
 
-        {activeTab === "reports" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 font-bold">Performance Report</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-300">Generate team performance reports.</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <ExtrudedButton className="bg-teal-600 hover:bg-teal-700">
-                      Generate Daily Report
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      Generate Weekly Report
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      Generate Monthly Report
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      Custom Range
-                    </ExtrudedButton>
-                  </div>
-                </CardContent>
-              </GlassPanel>
 
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 font-bold">Export Data</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-slate-300">Export portal data to various formats.</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <ExtrudedButton variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export Tasks (CSV)
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export Feedback (CSV)
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export Metrics (JSON)
-                    </ExtrudedButton>
-                    <ExtrudedButton variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export Calls (JSON)
-                    </ExtrudedButton>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

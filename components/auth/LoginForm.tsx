@@ -155,33 +155,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
           </div>
         </div>
 
-        {showMfa && role === "admin" && (
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-orange-400" />
-              Two-Factor Authentication Code
-            </label>
-            <SunkenInput
-              type="text"
-              value={formData.mfaCode}
-              onChange={(e) => setFormData({ ...formData, mfaCode: e.target.value })}
-              placeholder="Enter 6-digit code"
-              disabled={isSubmitting}
-              maxLength={6}
-              className="border-orange-500/30 focus-visible:ring-orange-500 focus-visible:border-orange-500 tracking-widest text-center"
-            />
-          </div>
-        )}
 
-        {/* MFA Info for Admin */}
-        {role === "admin" && !showMfa && (
-          <div className="flex items-start gap-2 p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
-            <ShieldCheck className="h-5 w-5 text-orange-400 shrink-0 mt-0.5" />
-            <div className="text-xs text-slate-300">
-              <span className="font-semibold text-orange-300">Security Note:</span> Admin accounts require two-factor authentication (2FA) for access (demo mode accepts any 6-digit code).
-            </div>
-          </div>
-        )}
 
         <ExtrudedButton
           type="submit"
@@ -213,7 +187,6 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
         <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
           <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
           <p className="text-xs text-slate-300 font-mono">admin@dealflow.ai / AdminDF</p>
-          <p className="text-xs text-slate-400 mt-1">Enter any 6-digit code for MFA</p>
         </div>
       )}
       

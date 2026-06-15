@@ -13,13 +13,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Sparkles,
-  Target,
   Database,
   Cpu,
   GitBranch,
   Network,
   PlayCircle,
   Bot,
+  Target,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 const IntakeForm = lazy(() => import("@/components/IntakeForm").then((m) => ({ default: m.IntakeForm })));
@@ -52,13 +52,6 @@ const HolographicGTM = React.memo(function HolographicGTM() {
   
   const sections = [
     {
-      title: "ICP Definition",
-      description: "Precision targeting filters",
-      icon: Target,
-      color: "text-teal-400",
-      glowColor: "rgba(20, 184, 166, 0.4)",
-    },
-    {
       title: "Pipeline Analysis",
       description: "Funnel drop-off triage",
       icon: TrendingUp,
@@ -83,7 +76,7 @@ const HolographicGTM = React.memo(function HolographicGTM() {
 
   // Console simulation for Execution Engine tab
   useEffect(() => {
-    if (activeSection !== 3) return;
+    if (activeSection !== 2) return;
     const phrases = [
       "→ Initializing outbound workflow...",
       "✔ Matched lead: Acme Corp (98% ICP Fit)",
@@ -169,26 +162,8 @@ const HolographicGTM = React.memo(function HolographicGTM() {
 
               {/* Graphical Visualizations based on Selected Tab */}
               <div className="flex-grow flex items-center justify-center min-h-[110px]">
-                {/* 1. ICP Definition Visual */}
+                {/* 1. Pipeline Analysis Visual (Line Chart) */}
                 {activeSection === 0 && (
-                  <div className="w-full grid grid-cols-3 gap-2.5">
-                    <div className="p-3 rounded-xl border border-teal-500/20 bg-teal-500/5 text-center">
-                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Fit Score</span>
-                      <span className="text-lg font-mono font-bold text-teal-400">98.4%</span>
-                    </div>
-                    <div className="p-3 rounded-xl border border-white/5 bg-white/5 text-center">
-                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Geography</span>
-                      <span className="text-[11px] font-mono font-bold text-white">US / EMEA</span>
-                    </div>
-                    <div className="p-3 rounded-xl border border-white/5 bg-white/5 text-center">
-                      <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Industry</span>
-                      <span className="text-[11px] font-mono font-bold text-white">B2B SaaS</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Pipeline Analysis Visual (Line Chart) */}
-                {activeSection === 1 && (
                   <div className="w-full h-24 relative flex items-end">
                     <svg className="w-full h-full" viewBox="0 0 200 80">
                       {/* Grid Lines */}
@@ -217,8 +192,8 @@ const HolographicGTM = React.memo(function HolographicGTM() {
                   </div>
                 )}
 
-                {/* 3. Agent Assignment Visual */}
-                {activeSection === 2 && (
+                {/* 2. Agent Assignment Visual */}
+                {activeSection === 1 && (
                   <div className="w-full space-y-2">
                     <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
                       <div className="flex items-center gap-2">
@@ -241,8 +216,8 @@ const HolographicGTM = React.memo(function HolographicGTM() {
                   </div>
                 )}
 
-                {/* 4. Execution Engine Visual (Console logs) */}
-                {activeSection === 3 && (
+                {/* 3. Execution Engine Visual (Console logs) */}
+                {activeSection === 2 && (
                   <div className="w-full font-mono text-[9px] text-amber-400 bg-[#0a0500]/60 p-2.5 rounded-lg border border-amber-500/10 space-y-1 overflow-hidden h-24">
                     {consoleLogs.map((log, i) => (
                       <div key={i} className="truncate select-none">

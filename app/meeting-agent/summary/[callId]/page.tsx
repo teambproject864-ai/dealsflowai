@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { db } from "@/lib/firebase-client";
+import { getDb } from "@/lib/firebase-client";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,15 +23,21 @@ export default function CallSummaryPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const callDoc = await getDoc(doc(db, "calls", callId));
+      const firestore = getDb();
+      if (!firestore) {
+        console.log('[Call Summary] Firebase not initialized, using demo data');
+        setLoading(false);
+        return;
+      }
+      const callDoc = await getDoc(doc(firestore, "calls", callId));
       if (!callDoc.exists()) return;
       const cData = callDoc.data();
       setCall(cData);
 
       const [lDoc, sSnapshot] = await Promise.all([
-        getDoc(doc(db, "leads", cData.leadId)),
+        getDoc(doc(firestore, "leads", cData.leadId)),
         getDocs(query(
-          collection(db, "summaries"), 
+          collection(firestore, "summaries"), 
           where("callId", "==", callId),
           where("type", "==", "post-call"),
           orderBy("sentAt", "desc"),

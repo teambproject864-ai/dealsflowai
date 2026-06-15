@@ -101,8 +101,8 @@ export const DEMO_CUSTOMERS: DemoCustomer[] = [
   {
     id: "customer-anil",
     email: "anil@cralgo.com",
-    // Hashed password for "Anil@DealFlow2026!"
-    hashedPassword: "$2b$12$fAXWcrwf7Bxr6D0h9jPv0uXZ5iBYMiPgWzQXYWQT8cOtzcZibP6re",
+    // Hashed password for "Anil@123!"
+    hashedPassword: "$2b$12$4nI.PqBx9Wr8si749DrYquPZ0l1Eceo1/aRfyj2fyDLjVEY0Yd/s2",
     name: "Anil Kumar",
     role: "customer",
   },

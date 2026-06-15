@@ -6,7 +6,14 @@ import type {
   CustomerFeedback,
   AgentPerformanceMetrics,
   AgentCredits,
-} from "@/lib/types";
+  CustomerCredits,
+  Requirement,
+  GTMReportMetric,
+  CustomerGTMData,
+  ScheduledReport,
+  Ticket,
+  NotificationPreferences,
+} from "@/lib/portal-types";
 
 // Demo users
 export const demoUsers: PortalUser[] = [
@@ -73,6 +80,13 @@ export const demoUsers: PortalUser[] = [
     role: "customer",
     createdAt: "2024-03-10T00:00:00Z",
   },
+  {
+    id: "customer-anil",
+    email: "anil@cralgo.com",
+    name: "Anil Kumar",
+    role: "customer",
+    createdAt: "2026-06-15T00:00:00Z",
+  },
 ];
 
 // Demo tasks
@@ -84,7 +98,6 @@ export const demoTasks: Task[] = [
     status: "in-progress",
     assignedAgentId: "agent-praneeth",
     customerId: "customer-demo",
-    customerName: "Demo Customer",
     priority: "high",
     progressNotes: ["Initial contact made", "Schedule meeting for next week"],
     milestones: [
@@ -102,7 +115,6 @@ export const demoTasks: Task[] = [
     status: "todo",
     assignedAgentId: "agent-ashok",
     customerId: "customer-demo",
-    customerName: "Demo Customer",
     priority: "medium",
     progressNotes: [],
     milestones: [
@@ -119,7 +131,6 @@ export const demoTasks: Task[] = [
     status: "completed",
     assignedAgentId: "agent-kiran",
     customerId: "customer-demo",
-    customerName: "Demo Customer",
     priority: "low",
     progressNotes: ["Feedback collected", "Analysis complete"],
     milestones: [
@@ -140,7 +151,6 @@ export const demoChatMessages: ChatMessage[] = [
     senderName: "Demo Customer",
     senderRole: "customer",
     content: "Hi, I'd like to discuss my GTM strategy.",
-    createdAt: "2024-05-20T10:00:00Z",
     timestamp: "2024-05-20T10:00:00Z",
     read: true,
   },
@@ -151,7 +161,6 @@ export const demoChatMessages: ChatMessage[] = [
     senderName: "Praneeth",
     senderRole: "agent",
     content: "Great! Let's schedule a call this week. Here's the GTM analysis report for reference.",
-    createdAt: "2024-05-20T10:15:00Z",
     timestamp: "2024-05-20T10:15:00Z",
     read: true,
     attachments: [
@@ -420,5 +429,308 @@ export const demoAgentCredits: AgentCredits[] = [
         createdAt: "2024-05-29T11:15:00Z",
       },
     ],
+  },
+];
+
+// Demo Customer Credits
+export const demoCustomerCredits: CustomerCredits[] = [
+  {
+    customerId: "customer-demo",
+    balance: 25,
+    totalPurchased: 30,
+    totalSpent: 5,
+    transactions: [
+      {
+        id: "ctx-1",
+        type: "bonus",
+        amount: 10,
+        description: "Welcome bonus for new customers",
+        createdAt: "2024-03-10T10:00:00Z",
+      },
+      {
+        id: "ctx-2",
+        type: "purchase",
+        amount: 20,
+        description: "Purchased 20 credits",
+        createdAt: "2024-04-15T14:30:00Z",
+      },
+      {
+        id: "ctx-3",
+        type: "consultation",
+        amount: -5,
+        description: "Spent on GTM strategy consultation",
+        createdAt: "2024-05-01T09:15:00Z",
+      },
+    ],
+  },
+  {
+    customerId: "customer-anil",
+    balance: 15,
+    totalPurchased: 15,
+    totalSpent: 0,
+    transactions: [
+      {
+        id: "ctx-anil-1",
+        type: "bonus",
+        amount: 10,
+        description: "Welcome bonus for new customers",
+        createdAt: "2026-06-15T09:00:00Z",
+      },
+      {
+        id: "ctx-anil-2",
+        type: "purchase",
+        amount: 5,
+        description: "Initial credit purchase",
+        createdAt: "2026-06-15T09:30:00Z",
+      },
+    ],
+  },
+];
+
+// Demo Requirements
+export const demoRequirements: Requirement[] = [
+  {
+    id: "req-1",
+    customerId: "customer-demo",
+    customerName: "Demo Customer",
+    requesterName: "Demo Customer",
+    requesterEmail: "demo@customer.com",
+    category: "Feature Request",
+    description: "We need a mobile app integration for our CRM.",
+    priority: "High",
+    status: "In Progress",
+    assignedAgentId: "agent-praneeth",
+    assignedAgentName: "Praneeth",
+    createdAt: "2026-06-14T10:00:00Z",
+    updatedAt: "2026-06-14T11:30:00Z",
+  },
+  {
+    id: "req-2",
+    customerId: "customer-anil",
+    customerName: "Anil Kumar",
+    requesterName: "Anil Kumar",
+    requesterEmail: "anil@cralgo.com",
+    category: "Billing Issue",
+    description: "Invoice was charged twice this month.",
+    priority: "Critical",
+    status: "Open",
+    assignedAgentId: "agent-ashok",
+    assignedAgentName: "Ashok",
+    createdAt: "2026-06-15T08:00:00Z",
+    updatedAt: "2026-06-15T08:00:00Z",
+  },
+];
+
+// Demo GTM Reports
+export const demoGTMReports: GTMReportMetric[] = [
+  {
+    id: "gtm-daily-1",
+    customerId: "customer-demo",
+    reportName: "Daily GTM Analysis - June 15, 2026",
+    reportType: "customer-submitted",
+    reportFrequency: "daily",
+    dateRange: {
+      start: "2026-06-15T00:00:00Z",
+      end: "2026-06-15T23:59:59Z",
+    },
+    leadConversionRate: 26.1,
+    marketPenetration: 19.3,
+    pipelineValue: 265000,
+    campaignEffectiveness: 87.2,
+    region: "North America",
+    segment: "Enterprise",
+    dailyMetrics: [
+      { date: "2026-06-13", leadConversionRate: 25.5, marketPenetration: 18.9, pipelineValue: 260000, campaignEffectiveness: 86.5 },
+      { date: "2026-06-14", leadConversionRate: 25.8, marketPenetration: 19.1, pipelineValue: 262000, campaignEffectiveness: 86.9 },
+      { date: "2026-06-15", leadConversionRate: 26.1, marketPenetration: 19.3, pipelineValue: 265000, campaignEffectiveness: 87.2 },
+    ],
+    actionableSuggestions: [
+      {
+        id: "suggestion-1",
+        title: "Optimize Ad Copy for Mid-Market Segment",
+        description: "Recent data shows 12% lower conversion rates for mid-market leads. Refine messaging to highlight scalability features.",
+        priority: "high",
+        estimatedImpact: "Increase conversion rate by 3-5%",
+      },
+      {
+        id: "suggestion-2",
+        title: "Expand Content Marketing in Europe",
+        description: "European market penetration remains below target. Increase blog and whitepaper production in local languages.",
+        priority: "medium",
+        estimatedImpact: "Increase market share by 2-3% in 90 days",
+      },
+    ],
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
+  },
+  {
+    id: "gtm-weekly-1",
+    customerId: "customer-demo",
+    reportName: "Weekly GTM Analysis - Week of June 10, 2026",
+    reportType: "customer-submitted",
+    reportFrequency: "weekly",
+    dateRange: {
+      start: "2026-06-10T00:00:00Z",
+      end: "2026-06-16T23:59:59Z",
+    },
+    leadConversionRate: 25.8,
+    marketPenetration: 19.1,
+    pipelineValue: 263000,
+    campaignEffectiveness: 87.1,
+    region: "North America",
+    segment: "Enterprise",
+    weeklyTrendComparisons: [
+      {
+        weekStart: "2026-06-03",
+        weekEnd: "2026-06-09",
+        leadConversionRateChange: 0.8,
+        marketPenetrationChange: 0.5,
+        pipelineValueChange: 3000,
+        campaignEffectivenessChange: 0.9,
+      },
+    ],
+    actionableSuggestions: [
+      {
+        id: "suggestion-3",
+        title: "Leverage New Sales Enablement Tools",
+        description: "New tools released last week show 15% faster close times. Ensure all reps are trained by end of month.",
+        priority: "high",
+        estimatedImpact: "Reduce sales cycle length by 10-12%",
+      },
+    ],
+    createdAt: "2026-06-16T00:00:00Z",
+    updatedAt: "2026-06-16T00:00:00Z",
+  },
+  {
+    id: "gtm-daily-2",
+    customerId: "customer-anil",
+    reportName: "Daily GTM Analysis - June 15, 2026",
+    reportType: "customer-submitted",
+    reportFrequency: "daily",
+    dateRange: {
+      start: "2026-06-15T00:00:00Z",
+      end: "2026-06-15T23:59:59Z",
+    },
+    leadConversionRate: 32.5,
+    marketPenetration: 23.3,
+    pipelineValue: 430000,
+    campaignEffectiveness: 92.8,
+    region: "Asia Pacific",
+    segment: "Mid-Market",
+    actionableSuggestions: [
+      {
+        id: "suggestion-4",
+        title: "Focus on Upsell Opportunities",
+        description: "Existing customers show 20% higher LTV potential. Launch targeted upsell campaigns.",
+        priority: "high",
+        estimatedImpact: "Increase ARR by 8-10%",
+      },
+    ],
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
+  },
+];
+
+// Demo Scheduled Reports
+export const demoScheduledReports: ScheduledReport[] = [
+  {
+    id: "scheduled-1",
+    customerId: "customer-demo",
+    reportFrequency: "daily",
+    recipients: ["demo@customer.com"],
+    fileFormats: ["pdf", "xlsx"],
+    enabled: true,
+    nextSendDate: "2026-06-16T08:00:00Z",
+    createdAt: "2026-06-10T00:00:00Z",
+  },
+  {
+    id: "scheduled-2",
+    customerId: "customer-anil",
+    reportFrequency: "weekly",
+    recipients: ["anil@cralgo.com"],
+    fileFormats: ["pdf"],
+    enabled: true,
+    nextSendDate: "2026-06-17T09:00:00Z",
+    createdAt: "2026-06-13T00:00:00Z",
+  },
+];
+
+// Demo Tickets
+export const demoTickets: Ticket[] = [
+  {
+    id: "ticket-1",
+    customerId: "customer-demo",
+    requesterName: "Demo Customer",
+    requesterEmail: "demo@customer.com",
+    category: "technical-support",
+    subject: "Issue with report generation",
+    description: "Unable to download reports in PDF format since yesterday",
+    priority: "high",
+    status: "in-progress",
+    assignedAgentId: "agent-jane",
+    assignedAgentName: "Jane Smith",
+    createdAt: "2026-06-14T10:00:00Z",
+    updatedAt: "2026-06-14T14:30:00Z",
+  },
+  {
+    id: "ticket-2",
+    customerId: "customer-anil",
+    requesterName: "Anil Kumar",
+    requesterEmail: "anil@cralgo.com",
+    category: "billing",
+    subject: "Question about credit usage",
+    description: "Can you provide a breakdown of credit usage for the past month?",
+    priority: "medium",
+    status: "resolved",
+    assignedAgentId: "agent-john",
+    assignedAgentName: "John Doe",
+    createdAt: "2026-06-12T11:00:00Z",
+    updatedAt: "2026-06-12T15:00:00Z",
+  },
+];
+
+// Demo Notification Preferences
+export const demoNotificationPreferences: Record<string, NotificationPreferences> = {
+  "customer-demo": {
+    emailNotifications: true,
+    inAppNotifications: true,
+    preferredReportFormats: ["pdf", "xlsx"],
+    dailyReportTime: "08:00",
+    weeklyReportDay: "monday",
+  },
+  "customer-anil": {
+    emailNotifications: true,
+    inAppNotifications: true,
+    preferredReportFormats: ["pdf"],
+    dailyReportTime: "09:00",
+    weeklyReportDay: "wednesday",
+  },
+};
+
+// Demo Customer GTM Data (customer-submitted)
+export const demoCustomerGTMData: CustomerGTMData[] = [
+  {
+    id: "customer-gtm-1",
+    customerId: "customer-demo",
+    submittedBy: "Demo Customer",
+    submittedAt: "2026-06-12T10:00:00Z",
+    data: {
+      companyName: "Demo Corp",
+      targetIndustry: "SaaS",
+      currentPipeline: 200000,
+      goals: ["Increase conversion rate", "Expand to Europe"],
+    },
+  },
+  {
+    id: "customer-gtm-2",
+    customerId: "customer-anil",
+    submittedBy: "Anil Kumar",
+    submittedAt: "2026-06-13T14:30:00Z",
+    data: {
+      companyName: "Cralgo",
+      targetIndustry: "Fintech",
+      currentPipeline: 350000,
+      goals: ["Improve campaign ROI", "Grow customer base"],
+    },
   },
 ];

@@ -4,7 +4,7 @@ Last Updated: 2026-06-11
 ## Admin Login
 | Email | Password | Notes |
 |-------|----------|-------|
-| admin@dealflow.ai | AdminDF | Requires 2FA code (any 6-digit number) |
+| admin@dealflow.ai | AdminDF | No 2FA required |
 
 ## Agent Logins
 | Email | Password |
@@ -17,7 +17,7 @@ Last Updated: 2026-06-11
 |-------|----------|
 | demo@customer.com | CustomerDemo123! |
 | praneethburada@gmail.com | Praneeth@123 |
-| anil@cralgo.com | Anil@DealFlow2026! |
+| anil@cralgo.com | Anil@123! |
 
 ## Quickstart
 1. Make sure your dev server is running with `npm run dev`

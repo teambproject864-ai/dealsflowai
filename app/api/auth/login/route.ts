@@ -55,25 +55,8 @@ export async function POST(req: NextRequest) {
         const isValidPassword = await verifyPassword(password, adminHash);
         
         if (isValidPassword) {
-          // Check if MFA is required and provided
-          if (!mfaCode) {
-            return NextResponse.json(
-              { success: false, requireMfa: true, error: "Two-factor authentication required" },
-              { status: 403 }
-            );
-          }
-          
-          // Verify TOTP MFA code
-          const mfaSecret = process.env.ADMIN_MFA_SECRET || "JBSWY3DPEHPK3PXP";
-          const isValidMfa = verifyTOTP(mfaSecret, mfaCode);
-          if (!isValidMfa) {
-            addAuditLog(email, role, false, "Invalid MFA code", ip, userAgent);
-            return NextResponse.json(
-              { success: false, error: "Invalid 2FA code" },
-              { status: 401 }
-            );
-          }
-          
+          // 2FA has been permanently disabled for admin account as per security policy
+          addAuditLog(email, role, true, "Admin logged in with 2FA disabled", ip, userAgent);
           user = { ...DEMO_ADMIN, role: "admin" as const };
         }
       }
