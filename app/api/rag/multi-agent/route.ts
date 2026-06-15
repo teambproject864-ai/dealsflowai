@@ -23,28 +23,43 @@ export async function POST(req: Request) {
     const conversationId = uuidv4();
     const framework = new AgenticFramework(conversationId);
 
-    // Step 1: Create and execute retrieval task
-    const retrievalTask = framework.createTask("Retrieval", { query: body.query, topK: body.topK }, "high");
-
-    // Step 2: If we have a document to add, chunk it first
+    // Step 1: If we have a document to add, chunk it first
     if (body.documentContent) {
       const chunks = chunkDocument(body.documentContent, body.documentType);
       console.log(`[Multi-Agent RAG] Chunked document into ${chunks.length} chunks`);
     }
 
-    // Execute the pipeline and add synthesis, generation, verification tasks
+    // Create all tasks first!
+    framework.createTask("Retrieval", { query: body.query, topK: body.topK }, "high");
+
+    // Execute full pipeline step by step, passing data between tasks
     await framework.executePipeline();
 
-    // Add remaining tasks now that retrieval is done
-    const retrievalOutput = framework.getContext().tasks.find(t => t.id === retrievalTask.id)?.output;
-    if (retrievalOutput) {
-      framework.createTask("ContextSynthesis", { results: retrievalOutput.results }, "medium");
-      framework.createTask("ResponseGeneration", { query: body.query, synthesizedContext: "" }, "medium");
-      framework.createTask("Verification", { response: "", results: retrievalOutput.results }, "low");
+    // Get retrieval output
+    let context = framework.getContext();
+    const retrievalTask = context.tasks.find(t => t.role === "Retrieval" && t.status === "completed");
+    if (!retrievalTask?.output) throw new Error("Retrieval failed");
+    const retrievalResults = retrievalTask.output.results;
 
-      // Execute again for remaining tasks
-      await framework.executePipeline();
-    }
+    // Create synthesis task
+    framework.createTask("ContextSynthesis", { results: retrievalResults }, "medium");
+    await framework.executePipeline();
+    context = framework.getContext();
+    const synthesisTask = context.tasks.find(t => t.role === "ContextSynthesis" && t.status === "completed");
+    if (!synthesisTask?.output) throw new Error("Synthesis failed");
+    const synthesizedContext = synthesisTask.output.synthesizedContext;
+
+    // Create generation task
+    framework.createTask("ResponseGeneration", { query: body.query, synthesizedContext }, "medium");
+    await framework.executePipeline();
+    context = framework.getContext();
+    const generationTask = context.tasks.find(t => t.role === "ResponseGeneration" && t.status === "completed");
+    if (!generationTask?.output) throw new Error("Generation failed");
+    const finalResponse = generationTask.output.response;
+
+    // Create verification task
+    framework.createTask("Verification", { response: finalResponse, results: retrievalResults }, "low");
+    await framework.executePipeline();
 
     // Optionally add A.G.E.N.T.I.C. framework tasks
     if (body.useAgenticFramework) {
@@ -61,13 +76,10 @@ export async function POST(req: Request) {
     const finalContext = framework.getContext();
     const metrics = framework.getMetrics();
 
-    // Find the response generation task's output
-    const generationTask = finalContext.tasks.find(t => t.role === "ResponseGeneration" && t.status === "completed");
-
     return NextResponse.json({
       success: true,
       conversationId,
-      response: generationTask?.output?.response || "No response generated",
+      response: finalResponse,
       tasks: finalContext.tasks,
       metrics,
     });
