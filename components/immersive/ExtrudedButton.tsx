@@ -48,18 +48,24 @@ export const ExtrudedButton = React.forwardRef<HTMLButtonElement, ExtrudedButton
     ref
   ) => {
     const { enableLite, reducedMotion } = useImmersive();
+    const [isClient, setIsClient] = React.useState(false);
+    
+    React.useEffect(() => {
+      setIsClient(true);
+    }, []);
+    
     const Comp = asChild ? Slot : "button";
 
     const buttonEl = (
       <motion.div
         style={{ transformStyle: "preserve-3d", display: "inline-flex" }}
         whileTap={
-          enableLite && !reducedMotion && !disabled
+          isClient && enableLite && !reducedMotion && !disabled
             ? { scale: 0.94, translateZ: -6 }
             : undefined
         }
         whileHover={
-          enableLite && !reducedMotion && !disabled
+          isClient && enableLite && !reducedMotion && !disabled
             ? { translateZ: 8, scale: 1.02 }
             : undefined
         }
@@ -69,6 +75,7 @@ export const ExtrudedButton = React.forwardRef<HTMLButtonElement, ExtrudedButton
           className={cn(extrudedVariants({ variant, size, className }))}
           ref={ref}
           disabled={disabled}
+          suppressHydrationWarning
           {...props}
         >
           {children}
@@ -82,7 +89,7 @@ export const ExtrudedButton = React.forwardRef<HTMLButtonElement, ExtrudedButton
       </RippleSurface>
     );
 
-    if (magnetic && enableLite && !reducedMotion) {
+    if (isClient && magnetic && enableLite && !reducedMotion) {
       return <Magnetic className="inline-flex">{withRipple}</Magnetic>;
     }
 
