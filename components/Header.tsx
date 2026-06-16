@@ -304,7 +304,7 @@ export function Header() {
     : "sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl !overflow-visible";
 
   return (
-    <header className={headerClasses}>
+    <header className={headerClasses} suppressHydrationWarning>
       {/* Skip-to-content link for accessibility */}
       <a
         href="#main-content"

@@ -23,6 +23,7 @@ export function LiveActivityFeed() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const [filter, setFilter] = useState<"all" | "booking" | "lead">("all");
+  const [isClient, setIsClient] = useState(false);
 
   const generateActivity = (): Activity => {
     const type = Math.random() > 0.5 ? "booking" as const : "lead" as const;
@@ -36,6 +37,7 @@ export function LiveActivityFeed() {
   };
 
   useEffect(() => {
+    setIsClient(true);
     const initialActivities: Activity[] = Array.from({ length: 5 }, () => generateActivity());
     setActivities(initialActivities);
   }, []);
@@ -62,8 +64,12 @@ export function LiveActivityFeed() {
     return `${hours}h ago`;
   };
 
+  if (!isClient) {
+    return null;
+  }
+
   return (
-    <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+    <Card className="border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]" suppressHydrationWarning>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">

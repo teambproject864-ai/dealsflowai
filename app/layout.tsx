@@ -91,6 +91,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${sans.variable} min-h-screen bg-background font-sans text-foreground antialiased flex flex-col`}
+        suppressHydrationWarning
       >
 
         <ImmersiveLayout
