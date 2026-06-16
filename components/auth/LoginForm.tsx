@@ -6,6 +6,7 @@ import { UserRole } from "@/lib/auth";
 import { Loader2, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
 import { BiometricAuthPanel } from "@/components/experience/BiometricAuthPanel";
 import { GlassPanel, ExtrudedButton, SunkenInput } from "@/components/immersive";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface LoginFormProps {
   role: UserRole;
@@ -27,6 +28,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoading } = useCurrentUser();
   const redirectUrl = searchParams.get("redirect") || `/portal/${role}`;
 
   // Set initial screen based on query parameter
@@ -40,6 +42,15 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   useEffect(() => {
     setError(null);
   }, [isLogin]);
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Redirect to the user's portal based on role
+      const userPortalUrl = `/portal/${user.role}`;
+      router.push(userPortalUrl);
+    }
+  }, [user, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

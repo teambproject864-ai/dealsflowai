@@ -1,5 +1,6 @@
 import { hfInfer } from "@/lib/huggingface";
 import { nvChatCompletion, nvChatCompletionStream } from "@/lib/nvidia";
+import { llmManager } from "@/lib/llm-manager";
 import type { RagAnswer, RagSearchHit } from "./types";
 
 function buildContext(hits: RagSearchHit[]) {
@@ -26,28 +27,41 @@ export async function answerWithRag(args: {
   infer?: typeof hfInfer;
   provider?: "huggingface" | "nvidia";
   model?: string;
+  userId?: string;
 }): Promise<RagAnswer> {
   const { system, user } = buildRagPrompt(args.question, args.hits);
 
-  const provider = args.provider || (process.env.RAG_LLM_PROVIDER as any) || "huggingface";
-  const model = args.model || process.env.RAG_LLM_MODEL || "google/gemma-4-31b-it";
+  // If stubbed infer function is provided, use that instead of LLM manager (for testing)
+  if (args.infer) {
+    const answer = await args.infer(user, system, { max_tokens: 800, temperature: 0.2, top_p: 0.9 });
+    return {
+      answer: (answer || "").trim(),
+      sources: args.hits.map((h) => ({
+        docId: h.docId,
+        docName: h.docName,
+        chunkIndex: h.chunkIndex,
+        score: h.score,
+      })),
+    };
+  }
 
-  const answer =
-    provider === "nvidia"
-      ? await nvChatCompletion({
-          model,
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-          maxTokens: 900,
-          temperature: 0.2,
-          topP: 0.95,
-        })
-      : await (args.infer || hfInfer)(user, system, { max_tokens: 800, temperature: 0.2, top_p: 0.9 });
+  // Otherwise, use LLM manager for intelligent routing
+  const response = await llmManager.executeRequest({
+    id: `rag-${Date.now()}`,
+    provider: args.provider,
+    model: args.model,
+    taskType: "rag",
+    systemPrompt: system,
+    userPrompt: user,
+    maxTokens: 900,
+    temperature: 0.2,
+    topP: 0.95,
+    userId: args.userId || "system",
+    useCase: "rag_question_answering",
+  });
 
   return {
-    answer: (answer || "").trim(),
+    answer: response.output.trim(),
     sources: args.hits.map((h) => ({
       docId: h.docId,
       docName: h.docName,
@@ -64,9 +78,11 @@ export async function* answerWithRagStream(args: {
   provider?: "huggingface" | "nvidia";
   model?: string;
   signal?: AbortSignal;
+  userId?: string;
 }): AsyncGenerator<string> {
   const { system, user } = buildRagPrompt(args.question, args.hits);
 
+  // For streaming, fall back to direct calls (LLM manager streaming support coming soon!)
   const provider = args.provider || (process.env.RAG_LLM_PROVIDER as any) || "huggingface";
   const model = args.model || process.env.RAG_LLM_MODEL || "google/gemma-4-31b-it";
 

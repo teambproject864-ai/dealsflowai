@@ -13,6 +13,10 @@ import type {
   ScheduledReport,
   Ticket,
   NotificationPreferences,
+  Customer,
+  CustomerResignation,
+  Document,
+  AuditLogEntry,
 } from "@/lib/portal-types";
 
 // Demo users
@@ -732,5 +736,163 @@ export const demoCustomerGTMData: CustomerGTMData[] = [
       currentPipeline: 350000,
       goals: ["Improve campaign ROI", "Grow customer base"],
     },
+  },
+];
+
+// Demo Customers
+export const demoCustomers: Customer[] = [
+  {
+    id: "customer-demo",
+    name: "Demo Customer",
+    email: "demo@customer.com",
+    phone: "+1-555-123-4567",
+    companyName: "Demo Corp",
+    industry: "SaaS",
+    status: "active",
+    assignedAgentId: "agent-praneeth",
+    assignedAgentName: "Praneeth",
+    serviceConfigurations: {
+      gtmReports: true,
+      leadScoring: true,
+      aiCalls: true,
+    },
+    createdAt: "2024-03-10T00:00:00Z",
+    updatedAt: "2024-03-10T00:00:00Z",
+  },
+  {
+    id: "customer-anil",
+    name: "Anil Kumar",
+    email: "anil@cralgo.com",
+    phone: "+91-9876543210",
+    companyName: "Cralgo",
+    industry: "Fintech",
+    status: "onboarding",
+    assignedAgentId: "agent-ashok",
+    assignedAgentName: "Ashok",
+    serviceConfigurations: {
+      gtmReports: true,
+      leadScoring: false,
+      aiCalls: true,
+    },
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
+  },
+  {
+    id: "customer-john",
+    name: "John Doe",
+    email: "john@techstartup.io",
+    phone: "+1-555-987-6543",
+    companyName: "TechStartup Inc",
+    industry: "Technology",
+    status: "resigned",
+    assignedAgentId: "agent-kiran",
+    assignedAgentName: "Kiran",
+    serviceConfigurations: {
+      gtmReports: false,
+      leadScoring: false,
+      aiCalls: false,
+    },
+    createdAt: "2025-01-01T00:00:00Z",
+    updatedAt: "2026-06-10T00:00:00Z",
+  },
+];
+
+// Demo Customer Resignations
+export const demoCustomerResignations: CustomerResignation[] = [
+  {
+    id: "resign-1",
+    customerId: "customer-john",
+    customerName: "John Doe",
+    requestDate: "2026-06-05T00:00:00Z",
+    effectiveDate: "2026-06-10T00:00:00Z",
+    terminationReason: "Switching to competitor",
+    notes: "Customer cited better pricing as main reason",
+    documentsArchived: true,
+    accountClosed: true,
+    processedBy: "demo-admin-1",
+    processedAt: "2026-06-10T00:00:00Z",
+  },
+];
+
+// Demo Documents
+export const demoDocuments: Document[] = [
+  {
+    id: "doc-1",
+    customerId: "customer-demo",
+    documentType: "icp",
+    title: "Demo Corp ICP Profile",
+    description: "Ideal Customer Profile for Demo Corp",
+    icpId: "icp-demo-1",
+    createdBy: "demo-admin-1",
+    createdAt: "2024-03-15T00:00:00Z",
+    updatedAt: "2024-03-15T00:00:00Z",
+    accessRoles: ["admin", "agent", "customer"],
+  },
+  {
+    id: "doc-2",
+    customerId: "customer-anil",
+    documentType: "requirement",
+    title: "Cralgo Project Requirements",
+    description: "Full project requirements document",
+    requirementId: "req-2",
+    createdBy: "agent-ashok",
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
+    accessRoles: ["admin", "agent"],
+  },
+  {
+    id: "doc-3",
+    customerId: "customer-demo",
+    documentType: "onboarding",
+    title: "Demo Corp Onboarding Guide",
+    description: "Complete onboarding documentation",
+    createdBy: "agent-praneeth",
+    createdAt: "2024-03-12T00:00:00Z",
+    updatedAt: "2024-03-12T00:00:00Z",
+    accessRoles: ["admin", "agent", "customer"],
+  },
+];
+
+// Demo Audit Logs
+export const demoAuditLogs: AuditLogEntry[] = [
+  {
+    id: "audit-1",
+    actionType: "customer_onboard",
+    actionDetails: "Onboarded new customer: Anil Kumar",
+    performedBy: "demo-admin-1",
+    performedByRole: "admin",
+    targetId: "customer-anil",
+    targetType: "customer",
+    createdAt: "2026-06-15T09:00:00Z",
+  },
+  {
+    id: "audit-2",
+    actionType: "customer_resign",
+    actionDetails: "Processed resignation for: John Doe",
+    performedBy: "demo-admin-1",
+    performedByRole: "admin",
+    targetId: "customer-john",
+    targetType: "customer",
+    createdAt: "2026-06-10T14:00:00Z",
+  },
+  {
+    id: "audit-3",
+    actionType: "task_create",
+    actionDetails: "Created new task: Follow up with Demo Customer",
+    performedBy: "agent-praneeth",
+    performedByRole: "agent",
+    targetId: "task-1",
+    targetType: "task",
+    createdAt: "2024-05-10T09:00:00Z",
+  },
+  {
+    id: "audit-4",
+    actionType: "document_access",
+    actionDetails: "Accessed document: Demo Corp ICP Profile",
+    performedBy: "agent-kiran",
+    performedByRole: "agent",
+    targetId: "doc-1",
+    targetType: "document",
+    createdAt: "2026-06-14T10:30:00Z",
   },
 ];

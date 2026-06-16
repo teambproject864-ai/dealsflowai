@@ -108,7 +108,7 @@ export async function testRagAnswerUsesNvidiaProviderWithStubbedFetch() {
       },
     ],
     provider: "nvidia",
-    model: "google/gemma-4-31b-it",
+    model: "meta-llama/Llama-3.1-70B-Instruct",
   });
 
   globalThis.fetch = originalFetch;

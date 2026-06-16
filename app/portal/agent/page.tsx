@@ -48,6 +48,7 @@ import { generateICPDocument } from "@/lib/icp-document-generator";
 
 const tabs = [
   { id: "requirements", label: "Requirements", icon: Users },
+  { id: "icp-entries", label: "ICP Entries", icon: FileText },
   { id: "tasks", label: "Tasks", icon: CheckCircle2 },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "calls", label: "Calls", icon: Phone },
@@ -78,6 +79,7 @@ function AgentPortalContent() {
   const [leads, setLeads] = useState<any[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [playbookContent, setPlaybookContent] = useState<string>("");
+  const [icpEntries, setIcpEntries] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadLeads() {
@@ -105,8 +107,20 @@ function AgentPortalContent() {
         console.error("Failed to load playbook:", err);
       }
     }
+    async function loadIcpEntries() {
+      try {
+        const res = await fetch("/api/customer/icp");
+        const data = await res.json();
+        if (data.success) {
+          setIcpEntries(data.icpEntries);
+        }
+      } catch (err) {
+        console.error("Failed to load ICP entries:", err);
+      }
+    }
     loadLeads();
     loadPlaybook();
+    loadIcpEntries();
   }, []);
 
   // Determine current agent ID based on authenticated user
@@ -611,6 +625,84 @@ function AgentPortalContent() {
                   </GlassPanel>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === "icp-entries" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-slate-100">Assigned ICP Entries</h2>
+              {icpEntries.length === 0 ? (
+                <GlassPanel tilt={false} className="border-slate-700/50">
+                  <CardContent className="py-16 text-center">
+                    <FileText className="h-20 w-20 text-slate-700 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-300 mb-1">No ICP entries yet</h3>
+                    <p className="text-slate-500">ICP entries submitted by customers will appear here</p>
+                  </CardContent>
+                </GlassPanel>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {icpEntries.map((entry) => (
+                    <GlassPanel key={entry.id} tilt={true} className="border-slate-700/50">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xl text-slate-100 font-bold">{entry.name}</CardTitle>
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold",
+                            entry.status === "active" ? "bg-green-500/15 text-green-400"
+                              : entry.status === "draft" ? "bg-yellow-500/15 text-yellow-400"
+                              : "bg-slate-500/15 text-slate-400"
+                          )}>{entry.status}</span>
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Customer: {entry.customerName}
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-slate-300">{entry.description}</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {entry.targetIndustries?.length > 0 && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Target Industries</p>
+                              <p className="text-slate-200">{entry.targetIndustries.join(", ")}</p>
+                            </div>
+                          )}
+                          {entry.targetCompanySizes?.length > 0 && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Company Sizes</p>
+                              <p className="text-slate-200">{entry.targetCompanySizes.join(", ")}</p>
+                            </div>
+                          )}
+                          {entry.targetGeographicRegions?.length > 0 && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Geographic Regions</p>
+                              <p className="text-slate-200">{entry.targetGeographicRegions.join(", ")}</p>
+                            </div>
+                          )}
+                          {entry.decisionMakers?.length > 0 && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Decision Makers</p>
+                              <p className="text-slate-200">{entry.decisionMakers.join(", ")}</p>
+                            </div>
+                          )}
+                          {entry.painPoints?.length > 0 && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Pain Points</p>
+                              <p className="text-slate-200">{entry.painPoints.join(", ")}</p>
+                            </div>
+                          )}
+                          {entry.valueProposition && (
+                            <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Value Proposition</p>
+                              <p className="text-slate-200">{entry.valueProposition}</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </GlassPanel>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "test": "tsx tests/run.ts",
-    "bench:rag": "tsx tests/rag.bench.ts"
+    "bench:rag": "tsx tests/rag.bench.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:debug": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:load": "k6 run --out json=test-results/k6-results.json k6-tests/load-test.js",
+    "test:load:smoke": "k6 run --scenario smoke k6-tests/load-test.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.64",

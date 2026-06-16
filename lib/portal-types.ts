@@ -226,3 +226,78 @@ export interface CustomerGTMData {
   data: Record<string, any>;
   attachments?: FileAttachment[];
 }
+
+export interface ICPEntry {
+  id: string;
+  customerId: string;
+  customerName: string;
+  name: string;
+  description: string;
+  targetIndustries: string[];
+  targetCompanySizes: string[];
+  targetGeographicRegions: string[];
+  decisionMakers: string[];
+  painPoints: string[];
+  valueProposition: string;
+  assignedAgentId?: string;
+  assignedAgentName?: string;
+  status: "draft" | "active" | "archived";
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- New Types for Comprehensive Admin Portal ---
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  companyName: string;
+  industry?: string;
+  status: "active" | "resigned" | "onboarding";
+  assignedAgentId?: string;
+  assignedAgentName?: string;
+  serviceConfigurations: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerResignation {
+  id: string;
+  customerId: string;
+  customerName: string;
+  requestDate: string;
+  effectiveDate: string;
+  terminationReason: string;
+  notes?: string;
+  documentsArchived: boolean;
+  accountClosed: boolean;
+  processedBy: string;
+  processedAt: string;
+}
+
+export interface Document {
+  id: string;
+  customerId?: string;
+  documentType: "icp" | "requirement" | "contract" | "onboarding" | "other";
+  title: string;
+  description: string;
+  fileAttachment?: FileAttachment;
+  icpId?: string;
+  requirementId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  accessRoles: Array<"admin" | "agent" | "customer">;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actionType: "customer_onboard" | "customer_resign" | "task_create" | "task_update" | "document_access" | "document_update" | "agent_assign" | "other";
+  actionDetails: string;
+  performedBy: string;
+  performedByRole: string;
+  targetId?: string;
+  targetType?: string;
+  createdAt: string;
+}

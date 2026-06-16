@@ -22,6 +22,7 @@ import {
   CreditCard,
   BarChart2,
   Check,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gtmPortalConfig } from '@/lib/config';
@@ -40,6 +41,7 @@ import type {
   ScheduledReport,
   NotificationPreferences,
   GTMReportMetric,
+  ICPEntry,
 } from '@/lib/portal-types';
 import AuthProvider from '@/components/auth/AuthProvider';
 import LogoutButton from '@/components/auth/LogoutButton';
@@ -47,6 +49,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
+  { id: 'icp-entries', label: 'ICP Entries', icon: Users },
   { id: 'gtm-analysis', label: 'GTM Analysis', icon: FileText },
   { id: 'tickets', label: 'Support Tickets', icon: TicketIcon },
   { id: 'billing', label: 'Billing & Credits', icon: CreditCard },
@@ -84,6 +87,77 @@ function CustomerPortalContent() {
   ]);
   const [chatMessages, setChatMessages] = useState([...demoChatMessages.filter(m => m.sessionId === 'session-1')]);
   const [newMessage, setNewMessage] = useState('');
+  const [icpEntries, setIcpEntries] = useState<ICPEntry[]>([]);
+  const [isSubmittingIcp, setIsSubmittingIcp] = useState(false);
+  const [icpFormData, setIcpFormData] = useState({
+    name: '',
+    description: '',
+    targetIndustries: [''],
+    targetCompanySizes: [''],
+    targetGeographicRegions: [''],
+    decisionMakers: [''],
+    painPoints: [''],
+    valueProposition: '',
+  });
+
+  // Fetch ICP entries on mount
+  useEffect(() => {
+    const fetchIcpEntries = async () => {
+      try {
+        const res = await fetch('/api/customer/icp');
+        const data = await res.json();
+        if (data.success) {
+          setIcpEntries(data.icpEntries);
+        }
+      } catch (e) {
+        console.error('Error fetching ICP entries:', e);
+      }
+    };
+    fetchIcpEntries();
+  }, []);
+
+  const handleSubmitIcp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingIcp(true);
+    try {
+      const res = await fetch('/api/customer/icp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...icpFormData,
+          targetIndustries: icpFormData.targetIndustries.filter(s => s.trim()),
+          targetCompanySizes: icpFormData.targetCompanySizes.filter(s => s.trim()),
+          targetGeographicRegions: icpFormData.targetGeographicRegions.filter(s => s.trim()),
+          decisionMakers: icpFormData.decisionMakers.filter(s => s.trim()),
+          painPoints: icpFormData.painPoints.filter(s => s.trim()),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Add new entry to state
+        setIcpEntries([data.icpEntry, ...icpEntries]);
+        // Reset form
+        setIcpFormData({
+          name: '',
+          description: '',
+          targetIndustries: [''],
+          targetCompanySizes: [''],
+          targetGeographicRegions: [''],
+          decisionMakers: [''],
+          painPoints: [''],
+          valueProposition: '',
+        });
+        alert('ICP entry submitted successfully!');
+      } else {
+        alert(data.error || 'Failed to submit ICP entry');
+      }
+    } catch (e) {
+      console.error('Error submitting ICP entry:', e);
+      alert('Error submitting ICP entry');
+    } finally {
+      setIsSubmittingIcp(false);
+    }
+  };
 
   const customerId = user?.id || 'customer-demo';
   const customerCredits = demoCustomerCredits.find((c) => c.customerId === customerId) || demoCustomerCredits[0];
@@ -104,7 +178,7 @@ function CustomerPortalContent() {
       id: `scheduled-${Date.now()}`,
       customerId,
       reportFrequency: frequency,
-      recipients: [customer?.email || ''],
+      recipients: [user?.email || ''],
       fileFormats: ['pdf'],
       enabled: true,
       nextSendDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -121,7 +195,7 @@ function CustomerPortalContent() {
       id: `ticket-${Date.now()}`,
       customerId,
       requesterName: customerName,
-      requesterEmail: customer?.email || '',
+      requesterEmail: user?.email || '',
       category: formData.get('category') as any,
       subject: formData.get('subject') as string,
       description: formData.get('description') as string,
@@ -329,6 +403,181 @@ function CustomerPortalContent() {
                   </CardContent>
                 </GlassPanel>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'icp-entries' && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-slate-100">Submit New ICP Entry</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmitIcp} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">ICP Name</Label>
+                      <Input
+                        type="text"
+                        value={icpFormData.name}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, name: e.target.value })}
+                        placeholder="e.g., Enterprise SaaS Buyers"
+                        className="bg-slate-800 border-slate-700 text-slate-200"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Description</Label>
+                      <textarea
+                        value={icpFormData.description}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, description: e.target.value })}
+                        placeholder="Describe your ideal customer profile..."
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        rows={4}
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-slate-300">Target Industries (comma separated)</Label>
+                        <Input
+                          type="text"
+                          value={icpFormData.targetIndustries.join(',')}
+                          onChange={(e) => setIcpFormData({ ...icpFormData, targetIndustries: e.target.value.split(',') })}
+                          placeholder="SaaS,FinTech,Healthcare"
+                          className="bg-slate-800 border-slate-700 text-slate-200"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-300">Company Sizes (comma separated)</Label>
+                        <Input
+                          type="text"
+                          value={icpFormData.targetCompanySizes.join(',')}
+                          onChange={(e) => setIcpFormData({ ...icpFormData, targetCompanySizes: e.target.value.split(',') })}
+                          placeholder="1-10,11-50,51-200"
+                          className="bg-slate-800 border-slate-700 text-slate-200"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Geographic Regions (comma separated)</Label>
+                      <Input
+                        type="text"
+                        value={icpFormData.targetGeographicRegions.join(',')}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, targetGeographicRegions: e.target.value.split(',') })}
+                        placeholder="North America,Europe"
+                        className="bg-slate-800 border-slate-700 text-slate-200"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Decision Makers (comma separated)</Label>
+                      <Input
+                        type="text"
+                        value={icpFormData.decisionMakers.join(',')}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, decisionMakers: e.target.value.split(',') })}
+                        placeholder="CEO,CTO,VP Sales"
+                        className="bg-slate-800 border-slate-700 text-slate-200"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Pain Points (comma separated)</Label>
+                      <Input
+                        type="text"
+                        value={icpFormData.painPoints.join(',')}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, painPoints: e.target.value.split(',') })}
+                        placeholder="High cost,Slow onboarding,Limited features"
+                        className="bg-slate-800 border-slate-700 text-slate-200"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Value Proposition</Label>
+                      <textarea
+                        value={icpFormData.valueProposition}
+                        onChange={(e) => setIcpFormData({ ...icpFormData, valueProposition: e.target.value })}
+                        placeholder="What value do you provide to this ICP?"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        rows={3}
+                      />
+                    </div>
+
+                    <ExtrudedButton
+                      type="submit"
+                      disabled={isSubmittingIcp}
+                      className="w-full bg-gradient-to-r from-teal-600 to-cyan-600"
+                    >
+                      {isSubmittingIcp ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Submit ICP Entry
+                        </>
+                      )}
+                    </ExtrudedButton>
+                  </form>
+                </CardContent>
+              </GlassPanel>
+
+              {/* Existing ICP Entries List */}
+              {icpEntries.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-slate-100">Your ICP Entries</h3>
+                  {icpEntries.map((entry) => (
+                    <GlassPanel key={entry.id} tilt={false} className="border-slate-700">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xl font-bold text-slate-100">{entry.name}</CardTitle>
+                          <span
+                            className={cn(
+                              'px-3 py-1 rounded-full text-xs font-semibold capitalize',
+                              entry.status === 'active' ? 'bg-green-500/15 text-green-400'
+                                : entry.status === 'draft' ? 'bg-yellow-500/15 text-yellow-400'
+                                : 'bg-slate-500/15 text-slate-400'
+                            )}
+                          >
+                            {entry.status}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-slate-300">{entry.description}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          {entry.targetIndustries.length > 0 && (
+                            <div>
+                              <p className="text-slate-400 uppercase tracking-wider text-xs">Industries</p>
+                              <p className="text-slate-200">{entry.targetIndustries.join(', ')}</p>
+                            </div>
+                          )}
+                          {entry.targetCompanySizes.length > 0 && (
+                            <div>
+                              <p className="text-slate-400 uppercase tracking-wider text-xs">Company Sizes</p>
+                              <p className="text-slate-200">{entry.targetCompanySizes.join(', ')}</p>
+                            </div>
+                          )}
+                        </div>
+                        {entry.assignedAgentName && (
+                          <div className="pt-2 border-t border-slate-700">
+                            <p className="text-xs text-slate-400 uppercase tracking-wider">
+                              Assigned Agent: <span className="text-teal-400 font-semibold">{entry.assignedAgentName}</span>
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </GlassPanel>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

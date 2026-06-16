@@ -36,7 +36,15 @@ export function useFirestoreCollection<T extends DocumentData>(
     let unsubscribe: (() => void) | null = null;
 
     try {
-      const q = query(collection(getDb(), collectionName), ...constraints);
+      const firestore = getDb();
+      if (!firestore) {
+        console.log(`[Firestore] Not configured, using fallback for ${collectionName}`);
+        setData(fallback);
+        setLoading(false);
+        return;
+      }
+
+      const q = query(collection(firestore, collectionName), ...constraints);
       unsubscribe = onSnapshot(
         q,
         (snapshot) => {
@@ -92,7 +100,15 @@ export function useFirestoreDoc<T extends DocumentData>(
     let unsubscribe: (() => void) | null = null;
     
     try {
-      const ref = doc(getDb(), path);
+      const firestore = getDb();
+      if (!firestore) {
+        console.log(`[Firestore] Not configured, using fallback for doc(${path})`);
+        setData(null);
+        setLoading(false);
+        return;
+      }
+
+      const ref = doc(firestore, path);
       unsubscribe = onSnapshot(
         ref,
         (snap) => {
