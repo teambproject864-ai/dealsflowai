@@ -286,7 +286,7 @@ const FeatureCard = React.memo(function FeatureCard({ icon: Icon, title, descrip
       initial={{ opacity: 0, y: 40 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay, ease: "easeOut" }}
-      className="group relative p-6 rounded-2xl border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-gradient-to-b dark:from-white/5 dark:to-white/[0.01] hover:bg-slate-100/80 dark:hover:from-white/10 dark:hover:to-white/5 hover:border-violet-500/30 transition-all duration-500 overflow-hidden cursor-default shadow-sm hover:shadow-violet-500/5 hover:-translate-y-1"
+      className="group relative p-6 rounded-2xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 hover:border-violet-500/30 transition-all duration-500 overflow-hidden cursor-default shadow-sm hover:shadow-violet-500/5 hover:-translate-y-1"
     >
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl ${gradient} blur-2xl scale-75`} />
       
@@ -295,7 +295,7 @@ const FeatureCard = React.memo(function FeatureCard({ icon: Icon, title, descrip
           <Icon className="w-6 h-6 text-slate-800 dark:text-white" />
         </div>
         <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-2">{title}</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{description}</p>
       </div>
     </motion.div>
   );
@@ -910,13 +910,13 @@ export default function HomePage() {
             ].map((t, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 hover:border-violet-500/30 transition-all flex flex-col justify-between shadow-sm"
+                className="p-6 rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 hover:border-violet-500/30 transition-all flex flex-col justify-between shadow-sm"
               >
-                <p className="text-slate-600 dark:text-slate-300 italic text-sm leading-relaxed">
+                <p className="text-slate-700 dark:text-slate-200 italic text-sm leading-relaxed">
                   &ldquo;{t.quote}&rdquo;
                 </p>
                 <div className="flex items-center gap-3 mt-6">
-                  <div className="h-9 w-9 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-bold text-xs flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300 font-bold text-xs flex items-center justify-center">
                     {t.initials}
                   </div>
                   <div>
