@@ -342,7 +342,7 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   }
 
   return (
-    <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] p-6 md:p-8 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)] relative overflow-hidden">
+    <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-950 p-6 md:p-8 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,rgba(139,92,246,0.16),transparent)]" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
 
@@ -396,13 +396,13 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                 Company Information
               </h3>
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-slate-700 dark:text-slate-200">Full Name</Label>
                 <Input
                   id="name"
                   value={data.name}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   placeholder="John Doe"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                   aria-invalid={!!errors.name}
                   aria-describedby={errors.name ? 'name-error' : undefined}
                 />
@@ -418,50 +418,50 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="emailPersonal">Primary Email Address</Label>
+                <Label htmlFor="emailPersonal" className="text-slate-700 dark:text-slate-200">Primary Email Address</Label>
                 <Input
                   id="emailPersonal"
                   type="email"
                   value={data.emailPersonal}
                   onChange={(e) => setData({ ...data, emailPersonal: e.target.value })}
                   placeholder="john@company.com"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 />
                 {errors.emailPersonal && <p className="text-xs text-red-400">{errors.emailPersonal}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="additionalEmail">Additional Email Address</Label>
+                <Label htmlFor="additionalEmail" className="text-slate-700 dark:text-slate-200">Additional Email Address</Label>
                 <Input
                   id="additionalEmail"
                   type="email"
                   value={data.additionalEmail}
                   onChange={(e) => setData({ ...data, additionalEmail: e.target.value })}
                   placeholder="optional@company.com"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="companyName" className="text-slate-700 dark:text-slate-200">Company Name</Label>
                 <Input
                   id="companyName"
                   value={data.companyName}
                   onChange={(e) => setData({ ...data, companyName: e.target.value })}
                   placeholder="Acme Corp"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 />
                 {errors.companyName && <p className="text-xs text-red-400">{errors.companyName}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="websiteUrl">Company Website</Label>
+                <Label htmlFor="websiteUrl" className="text-slate-700 dark:text-slate-200">Company Website</Label>
                 <Input
                   id="websiteUrl"
                   value={data.websiteUrl}
                   onChange={(e) => setData({ ...data, websiteUrl: e.target.value })}
                   placeholder="https://acme.com"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 />
                 {errors.websiteUrl && <p className="text-xs text-red-400">{errors.websiteUrl}</p>}
               </div>
