@@ -206,7 +206,7 @@ function FeaturesContent() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className={`group relative p-8 rounded-3xl border border-slate-200 dark:${core.borderColor} bg-gradient-to-b from-slate-50/50 to-transparent dark:${core.bgGradient} dark:to-transparent backdrop-blur-md transition-all duration-500 overflow-hidden flex flex-col justify-between`}
+              className={`group relative p-8 rounded-3xl border border-slate-200 dark:${core.borderColor} bg-slate-50 dark:bg-slate-900 transition-all duration-500 overflow-hidden flex flex-col justify-between`}
             >
               {/* Card visual accent glow */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors pointer-events-none" />
@@ -300,7 +300,7 @@ function FeaturesContent() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: Math.min(i * 0.04, 0.3) }}
                 >
-                  <Card className="h-full bg-slate-50/50 dark:bg-white/3 border-slate-200 dark:border-white/8 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300 group overflow-hidden flex flex-col justify-between">
+                  <Card className="h-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 group overflow-hidden flex flex-col justify-between">
                     <CardHeader className="space-y-4">
                       <div className="flex justify-between items-start">
                         <div className="rounded-xl bg-teal-500/10 p-3 text-teal-400 transition-all group-hover:bg-teal-500 group-hover:text-white group-hover:scale-105 border border-teal-500/20">
@@ -373,7 +373,7 @@ function FeaturesContent() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className={`p-8 rounded-3xl bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:${item.borderColor} hover:bg-slate-100/80 dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300`}
+              className={`p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:${item.borderColor} hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300`}
             >
               <div className={`p-3 rounded-2xl w-fit mb-6 ${item.bg} ${item.color} border border-slate-200 dark:border-white/5`}>
                 <item.icon className="h-8 w-8" />
@@ -400,7 +400,7 @@ function FeaturesContent() {
                 { label: "Agent Response", value: "< 2s", desc: "Instant interactions" },
                 { label: "Data Accuracy", value: "100%", desc: "Secure & compliant" }
               ].map((stat, i) => (
-                <div key={stat.label} className="p-4 rounded-2xl bg-slate-50/80 dark:bg-white/3 border border-slate-200 dark:border-white/5">
+                <div key={stat.label} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15">
                   <div className="text-3xl md:text-4xl font-extrabold text-teal-600 dark:text-teal-400 mb-1">{stat.value}</div>
                   <div className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-0.5">{stat.label}</div>
                   <div className="text-[11px] text-slate-550 dark:text-slate-500">{stat.desc}</div>
