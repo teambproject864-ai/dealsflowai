@@ -369,6 +369,40 @@ export default function HomePage() {
 
   // Annual pricing toggle
   const [isAnnual, setIsAnnual] = useState(true);
+  // Currency selector
+  const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD">("USD");
+  
+  // Currency conversion rates (relative to USD)
+  const conversionRates: Record<string, number> = {
+    USD: 1,
+    EUR: 0.93,
+    GBP: 0.79,
+    CAD: 1.38,
+  };
+  
+  // Pricing plans base prices (in USD)
+  const pricingPlans = {
+    starter: { monthly: 499, annual: 399 },
+    growth: { monthly: 1299, annual: 999 },
+  };
+  
+  // Format currency with proper locale and symbol
+  const formatCurrency = (amount: number, currencyCode: string) => {
+    const localeMap: Record<string, string> = {
+      USD: "en-US",
+      EUR: "de-DE",
+      GBP: "en-GB",
+      CAD: "en-CA",
+    };
+    
+    const convertedAmount = amount * conversionRates[currencyCode];
+    
+    return new Intl.NumberFormat(localeMap[currencyCode] || "en-US", {
+      style: "currency",
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(convertedAmount);
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -967,36 +1001,59 @@ export default function HomePage() {
               Start free for 14 days. No credit card required.
             </motion.p>
 
-            {/* Annual billing toggle */}
-            <div className="flex items-center justify-center gap-3 mt-8">
-              <span className={`text-sm font-semibold transition-colors ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-400"}`}>Monthly</span>
-              <button
-                onClick={() => setIsAnnual(!isAnnual)}
-                className="relative w-14 h-7 bg-white/5 border border-white/10 rounded-full transition-colors flex items-center p-1 cursor-pointer"
-                aria-label="Toggle annual billing"
-              >
-                <motion.div
-                  className="w-5 h-5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full shadow-md shadow-teal-500/20"
-                  animate={{ x: isAnnual ? 26 : 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                />
-              </button>
-              <span className={`text-sm font-semibold transition-colors ${isAnnual ? "text-teal-400 font-bold" : "text-slate-400"} flex items-center gap-1.5`}>
-                Annually
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-                  Save 20%
+            {/* Annual billing toggle and currency selector */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-8">
+              {/* Annual billing toggle */}
+              <div className="flex items-center justify-center gap-3">
+                <span className={`text-sm font-semibold transition-colors ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-400"}`}>Monthly</span>
+                <button
+                  onClick={() => setIsAnnual(!isAnnual)}
+                  className="relative w-14 h-7 bg-white/5 border border-white/10 rounded-full transition-colors flex items-center p-1 cursor-pointer"
+                  aria-label="Toggle annual billing"
+                >
+                  <motion.div
+                    className="w-5 h-5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full shadow-md shadow-teal-500/20"
+                    animate={{ x: isAnnual ? 26 : 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  />
+                </button>
+                <span className={`text-sm font-semibold transition-colors ${isAnnual ? "text-teal-400 font-bold" : "text-slate-400"} flex items-center gap-1.5`}>
+                  Annually
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                    Save 20%
+                  </span>
                 </span>
-              </span>
+              </div>
+
+              {/* Currency selector */}
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-sm font-semibold text-slate-400">Currency:</span>
+                <div className="flex bg-white/5 border border-white/10 rounded-full p-0.5">
+                  {["USD", "EUR", "GBP", "CAD"].map((curr) => (
+                    <button
+                      key={curr}
+                      onClick={() => setCurrency(curr as any)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ${
+                        currency === curr
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-400 text-white shadow-md"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {curr}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
             {/* Starter Plan */}
-            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-all duration-300 flex flex-col justify-between">
+            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-6">
                 <div>
                   <div className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Starter</div>
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{isAnnual ? "$399/mo" : "$499/mo"}</div>
+                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(isAnnual ? pricingPlans.starter.annual : pricingPlans.starter.monthly, currency)}/mo</div>
                   <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
@@ -1035,7 +1092,7 @@ export default function HomePage() {
               <div className="space-y-6">
                 <div>
                   <div className="text-violet-400 text-[10px] font-bold uppercase tracking-widest mb-1">Growth</div>
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{isAnnual ? "$999/mo" : "$1,299/mo"}</div>
+                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(isAnnual ? pricingPlans.growth.annual : pricingPlans.growth.monthly, currency)}/mo</div>
                   <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
