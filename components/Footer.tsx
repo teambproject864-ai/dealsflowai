@@ -33,7 +33,7 @@ export function Footer() {
 
   return (
     <footer className="w-full border-t border-white/10 bg-[#060612]">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+      <div className="mx-auto max-w-7xl px-6 py-12">
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
           {/* Brand column */}
