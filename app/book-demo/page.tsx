@@ -252,7 +252,7 @@ function BookDemoContent() {
       <div className="space-y-12">
         {/* Hero Section */}
         <Section>
-          <header className="space-y-6 rounded-3xl border border-white/8 bg-white/3 p-8 md:p-12 backdrop-blur-md shadow-2xl relative overflow-hidden group">
+          <header className="space-y-6 rounded-3xl border border-white/15 bg-slate-900 p-8 md:p-12 backdrop-blur-md shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-teal-500/8 transition-all duration-700" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500/4 rounded-full blur-3xl pointer-events-none" />
             
@@ -405,7 +405,7 @@ function BookDemoContent() {
                 </div>
               </GlassPanel>
             ) : (
-              <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden shadow-2xl p-3 min-h-[620px]">
+              <div className="bg-slate-900 border border-white/15 rounded-2xl overflow-hidden shadow-2xl p-3 min-h-[620px]">
                 <BookingWidget
                   name={directName}
                   email={directEmail}
@@ -502,7 +502,7 @@ function BookDemoContent() {
   return (
     <div className="space-y-12">
       <Section>
-        <header className="space-y-6 rounded-3xl border border-white/8 bg-gradient-to-r from-teal-500/10 via-[#060612] to-[#060612] p-8 md:p-12 backdrop-blur-md shadow-2xl relative overflow-hidden group">
+        <header className="space-y-6 rounded-3xl border border-white/15 bg-slate-900 p-8 md:p-12 backdrop-blur-md shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-teal-500/8 transition-all duration-700" />
           <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-semibold text-teal-300 uppercase tracking-wider">
             <Zap className="h-4 w-4 text-teal-400 animate-pulse" />
@@ -582,7 +582,7 @@ function BookDemoContent() {
               </div>
             </GlassPanel>
           ) : (
-            <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden shadow-2xl p-3 min-h-[620px]">
+            <div className="bg-slate-900 border border-white/15 rounded-2xl overflow-hidden shadow-2xl p-3 min-h-[620px]">
               <BookingWidget
                 name={lead.contactName}
                 email={lead.contactEmail}
@@ -642,7 +642,7 @@ function BookDemoContent() {
               <p className="text-xs text-slate-400 leading-relaxed">
                 Your demo workspace is initialized with website scan telemetry.
               </p>
-              <div className="bg-white/3 border border-white/5 rounded-xl p-4 flex justify-between items-center text-xs">
+              <div className="bg-slate-900 border border-white/15 rounded-xl p-4 flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase tracking-widest">Health Index</span>
                 <span className="text-emerald-400 font-extrabold text-lg">{analysis.healthScore} / 100</span>
               </div>
