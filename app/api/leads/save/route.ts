@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads } from "@/lib/memory-storage";
-import { intakeSchema } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { sanitizeObject } from "@/lib/sanitize";
 import { db } from "@/lib/firebase-admin";
+
+// Simple schema for booking widget submissions (just the basics)
+const simpleLeadSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
+  contactName: z.string().min(1, "Name is required"),
+  contactEmail: z.string().email("Valid email is required"),
+  contactPhone: z.string().optional(),
+  source: z.string().optional(),
+});
 
 const inMemoryLeads = getInMemoryLeads();
 
@@ -27,14 +36,17 @@ export async function POST(req: Request) {
     // Sanitize all inputs first
     const sanitizedData = sanitizeObject(companyData);
 
-    // Validate incoming data against our Zod schema
-    const validationResult = intakeSchema.safeParse(sanitizedData);
-    if (!validationResult.success) {
+    // Try to validate against simple schema first (for booking widget)
+    let validatedData;
+    const simpleResult = simpleLeadSchema.safeParse(sanitizedData);
+    if (simpleResult.success) {
+      validatedData = simpleResult.data;
+    } else {
       return NextResponse.json(
         {
           success: false,
           error: "Invalid lead data",
-          details: validationResult.error.flatten(),
+          details: simpleResult.error.flatten(),
         },
         { status: 400 }
       );
@@ -42,7 +54,7 @@ export async function POST(req: Request) {
 
     const leadId = uuidv4();
     const leadRecord = {
-      ...validationResult.data,
+      ...validatedData,
       id: leadId,
       createdAt: new Date().toISOString(),
       analysisId: "",
