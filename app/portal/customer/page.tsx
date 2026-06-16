@@ -65,7 +65,7 @@ export default function CustomerPortal() {
 }
 
 function CustomerPortalContent() {
-  const { user } = useCurrentUser();
+  const { user, isLoading } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<typeof tabs[number]['id']>('dashboard');
   const [customerGTMData] = useState(demoCustomerGTMData);
   const [scheduledReports, setScheduledReports] = useState(demoScheduledReports);
@@ -87,8 +87,7 @@ function CustomerPortalContent() {
 
   const customerId = user?.id || 'customer-demo';
   const customerCredits = demoCustomerCredits.find((c) => c.customerId === customerId) || demoCustomerCredits[0];
-  const customer = demoUsers.find((u) => u.id === customerId) || demoUsers.find((u) => u.id === 'customer-demo');
-  const customerName = customer?.name || 'Customer';
+  const customerName = user?.name || 'Customer';
 
   useEffect(() => {
     if (customerId && demoNotificationPreferences[customerId]) {
@@ -156,6 +155,17 @@ function CustomerPortalContent() {
     setChatMessages([...chatMessages, newMsg]);
     setNewMessage('');
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-teal-400 border-t-transparent mx-auto"></div>
+          <p className="text-slate-300 text-lg">Loading your portal...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200">
