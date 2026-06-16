@@ -370,7 +370,7 @@ export default function HomePage() {
   // Annual pricing toggle
   const [isAnnual, setIsAnnual] = useState(true);
   // Currency selector
-  const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD">("USD");
+  const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD" | "INR">("USD");
   
   // Currency conversion rates (relative to USD)
   const conversionRates: Record<string, number> = {
@@ -378,6 +378,7 @@ export default function HomePage() {
     EUR: 0.93,
     GBP: 0.79,
     CAD: 1.38,
+    INR: 83.5,
   };
   
   // Pricing plans base prices (in USD)
@@ -393,6 +394,7 @@ export default function HomePage() {
       EUR: "de-DE",
       GBP: "en-GB",
       CAD: "en-CA",
+      INR: "en-IN",
     };
     
     const convertedAmount = amount * conversionRates[currencyCode];
@@ -1029,7 +1031,7 @@ export default function HomePage() {
               <div className="flex items-center justify-center gap-2">
                 <span className="text-sm font-semibold text-slate-400">Currency:</span>
                 <div className="flex bg-white/5 border border-white/10 rounded-full p-0.5">
-                  {["USD", "EUR", "GBP", "CAD"].map((curr) => (
+                  {["USD", "EUR", "GBP", "CAD", "INR"].map((curr) => (
                     <button
                       key={curr}
                       onClick={() => setCurrency(curr as any)}
