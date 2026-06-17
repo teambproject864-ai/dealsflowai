@@ -79,13 +79,17 @@ export async function POST(req: NextRequest) {
     } else if (role === "customer") {
       // Check Firestore users first, then fall back to demo customers
       let customer = null;
-      const { db } = await import("@/lib/firebase-admin");
-      if (db) {
-        const snap = await db.collection("users").where("email", "==", email).where("role", "==", "customer").get();
-        if (!snap.empty) {
-          const doc = snap.docs[0];
-          customer = { id: doc.id, ...doc.data() } as any;
+      try {
+        const { db } = await import("@/lib/firebase-admin");
+        if (db) {
+          const snap = await db.collection("users").where("email", "==", email).where("role", "==", "customer").get();
+          if (!snap.empty) {
+            const doc = snap.docs[0];
+            customer = { id: doc.id, ...doc.data() } as any;
+          }
         }
+      } catch (e) {
+        console.warn("[Login] Firebase not configured, skipping Firestore customer check", e);
       }
       
       if (!customer) {

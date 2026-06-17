@@ -166,7 +166,17 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
           </div>
         </div>
 
-
+        {isLogin && (
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => router.push("/auth/forgot-password")}
+              className="text-xs text-teal-400 hover:text-teal-300 font-semibold transition-colors"
+            >
+              Forgot Password?
+            </button>
+          </div>
+        )}
 
         <ExtrudedButton
           type="submit"
@@ -194,26 +204,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
         </div>
       )}
 
-      {role === "admin" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">admin@dealflow.ai / AdminDF</p>
-        </div>
-      )}
-      
-      {role === "customer" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">demo@customer.com / CustomerDemo123!</p>
-        </div>
-      )}
-      
-      {role === "agent" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">praneeth@dealflow.ai / Praneeth123!</p>
-        </div>
-      )}
+
     </GlassPanel>
   );
 }

@@ -5,8 +5,8 @@ import {
   createToken,
   setAuthCookie,
   addAuditLog,
+  NEW_CUSTOMERS,
 } from "@/lib/auth";
-import { db } from "@/lib/firebase-admin";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -43,16 +43,21 @@ export async function POST(req: NextRequest) {
 
     // ── Check if email already exists in Firestore users collection ──
     let emailExists = false;
-    if (db) {
-      const snapshot = await db.collection("users").where("email", "==", email).get();
-      if (!snapshot.empty) {
-        emailExists = true;
+    try {
+      const { db } = await import("@/lib/firebase-admin");
+      if (db) {
+        const snapshot = await db.collection("users").where("email", "==", email).get();
+        if (!snapshot.empty) {
+          emailExists = true;
+        }
       }
+    } catch (e) {
+      console.warn("[Register] Firebase not configured, skipping Firestore email check", e);
     }
 
     // Also check demo customers fallback
     if (!emailExists) {
-      emailExists = DEMO_CUSTOMERS.some((c) => c.email === email);
+      emailExists = [...DEMO_CUSTOMERS, ...NEW_CUSTOMERS].some((c) => c.email === email);
     }
 
     if (emailExists) {
@@ -76,10 +81,18 @@ export async function POST(req: NextRequest) {
     };
 
     // Save to Firestore
-    if (db) {
-      await db.collection("users").doc(customerId).set(newCustomer);
+    try {
+      const { db } = await import("@/lib/firebase-admin");
+      if (db) {
+        await db.collection("users").doc(customerId).set(newCustomer);
+        console.log("[Register] New customer registered and stored in Firestore:", customerId);
+      }
+    } catch (e) {
+      console.warn("[Register] Firebase not configured, only storing in memory", e);
     }
-    console.log("[Register] New customer registered and stored in Firestore:", customerId);
+    
+    // Also save to in-memory NEW_CUSTOMERS array
+    NEW_CUSTOMERS.push(newCustomer);
 
     // Auto log them in
     const user = { id: newCustomer.id, email: newCustomer.email, name: newCustomer.name, role: newCustomer.role };

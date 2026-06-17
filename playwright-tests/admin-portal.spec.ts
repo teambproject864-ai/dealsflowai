@@ -17,6 +17,7 @@ test.describe('Admin Portal - Authentication & Navigation', () => {
       'Bot Monitor',
       'Tasks',
       'Customers',
+      'Resignations',
       'Documents',
       'Requirements',
       'GTM Reports',
