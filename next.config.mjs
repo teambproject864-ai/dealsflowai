@@ -11,9 +11,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  turbopack: {
-    root: __dirname,
-  },
   async redirects() {
     return [
       {
