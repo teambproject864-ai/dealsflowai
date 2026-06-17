@@ -194,26 +194,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
         </div>
       )}
 
-      {role === "admin" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">admin@dealflow.ai / AdminDF</p>
-        </div>
-      )}
-      
-      {role === "customer" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">demo@customer.com / CustomerDemo123!</p>
-        </div>
-      )}
-      
-      {role === "agent" && (
-        <div className="mt-6 p-4 bg-slate-950/40 border border-white/5 rounded-xl text-center">
-          <p className="text-xs text-slate-500 mb-1">Demo Credentials</p>
-          <p className="text-xs text-slate-300 font-mono">praneeth@dealflow.ai / Praneeth123!</p>
-        </div>
-      )}
+
     </GlassPanel>
   );
 }
