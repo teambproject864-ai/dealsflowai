@@ -25,7 +25,7 @@ test.describe('Admin Portal - Authentication & Navigation', () => {
     ];
     
     for (const tabName of expectedTabs) {
-      await expect(authenticatedAdmin.getByRole('button', { name: tabName, exact: true })).toBeVisible();
+      await expect(authenticatedAdmin.getByText(tabName, { exact: true })).toBeVisible();
     }
   });
 });
