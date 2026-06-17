@@ -1,9 +1,18 @@
 /** @type {import('next').NextConfig} */
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const nextConfig = {
   // Streaming chat + intro effect behave more predictably without double-invoke in dev.
   reactStrictMode: false,
   typescript: {
     ignoreBuildErrors: true,
+  },
+  turbopack: {
+    root: __dirname,
   },
   async redirects() {
     return [
