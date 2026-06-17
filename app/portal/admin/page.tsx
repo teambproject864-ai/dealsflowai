@@ -165,6 +165,34 @@ function AdminPortalContent() {
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const [llmMetrics, setLlmMetrics] = useState<{
+    totalRequests: number;
+    successfulRequests: number;
+    failedRequests: number;
+    totalCost: number;
+    totalLatencyMs: number;
+    averageLatencyMs: number;
+    successRate: number;
+  } | null>(null);
+  const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+
+  const fetchLlmMetrics = async () => {
+    setIsLoadingMetrics(true);
+    try {
+      const res = await fetch("/api/llm-manager/metrics");
+      const data = await res.json();
+      if (data.success) {
+        setLlmMetrics(data.metrics);
+        setRecentInteractions(data.recentInteractions);
+      }
+    } catch (error) {
+      console.error("Failed to load LLM metrics:", error);
+    } finally {
+      setIsLoadingMetrics(false);
+    }
+  };
+
   const fetchLeads = async () => {
     try {
       const res = await fetch("/api/leads");
@@ -207,6 +235,12 @@ function AdminPortalContent() {
     fetchLeads();
     fetchAuditLogs();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "llm-manager") {
+      fetchLlmMetrics();
+    }
+  }, [activeTab]);
 
   const handleReassign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1480,7 +1514,7 @@ function AdminPortalContent() {
               </CardHeader>
               <CardContent>
                 <p className="text-5xl font-extrabold text-teal-400">
-                  {localAuditLogs.filter(log => log.actionType.startsWith("llm")).length + 10}
+                  {llmMetrics ? llmMetrics.totalRequests : (localAuditLogs.filter(log => log.actionType.startsWith("llm")).length + 10)}
                 </p>
               </CardContent>
             </GlassPanel>
@@ -1490,7 +1524,9 @@ function AdminPortalContent() {
                 <CardTitle className="text-slate-300 text-lg">Total Cost</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-extrabold text-blue-400">$0.42</p>
+                <p className="text-5xl font-extrabold text-blue-400">
+                  {llmMetrics ? `$${llmMetrics.totalCost.toFixed(5)}` : "$0.42"}
+                </p>
               </CardContent>
             </GlassPanel>
 
@@ -1499,7 +1535,9 @@ function AdminPortalContent() {
                 <CardTitle className="text-slate-300 text-lg">Avg Latency</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-extrabold text-amber-400">1.4s</p>
+                <p className="text-5xl font-extrabold text-amber-400">
+                  {llmMetrics ? `${(llmMetrics.averageLatencyMs / 1000).toFixed(2)}s` : "1.4s"}
+                </p>
               </CardContent>
             </GlassPanel>
 
@@ -1508,7 +1546,9 @@ function AdminPortalContent() {
                 <CardTitle className="text-slate-300 text-lg">Success Rate</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-extrabold text-green-400">98.2%</p>
+                <p className="text-5xl font-extrabold text-green-400">
+                  {llmMetrics ? `${(llmMetrics.successRate * 100).toFixed(1)}%` : "98.2%"}
+                </p>
               </CardContent>
             </GlassPanel>
           </div>
@@ -1523,6 +1563,7 @@ function AdminPortalContent() {
                   const data = await res.json();
                   if (data.success) {
                     alert("Retraining initiated!");
+                    fetchLlmMetrics();
                   }
                 } catch (e) {
                   console.error(e);
@@ -1559,29 +1600,68 @@ function AdminPortalContent() {
 
           {/* Recent Interactions */}
           <div>
-            <h3 className="text-xl font-bold text-slate-100 mb-4">Recent Interactions</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-100">Recent Interactions</h3>
+              <ExtrudedButton size="sm" onClick={fetchLlmMetrics}>Refresh</ExtrudedButton>
+            </div>
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {localAuditLogs.filter(log => log.actionType.startsWith("llm")).map(log => (
-              <GlassPanel key={log.id} tilt={false} className="border-slate-800 bg-slate-900/40">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-white">{log.actionDetails}</h4>
-                      <p className="text-xs text-slate-400 mt-1">
-                        By: {log.performedBy} • {new Date(log.createdAt).toLocaleString()}
-                      </p>
+              {isLoadingMetrics && <div className="text-slate-400 py-4 text-center">Loading interactions...</div>}
+              {!isLoadingMetrics && recentInteractions.length === 0 && (
+                <div className="text-slate-400 py-4 text-center">No recent interactions logged. Run RAG or agent calls to generate activity!</div>
+              )}
+              {!isLoadingMetrics && recentInteractions.map(interaction => (
+                <GlassPanel key={interaction.id} tilt={false} className="border-slate-800 bg-slate-900/40">
+                  <CardContent className="p-4 space-y-2 text-slate-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            interaction.provider === "nvidia" ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {interaction.provider.toUpperCase()}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-300">
+                            {interaction.modelId || "Unknown Model"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {new Date(interaction.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right text-xs">
+                        <div className="font-semibold text-slate-300">{(interaction.latencyMs / 1000).toFixed(2)}s</div>
+                        <div className="text-slate-500">${interaction.cost.toFixed(6)}</div>
+                      </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400">
-                      {log.actionType}
-                    </span>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-            ))}
+                    
+                    <div className="border-t border-slate-800/60 pt-2 mt-2 space-y-1.5 text-xs text-slate-300">
+                      <div>
+                        <strong className="text-slate-400">Prompt:</strong>
+                        <div className="bg-black/20 p-2 text-slate-300 rounded mt-1 overflow-x-auto whitespace-pre-wrap max-h-24">
+                          {interaction.request.userPrompt}
+                        </div>
+                      </div>
+                      {interaction.response && (
+                        <div>
+                          <strong className="text-slate-400">Response:</strong>
+                          <div className="bg-teal-950/10 border border-teal-500/10 p-2 rounded mt-1 overflow-x-auto whitespace-pre-wrap max-h-24 text-teal-200">
+                            {interaction.response.output}
+                          </div>
+                        </div>
+                      )}
+                      {interaction.error && (
+                        <div className="bg-red-950/15 border border-red-500/10 p-2 rounded mt-1 text-red-400 font-semibold">
+                          Error: {interaction.error}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-      )}
+        )}
 
         {/* Bot Monitor Tab */}
         {activeTab === "bot-monitor" && (
