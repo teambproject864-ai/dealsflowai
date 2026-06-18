@@ -18,7 +18,7 @@ export async function GET(
     if (cached) {
       return NextResponse.json({
         success: true,
-        analysisId: cached.id || analysisId,
+        analysisId: cached.analysisId || analysisId,
         leadId: cached.leadId,
         ...cached,
       });

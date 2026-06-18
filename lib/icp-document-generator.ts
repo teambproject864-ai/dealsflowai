@@ -98,8 +98,8 @@ export function generateICPDocument(formData: IntakeFormData): ICPDocumentData {
       "Customer Profile Summary": {
         companyName: companyName,
         websiteUrl: formData.websiteUrl || formData.website || "https://example.com",
-        contactName: formData.contactName || "John Doe",
-        contactEmail: formData.contactEmail || "contact@example.com",
+        contactName: formData.name || "John Doe",
+        contactEmail: formData.emailPersonal || "contact@example.com",
         targetIndustries: industries,
         targetCompanySizes: companySizes,
         targetRevenues: formData.targetRevenues || ["$10M - $50M"],

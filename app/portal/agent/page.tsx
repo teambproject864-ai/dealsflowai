@@ -39,7 +39,8 @@ import {
   demoAgentMetrics,
   demoAgentCredits,
 } from "@/lib/portal-demo-data";
-import type { TaskStatus, AgentCredits, FileAttachment } from "@/lib/types";
+import type { AgentCredits, FileAttachment } from "@/lib/types";
+import type { TaskStatus } from "@/lib/portal-types";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { Unibox } from "@/components/Unibox";
@@ -1155,7 +1156,7 @@ function AgentPortalContent() {
                           </div>
                         )}
                         <p className="text-xs mt-2 opacity-70 text-right">
-                          {new Date(msg.createdAt || msg.timestamp || "").toLocaleTimeString(undefined, {
+                          {new Date(msg.timestamp || "").toLocaleTimeString(undefined, {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}

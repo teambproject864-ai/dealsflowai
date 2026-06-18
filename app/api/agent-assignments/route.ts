@@ -3,7 +3,7 @@ import {
   getInMemoryAgentAssignments,
   getInMemoryLeads,
 } from "@/lib/memory-storage";
-import { AgentAssignment, getAgentByKey } from "@/lib/types";
+import { AgentAssignment, ExtendedLeadRecord, getAgentByKey } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limiter";
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data();
+        lead = doc.data() as ExtendedLeadRecord;
       }
     }
 
@@ -97,8 +97,8 @@ export async function POST(req: Request) {
     // Send instant in-app notifications
     const nowStr = new Date().toISOString();
     const companyName = lead?.companyName || "a new company";
-    const customerName = lead?.name || "Customer";
-    const customerEmail = lead?.emailPersonal || "";
+    const customerName = lead?.contactName || "Customer";
+    const customerEmail = lead?.contactEmail || "";
 
     if (db) {
       // Notification for assigned agent

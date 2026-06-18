@@ -32,8 +32,13 @@ export function useFirebaseAuth(): AuthState {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const clientAuth = getClientAuth();
+    if (!clientAuth) {
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(
-      getClientAuth(),
+      clientAuth,
       (firebaseUser) => {
         setUser(firebaseUser);
         setLoading(false);
@@ -50,7 +55,9 @@ export function useFirebaseAuth(): AuthState {
   const signInWithGoogle = useCallback(async () => {
     setError(null);
     try {
-      await signInWithPopup(getClientAuth(), googleProvider);
+      const clientAuth = getClientAuth();
+      if (!clientAuth) { setError("Firebase not configured"); return; }
+      await signInWithPopup(clientAuth, googleProvider);
     } catch (err: any) {
       // User closed popup — not a real error
       if (err.code !== "auth/popup-closed-by-user") {
@@ -60,7 +67,8 @@ export function useFirebaseAuth(): AuthState {
   }, []);
 
   const signOut = useCallback(async () => {
-    await firebaseSignOut(getClientAuth());
+    const clientAuth = getClientAuth();
+    if (clientAuth) await firebaseSignOut(clientAuth);
   }, []);
 
   return {
@@ -79,7 +87,9 @@ export function useFirebaseAuth(): AuthState {
  * Returns null if not signed in.
  */
 export async function getIdToken(): Promise<string | null> {
-  const currentUser = getClientAuth().currentUser;
+  const clientAuth = getClientAuth();
+  if (!clientAuth) return null;
+  const currentUser = clientAuth.currentUser;
   if (!currentUser) return null;
   return currentUser.getIdToken();
 }

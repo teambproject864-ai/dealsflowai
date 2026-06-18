@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getInMemoryLeads } from "@/lib/memory-storage";
 import { db } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
+import { ExtendedLeadRecord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +26,9 @@ export async function GET(
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data();
+        lead = doc.data() as ExtendedLeadRecord;
         // Cache it locally
-        inMemoryLeads.set(leadId, lead);
+        inMemoryLeads.set(leadId, lead!);
       }
     }
 

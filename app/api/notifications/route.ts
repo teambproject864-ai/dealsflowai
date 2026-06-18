@@ -16,16 +16,16 @@ export async function GET(req: Request) {
     if (db) {
       let query: any = db.collection("in_app_notifications");
 
-      if (user.role === "admin") {
+      if (user!.role === "admin") {
         query = query.where("role", "==", "admin");
-      } else if (user.role === "agent") {
+      } else if (user!.role === "agent") {
         // Look up by agent ID (e.g. agent-praneeth) or agent key (e.g. praneeth)
         // We check if either the userId matches or the role is agent.
         // For security & scope, we match the userId or role.
-        const agentKey = user.id.replace("agent-", "");
-        query = query.where("userId", "in", [user.id, agentKey]);
-      } else if (user.role === "customer") {
-        query = query.where("userId", "==", user.id);
+        const agentKey = user!.id.replace("agent-", "");
+        query = query.where("userId", "in", [user!.id, agentKey]);
+      } else if (user!.role === "customer") {
+        query = query.where("userId", "==", user!.id);
       }
 
       const snapshot = await query.orderBy("createdAt", "desc").limit(50).get();
@@ -62,13 +62,13 @@ export async function POST(req: Request) {
 
     if (action === "mark-all-read") {
       let query: any = db.collection("in_app_notifications").where("unread", "==", true);
-      if (user.role === "admin") {
+      if (user!.role === "admin") {
         query = query.where("role", "==", "admin");
-      } else if (user.role === "agent") {
-        const agentKey = user.id.replace("agent-", "");
-        query = query.where("userId", "in", [user.id, agentKey]);
-      } else if (user.role === "customer") {
-        query = query.where("userId", "==", user.id);
+      } else if (user!.role === "agent") {
+        const agentKey = user!.id.replace("agent-", "");
+        query = query.where("userId", "in", [user!.id, agentKey]);
+      } else if (user!.role === "customer") {
+        query = query.where("userId", "==", user!.id);
       }
 
       const snapshot = await query.get();
@@ -99,13 +99,13 @@ export async function POST(req: Request) {
 
     if (action === "clear-all") {
       let query: any = db.collection("in_app_notifications");
-      if (user.role === "admin") {
+      if (user!.role === "admin") {
         query = query.where("role", "==", "admin");
-      } else if (user.role === "agent") {
-        const agentKey = user.id.replace("agent-", "");
-        query = query.where("userId", "in", [user.id, agentKey]);
-      } else if (user.role === "customer") {
-        query = query.where("userId", "==", user.id);
+      } else if (user!.role === "agent") {
+        const agentKey = user!.id.replace("agent-", "");
+        query = query.where("userId", "in", [user!.id, agentKey]);
+      } else if (user!.role === "customer") {
+        query = query.where("userId", "==", user!.id);
       }
 
       const snapshot = await query.get();

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { analysisGraph } from "@/lib/agents/analysisGraph";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads, getInMemoryAnalyses } from "@/lib/memory-storage";
+import { ExtendedLeadRecord } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { db } from "@/lib/firebase-admin";
 
@@ -64,8 +65,8 @@ export async function POST(req: Request) {
       if (!companyData && db) {
         const doc = await db.collection("leads").doc(leadId).get();
         if (doc.exists) {
-          companyData = doc.data();
-          inMemoryLeads.set(leadId, companyData);
+          companyData = doc.data() as ExtendedLeadRecord;
+          inMemoryLeads.set(leadId, companyData as ExtendedLeadRecord);
         }
       }
       if (!companyData) {
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
       if (!leadRecord && db) {
         const doc = await db.collection("leads").doc(leadId).get();
         if (doc.exists) {
-          leadRecord = doc.data();
+          leadRecord = doc.data() as ExtendedLeadRecord;
         }
       }
       

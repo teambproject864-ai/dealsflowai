@@ -17,11 +17,11 @@ export async function GET(req: Request) {
       let query: any = db.collection("leads");
       
       // Filter by role
-      if (user.role === "agent") {
-        const agentKey = user.id.replace(/^agent-/, "");
+      if (user!.role === "agent") {
+        const agentKey = user!.id.replace(/^agent-/, "");
         query = query.where("assignedAgentKey", "==", agentKey);
-      } else if (user.role === "customer") {
-        query = query.where("customerId", "==", user.id);
+      } else if (user!.role === "customer") {
+        query = query.where("customerId", "==", user!.id);
       }
 
       const snapshot = await query.get();
@@ -37,11 +37,11 @@ export async function GET(req: Request) {
       }));
 
       // Filter in-memory leads
-      if (user.role === "agent") {
-        const agentKey = user.id.replace(/^agent-/, "");
+      if (user!.role === "agent") {
+        const agentKey = user!.id.replace(/^agent-/, "");
         leadsList = leadsList.filter((l) => l.assignedAgentKey === agentKey);
-      } else if (user.role === "customer") {
-        leadsList = leadsList.filter((l) => l.customerId === user.id);
+      } else if (user!.role === "customer") {
+        leadsList = leadsList.filter((l) => l.customerId === user!.id);
       }
     }
 

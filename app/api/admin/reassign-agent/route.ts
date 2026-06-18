@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireAuth, addAuditLog, getAgentByKey } from "@/lib/auth";
+import { requireAuth, addAuditLog } from "@/lib/auth";
+import { getAgentByKey } from "@/lib/types";
+import { ExtendedLeadRecord } from "@/lib/types";
 import { getInMemoryLeads, getInMemoryAgentAssignments } from "@/lib/memory-storage";
 import { db } from "@/lib/firebase-admin";
 import { sendEmail } from "@/lib/notifications";
@@ -29,7 +31,7 @@ export async function POST(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data();
+        lead = doc.data() as ExtendedLeadRecord;
       }
     }
 
@@ -42,8 +44,8 @@ export async function POST(req: Request) {
 
     const outgoingAgentKey = lead.assignedAgentKey || "unassigned";
     const companyName = lead.companyName || "Company";
-    const customerName = lead.name || "Customer";
-    const customerEmail = lead.emailPersonal || "";
+    const customerName = lead.contactName || "Customer";
+    const customerEmail = lead.contactEmail || "";
 
     if (outgoingAgentKey === newAgentKey) {
       return NextResponse.json(
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
       agentKey: newAgentKey,
       agentName: newAgentProfile.name,
       assignedAt: new Date().toISOString(),
-      status: "active",
+      status: "active" as const,
     };
     getInMemoryAgentAssignments().set(assignmentId, assignment);
 
@@ -124,10 +126,11 @@ export async function POST(req: Request) {
       }
 
       // Notification for customer
-      if (lead.customerId) {
+      const leadWithCustomer = lead as ExtendedLeadRecord & { customerId?: string };
+      if (leadWithCustomer.customerId) {
         await db.collection("in_app_notifications").add({
           id: uuidv4(),
-          userId: lead.customerId,
+          userId: leadWithCustomer.customerId,
           role: "customer",
           title: "Agent Reassigned",
           description: `Your assigned Agent has been updated. ${newAgentProfile.name} is now handling your request.`,
@@ -194,8 +197,9 @@ export async function POST(req: Request) {
     // 7. Log to security audit trail
     const ip = (req as any).ip || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
+    const auditEmail = user?.email || "admin@dealflow.ai";
     addAuditLog(
-      adminEmail || "admin@dealflow.ai",
+      auditEmail,
       "admin",
       true,
       `Agent reassigned for ${companyName} (Lead ID: ${leadId}) from ${outgoingAgentName} (${outgoingAgentKey}) to ${newAgentProfile.name} (${newAgentKey})`,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId, useRef } from "react";
+import { useState, useEffect, useId } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserRole } from "@/lib/auth";
 import {
@@ -23,7 +23,7 @@ import {
   Activity,
   Target,
 } from "lucide-react";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 
