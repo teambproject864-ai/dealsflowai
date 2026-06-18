@@ -1,7 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { db, logger } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase-admin";
+import { logger } from "@/lib/logger";
 import {
   DEMO_ADMIN,
   DEMO_AGENTS,
@@ -47,6 +48,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Invalid token type" },
         { status: 400 }
+      );
+    }
+
+    if (decoded.role !== "admin") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Only admin accounts can perform direct password resets. For other roles, resets must be approved and executed by an administrator.",
+        },
+        { status: 403 }
       );
     }
 

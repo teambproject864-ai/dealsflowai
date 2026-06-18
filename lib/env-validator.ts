@@ -20,8 +20,36 @@ export function validateEnv(): EnvValidationResult {
   }
 
   // 1. Check JWT Secret (Critical for Security)
-  if (isProd && !process.env.JWT_SECRET) {
-    errors.push("JWT_SECRET environment variable is required in production environments.");
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    errors.push("JWT_SECRET environment variable is required.");
+  } else {
+    // Validate length and complexity
+    if (jwtSecret.length < 32) {
+      errors.push("JWT_SECRET must be at least 32 characters long to ensure cryptographic strength.");
+    }
+    
+    const hasUppercase = /[A-Z]/.test(jwtSecret);
+    const hasLowercase = /[a-z]/.test(jwtSecret);
+    const hasNumbers = /[0-9]/.test(jwtSecret);
+    const hasSpecial = /[^A-Za-z0-9]/.test(jwtSecret);
+    const characterClassesCount = [hasUppercase, hasLowercase, hasNumbers, hasSpecial].filter(Boolean).length;
+    
+    // Check if it has at least 3 character classes OR is a strong cryptographically generated hex or base64 key
+    const isHexOrBase64 = /^[0-9a-fA-F]{64,}$/.test(jwtSecret) || /^[A-Za-z0-9+/]{44,}={0,2}$/.test(jwtSecret);
+    
+    if (characterClassesCount < 3 && !isHexOrBase64) {
+      errors.push("JWT_SECRET is not complex enough. It must contain a mix of uppercase, lowercase, numbers, and special characters, or be a cryptographically strong generated key (like a 32-byte hex/base64 string).");
+    }
+    
+    // Check for common weak phrases
+    const lowerSecret = jwtSecret.toLowerCase();
+    const weakPhrases = ["secret", "default", "password", "123456", "change-me", "your-secret-key"];
+    for (const phrase of weakPhrases) {
+      if (lowerSecret.includes(phrase)) {
+        errors.push(`JWT_SECRET must not contain common weak words/phrases like '${phrase}'.`);
+      }
+    }
   }
 
   // 2. Check Firebase Configuration

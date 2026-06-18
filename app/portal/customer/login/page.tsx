@@ -1,19 +1,22 @@
 import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
-import { Loader3D } from "@/components/immersive/Loader3D";
+import { Loader2 } from "lucide-react";
+
+export const metadata = {
+  title: "Customer Sign In — DealFlow AI",
+  description: "Sign in or create your DealFlow AI customer account to access GTM analytics and pipeline intelligence.",
+};
 
 export default function CustomerLoginPage() {
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-6">
-      <Suspense
-        fallback={
-          <div className="flex justify-center">
-            <Loader3D label="Loading login" />
-          </div>
-        }
-      >
-        <LoginForm role="customer" allowRegistration />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+        </div>
+      }
+    >
+      <LoginForm role="customer" allowRegistration />
+    </Suspense>
   );
 }

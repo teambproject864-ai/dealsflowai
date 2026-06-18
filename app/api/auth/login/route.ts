@@ -49,57 +49,65 @@ export async function POST(req: NextRequest) {
 
     let user = null;
 
-    if (role === "admin") {
-      if (email === DEMO_ADMIN.email) {
-        const adminHash = process.env.ADMIN_PASSWORD_HASH;
-        if (!adminHash) {
-          // ADMIN_PASSWORD_HASH env var must be set — no fallback to prevent hash exposure in source
-          addAuditLog(email, role, false, "Admin login failed: ADMIN_PASSWORD_HASH not configured", ip, userAgent);
-          return NextResponse.json(
-            { success: false, error: "Admin authentication not configured. Set ADMIN_PASSWORD_HASH." },
-            { status: 503 }
-          );
+    // Check Firestore users first for all roles
+    let dbUser = null;
+    try {
+      const { db } = await import("@/lib/firebase-admin");
+      if (db) {
+        const snap = await db
+          .collection("users")
+          .where("email", "==", email.toLowerCase())
+          .where("role", "==", role)
+          .get();
+        if (!snap.empty) {
+          const doc = snap.docs[0];
+          dbUser = { id: doc.id, ...doc.data() } as any;
         }
-        const isValidPassword = await verifyPassword(password, adminHash);
+      }
+    } catch (e) {
+      console.warn("[Login] Firebase not configured, skipping Firestore user check", e);
+    }
 
-        if (isValidPassword) {
-          // Note: TOTP-based 2FA is disabled per security policy decision recorded in audit log
-          addAuditLog(email, role, true, "Admin login successful (2FA disabled by policy)", ip, userAgent);
-          user = { ...DEMO_ADMIN, role: "admin" as const };
-        }
+    if (dbUser) {
+      const isValidPassword = await verifyPassword(password, dbUser.hashedPassword);
+      if (isValidPassword) {
+        user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name || (role === "admin" ? "Administrator" : role === "agent" ? "Agent" : "Customer"),
+          role: dbUser.role as "admin" | "agent" | "customer",
+        };
       }
-    } else if (role === "agent") {
-      const agent = DEMO_AGENTS.find((a) => a.email === email);
-      if (agent) {
-        const isValidPassword = await verifyPassword(password, agent.hashedPassword);
-        if (isValidPassword) {
-          user = { id: agent.id, email: agent.email, name: agent.name, role: "agent" as const };
-        }
-      }
-    } else if (role === "customer") {
-      // Check Firestore users first, then fall back to demo customers
-      let customer = null;
-      try {
-        const { db } = await import("@/lib/firebase-admin");
-        if (db) {
-          const snap = await db.collection("users").where("email", "==", email).where("role", "==", "customer").get();
-          if (!snap.empty) {
-            const doc = snap.docs[0];
-            customer = { id: doc.id, ...doc.data() } as any;
+    }
+
+    // Fall back to demo/hardcoded config if not found or password verification failed
+    if (!user) {
+      if (role === "admin") {
+        if (email.toLowerCase() === DEMO_ADMIN.email.toLowerCase()) {
+          const adminHash = process.env.ADMIN_PASSWORD_HASH;
+          if (adminHash) {
+            const isValidPassword = await verifyPassword(password, adminHash);
+            if (isValidPassword) {
+              addAuditLog(email, role, true, "Admin login successful (2FA disabled by policy)", ip, userAgent);
+              user = { ...DEMO_ADMIN, role: "admin" as const };
+            }
           }
         }
-      } catch (e) {
-        console.warn("[Login] Firebase not configured, skipping Firestore customer check", e);
-      }
-      
-      if (!customer) {
-        customer = [...DEMO_CUSTOMERS, ...NEW_CUSTOMERS].find((c) => c.email === email);
-      }
-
-      if (customer) {
-        const isValidPassword = await verifyPassword(password, customer.hashedPassword);
-        if (isValidPassword) {
-          user = { id: customer.id, email: customer.email, name: customer.name, role: "customer" as const };
+      } else if (role === "agent") {
+        const agent = DEMO_AGENTS.find((a) => a.email.toLowerCase() === email.toLowerCase());
+        if (agent) {
+          const isValidPassword = await verifyPassword(password, agent.hashedPassword);
+          if (isValidPassword) {
+            user = { id: agent.id, email: agent.email, name: agent.name, role: "agent" as const };
+          }
+        }
+      } else if (role === "customer") {
+        const customer = [...DEMO_CUSTOMERS, ...NEW_CUSTOMERS].find((c) => c.email.toLowerCase() === email.toLowerCase());
+        if (customer) {
+          const isValidPassword = await verifyPassword(password, customer.hashedPassword);
+          if (isValidPassword) {
+            user = { id: customer.id, email: customer.email, name: customer.name, role: "customer" as const };
+          }
         }
       }
     }

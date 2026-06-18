@@ -27,6 +27,7 @@ import {
   FolderOpen,
   Check,
   Archive,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -69,6 +70,7 @@ const tabs = [
   { id: "gtm-reports", label: "GTM Reports", icon: BarChart3 },
   { id: "agents", label: "Agents", icon: UserPlus },
   { id: "interactions", label: "Interactions", icon: MessageSquare },
+  { id: "password-requests", label: "Password Requests", icon: KeyRound },
 ] as const;
 
 function AdminPortalContent() {
@@ -86,6 +88,12 @@ function AdminPortalContent() {
   const [gtmReports, setGtmReports] = useState(demoGTMReports);
   const [customerGTMData, setCustomerGTMData] = useState(demoCustomerGTMData);
   const [showReassignReqModal, setShowReassignReqModal] = useState(false);
+  const [passwordRequests, setPasswordRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
   const [addingAgentFromReassign, setAddingAgentFromReassign] = useState(false);
   
@@ -217,6 +225,61 @@ function AdminPortalContent() {
     }
   };
   
+  const fetchPasswordRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const res = await fetch("/api/admin/password-requests");
+      const data = await res.json();
+      if (data.success) {
+        setPasswordRequests(data.requests);
+      }
+    } catch (err) {
+      console.error("Failed to fetch password requests:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleProcessReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRequest || !newPassword) return;
+    setResettingPassword(true);
+    try {
+      const res = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: selectedRequest.id, newPassword }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotification({
+          type: "success",
+          title: "Password Reset Approved",
+          message: `Password has been successfully updated for ${selectedRequest.email}.`,
+        });
+        setShowResetModal(false);
+        setSelectedRequest(null);
+        setNewPassword("");
+        fetchPasswordRequests();
+      } else {
+        setNotification({
+          type: "error",
+          title: "Reset Failed",
+          message: data.error || "Failed to reset password",
+        });
+      }
+    } catch (err) {
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "Failed to connect to server for password reset",
+      });
+    } finally {
+      setResettingPassword(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+  
   const addAuditLog = (actionType: AuditLogEntry["actionType"], actionDetails: string, targetId?: string, targetType?: string) => {
     const newLog = {
       id: `audit-${Date.now()}`,
@@ -239,6 +302,8 @@ function AdminPortalContent() {
   useEffect(() => {
     if (activeTab === "llm-manager") {
       fetchLlmMetrics();
+    } else if (activeTab === "password-requests") {
+      fetchPasswordRequests();
     }
   }, [activeTab]);
 
@@ -2038,7 +2103,7 @@ function AdminPortalContent() {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-xl text-slate-100 font-bold">
-                          {demoUsers.find(u => u.id === data.customerId)?.name || "Customer"}'s Submission
+                          {demoUsers.find(u => u.id === data.customerId)?.name || "Customer"}&apos;s Submission
                         </CardTitle>
                       </div>
                       <p className="text-xs text-slate-500">
@@ -2309,8 +2374,157 @@ function AdminPortalContent() {
           </div>
         )}
 
+        {activeTab === "password-requests" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100">Password Change Requests</h2>
+                <p className="text-slate-400 text-sm mt-1">
+                  Review and process submitted password change requests from customers and agents.
+                </p>
+              </div>
+            </div>
+
+            <GlassPanel className="border-slate-800 p-6">
+              {loadingRequests ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                </div>
+              ) : passwordRequests.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  No password reset requests found.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 text-sm font-semibold">
+                        <th className="pb-3 pr-4">User Email</th>
+                        <th className="pb-3 px-4">Role</th>
+                        <th className="pb-3 px-4">Requested At</th>
+                        <th className="pb-3 px-4">Status</th>
+                        <th className="pb-3 pl-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {passwordRequests.map((req) => (
+                        <tr key={req.id} className="border-b border-slate-900/50 hover:bg-slate-900/20 text-slate-300 transition-colors">
+                          <td className="py-4 pr-4 font-medium">{req.email}</td>
+                          <td className="py-4 px-4 capitalize">
+                            <span className={cn(
+                              "px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                              req.role === "admin" ? "bg-red-500/10 text-red-400" :
+                              req.role === "agent" ? "bg-purple-500/10 text-purple-400" :
+                              "bg-orange-500/10 text-orange-400"
+                            )}>
+                              {req.role || "customer"}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-slate-400 text-sm">
+                            {req.createdAt ? new Date(req.createdAt).toLocaleString() : "Unknown"}
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={cn(
+                              "px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                              req.used || req.status === "approved" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400 animate-pulse"
+                            )}>
+                              {req.used || req.status === "approved" ? "Processed" : "Pending"}
+                            </span>
+                          </td>
+                          <td className="py-4 pl-4 text-right">
+                            {!(req.used || req.status === "approved") ? (
+                              <ExtrudedButton
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRequest(req);
+                                  setShowResetModal(true);
+                                }}
+                              >
+                                Process Reset
+                              </ExtrudedButton>
+                            ) : (
+                              <span className="text-xs text-slate-500">Completed</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </GlassPanel>
+          </div>
+        )}
 
       </div>
+
+      {/* Reset Password Modal */}
+      {showResetModal && selectedRequest && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassPanel className="w-full max-w-md border-slate-700 p-6 shadow-2xl relative">
+            <button
+              onClick={() => {
+                setShowResetModal(false);
+                setSelectedRequest(null);
+                setNewPassword("");
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h3 className="text-xl font-bold text-slate-100 mb-2">Process Password Reset</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Set a new password for <span className="font-semibold text-slate-200">{selectedRequest.email}</span> ({selectedRequest.role || "customer"}).
+            </p>
+
+            <form onSubmit={handleProcessReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Minimum 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={8}
+                  required
+                  autoFocus
+                  className="bg-slate-900 border-slate-700 text-white"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setSelectedRequest(null);
+                    setNewPassword("");
+                  }}
+                  disabled={resettingPassword}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={resettingPassword || newPassword.length < 8}
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  {resettingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Reset Password"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </GlassPanel>
+        </div>
+      )}
     </div>
   );
 }

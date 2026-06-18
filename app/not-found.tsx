@@ -31,7 +31,7 @@ export default function NotFound() {
             Lost in the Pipeline
           </h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
-            The RevOps agents couldn't find the page you are looking for. It might have been moved, deleted, or was never qualified.
+            The RevOps agents couldn&apos;t find the page you are looking for. It might have been moved, deleted, or was never qualified.
           </p>
         </div>
 

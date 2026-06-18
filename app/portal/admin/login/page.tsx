@@ -1,19 +1,22 @@
 import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
-import { Loader3D } from "@/components/immersive/Loader3D";
+import { Loader2 } from "lucide-react";
+
+export const metadata = {
+  title: "Admin Sign In — DealFlow AI",
+  description: "Administrator portal sign in for DealFlow AI revenue operations platform.",
+};
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-6">
-      <Suspense
-        fallback={
-          <div className="flex justify-center">
-            <Loader3D label="Loading login" />
-          </div>
-        }
-      >
-        <LoginForm role="admin" />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+        </div>
+      }
+    >
+      <LoginForm role="admin" />
+    </Suspense>
   );
 }

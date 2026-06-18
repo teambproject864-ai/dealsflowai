@@ -3,7 +3,7 @@ import { test, expect } from './auth-test.fixture';
 test.describe('Customer Portal - Authentication & Navigation', () => {
   test.beforeEach(async ({ authenticatedCustomer }) => {
     await authenticatedCustomer.goto('/portal/customer');
-    await expect(authenticatedCustomer.getByText(/Dashboard/i)).toBeVisible();
+    await expect(authenticatedCustomer.getByText(/Dashboard/i).first()).toBeVisible();
     // Hide the booking FAB to prevent overlaps on mobile viewports
     await authenticatedCustomer.addStyleTag({ content: '[aria-label="Book a call"] { display: none !important; }' }).catch(() => {});
   });

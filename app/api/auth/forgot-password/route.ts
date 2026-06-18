@@ -1,7 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { db, logger } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase-admin";
+import { logger } from "@/lib/logger";
 import { DEMO_ADMIN, DEMO_AGENTS, DEMO_CUSTOMERS } from "@/lib/auth";
 
 // Get JWT secret from environment or use fallback for dev
