@@ -209,6 +209,11 @@ export async function getAuthCookie(): Promise<string | null> {
   return cookieStore.get(AUTH_COOKIE_NAME)?.value || null;
 }
 
+export function deleteAuthCookieFromResponse(response: NextResponse): NextResponse {
+  response.cookies.delete(AUTH_COOKIE_NAME);
+  return response;
+}
+
 export async function deleteAuthCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE_NAME);

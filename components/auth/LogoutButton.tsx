@@ -12,10 +12,21 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
+      // Clear all client-side storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Call server-side logout
       await fetch("/api/auth/logout", { method: "POST" });
+      
+      // Hard reload/redirect to clear any cached state
       window.location.replace("/");
     } catch (e) {
       console.error("Logout failed:", e);
+      // Even if server logout fails, clear client storage and redirect
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace("/");
     } finally {
       setIsLoggingOut(false);
     }

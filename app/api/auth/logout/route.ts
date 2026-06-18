@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteAuthCookie, getCurrentUser, addAuditLog } from "@/lib/auth";
+import { deleteAuthCookieFromResponse, getCurrentUser, addAuditLog } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const ip = (req as any).ip || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
@@ -23,15 +23,11 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error("[Logout Error] Failed to retrieve user info during logout:", error);
-  } finally {
-    try {
-      await deleteAuthCookie();
-    } catch (cookieError) {
-      console.error("[Logout Error] Failed to delete authentication cookie:", cookieError);
-    }
   }
 
-  return NextResponse.json({ success: true });
+  let response = NextResponse.json({ success: true });
+  response = deleteAuthCookieFromResponse(response);
+  return response;
 }
 
 export async function GET(req: NextRequest) {
