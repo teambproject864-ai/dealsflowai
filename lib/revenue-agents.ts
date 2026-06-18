@@ -1,7 +1,7 @@
 import { db } from "@/lib/firebase-admin";
 import { PERSONAS } from "@/prompts/personas";
 import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE } from "@/lib/types";
-import { getRandomAvailableAgent } from "./agent-assignment";
+import { assignFairRandomAgent } from "./agent-assignment";
 
 export type RevenueAgentProfile = {
   key: string;
@@ -69,18 +69,11 @@ export async function listRevenueAgentsWithAvailability(): Promise<RevenueAgentP
 }
 
 /**
- * Picks a random available agent (or random if all are busy).
+ * Picks a fair random available agent (or random if all are busy) with variance control (<=15%)
  */
 export async function assignRandomAgent(): Promise<{ agentKey: string; reason: string }> {
   const agents = await listRevenueAgentsWithAvailability();
-  const availableAgents = agents.filter(agent => agent.available);
-  const agentPool = availableAgents.length > 0 ? availableAgents : agents;
-  const randomIndex = Math.floor(Math.random() * agentPool.length);
-  const selectedAgent = agentPool[randomIndex];
-  return {
-    agentKey: selectedAgent.key,
-    reason: availableAgents.length > 0 ? "random_available_agent" : "fallback_random_agent",
-  };
+  return await assignFairRandomAgent(agents);
 }
 
 /**
@@ -90,7 +83,7 @@ export async function assignOptimalAgent(
   preferredKeys: string[] = [],
   challengeTags: string[] = []
 ): Promise<{ agentKey: string; reason: string }> {
-  // If automatic assignment is requested, use random assignment
+  // If automatic assignment is requested, use fair assignment
   if (preferredKeys.length === 0 || preferredKeys.includes("automatic")) {
     return await assignRandomAgent();
   }

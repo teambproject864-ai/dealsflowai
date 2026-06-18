@@ -10,6 +10,8 @@ import { checkRateLimit } from "@/lib/rate-limiter";
 import * as admin from "firebase-admin";
 import { requireAuth } from "@/lib/auth";
 import { sendEmail } from "@/lib/notifications";
+import { reassignAgent } from "@/lib/agent-assignment";
+import { listRevenueAgentsWithAvailability } from "@/lib/revenue-agents";
 
 export const dynamic = "force-dynamic";
 
@@ -171,6 +173,179 @@ export async function POST(req: Request) {
     console.error("[agent-assignments POST] failed:", error);
     return NextResponse.json(
       { success: false, error: "Failed to assign agent" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: Request) {
+  // Rate limiting first
+  const rateLimitCheck = await checkRateLimit(req);
+  if (!rateLimitCheck.allowed) {
+    const headers = new Headers();
+    if (rateLimitCheck.msBeforeNext) {
+      headers.set('Retry-After', Math.ceil(rateLimitCheck.msBeforeNext / 1000).toString());
+    }
+    return NextResponse.json(
+      { success: false, error: "Too many requests, please try again later" },
+      { status: 429, headers }
+    );
+  }
+  
+  try {
+    const body = await req.json();
+    const { leadId } = body;
+    
+    if (!leadId) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields (leadId)" },
+        { status: 400 }
+      );
+    }
+
+    // Find the current assignment
+    let currentAssignment: AgentAssignment | undefined;
+    if (db) {
+      const query = db.collection("agent_assignments").where("leadId", "==", leadId).orderBy("assignedAt", "desc").limit(1);
+      const snapshot = await query.get();
+      if (!snapshot.empty) {
+        currentAssignment = snapshot.docs[0].data() as AgentAssignment;
+      }
+    } else {
+      const assignments = Array.from(getInMemoryAgentAssignments().values());
+      assignments.sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
+      currentAssignment = assignments.find(a => a.leadId === leadId);
+    }
+    
+    if (!currentAssignment) {
+      return NextResponse.json(
+        { success: false, error: "No active agent assignment found for this lead" },
+        { status: 404 }
+      );
+    }
+
+    // Get list of agents
+    const agents = await listRevenueAgentsWithAvailability();
+    const { agentKey: newAgentKey, reason } = await reassignAgent(leadId, currentAssignment.agentKey, agents);
+
+    const agentProfile = getAgentByKey(newAgentKey as any);
+    if (!agentProfile) {
+      return NextResponse.json(
+        { success: false, error: "New agent not found" },
+        { status: 500 }
+      );
+    }
+
+    // Create new assignment record
+    const newAssignment: AgentAssignment = {
+      id: uuidv4(),
+      leadId,
+      agentKey: newAgentKey as any,
+      agentName: agentProfile.name,
+      assignedAt: new Date().toISOString(),
+      status: "active"
+    };
+
+    // Update in-memory storage
+    const assignmentsMap = getInMemoryAgentAssignments();
+    assignmentsMap.set(newAssignment.id, newAssignment);
+
+    // Mark old assignment as reassigned
+    if (db) {
+      if (currentAssignment.id) {
+        await db.collection("agent_assignments").doc(currentAssignment.id).update({ status: "completed" });
+      }
+      // Save new assignment
+      await db.collection("agent_assignments").doc(newAssignment.id).set(newAssignment);
+    }
+
+    // Update lead in Firestore and in-memory
+    const leadsMap = getInMemoryLeads();
+    let lead = leadsMap.get(leadId);
+    if (!lead && db) {
+      const doc = await db.collection("leads").doc(leadId).get();
+      if (doc.exists) {
+        lead = doc.data() as ExtendedLeadRecord;
+      }
+    }
+
+    if (lead) {
+      const updatedLead = {
+        ...lead,
+        assignedAgentKey: newAgentKey,
+        agentAssignmentId: newAssignment.id
+      };
+      leadsMap.set(leadId, updatedLead);
+      if (db) {
+        await db.collection("leads").doc(leadId).set(updatedLead);
+      }
+    }
+
+    // Send notifications
+    const companyName = lead?.companyName || "a new company";
+    const customerName = lead?.contactName || "Customer";
+    const customerEmail = lead?.contactEmail || "";
+    const oldAgentName = getAgentByKey(currentAssignment.agentKey as any)?.name || currentAssignment.agentKey;
+
+    if (db) {
+      // Notify new agent
+      await db.collection("in_app_notifications").add({
+        id: uuidv4(),
+        userId: newAgentKey,
+        role: "agent",
+        title: "New Reassigned Lead",
+        description: `You have been reassigned ${companyName}'s lead, replacing ${oldAgentName}`,
+        type: "success",
+        createdAt: new Date().toISOString(),
+        unread: true
+      });
+      
+      // Notify admin team
+      await db.collection("in_app_notifications").add({
+        id: uuidv4(),
+        userId: "admin",
+        role: "admin",
+        title: "Lead Reassigned",
+        description: `${customerName}'s lead reassigned from ${oldAgentName} to ${agentProfile.name}`,
+        type: "info",
+        createdAt: new Date().toISOString(),
+        unread: true
+      });
+    }
+
+    // Send email notifications
+    try {
+      const newAgentEmail = `${newAgentKey}@dealflow.ai`;
+      const adminEmail = "admin@dealflow.ai";
+      
+      // Notify new agent
+      await sendEmail({
+        to: newAgentEmail,
+        subject: `[DealFlow] Reassigned: ${companyName}`,
+        body: `
+          <h3>Hello ${agentProfile.name},</h3>
+          <p>You have been reassigned to ${companyName}'s lead, replacing ${oldAgentName}.</p>
+        `
+      });
+      
+      // Notify admin
+      await sendEmail({
+        to: adminEmail,
+        subject: `[DealFlow] Lead Reassigned: ${companyName}`,
+        body: `
+          <h3>Hello Admin Team,</h3>
+          <p>${customerName}'s lead has been reassigned from ${oldAgentName} to ${agentProfile.name}.</p>
+        `
+      });
+    } catch (emailErr: any) {
+      console.warn("[AgentAssignment] Email notification failed for reassignment", emailErr);
+    }
+
+    return NextResponse.json({ success: true, assignment: newAssignment });
+  } catch (err: any) {
+    console.error("[agent-assignments PUT] failed:", err);
+    return NextResponse.json(
+      { success: false, error: "Failed to reassign agent" },
       { status: 500 }
     );
   }

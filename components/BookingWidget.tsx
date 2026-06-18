@@ -564,7 +564,7 @@ export function BookingWidget({
       }
 
       // B. Resolve Agent Key
-      const agentKey = autoAssignAgent ? (agents[0]?.key || "praneeth") : (selectedAgentKeys[0] || "praneeth");
+      const agentKey = autoAssignAgent ? "automatic" : (selectedAgentKeys[0] || "praneeth");
 
       // C. Save Agent Assignment
       const resAssign = await fetch("/api/agent-assignments", {

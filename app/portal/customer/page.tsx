@@ -99,22 +99,60 @@ function CustomerPortalContent() {
     painPoints: [''],
     valueProposition: '',
   });
+  const [currentAgentAssignment, setCurrentAgentAssignment] = useState<any>(null);
+  const [isReassigning, setIsReassigning] = useState(false);
 
-  // Fetch ICP entries on mount
+  // Fetch ICP entries and agent assignment on mount
   useEffect(() => {
-    const fetchIcpEntries = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/customer/icp');
-        const data = await res.json();
-        if (data.success) {
-          setIcpEntries(data.icpEntries);
+        // Fetch ICP entries
+        const icpRes = await fetch('/api/customer/icp');
+        const icpData = await icpRes.json();
+        if (icpData.success) {
+          setIcpEntries(icpData.icpEntries);
+        }
+        
+        // Fetch agent assignments
+        const assignRes = await fetch('/api/agent-assignments');
+        const assignData = await assignRes.json();
+        if (assignData.success && assignData.assignments.length > 0) {
+          // Get the most recent assignment
+          const sorted = [...assignData.assignments].sort(
+            (a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime()
+          );
+          setCurrentAgentAssignment(sorted[0]);
         }
       } catch (e) {
-        console.error('Error fetching ICP entries:', e);
+        console.error('Error fetching data:', e);
       }
     };
-    fetchIcpEntries();
+    fetchData();
   }, []);
+  
+  const handleReassignAgent = async () => {
+    if (!currentAgentAssignment) return;
+    setIsReassigning(true);
+    try {
+      const res = await fetch('/api/agent-assignments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: currentAgentAssignment.leadId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentAgentAssignment(data.assignment);
+        alert('Agent reassigned successfully!');
+      } else {
+        alert(data.error || 'Failed to reassign agent');
+      }
+    } catch (e) {
+      console.error('Error reassigning agent:', e);
+      alert('Error reassigning agent');
+    } finally {
+      setIsReassigning(false);
+    }
+  };
 
   const handleSubmitIcp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,6 +381,39 @@ function CustomerPortalContent() {
                   </CardContent>
                 </GlassPanel>
               </div>
+              
+              {currentAgentAssignment && (
+                <GlassPanel className="border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold text-slate-100">Your Assigned Agent</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-2xl font-bold text-teal-400">{currentAgentAssignment.agentName}</p>
+                        <p className="text-sm text-slate-400">Active since {new Date(currentAgentAssignment.assignedAt).toLocaleDateString()}</p>
+                      </div>
+                      <ExtrudedButton
+                        onClick={handleReassignAgent}
+                        disabled={isReassigning}
+                        variant="outline"
+                      >
+                        {isReassigning ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-transparent mr-2" />
+                            Reassigning...
+                          </>
+                        ) : (
+                          <>
+                            <Users className="h-4 w-4 mr-2" />
+                            Reassign Agent
+                          </>
+                        )}
+                      </ExtrudedButton>
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <GlassPanel className="border-slate-700">
