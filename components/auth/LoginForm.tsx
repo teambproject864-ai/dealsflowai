@@ -303,7 +303,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
       const data = await response.json();
       if (data.success) {
         setSuccessMessage(isLogin ? "Welcome back! Redirecting…" : "Account created! Redirecting…");
-        setTimeout(() => { router.push(redirectUrl); router.refresh(); }, 800);
+        setTimeout(() => { window.location.replace(redirectUrl); }, 800);
       } else {
         setApiError(data.error || "An error occurred. Please try again.");
         triggerShake();

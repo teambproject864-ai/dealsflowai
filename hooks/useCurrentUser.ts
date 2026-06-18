@@ -33,6 +33,11 @@ export function useCurrentUser() {
     }
   }, []);
 
+  const resetUser = useCallback(() => {
+    setUser(null);
+    setError(null);
+  }, []);
+
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
@@ -79,6 +84,6 @@ export function useCurrentUser() {
     };
   }, [user]);
 
-  return { user, isLoading, error, refetchUser: fetchUser };
+  return { user, isLoading, error, refetchUser: fetchUser, resetUser };
 }
 

@@ -101,11 +101,15 @@ export default function PortalLayout({
               onClick={async () => {
                 setIsLoggingOut(true);
                 try {
+                  localStorage.clear();
+                  sessionStorage.clear();
                   await fetch("/api/auth/logout", { method: "POST" });
                   window.location.replace("/");
                 } catch (e) {
                   console.error("Logout failed:", e);
-                  setIsLoggingOut(false);
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.replace("/");
                 }
               }}
             >
