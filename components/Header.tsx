@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles, Bot } from "lucide-react";
 
 import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import {
