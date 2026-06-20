@@ -14,7 +14,6 @@ import {
   Info,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
-import { Header } from "@/components/Header";
 import { getBrowserAgentController, type Command as Task } from "@/lib/browser-agent/unified-controller";
 
 export default function BrowserAgentPage() {
@@ -158,7 +157,6 @@ export default function BrowserAgentPage() {
 
   return (
     <div className="min-h-screen bg-[#060612] text-white flex flex-col">
-      <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
