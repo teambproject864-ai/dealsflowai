@@ -251,7 +251,7 @@ export function SalesPipeline3D() {
         </div>
 
         {/* 5-Column Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto overflow-y-hidden pb-4 items-stretch h-[calc(100vh-270px)]">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto overflow-y-auto pb-4 items-stretch min-h-[400px]">
           {pipelineStages.map((stage) => {
             const stageLeads = byStage[stage] ?? [];
             const cfg = STAGE_CONFIG[stage] ?? { color: "#6366f1", label: stage };
@@ -347,7 +347,7 @@ export function SalesPipeline3D() {
   }
 
   return (
-    <div className="relative h-full w-full" onClick={() => setSelectedStage(null)}>
+    <div className="relative min-h-[70vh] w-full" onClick={() => setSelectedStage(null)}>
       <Canvas shadows dpr={dpr}>
         <PerformanceMonitor
           onIncline={() => { setDpr(2); setPerf("high"); }}

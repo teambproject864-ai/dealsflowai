@@ -19,8 +19,8 @@ const NAV_LINKS = [
 
 export default function SalesPage() {
   return (
-    <main className="fixed inset-0 overflow-hidden bg-slate-950">
-      <nav className="absolute left-0 right-0 top-0 z-10 flex items-center gap-1 border-b border-white/5 bg-slate-950/80 px-6 py-3 backdrop-blur-md">
+    <main className="relative min-h-screen bg-slate-950">
+      <nav className="sticky left-0 right-0 top-0 z-10 flex items-center gap-1 border-b border-white/5 bg-slate-950/80 px-6 py-3 backdrop-blur-md">
         {NAV_LINKS.map(({ href, label }) => (
           <Link
             key={href}
@@ -35,14 +35,14 @@ export default function SalesPage() {
           </Link>
         ))}
         <div className="ml-auto text-[10px] font-mono uppercase tracking-widest text-slate-600">
-          Sales Pipeline Dashboard — Real-time Sync
+          Sales Pipeline Dashboard - Real-time Sync
         </div>
       </nav>
 
-      <div className="h-full w-full pt-12">
+      <div className="min-h-[80vh] w-full pt-4">
         <Suspense
           fallback={
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-96 items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-violet-500" />
             </div>
           }

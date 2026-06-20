@@ -262,7 +262,7 @@ export function MarketingCampaignViewer3D() {
         </div>
 
         {/* 2-Column Dashboard Grid */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto lg:overflow-hidden pb-4 items-stretch h-[calc(100vh-270px)]">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto pb-4 items-stretch min-h-[400px]">
           
           {/* Main Campaign List (2/3 width) */}
           <div className="lg:col-span-2 bg-slate-900/20 border border-white/5 rounded-2xl p-4 flex flex-col h-full overflow-hidden">
@@ -406,7 +406,7 @@ export function MarketingCampaignViewer3D() {
   }
 
   return (
-    <div className="relative h-full w-full" onClick={() => setSelectedCampaign(null)}>
+    <div className="relative min-h-[70vh] w-full" onClick={() => setSelectedCampaign(null)}>
       <Canvas shadows dpr={dpr}>
         <PerformanceMonitor
           onIncline={() => { setDpr(2); setPerf("high"); }}
