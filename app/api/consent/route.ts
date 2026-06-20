@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
 import { hashIp } from "@/lib/security";
+import { checkRateLimitByRoute } from "@/lib/rate-limiter";
 
 async function verifyToken(req: Request) {
   const authHeader = req.headers.get("authorization") ?? "";
@@ -20,6 +21,18 @@ async function verifyToken(req: Request) {
  */
 
 export async function POST(req: Request) {
+  const rateLimitCheck = await checkRateLimitByRoute(req, "consent");
+  if (!rateLimitCheck.allowed) {
+    const headers = new Headers();
+    if (rateLimitCheck.msBeforeNext) {
+      headers.set('Retry-After', Math.ceil(rateLimitCheck.msBeforeNext / 1000).toString());
+    }
+    return NextResponse.json(
+      { success: false, error: "Too many requests, please try again later" },
+      { status: 429, headers }
+    );
+  }
+
   try {
     let uid: string;
     try {

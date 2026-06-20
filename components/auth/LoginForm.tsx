@@ -478,6 +478,17 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
                 role="tablist"
                 aria-label="Authentication mode"
                 className="flex rounded-2xl bg-slate-800/80 border border-white/6 p-1 mb-7"
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    setIsLogin((v) => !v);
+                    setTimeout(() => {
+                      const buttons = e.currentTarget.querySelectorAll("button");
+                      const nextBtn = Array.from(buttons).find((b) => b.getAttribute("aria-selected") === "true");
+                      (nextBtn as HTMLElement)?.focus();
+                    }, 50);
+                  }
+                }}
               >
                 {[
                   { id: "login", label: "Sign In" },
@@ -655,6 +666,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
                   {!isLogin && formData.password && (
                     <motion.div
                       id={`${passwordId}-strength`}
+                      role="region"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}

@@ -3,6 +3,7 @@ import { getInMemoryLeads } from "@/lib/memory-storage";
 import { db } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 import { ExtendedLeadRecord } from "@/lib/types";
+import { decryptLead } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +40,12 @@ export async function GET(
       );
     }
 
+    const decryptedLead = decryptLead(lead);
+
     return NextResponse.json({
       success: true,
       leadId,
-      ...lead,
+      ...decryptedLead,
     });
   } catch (error) {
     console.error("Error fetching lead:", error);

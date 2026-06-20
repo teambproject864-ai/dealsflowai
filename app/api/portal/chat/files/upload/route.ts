@@ -35,8 +35,7 @@ const fileMetadata: Record<string, {
 
 export async function POST(req: Request) {
   try {
-    // Check authentication
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(req);
     if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
@@ -122,7 +121,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(req);
     if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }

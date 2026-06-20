@@ -273,8 +273,8 @@ export function Header() {
 
   const handleBookMeeting = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent("open-voice-call"));
-  }, []);
+    router.push("/book-demo");
+  }, [router]);
 
   // Scroll handler for header transformation
   useEffect(() => {
@@ -349,6 +349,7 @@ export function Header() {
               }
 
               const isActive = pathname === link.href;
+              const isAnchor = link.href.includes("#");
               return (
                 <Link
                   key={link.href}
@@ -356,10 +357,13 @@ export function Header() {
                   className={`relative px-3 sm:px-4.5 py-2.5 sm:py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
                     isActive
                       ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20 shadow-md shadow-teal-500/10"
-                      : "text-slate-400 hover:text-teal-300 hover:bg-white/8 border border-transparent hover:border-white/15"
+                      : isAnchor
+                        ? "text-slate-400/80 hover:text-teal-300 hover:bg-white/5 border border-transparent hover:border-white/10"
+                        : "text-slate-400 hover:text-teal-300 hover:bg-white/8 border border-transparent hover:border-white/15"
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50`}
                   aria-current={isActive ? "page" : undefined}
                 >
+                  {isAnchor && <span className="text-teal-500/60 mr-1 font-bold">#</span>}
                   {link.name}
                   {isActive && (
                     <motion.div
@@ -396,8 +400,7 @@ export function Header() {
               onClick={handleBookMeeting}
             >
               <Calendar className="h-4 w-4 md:h-4.5 md:w-4.5" />
-              <span className="hidden md:inline">Book Meeting</span>
-              <span className="md:hidden">Book</span>
+              <span>Book a Demo</span>
             </ExtrudedButton>
 
             <ExtrudedButton

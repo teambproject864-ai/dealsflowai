@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 import { getInMemoryLeads } from "@/lib/memory-storage";
+import { decryptLead } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -26,15 +27,15 @@ export async function GET(req: Request) {
 
       const snapshot = await query.get();
       snapshot.forEach((doc: any) => {
-        leadsList.push({ id: doc.id, ...doc.data() });
+        const decrypted = decryptLead({ id: doc.id, ...doc.data() });
+        leadsList.push(decrypted);
       });
     } else {
       // Fallback to in-memory
       const inMemoryLeads = getInMemoryLeads();
-      leadsList = Array.from(inMemoryLeads.entries()).map(([id, data]) => ({
-        id,
-        ...data,
-      }));
+      leadsList = Array.from(inMemoryLeads.entries()).map(([id, data]) => {
+        return decryptLead({ id, ...data });
+      });
 
       // Filter in-memory leads
       if (user!.role === "agent") {

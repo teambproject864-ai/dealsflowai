@@ -1,7 +1,7 @@
 // app/features/page.tsx
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Loader2, 
@@ -116,8 +116,20 @@ function FeaturesContent() {
   const { features, loading, error } = useFeatures();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isTimedOut, setIsTimedOut] = useState(false);
 
-  const filteredFeatures = features.filter(f => {
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setIsTimedOut(true);
+      }, 8000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsTimedOut(false);
+    }
+  }, [loading]);
+
+  const filteredFeatures = (features || []).filter(f => {
     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          f.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || f.category === selectedCategory;
@@ -126,26 +138,30 @@ function FeaturesContent() {
 
   const categories = ["All", ...FEATURE_CATEGORIES];
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
-        <p className="mt-4 text-slate-400 animate-pulse font-medium">Loading Dealflow.ai capabilities...</p>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (error || (loading && isTimedOut)) {
     return (
       <div className="mx-auto max-w-lg py-20 text-center">
         <div className="flex justify-center mb-4">
           <IconAlertObjection className="h-12 w-12 text-rose-500" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Unable to load features</h2>
-        <p className="mt-2 text-slate-600 dark:text-slate-400">{error}</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {isTimedOut ? "Request Timed Out" : "Unable to load features"}
+        </h2>
+        <p className="mt-2 text-slate-605 dark:text-slate-400">
+          {isTimedOut ? "The features directory took too long to respond. Please try reloading." : error}
+        </p>
         <Button onClick={() => window.location.reload()} variant="outline" className="mt-6 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white">
           Try again
         </Button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
+        <p className="mt-4 text-slate-400 animate-pulse font-medium">Loading Dealflow.ai capabilities...</p>
       </div>
     );
   }

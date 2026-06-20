@@ -154,3 +154,45 @@ export function sanitizeInput(str: string): string {
 export function hashIp(ip: string): string {
   return createHash('sha256').update(ip + (process.env.IP_HASH_SALT ?? 'dealflow')).digest('hex');
 }
+
+function getAESKey(): Buffer {
+  const rawKey = process.env.LLM_API_KEY_ENCRYPTION_KEY || 'default-fallback-key-dealflow-value';
+  if (typeof rawKey === 'string' && /^[0-9a-fA-F]{64}$/.test(rawKey)) {
+    return Buffer.from(rawKey, 'hex');
+  }
+  return createHash('sha256').update(rawKey).digest();
+}
+
+export function encryptLead(lead: any): any {
+  if (!lead) return lead;
+  const key = getAESKey();
+  const result = { ...lead };
+  if (result.contactEmail && typeof result.contactEmail === 'string' && !result.contactEmail.includes(':')) {
+    result.contactEmail = encryptAES(result.contactEmail, key);
+  }
+  if (result.contactPhone && typeof result.contactPhone === 'string' && !result.contactPhone.includes(':')) {
+    result.contactPhone = encryptAES(result.contactPhone, key);
+  }
+  return result;
+}
+
+export function decryptLead(lead: any): any {
+  if (!lead) return lead;
+  const key = getAESKey();
+  const result = { ...lead };
+  if (result.contactEmail && typeof result.contactEmail === 'string' && result.contactEmail.includes(':')) {
+    try {
+      result.contactEmail = decryptAES(result.contactEmail, key);
+    } catch (e) {
+      console.warn("Failed to decrypt contactEmail:", e);
+    }
+  }
+  if (result.contactPhone && typeof result.contactPhone === 'string' && result.contactPhone.includes(':')) {
+    try {
+      result.contactPhone = decryptAES(result.contactPhone, key);
+    } catch (e) {
+      console.warn("Failed to decrypt contactPhone:", e);
+    }
+  }
+  return result;
+}

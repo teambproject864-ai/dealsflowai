@@ -60,15 +60,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check Firestore customers (if db is available)
+    // Check Firestore users (if db is available)
     if (!userExists && db) {
-      const customersSnapshot = await db
-        .collection("customers")
+      const usersSnapshot = await db
+        .collection("users")
         .where("email", "==", email.toLowerCase())
         .get();
-      if (!customersSnapshot.empty) {
+      if (!usersSnapshot.empty) {
         userExists = true;
-        userRole = "customer";
+        const userDoc = usersSnapshot.docs[0].data();
+        userRole = (userDoc.role as "admin" | "agent" | "customer") || "customer";
       }
     }
 

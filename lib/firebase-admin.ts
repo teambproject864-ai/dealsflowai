@@ -50,32 +50,39 @@ export function getDb(): admin.firestore.Firestore {
   return firestoreInstance;
 }
 
-/** Lazy Firestore handle for existing imports — initializes on first property access. */
-export const db: admin.firestore.Firestore = new Proxy({} as admin.firestore.Firestore, {
-  get(_target, prop) {
-    const mock = (globalThis as any).firestoreMock;
-    const real = mock || getDb();
-    const value = (real as unknown as Record<string | symbol, unknown>)[prop];
-    if (typeof value === "function") {
-      return (value as (...args: unknown[]) => unknown).bind(real);
-    }
-    return value;
-  },
-});
+/** Lazy Firestore handle for existing imports — initializes on first property access. Returns null if not configured. */
+export const db: admin.firestore.Firestore | null =
+  (typeof window === "undefined" && loadServiceAccount())
+    ? new Proxy({} as admin.firestore.Firestore, {
+        get(_target, prop) {
+          const mock = (globalThis as any).firestoreMock;
+          const real = mock || getDb();
+          const value = (real as unknown as Record<string | symbol, unknown>)[prop];
+          if (typeof value === "function") {
+            return (value as (...args: unknown[]) => unknown).bind(real);
+          }
+          return value;
+        },
+      })
+    : null;
 
 export function getStorage(): admin.storage.Storage {
   return ensureFirebaseApp().storage();
 }
 
-export const storage = new Proxy({} as admin.storage.Storage, {
-  get(_target, prop) {
-    const real = getStorage();
-    const value = (real as unknown as Record<string | symbol, unknown>)[prop];
-    if (typeof value === "function") {
-      return (value as (...args: unknown[]) => unknown).bind(real);
-    }
-    return value;
-  },
-});
+export const storage: admin.storage.Storage | null =
+  (typeof window === "undefined" && loadServiceAccount())
+    ? new Proxy({} as admin.storage.Storage, {
+        get(_target, prop) {
+          const real = getStorage();
+          const value = (real as unknown as Record<string | symbol, unknown>)[prop];
+          if (typeof value === "function") {
+            return (value as (...args: unknown[]) => unknown).bind(real);
+          }
+          return value;
+        },
+      })
+    : null;
 
 export default admin;
+

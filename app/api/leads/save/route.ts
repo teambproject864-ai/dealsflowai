@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads } from "@/lib/memory-storage";
-import { checkRateLimit } from "@/lib/rate-limiter";
+import { checkRateLimitByRoute } from "@/lib/rate-limiter";
 import { sanitizeObject } from "@/lib/sanitize";
 import { db } from "@/lib/firebase-admin";
+import { encryptLead } from "@/lib/security";
 
 // Simple schema for booking widget submissions (just the basics)
 const simpleLeadSchema = z.object({
@@ -19,7 +20,7 @@ const inMemoryLeads = getInMemoryLeads();
 
 export async function POST(req: Request) {
   // Check rate limit first
-  const rateLimitCheck = await checkRateLimit(req);
+  const rateLimitCheck = await checkRateLimitByRoute(req, "leads/save");
   if (!rateLimitCheck.allowed) {
     const headers = new Headers();
     if (rateLimitCheck.msBeforeNext) {
@@ -60,9 +61,11 @@ export async function POST(req: Request) {
       analysisId: "",
     };
 
+    const encryptedLead = encryptLead(leadRecord);
+
     // Save to Firestore
     if (db) {
-      await db.collection("leads").doc(leadId).set(leadRecord);
+      await db.collection("leads").doc(leadId).set(encryptedLead);
     }
 
     // Keep memory storage cache updated

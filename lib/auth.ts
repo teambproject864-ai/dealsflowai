@@ -210,23 +210,50 @@ export async function getAuthCookie(): Promise<string | null> {
 }
 
 export function deleteAuthCookieFromResponse(response: NextResponse): NextResponse {
-  response.cookies.delete(AUTH_COOKIE_NAME);
+  response.cookies.set(AUTH_COOKIE_NAME, "", {
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
   return response;
 }
 
 export async function deleteAuthCookie() {
   const cookieStore = await cookies();
-  cookieStore.delete(AUTH_COOKIE_NAME);
+  cookieStore.set(AUTH_COOKIE_NAME, "", {
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
 }
 
 // --- Current User Helper ---
 export async function getAuthenticatedUser(req?: Request): Promise<AuthUser | null> {
-  let token = await getAuthCookie();
+  let token: string | null = null;
+  try {
+    token = await getAuthCookie();
+  } catch (e) {
+    // cookies() might throw in some rendering contexts
+  }
   
   if (!token && req) {
     const authHeader = req.headers.get("authorization") ?? "";
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
+    }
+    
+    if (!token) {
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      const match = cookieHeader.match(new RegExp(`(^|;)\\s*${AUTH_COOKIE_NAME}\\s*=\\s*([^;]+)`));
+      if (match) {
+        token = match[2];
+      }
     }
   }
   
@@ -241,8 +268,8 @@ export async function getAuthenticatedUser(req?: Request): Promise<AuthUser | nu
   };
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  return getAuthenticatedUser();
+export async function getCurrentUser(req?: Request): Promise<AuthUser | null> {
+  return getAuthenticatedUser(req);
 }
 
 /**

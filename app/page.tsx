@@ -24,6 +24,7 @@ import {
 import { trackEvent } from "@/lib/analytics";
 const IntakeForm = lazy(() => import("@/components/IntakeForm").then((m) => ({ default: m.IntakeForm })));
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
 // ─── Floating Orb ────────────────────────────────────────────────────────────
 const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: number }) {
@@ -372,21 +373,6 @@ export default function HomePage() {
   // Currency selector
   const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD" | "INR">("USD");
   
-  // Currency conversion rates (relative to USD)
-  const conversionRates: Record<string, number> = {
-    USD: 1,
-    EUR: 0.93,
-    GBP: 0.79,
-    CAD: 1.38,
-    INR: 83.5,
-  };
-  
-  // Pricing plans base prices (in USD)
-  const pricingPlans = {
-    starter: { monthly: 499, annual: 399 },
-    growth: { monthly: 1299, annual: 999 },
-  };
-  
   // Format currency with proper locale and symbol
   const formatCurrency = (amount: number, currencyCode: string) => {
     const localeMap: Record<string, string> = {
@@ -397,7 +383,7 @@ export default function HomePage() {
       INR: "en-IN",
     };
     
-    const convertedAmount = amount * conversionRates[currencyCode];
+    const convertedAmount = amount * CONVERSION_RATES[currencyCode];
     
     return new Intl.NumberFormat(localeMap[currencyCode] || "en-US", {
       style: "currency",
@@ -1050,112 +1036,75 @@ export default function HomePage() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
-            {/* Starter Plan */}
-            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 flex flex-col justify-between">
-              <div className="space-y-6">
-                <div>
-                  <div className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Starter</div>
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(isAnnual ? pricingPlans.starter.annual : pricingPlans.starter.monthly, currency)}/mo</div>
-                  <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
-                </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  For teams just starting to bring AI into their sales motion
-                </p>
-                <div className="border-t border-white/5 my-4" />
-                <ul className="space-y-3">
-                  {["Up to 5 AI Revenue Agents", "Memory OS — 30-day context", "GTM Pipeline Analysis", "Standard Integrations"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-teal-500 flex-shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300 text-xs">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-8">
-                <Link
-                  href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold text-xs transition-colors"
+            {PLANS.map((plan) => {
+              const isPopular = plan.popular;
+              const isEnterprise = plan.price === null;
+              
+              const formattedPrice = isEnterprise 
+                ? "Custom" 
+                : formatCurrency(isAnnual ? plan.price!.annual : plan.price!.monthly, currency);
+                
+              return (
+                <div 
+                  key={plan.name}
+                  className={`relative p-8 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
+                    isPopular 
+                      ? "border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] shadow-xl shadow-violet-500/5 hover:-translate-y-1 hover:border-violet-500/60" 
+                      : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  Start free trial
-                </Link>
-                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
-                  No credit card required · Cancel anytime
-                </span>
-              </div>
-            </div>
-
-            {/* Growth Plan */}
-            <div className="relative p-8 rounded-3xl border border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] flex flex-col justify-between shadow-xl shadow-violet-500/5 hover:-translate-y-1 hover:border-violet-500/60 transition-all duration-300">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-violet-500/25">
-                  Most Popular
-                </span>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <div className="text-violet-400 text-[10px] font-bold uppercase tracking-widest mb-1">Growth</div>
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(isAnnual ? pricingPlans.growth.annual : pricingPlans.growth.monthly, currency)}/mo</div>
-                  <div className="text-[10px] text-slate-500 mt-1">{isAnnual ? "Billed annually" : "Billed monthly"}</div>
+                  {isPopular && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-violet-500/25">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                  <div className="space-y-6">
+                    <div>
+                      <div className={`${isPopular ? "text-violet-400" : "text-slate-550 dark:text-slate-400"} text-[10px] font-bold uppercase tracking-widest mb-1`}>
+                        {plan.name}
+                      </div>
+                      <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">
+                        {formattedPrice}{!isEnterprise && "/mo"}
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        {isEnterprise ? "Billed bespoke" : isAnnual ? "Billed annually" : "Billed monthly"}
+                      </div>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed min-h-[32px]">
+                      {plan.description}
+                    </p>
+                    <div className={`border-t ${isPopular ? "border-violet-500/10" : "border-white/5"} my-4`} />
+                    <ul className="space-y-3">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-violet-400" : "text-teal-500"}`} />
+                          <span className={`${isPopular ? "text-slate-300" : "text-slate-700 dark:text-slate-300"} text-xs ${!f.included ? "text-slate-550 dark:text-slate-550 line-through" : ""}`}>
+                            {f.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-8">
+                    <Link
+                      href={isEnterprise ? "/book-demo" : "/book-demo?trial=true"}
+                      className={`w-full h-11 flex items-center justify-center rounded-xl font-bold text-xs transition-all ${
+                        isPopular
+                          ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
+                          : "border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white"
+                      }`}
+                    >
+                      {plan.cta}
+                    </Link>
+                    <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
+                      No credit card required · Cancel anytime
+                    </span>
+                  </div>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  For teams scaling a multi-rep GTM motion with advanced agent orchestration
-                </p>
-                <div className="border-t border-violet-500/10 my-4" />
-                <ul className="space-y-3">
-                  {["Up to 25 AI Revenue Agents", "Full Memory OS — unlimited context", "Continuous agent learning", "Multi-Agent Framework", "All integrations + webhook support"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
-                      <span className="text-slate-300 text-xs font-semibold">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-8">
-                <Link
-                  href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-lg shadow-violet-500/20 transition-all"
-                >
-                  Start free trial
-                </Link>
-                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
-                  No credit card required · Cancel anytime
-                </span>
-              </div>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="relative p-8 rounded-3xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-all duration-300 flex flex-col justify-between">
-              <div className="space-y-6">
-                <div>
-                  <div className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Enterprise</div>
-                  <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">Custom</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Bespoke contract</div>
-                </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  For large orgs needing bespoke AI infrastructure, compliance, and dedicated support
-                </p>
-                <div className="border-t border-white/5 my-4" />
-                <ul className="space-y-3">
-                  {["Unlimited AI Revenue Agents", "Custom memory architecture", "On-premise / VPC deployment", "SOC 2 Type II compliance", "Custom integrations & SLA support"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-teal-500 flex-shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300 text-xs">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-8">
-                <Link
-                  href="/book-demo"
-                  className="w-full h-11 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold text-xs transition-colors"
-                >
-                  Contact Sales
-                </Link>
-                <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
-                  No credit card required · Cancel anytime
-                </span>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
           {/* Bottom Trust Row */}

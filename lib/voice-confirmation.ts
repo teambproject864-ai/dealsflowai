@@ -2,6 +2,7 @@
 import { db } from "./firebase-admin";
 import { LeadRecord, CallRecord } from "./types";
 import { sendSMS, sendEmailWithRetry } from "./notifications";
+import { decryptLead } from "./security";
 
 export interface VoiceConfirmationRecord {
   callId: string;
@@ -125,7 +126,7 @@ export async function initiateVoiceCall(callId: string, attempt: number = 1): Pr
     if (!leadDoc.exists) {
       throw new Error(`Lead record ${call.leadId} not found`);
     }
-    const lead = leadDoc.data() as LeadRecord;
+    const lead = decryptLead(leadDoc.data()) as LeadRecord;
 
     const rawPhone = lead.contactPhone || "";
     const phone = formatE164(rawPhone);
@@ -340,7 +341,7 @@ export async function triggerVoiceFallback(callId: string, reason: string): Prom
     if (!call) throw new Error("Call doc not found for fallback");
 
     const leadDoc = await db.collection("leads").doc(config.leadId).get();
-    const lead = leadDoc.data();
+    const lead = decryptLead(leadDoc.data());
     if (!lead) throw new Error("Lead doc not found for fallback");
 
     const formattedDate = call.scheduledAt

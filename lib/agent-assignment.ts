@@ -87,7 +87,7 @@ export async function assignFairRandomAgent(
     const countA = inMemoryAssignmentCounts[a.key] || 0;
     const countB = inMemoryAssignmentCounts[b.key] || 0;
     return countA - countB;
-  };
+  });
 
   // Select from the first 50% of sorted agents (or all if small pool) to keep it random but fair
   const fairPoolSize = Math.max(1, Math.floor(sortedAgents.length / 2));
@@ -108,7 +108,7 @@ export async function assignFairRandomAgent(
       ? `fair_random_available_agent (variance: ${variance.toFixed(2)}%)` 
       : `fair_random_fallback_agent (variance: ${variance.toFixed(2)}%)`;
   
-  logger.info(`[AgentAssignment] Assigned agent: ${selectedAgent.key}`, { reason, variance, excludeAgentKey ? `excluded previous: ${excludeAgentKey}` : "" });
+  logger.info(`[AgentAssignment] Assigned agent: ${selectedAgent.key}`, { reason, variance, exclusionInfo: excludeAgentKey ? `excluded previous: ${excludeAgentKey}` : "" });
   
   return { agentKey: selectedAgent.key, reason };
 }

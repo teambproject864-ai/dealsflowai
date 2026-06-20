@@ -91,7 +91,7 @@ function BookDemoContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [skipAiAgent, setSkipAiAgent] = useState(true);
-  const [meetingType, setMeetingType] = useState<"calendly" | "cal" | "other">("cal");
+  const [meetingType, setMeetingType] = useState<"calendly" | "cal" | "other" | "direct">("cal");
   const [customMeetingUrl, setCustomMeetingUrl] = useState("");
   const [isSubmittingCustom, setIsSubmittingCustom] = useState(false);
   const [availability, setAvailability] = useState<ImmediateAvailability | null>(null);
@@ -99,7 +99,38 @@ function BookDemoContent() {
   const [directCompanyName, setDirectCompanyName] = useState("");
   const [directName, setDirectName] = useState("");
   const [directEmail, setDirectEmail] = useState("");
+  const [directMessage, setDirectMessage] = useState("");
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const handleDirectSubmit = async () => {
+    if (!directName || !directEmail || !directCompanyName) {
+      return alert("Please fill out all required fields (*)");
+    }
+    setIsSubmittingCustom(true);
+    try {
+      const res = await fetch("/api/book-demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: directName,
+          email: directEmail,
+          company: directCompanyName,
+          message: directMessage,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFormSubmitted(true);
+      } else {
+        alert(data.error || "Failed to submit demo request.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit request.");
+    } finally {
+      setIsSubmittingCustom(false);
+    }
+  };
 
   useEffect(() => {
     if (!analysisId) {
@@ -118,6 +149,11 @@ function BookDemoContent() {
         const leadData = await leadRes.json();
         if (!leadRes.ok) throw new Error(leadData.error || "Failed to fetch lead");
         setLead(leadData);
+        if (leadData) {
+          setDirectName(leadData.contactName || "");
+          setDirectEmail(leadData.contactEmail || "");
+          setDirectCompanyName(leadData.companyName || "");
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
       } finally {
@@ -312,7 +348,7 @@ function BookDemoContent() {
                   <CheckCircle2 className="h-4 w-4" />
                   Essential Information
                 </h2>
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-3">
                   <div className="space-y-3">
                     <Label htmlFor="directName" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name *</Label>
                     <Input
@@ -336,6 +372,17 @@ function BookDemoContent() {
                       required
                     />
                   </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="directCompanyName" className="text-xs font-bold text-slate-400 uppercase tracking-wider">Company Name *</Label>
+                    <Input
+                      id="directCompanyName"
+                      value={directCompanyName}
+                      onChange={(e) => setDirectCompanyName(e.target.value)}
+                      placeholder="Acme Corp"
+                      className="bg-slate-950/70 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-teal-500/40 h-12 rounded-xl px-4 transition-all focus:border-teal-500/40"
+                      required
+                    />
+                  </div>
                 </div>
               </GlassPanel>
             </Section>
@@ -345,7 +392,7 @@ function BookDemoContent() {
               <div className="space-y-2">
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest">Preferred Scheduling Tool</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Select Cal.com or Calendly to view instant calendar slots.
+                  Select Cal.com, Calendly or Direct Request.
                 </p>
               </div>
               <Select value={meetingType} onValueChange={(v: any) => setMeetingType(v)}>
@@ -359,6 +406,9 @@ function BookDemoContent() {
                   <SelectItem value="calendly" className="cursor-pointer hover:bg-white/5 text-sm py-3">
                     Calendly
                   </SelectItem>
+                  <SelectItem value="direct" className="cursor-pointer hover:bg-white/5 text-sm py-3">
+                    Direct Request Form
+                  </SelectItem>
                   <SelectItem value="other" className="cursor-pointer hover:bg-white/5 text-sm py-3">
                     Other / Manual Link
                   </SelectItem>
@@ -366,7 +416,46 @@ function BookDemoContent() {
               </Select>
             </GlassPanel>
 
-            {meetingType === "other" ? (
+            {meetingType === "direct" ? (
+              <GlassPanel material="glass" depth="mid" className="p-10 border-white/8 shadow-xl flex flex-col space-y-6 min-h-[420px]">
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold text-white">Direct Demo Request</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    Can&apos;t find a slot or want to contact our team directly? Submit a request and our sales team will reach out within 2 hours.
+                  </p>
+                </div>
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="directMessage" className="text-xs font-bold text-slate-400 uppercase tracking-widest">Message / Specific Requirements</Label>
+                    <textarea
+                      id="directMessage"
+                      value={directMessage}
+                      onChange={(e) => setDirectMessage(e.target.value)}
+                      placeholder="Tell us about your team size, CRM system, and what you would like to see in the demo..."
+                      rows={4}
+                      className="w-full bg-slate-950/70 border border-white/10 text-white rounded-xl p-4 text-sm transition-all focus:border-teal-500/40 focus:ring-0 focus-visible:outline-none"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleDirectSubmit}
+                    disabled={isSubmittingCustom}
+                    className="w-full h-13 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-semibold text-sm uppercase tracking-wider transition-all shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
+                  >
+                    {isSubmittingCustom ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        Submit Request
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </GlassPanel>
+            ) : meetingType === "other" ? (
               <GlassPanel material="glass" depth="mid" className="p-10 border-white/8 shadow-xl flex flex-col items-center justify-center space-y-8 min-h-[420px]">
                 <div className="text-center space-y-3 max-w-lg">
                   <h3 className="text-xl font-bold text-white">Paste your custom meeting link</h3>
@@ -523,7 +612,7 @@ function BookDemoContent() {
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest">Preferred Scheduling Tool</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Select Cal.com or Calendly to view instant calendar slots.
+                Select Cal.com, Calendly or Direct Request.
               </p>
             </div>
             <Select value={meetingType} onValueChange={(v: any) => setMeetingType(v)}>
@@ -537,6 +626,9 @@ function BookDemoContent() {
                 <SelectItem value="calendly" className="cursor-pointer hover:bg-white/5 text-sm py-3">
                   Calendly
                 </SelectItem>
+                <SelectItem value="direct" className="cursor-pointer hover:bg-white/5 text-sm py-3">
+                  Direct Request Form
+                </SelectItem>
                 <SelectItem value="other" className="cursor-pointer hover:bg-white/5 text-sm py-3">
                   Other / Manual Link
                 </SelectItem>
@@ -544,7 +636,46 @@ function BookDemoContent() {
             </Select>
           </GlassPanel>
 
-          {meetingType === "other" ? (
+          {meetingType === "direct" ? (
+            <GlassPanel material="glass" depth="mid" className="p-10 border-white/8 shadow-xl flex flex-col space-y-6 min-h-[420px]">
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold text-white">Direct Demo Request</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Send a direct request with your requirements and our team will get in touch instantly.
+                </p>
+              </div>
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="scannedDirectMessage" className="text-xs font-bold text-slate-400 uppercase tracking-widest">Message / Specific Requirements</Label>
+                  <textarea
+                    id="scannedDirectMessage"
+                    value={directMessage}
+                    onChange={(e) => setDirectMessage(e.target.value)}
+                    placeholder="Tell us about your team size, CRM system, and what you would like to see in the demo..."
+                    rows={4}
+                    className="w-full bg-slate-950/70 border border-white/10 text-white rounded-xl p-4 text-sm transition-all focus:border-teal-500/40 focus:ring-0 focus-visible:outline-none"
+                  />
+                </div>
+                <Button
+                  onClick={handleDirectSubmit}
+                  disabled={isSubmittingCustom}
+                  className="w-full h-13 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-semibold text-sm uppercase tracking-wider transition-all shadow-xl shadow-teal-500/25 hover:shadow-teal-400/35 hover:-translate-y-0.5"
+                >
+                  {isSubmittingCustom ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Request
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </GlassPanel>
+          ) : meetingType === "other" ? (
             <GlassPanel material="glass" depth="mid" className="p-10 border-white/8 shadow-xl flex flex-col items-center justify-center space-y-8 min-h-[440px]">
               <div className="text-center space-y-3 max-w-lg">
                 <h3 className="text-xl font-bold text-white">Using another calendar platform?</h3>

@@ -25,10 +25,7 @@ export function Footer() {
   };
 
   const socialLinks = [
-    { name: "Twitter", icon: Twitter, href: "https://twitter.com/dealflowai" },
-    { name: "LinkedIn", icon: Linkedin, href: "https://linkedin.com/company/dealflowai" },
-    { name: "GitHub", icon: Github, href: "https://github.com/dealflowai" },
-    { name: "Email", icon: Mail, href: "mailto:hello@dealflow.ai" },
+    { name: "Email", icon: Mail, href: "mailto:praneethburada@gmail.com" },
   ];
 
   return (

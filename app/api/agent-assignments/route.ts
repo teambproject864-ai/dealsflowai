@@ -12,6 +12,7 @@ import { requireAuth } from "@/lib/auth";
 import { sendEmail } from "@/lib/notifications";
 import { reassignAgent } from "@/lib/agent-assignment";
 import { listRevenueAgentsWithAvailability } from "@/lib/revenue-agents";
+import { encryptLead, decryptLead } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data() as ExtendedLeadRecord;
+        lead = decryptLead(doc.data() as ExtendedLeadRecord);
       }
     }
 
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
       };
       leadsMap.set(leadId, updatedLead);
       if (db) {
-        await db.collection("leads").doc(leadId).set(updatedLead);
+        await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
       }
     }
 
@@ -265,19 +266,19 @@ export async function PUT(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data() as ExtendedLeadRecord;
+        lead = decryptLead(doc.data() as ExtendedLeadRecord);
       }
     }
 
     if (lead) {
       const updatedLead = {
         ...lead,
-        assignedAgentKey: newAgentKey,
+        assignedAgentKey: newAgentKey as any,
         agentAssignmentId: newAssignment.id
       };
       leadsMap.set(leadId, updatedLead);
       if (db) {
-        await db.collection("leads").doc(leadId).set(updatedLead);
+        await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
       }
     }
 

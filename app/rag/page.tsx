@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +41,15 @@ function parseSseBlock(block: string) {
 }
 
 export default function RagPage() {
+  const router = useRouter();
+  const { user, isLoading } = useCurrentUser();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/portal/customer/login");
+    }
+  }, [user, isLoading, router]);
+
   const [question, setQuestion] = useState("Summarize the key product capabilities.");
   const [provider, setProvider] = useState<"nvidia" | "huggingface">("nvidia");
   const [model, setModel] = useState(MODEL_REGISTRY.nvidia[0].id);
@@ -51,6 +62,21 @@ export default function RagPage() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold animate-pulse">Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   async function runAskStream() {
     abortRef.current?.abort();

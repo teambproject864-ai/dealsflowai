@@ -3,8 +3,9 @@ import { analysisGraph } from "@/lib/agents/analysisGraph";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads, getInMemoryAnalyses } from "@/lib/memory-storage";
 import { ExtendedLeadRecord } from "@/lib/types";
-import { checkRateLimit } from "@/lib/rate-limiter";
+import { checkRateLimitByRoute } from "@/lib/rate-limiter";
 import { db } from "@/lib/firebase-admin";
+import { encryptLead, decryptLead } from "@/lib/security";
 
 export const maxDuration = 120; // Extended from 60 to allow more time
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
   let analysisId: string | undefined;
 
   // Check rate limit first
-  const rateLimitCheck = await checkRateLimit(req);
+  const rateLimitCheck = await checkRateLimitByRoute(req, "analyze");
   if (!rateLimitCheck.allowed) {
     const headers = new Headers();
     if (rateLimitCheck.msBeforeNext) {
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
       if (!companyData && db) {
         const doc = await db.collection("leads").doc(leadId).get();
         if (doc.exists) {
-          companyData = doc.data() as ExtendedLeadRecord;
+          companyData = decryptLead(doc.data() as ExtendedLeadRecord);
           inMemoryLeads.set(leadId, companyData as ExtendedLeadRecord);
         }
       }
@@ -111,7 +112,7 @@ export async function POST(req: Request) {
       if (!leadRecord && db) {
         const doc = await db.collection("leads").doc(leadId).get();
         if (doc.exists) {
-          leadRecord = doc.data() as ExtendedLeadRecord;
+          leadRecord = decryptLead(doc.data() as ExtendedLeadRecord);
         }
       }
       
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
           analysisId,
         };
         if (db) {
-          await db.collection("leads").doc(leadId).set(updatedLead);
+          await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
         }
         inMemoryLeads.set(leadId, updatedLead);
       }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, addAuditLog } from "@/lib/auth";
 import { getAgentByKey } from "@/lib/types";
 import { ExtendedLeadRecord } from "@/lib/types";
+import { encryptLead, decryptLead } from "@/lib/security";
 import { getInMemoryLeads, getInMemoryAgentAssignments } from "@/lib/memory-storage";
 import { db } from "@/lib/firebase-admin";
 import { sendEmail } from "@/lib/notifications";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
     if (!lead && db) {
       const doc = await db.collection("leads").doc(leadId).get();
       if (doc.exists) {
-        lead = doc.data() as ExtendedLeadRecord;
+        lead = decryptLead(doc.data() as ExtendedLeadRecord);
       }
     }
 
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     leadsMap.set(leadId, updatedLead);
 
     if (db) {
-      await db.collection("leads").doc(leadId).set(updatedLead);
+      await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
     }
 
     // 4. Create/update assignment record

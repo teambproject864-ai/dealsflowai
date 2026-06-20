@@ -440,6 +440,7 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                   placeholder="optional@company.com"
                   className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 />
+                <p className="text-xs text-slate-500 dark:text-slate-450 mt-1">We will copy this address on all onboarding updates and campaign reports.</p>
               </div>
 
               <div className="space-y-2">
@@ -1198,9 +1199,13 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       {/* --- Regular step navigation only when not in post-submission flow --- */}
       {postSubmissionStep === null && (
         <div className="mt-8 flex justify-between gap-4 relative z-10">
-          <Button variant="outline" onClick={back} disabled={step === 0} className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white disabled:opacity-40 px-4 h-11 rounded-xl">
-            <IconArrowLeft className="h-4 w-4 mr-2" /> Back
-          </Button>
+          {step > 0 ? (
+            <Button variant="outline" onClick={back} className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl">
+              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Button>
+          ) : (
+            <div />
+          )}
           <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
             {submitting ? (
               <>

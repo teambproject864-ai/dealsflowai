@@ -1,23 +1,15 @@
 import { db } from "@/lib/firebase-admin";
 import { PERSONAS } from "@/prompts/personas";
-import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE } from "@/lib/types";
+import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE, RevenueAgentProfile } from "@/lib/types";
 import { assignFairRandomAgent } from "./agent-assignment";
-
-export type RevenueAgentProfile = {
-  key: string;
-  fullName: string;
-  role: string;
-  expertise: string[];
-  activeSessions: number;
-  available: boolean;
-};
 
 // Use the new agent names from lib/types.ts
 import { AGENT_FULL_NAMES, AGENT_EXPERTISE } from "./types";
 
 export function getRevenueAgentCatalog(): Omit<RevenueAgentProfile, "activeSessions" | "available">[] {
   return Object.entries(AGENT_FULL_NAMES).map(([key, name]) => ({
-    key,
+    key: key as keyof typeof AGENT_FULL_NAMES,
+    name,
     fullName: name,
     role: "AI Revenue Agent",
     expertise: AGENT_EXPERTISE[key as keyof typeof AGENT_EXPERTISE] || ["gtm"],

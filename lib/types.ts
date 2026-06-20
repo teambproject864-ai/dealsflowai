@@ -406,6 +406,8 @@ export const AGENT_EXPERTISE = {
 export type RevenueAgentProfile = {
   key: keyof typeof AGENT_FULL_NAMES;
   name: string;
+  fullName: string;
+  role: string;
   expertise: string[];
   activeSessions: number;
   available: boolean;
@@ -415,6 +417,8 @@ export function getRevenueAgentCatalog(): RevenueAgentProfile[] {
   return Object.entries(AGENT_FULL_NAMES).map(([key, name]) => ({
     key: key as keyof typeof AGENT_FULL_NAMES,
     name,
+    fullName: name,
+    role: "AI Revenue Agent",
     expertise: AGENT_EXPERTISE[key as keyof typeof AGENT_EXPERTISE],
     activeSessions: 0,
     available: true,

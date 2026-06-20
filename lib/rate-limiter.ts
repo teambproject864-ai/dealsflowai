@@ -1,65 +1,78 @@
-import { db } from "./firebase-admin";
-import admin from "firebase-admin";
-import { hashIp } from "./security";
+import { RateLimiterMemory } from "rate-limiter-flexible";
 
-// Define limit settings: 10 requests per minute
-const MAX_LIMIT = 10;
-const WINDOW_MS = 60 * 1000;
+const defaultLimiter = new RateLimiterMemory({
+  points: 60,
+  duration: 60,
+});
+
+const saveLeadLimiter = new RateLimiterMemory({
+  points: 60,
+  duration: 60,
+});
+
+const consentLimiter = new RateLimiterMemory({
+  points: 60,
+  duration: 60,
+});
+
+const analyzeLimiter = new RateLimiterMemory({
+  points: 10,
+  duration: 60,
+});
+
+function getClientIp(req: Request): string {
+  let ip = "127.0.0.1";
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    ip = forwardedFor.split(",")[0].trim();
+  }
+  return ip;
+}
 
 export async function checkRateLimit(req: Request): Promise<{ allowed: boolean; remainingPoints?: number; msBeforeNext?: number }> {
   try {
-    // Get client IP
-    let ip = "127.0.0.1";
-    const forwardedFor = req.headers.get("x-forwarded-for");
-    if (forwardedFor) {
-      ip = forwardedFor.split(",")[0].trim();
-    }
-
-    const hashedIp = hashIp(ip);
-    const minuteTimestamp = Math.floor(Date.now() / WINDOW_MS);
-    const docId = `rl_${hashedIp}_${minuteTimestamp}`;
-
-    if (!db) {
-      // Fallback if db is not ready/mocked
-      return { allowed: true, remainingPoints: 1 };
-    }
-
-    const docRef = db.collection("rate_limits").doc(docId);
-    const docSnap = await docRef.get();
-    
-    let currentPoints = 0;
-    if (docSnap.exists) {
-      currentPoints = docSnap.data()?.points || 0;
-    }
-
-    const nextMinuteTime = (minuteTimestamp + 1) * WINDOW_MS;
-    const msBeforeNext = nextMinuteTime - Date.now();
-
-    if (currentPoints >= MAX_LIMIT) {
-      return {
-        allowed: false,
-        remainingPoints: 0,
-        msBeforeNext,
-      };
-    }
-
-    // Atomic increment
-    await docRef.set(
-      {
-        points: admin.firestore.FieldValue.increment(1),
-        expiresAt: new Date(Date.now() + 120 * 1000), // expire in 2 minutes for TTL cleanup
-      },
-      { merge: true }
-    );
-
+    const ip = getClientIp(req);
+    const res = await defaultLimiter.consume(ip, 1);
     return {
       allowed: true,
-      remainingPoints: MAX_LIMIT - (currentPoints + 1),
+      remainingPoints: res.remainingPoints,
       msBeforeNext: 0,
     };
-  } catch (error) {
-    // Fail-open to avoid breaking the application for users if Firestore is temporarily offline
-    console.error("[Rate Limiter] Unexpected error, fail-open allowed:", error);
-    return { allowed: true, remainingPoints: 1 };
+  } catch (rej: any) {
+    return {
+      allowed: false,
+      remainingPoints: 0,
+      msBeforeNext: rej.msBeforeNext || 1000,
+    };
+  }
+}
+
+export async function checkRateLimitByRoute(
+  req: Request,
+  route: 'leads/save' | 'consent' | 'analyze'
+): Promise<{ allowed: boolean; remainingPoints?: number; msBeforeNext?: number }> {
+  try {
+    const ip = getClientIp(req);
+    let limiter: RateLimiterMemory;
+    if (route === 'leads/save') {
+      limiter = saveLeadLimiter;
+    } else if (route === 'consent') {
+      limiter = consentLimiter;
+    } else {
+      limiter = analyzeLimiter;
+    }
+
+    const res = await limiter.consume(ip, 1);
+    return {
+      allowed: true,
+      remainingPoints: res.remainingPoints,
+      msBeforeNext: 0,
+    };
+  } catch (rej: any) {
+    return {
+      allowed: false,
+      remainingPoints: 0,
+      msBeforeNext: rej.msBeforeNext || 1000,
+    };
   }
 }

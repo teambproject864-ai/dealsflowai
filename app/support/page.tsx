@@ -106,25 +106,28 @@ export default function SupportPage() {
             </GlassPanel>
           </Link>
 
-          <a href="https://dealflow.ai/chat" className="group">
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-live-chat"))}
+            className="group text-left bg-transparent border-0 p-0 m-0 w-full focus:outline-none"
+          >
             <GlassPanel glow="accent" className="p-6 h-full transition-all duration-300 hover:border-violet-500/50 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] hover:scale-105">
               <MessageSquare className="h-10 w-10 text-violet-500 dark:text-violet-400 mb-4" />
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Live Chat</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-slate-650 dark:text-slate-400 text-sm">
                 Chat with our support team in real-time.
               </p>
             </GlassPanel>
-          </a>
+          </button>
 
-          <a href="https://dealflow.ai" className="group" target="_blank" rel="noopener noreferrer">
+          <Link href="/" className="group">
             <GlassPanel className="p-6 h-full transition-all duration-300 hover:border-cyan-500/50 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] hover:scale-105">
               <Globe className="h-10 w-10 text-cyan-500 dark:text-cyan-400 mb-4" />
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Website</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-slate-650 dark:text-slate-400 text-sm">
                 Visit our main website for more resources and contact details.
               </p>
             </GlassPanel>
-          </a>
+          </Link>
         </StaggerReveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

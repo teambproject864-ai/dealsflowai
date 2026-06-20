@@ -4,6 +4,7 @@ import { formatICPDocument } from "@/lib/icp-document-generator";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 import { v4 as uuidv4 } from "uuid";
 
 export const maxDuration = 30;
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     // 1. Authenticate and verify role permissions
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(req);
     
     // Allow 'admin' and 'agent', block 'customer' or null
     if (!user || (user.role !== "admin" && user.role !== "agent")) {
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     } 
     
     if (format === "docx") {
-      const tempDocxPath = path.join(process.cwd(), `tmp_${uuidv4()}.docx`);
+      const tempDocxPath = path.join(os.tmpdir(), `tmp_${uuidv4()}.docx`);
       
       try {
         // Run Python compiler feeding JSON payload to standard input

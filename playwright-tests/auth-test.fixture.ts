@@ -14,7 +14,7 @@ export const test = base.extend<CustomFixtures>({
     await context.addCookies([
       {
         name: 'df_auth_token',
-        value: 'mock_admin_token',
+        value: 'dummyHeader.eyJ1c2VySWQiOiJkZW1vLWFkbWluLTEiLCJuYW1lIjoiRGVhbEZsb3cgQWRtaW4iLCJlbWFpbCI6ImFkbWluQGRlYWxmbG93LmFpIiwicm9sZSI6ImFkbWluIn0=.dummySignature',
         domain: 'localhost',
         path: '/',
         httpOnly: true,
@@ -49,7 +49,7 @@ export const test = base.extend<CustomFixtures>({
     await context.addCookies([
       {
         name: 'df_auth_token',
-        value: 'mock_customer_token',
+        value: 'dummyHeader.eyJ1c2VySWQiOiJjdXN0b21lci1kZW1vIiwibmFtZSI6IkRlbW8gQ3VzdG9tZXIiLCJlbWFpbCI6ImRlbW9AY3VzdG9tZXIuY29tIiwicm9sZSI6ImN1c3RvbWVyIn0=.dummySignature',
         domain: 'localhost',
         path: '/',
         httpOnly: true,
@@ -82,7 +82,7 @@ export const test = base.extend<CustomFixtures>({
     await context.addCookies([
       {
         name: 'df_auth_token',
-        value: 'mock_agent_token',
+        value: 'dummyHeader.eyJ1c2VySWQiOiJhZ2VudC1wcmFuZWV0aCIsIm5hbWUiOiJQcmFuZWV0aCIsImVtYWlsIjoicHJhbmVldGhAZGVhbGZsb3cuYWkiLCJyb2xlIjoiYWdlbnQifQ==.dummySignature',
         domain: 'localhost',
         path: '/',
         httpOnly: true,

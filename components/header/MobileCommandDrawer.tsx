@@ -216,6 +216,7 @@ export function MobileCommandDrawer({
                       );
                     }
 
+                    const isAnchor = link.href.includes("#");
                     return (
                       <Link
                         key={link.href}
@@ -224,10 +225,13 @@ export function MobileCommandDrawer({
                         className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 ${
                           isActive
                             ? "border-teal-500/30 bg-gradient-to-r from-teal-500/15 to-cyan-500/10 text-teal-300"
-                            : "border-transparent text-slate-300 hover:text-white hover:bg-white/8 hover:border-white/10"
+                            : isAnchor
+                              ? "border-transparent text-slate-400 hover:text-white hover:bg-white/6"
+                              : "border-transparent text-slate-300 hover:text-white hover:bg-white/8 hover:border-white/10"
                         }`}
                       >
                         {Icon && <Icon className={`h-5 w-5 ${isActive ? "text-teal-400" : "text-slate-500"}`} />}
+                        {isAnchor && <span className="text-teal-500/60 mr-1 font-bold">#</span>}
                         <span className="font-semibold text-sm">{link.name}</span>
                       </Link>
                     );
@@ -275,7 +279,7 @@ export function MobileCommandDrawer({
                 }}
               >
                 <Calendar className="h-4.5 w-4.5" />
-                Book Meeting
+                Book a Demo
               </Button>
 
               <Button

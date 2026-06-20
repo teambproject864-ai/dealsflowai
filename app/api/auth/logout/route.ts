@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const userAgent = req.headers.get("user-agent") || "unknown";
 
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(req);
     if (user) {
       console.log(`[Logout] User ${user.email} logged out`);
       // Add audit log for logout matching the login log format
