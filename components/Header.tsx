@@ -377,7 +377,7 @@ export function Header() {
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
           {/* Browser Agent (All Sizes) */}
           <Link
-            href="/solutions/gtm"
+            href="/browser-agent"
             className="relative inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-teal-500/20 bg-gradient-to-r from-teal-500/15 via-cyan-500/10 to-teal-400/10 hover:from-teal-500/25 hover:via-cyan-500/20 hover:to-teal-400/20 text-teal-300 hover:text-teal-100 transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.15)] hover:shadow-[0_0_35px_rgba(20,184,166,0.3)] group"
             aria-label="Open Browser Agent"
           >
