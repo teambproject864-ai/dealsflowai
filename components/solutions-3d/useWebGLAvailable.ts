@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 export function useWebGLAvailable() {
-  const [available, setAvailable] = useState<boolean>(true);
+  const [available, setAvailable] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -12,7 +12,10 @@ export function useWebGLAvailable() {
         window.WebGLRenderingContext &&
         (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
       );
-      setAvailable(hasWebGL);
+      const hasWebGL2 = !!(
+        window.WebGL2RenderingContext && canvas.getContext("webgl2")
+      );
+      setAvailable(hasWebGL || hasWebGL2);
     } catch {
       setAvailable(false);
     }
