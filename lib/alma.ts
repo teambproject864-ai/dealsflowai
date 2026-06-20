@@ -1,5 +1,5 @@
 // lib/alma.ts
-import { db } from './firebase-admin';
+import { getDb } from './firebase-admin';
 import admin from 'firebase-admin';
 import { MemoryEntry, MemoryCategory } from './types';
 import { hfEmbed } from './huggingface';
@@ -33,6 +33,7 @@ const ALMA_COLLECTION = 'alma_memory';
  * Store a memory with automatic embedding generation
  */
 export async function storeMemory(memory: Omit<ALMAMemory, 'id' | 'createdAt' | 'accessCount' | 'lastAccessed'>) {
+  const db = getDb();
   if (!db) return null;
 
   // Generate embedding for semantic search
@@ -102,6 +103,7 @@ async function doRetrieveMemories(args: {
   queryText?: string;
   limit?: number;
 }): Promise<ALMAMemory[]> {
+  const db = getDb();
   if (!db) return [];
 
   let query: admin.firestore.Query = db.collection(ALMA_COLLECTION);
@@ -179,6 +181,7 @@ async function doRetrieveMemories(args: {
  * Memory Consolidation: Transfer STM to LTM if importance is high or frequency is high
  */
 export async function consolidateMemories() {
+  const db = getDb();
   if (!db) return;
 
   // Find STM entries that are important and not yet consolidated
@@ -223,6 +226,7 @@ await batch.commit();
  * Forgetting Mechanism: Remove or archive low-importance, old memories
  */
 export async function applyForgetting() {
+  const db = getDb();
   if (!db) return;
 
   const now = Date.now();

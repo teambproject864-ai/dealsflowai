@@ -209,16 +209,12 @@ export function Header() {
       ],
     },
     {
-      name: "How it works",
-      href: "/#how-it-works",
+      name: "Go-to-Market (GTM) Analysis",
+      href: "/solutions/gtm",
     },
     {
       name: "Features",
       href: "/features",
-    },
-    {
-      name: "Pricing",
-      href: "/#pricing",
     },
     {
       name: "Support",

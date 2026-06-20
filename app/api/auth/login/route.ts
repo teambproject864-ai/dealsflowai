@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth";
 import { verifyTOTP } from "@/lib/totp";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
     const validation = loginSchema.safeParse(body);
 
     if (!validation.success) {
+      logger.warn("Invalid login request parameters", validation.error.issues);
       return NextResponse.json(
         { success: false, error: "Invalid request parameters" },
         { status: 400 }
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn("[Login] Firebase not configured, skipping Firestore user check", e);
+      logger.warn("[Login] Firebase not configured or failed to connect, skipping Firestore user check", e);
     }
 
     if (dbUser) {
@@ -141,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, user });
   } catch (error) {
-    console.error("[Login Error]", error);
+    logger.error("[Login Error]", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

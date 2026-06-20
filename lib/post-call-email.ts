@@ -1,5 +1,5 @@
 // lib/post-call-email.ts
-import { db } from './firebase-admin';
+import { getDb } from './firebase-admin';
 import { sendEmailWithRetry } from './notifications';
 
 export interface CallTranscript {

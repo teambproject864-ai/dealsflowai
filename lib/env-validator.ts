@@ -52,7 +52,7 @@ export function validateEnv(): EnvValidationResult {
     }
   }
 
-  // 2. Check Firebase Configuration
+  // 2. Check Firebase Configuration (optional, not required for basic login/demo)
   const saPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   const hasSaVars = 
     process.env.FIREBASE_PROJECT_ID && 
@@ -60,9 +60,8 @@ export function validateEnv(): EnvValidationResult {
     process.env.FIREBASE_PRIVATE_KEY;
 
   if (!saPath && !hasSaVars && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    errors.push(
-      "Firebase Admin credentials are not configured. Provide FIREBASE_SERVICE_ACCOUNT_PATH or individual FIREBASE_* variables."
-    );
+    // Only warn, don't fail validation - demo users can use hardcoded credentials
+    logger.warn("Firebase Admin credentials not configured - using demo accounts only");
   }
 
   // 3. AI configuration (Warnings only, as these are often hot-swappable)

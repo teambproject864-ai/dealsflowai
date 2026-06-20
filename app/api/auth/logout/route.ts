@@ -25,9 +25,8 @@ export async function POST(req: NextRequest) {
     console.error("[Logout Error] Failed to retrieve user info during logout:", error);
   }
 
-  let response = NextResponse.json({ success: true });
-  response = deleteAuthCookieFromResponse(response);
-  return response;
+  const response = NextResponse.json<{ success: boolean }>({ success: true });
+  return deleteAuthCookieFromResponse(response);
 }
 
 export async function GET(req: NextRequest) {

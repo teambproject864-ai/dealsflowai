@@ -1,6 +1,8 @@
 // lib/post-call-scheduler.ts
 import { executeEndOfDayEmailRun, processAndSendPostCallEmail } from './post-call-email';
-import { db } from './firebase-admin';
+import { getDb } from './firebase-admin';
+
+const db = getDb();
 
 export interface SchedulerConfig {
   defaultStakeholderEmail: string;

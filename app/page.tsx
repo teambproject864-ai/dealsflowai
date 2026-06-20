@@ -542,6 +542,14 @@ export default function HomePage() {
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
+                    href="/solutions/gtm"
+                    onClick={() => trackEvent("cta_browser_agent", { surface: "hero_v3", abVariant })}
+                    className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-semibold text-base transition-all duration-300 shadow-xl shadow-teal-600/35 hover:-translate-y-0.5"
+                  >
+                    Browser Agent
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
                     href="/book-demo"
                     onClick={() => trackEvent("cta_book_demo", { surface: "hero_v3", abVariant })}
                     className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"

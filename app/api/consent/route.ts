@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
 import { hashIp } from "@/lib/security";
 import { checkRateLimitByRoute } from "@/lib/rate-limiter";
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       userAgent:       req.headers.get("user-agent") ?? "unknown",
     };
 
-    await db.collection("user_consent").doc(uid).set(consentRecord, { merge: true });
+    await getDb().collection("user_consent").doc(uid).set(consentRecord, { merge: true });
 
     // Audit
     await db.collection("audit_log").add({
@@ -97,7 +97,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const snap = await db.collection("user_consent").doc(uid).get();
+    const snap = await getDb().collection("user_consent").doc(uid).get();
     if (!snap.exists) {
       return NextResponse.json({ success: true, consent: null });
     }

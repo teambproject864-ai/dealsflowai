@@ -192,7 +192,7 @@ function ResetPasswordContent() {
           <ShieldCheck className="h-9 w-9 text-amber-400" />
         </div>
         <div>
-          <h2 className="text-xl font-extrabold text-white mb-2">Review Pending</h2>
+          <h2 className="text-xl font-extrabold text-white mb-2">Direct password reset is restricted for customers and agents</h2>
           <p className="text-sm text-slate-400 max-w-xs mx-auto leading-relaxed">
             For security, direct password resets for customer and agent accounts require administrator approval. Your request has been submitted.
           </p>

@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 import { PERSONAS } from "@/prompts/personas";
 import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE, RevenueAgentProfile } from "@/lib/types";
 import { assignFairRandomAgent } from "./agent-assignment";
@@ -23,7 +23,7 @@ async function countActiveSessionsByPersona(): Promise<Record<string, number>> {
   }
 
   try {
-    const snapshot = await db
+    const snapshot = await getDb()
       .collection("calls")
       .where("status", "==", "in-progress")
       .limit(50)

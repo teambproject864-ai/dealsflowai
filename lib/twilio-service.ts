@@ -1,5 +1,5 @@
 import twilio from "twilio";
-import { db } from "./firebase-admin";
+import { getDb } from "./firebase-admin";
 import { z } from "zod";
 
 export interface OTPRecord {
