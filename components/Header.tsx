@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles, Bot } from "lucide-react";
+import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles, Bot, MoreHorizontal } from "lucide-react";
 
 import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import {
@@ -383,6 +383,15 @@ export function Header() {
           >
             <Bot className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300 group-hover:scale-110" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)] animate-pulse" aria-hidden="true" />
+          </Link>
+          
+          {/* More Options Icon */}
+          <Link
+            href="/all-options"
+            className="inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-white/15 bg-white/6 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+            aria-label="View all application options"
+          >
+            <MoreHorizontal className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300 group-hover:scale-110" />
           </Link>
 
           {/* Notifications Center (Tablet & Desktop) */}
