@@ -18,7 +18,7 @@ export function PageTransition3D({ children }: { children: ReactNode }) {
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        className="relative z-10 flex flex-col flex-1 immersive-page-scene"
+        className="relative z-10 flex flex-col flex-1"
         style={{ transformStyle: "preserve-3d", perspective: 1600 }}
         initial={{ opacity: 0, scale: 0.72, z: -2000, rotateX: 8 }}
         animate={{ opacity: 1, scale: 1, z: 0, rotateX: 0 }}

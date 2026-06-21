@@ -468,10 +468,10 @@ export default function HomePage() {
   ], []);
 
   return (
-    <main className="snap-container min-h-screen text-slate-800 dark:text-white bg-background">
+    <main className="min-h-screen text-slate-800 dark:text-white bg-background">
       
       {/* ── HERO SECTION WITH HOLOGRAPHIC GTM ────────────────────────────────────── */}
-      <section id="hero" ref={heroRef} className="snap-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section id="hero" ref={heroRef} className=" relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         
         {/* Ambient background */}
         <div className="absolute inset-0 pointer-events-none">
@@ -581,7 +581,7 @@ export default function HomePage() {
       </section>
 
       {/* ── WHY TEAMS CHOOSE DEALFLOW AI (OUTCOMES SECTION) ──────────────────────────────── */}
-      <section className="snap-section relative border-y border-slate-200 dark:border-white/5 bg-[#060612] flex flex-col justify-center py-20">
+      <section className=" relative border-y border-slate-200 dark:border-white/5 bg-[#060612] flex flex-col justify-center py-20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.03),transparent)] pointer-events-none" />
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center mb-16">
@@ -686,7 +686,7 @@ export default function HomePage() {
       </section>
 
       {/* ── FAPO: FULLY AUTONOMOUS PROMPT OPTIMIZATION SECTION ───────────────────── */}
-      <section className="snap-section relative border-b border-slate-200 dark:border-white/5 bg-background py-20">
+      <section className=" relative border-b border-slate-200 dark:border-white/5 bg-background py-20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center mb-16">
@@ -786,7 +786,7 @@ export default function HomePage() {
       </section>
 
       {/* ── GTM ASSESSMENT INTAKE FORM SECTION ───────────────────────────────────────── */}
-      <section id="how-it-works" ref={intakeSectionRef} className="snap-section relative py-20 border-b border-slate-200 dark:border-white/5 scroll-mt-16 flex flex-col justify-center">
+      <section id="how-it-works" ref={intakeSectionRef} className=" relative py-20 border-b border-slate-200 dark:border-white/5 scroll-mt-16 flex flex-col justify-center">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid lg:grid-cols-12 gap-8 items-center">
             
@@ -869,7 +869,7 @@ export default function HomePage() {
       </section>
 
       {/* ── PLATFORM SECTION ───────────────────────────────────────────────────── */}
-      <section id="features" className="snap-section relative py-28 overflow-hidden flex flex-col justify-center">
+      <section id="features" className=" relative py-28 overflow-hidden flex flex-col justify-center">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
         
         <div className="mx-auto max-w-7xl px-6">
@@ -974,7 +974,7 @@ export default function HomePage() {
       </section>
 
       {/* ── INTEGRATIONS & TESTIMONIALS SECTION GROUP ─────────────────────────── */}
-      <div className="snap-section flex flex-col justify-center py-20 border-t border-slate-200 dark:border-white/5 bg-[#070715]/10">
+      <div className=" flex flex-col justify-center py-20 border-t border-slate-200 dark:border-white/5 bg-[#070715]/10">
         
         {/* ── INTEGRATIONS MARQUEE STRIP ───────────────────────────────────────── */}
         <section className="relative overflow-hidden mb-12">
@@ -1067,7 +1067,7 @@ export default function HomePage() {
     </div>
 
       {/* ── PRICING ─────────────────────────────────────────────────────────────── */}
-      <section className="snap-section relative py-28 border-t border-slate-200 dark:border-white/5 flex flex-col justify-center" id="pricing">
+      <section className=" relative py-28 border-t border-slate-200 dark:border-white/5 flex flex-col justify-center" id="pricing">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_80%,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-6">
@@ -1226,7 +1226,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA SECTION ─────────────────────────────────────────────────────────── */}
-      <section className="snap-section relative py-28 border-t border-slate-200 dark:border-white/5 overflow-hidden flex flex-col justify-center bg-[#05050e]">
+      <section className=" relative py-28 border-t border-slate-200 dark:border-white/5 overflow-hidden flex flex-col justify-center bg-[#05050e]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.08),transparent)] pointer-events-none" />
         
         <div className="relative mx-auto max-w-4xl px-6 text-center">
