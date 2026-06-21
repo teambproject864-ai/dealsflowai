@@ -4,7 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ExperienceProvider } from "./ExperienceProvider";
 import { CustomCursor } from "./CustomCursor";
-import { MultimodalControlDock } from "./MultimodalControlDock";
+
 import { AccessibilityPanel } from "./AccessibilityPanel";
 import { OfflineBanner } from "./OfflineBanner";
 import { MultimodalIndicator } from "./MultimodalIndicator";
@@ -35,7 +35,7 @@ export function ExperienceChrome({ children }: { children: ReactNode }) {
         <>
           {showLoader && <CinematicLoader ready={ready} />}
           {!isPortal && <CustomCursor />}
-          <MultimodalControlDock />
+
           <AccessibilityPanel />
           <OfflineBanner />
           <MultimodalIndicator />
