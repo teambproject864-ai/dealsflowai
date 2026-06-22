@@ -7,16 +7,28 @@ import { sanitizeObject } from "@/lib/sanitize";
 import { db } from "@/lib/firebase-admin";
 import { encryptLead } from "@/lib/security";
 
-// Simple schema for booking widget submissions (just the basics)
-const simpleLeadSchema = z.object({
+// Schema for normalized lead data
+const normalizedLeadSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   contactName: z.string().min(1, "Name is required"),
   contactEmail: z.string().email("Valid email is required"),
   contactPhone: z.string().optional(),
   source: z.string().optional(),
-});
+}).passthrough(); // Allow extra fields to be stored
 
 const inMemoryLeads = getInMemoryLeads();
+
+function normalizeLeadData(data: any) {
+  // Normalize the data to the standard field names
+  return {
+    companyName: data.companyName || data.company,
+    contactName: data.contactName || data.name,
+    contactEmail: data.contactEmail || data.emailPersonal || data.email,
+    contactPhone: data.contactPhone || data.phone || "",
+    source: data.source || "unknown",
+    ...data, // Keep all other fields
+  };
+}
 
 export async function POST(req: Request) {
   // Check rate limit first
@@ -36,23 +48,24 @@ export async function POST(req: Request) {
     const companyData = await req.json();
     // Sanitize all inputs first
     const sanitizedData = sanitizeObject(companyData);
+    const normalizedData = normalizeLeadData(sanitizedData);
 
-    // Try to validate against simple schema first (for booking widget)
-    let validatedData;
-    const simpleResult = simpleLeadSchema.safeParse(sanitizedData);
-    if (simpleResult.success) {
-      validatedData = simpleResult.data;
-    } else {
+    // Validate the normalized data
+    const validationResult = normalizedLeadSchema.safeParse(normalizedData);
+    if (!validationResult.success) {
+      // Get a human-readable error message
+      const errorMessages = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; ');
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid lead data",
-          details: simpleResult.error.flatten(),
+          error: `Invalid lead data: ${errorMessages}`,
+          details: validationResult.error.flatten(),
         },
         { status: 400 }
       );
     }
 
+    const validatedData = validationResult.data;
     const leadId = uuidv4();
     const leadRecord = {
       ...validatedData,

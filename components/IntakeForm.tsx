@@ -299,10 +299,18 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
     // --- Submit (online/offline) ---
     try {
       const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
+      const leadPayload = {
+        companyName: fullValidation.data.companyName,
+        contactName: fullValidation.data.name,
+        contactEmail: fullValidation.data.emailPersonal,
+        contactPhone: "", // We don't collect phone in intake form yet, so leave empty
+        source: "intake_form",
+        ...fullValidation.data, // Include all data for full storage
+      };
       const res = await fetch("/api/leads/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fullValidation.data),
+        body: JSON.stringify(leadPayload),
       });
       const result = await res.json();
       if (result.success && result.leadId) {
