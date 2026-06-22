@@ -41,50 +41,127 @@ function generateMockCompleteGTM(companyName: string): AnalysisResult {
       exclusionCriteria: [
         "B2C companies",
         "Early-stage pre-revenue startups",
-        "Enterprise companies >1000 employees requiring custom onboarding"
+        "Enterprise companies >1000 employees requiring custom onboarding",
+        "Already running a mature, analytics-driven solution in this category",
+        "Single small operation with negligible spend or scale",
+        "No operational authority to make or influence purchasing decisions"
       ]
     },
     table1FirmographicDemographic: [
-      { priorityTier: "Tier 1", industryVertical: "SalesTech/MarTech", companySize: "25-100 employees", arrRange: "$2M-$20M", location: "United States (West/Northeast)", keyDecisionMakerDemographics: "VP Sales, 35-50yo, data-driven", notes: "Highest conversion, fastest sales cycles" },
-      { priorityTier: "Tier 2", industryVertical: "FinTech B2B SaaS", companySize: "50-150 employees", arrRange: "$5M-$50M", location: "US/EU", keyDecisionMakerDemographics: "CRO/Director of Sales", notes: "High ACV, higher retention" }
+      { priorityTier: "Tier 1", industryVertical: "SalesTech/MarTech", companySize: "25-100 employees", arrRange: "$2M-$20M", location: "United States (West/Northeast)", keyDecisionMakerDemographics: "VP Sales, 35-50yo, data-driven", notes: "Highest conversion, fastest sales cycles", primaryCostDriver: "Tooling", currentSolutionStatus: "Basic", numberOfSitesTeamsLocations: "2-5", sustainabilityEsgComplianceCommitment: "Yes" },
+      { priorityTier: "Tier 2", industryVertical: "FinTech B2B SaaS", companySize: "50-150 employees", arrRange: "$5M-$50M", location: "US/EU", keyDecisionMakerDemographics: "CRO/Director of Sales", notes: "High ACV, higher retention", primaryCostDriver: "Headcount", currentSolutionStatus: "None", numberOfSitesTeamsLocations: "5-10", sustainabilityEsgComplianceCommitment: "In Progress" }
     ],
     behavioralPsychographicTraits: {
       observableBehavioralPatterns: ["Downloads sales automation content", "Attends GTM webinars", "Active on LinkedIn Sales", "Uses multiple SaaS tools"],
       corePsychographicAttributes: ["Data-driven decision making", "Risk-tolerant for ROI-positive tools", "Innovation-focused"]
     },
     table2PainPointAnalysis: [
-      { painPoint: "Manual lead qualification takes too long", severity: "Critical", businessImpact: "30% wasted sales time, $40k/year cost per rep", rootCause: "No AI-assisted scoring", dealFlowAISolution: "AI Lead Analysis + ICP Matching" },
-      { painPoint: "No visibility into meeting quality", severity: "High", businessImpact: "10% lower close rate", rootCause: "No systematic call analysis", dealFlowAISolution: "Meeting Summaries + Sentiment Analysis" }
+      { painPoint: "Manual lead qualification takes too long", severity: "Critical", businessImpact: "30% wasted sales time, $40k/year cost per rep", rootCause: "No AI-assisted scoring", dealFlowAISolution: "AI Lead Analysis + ICP Matching", frequencyOfPain: "Daily", howPainIsCurrentlyDiscovered: "Manual audit", competitorCurrentSolutionInUse: "None" },
+      { painPoint: "No visibility into meeting quality", severity: "High", businessImpact: "10% lower close rate", rootCause: "No systematic call analysis", dealFlowAISolution: "Meeting Summaries + Sentiment Analysis", frequencyOfPain: "Weekly", howPainIsCurrentlyDiscovered: "Complaint", competitorCurrentSolutionInUse: "Gong (basic)" }
     ],
     table3DecisionMakerInfluence: [
-      { role: "VP Sales / CRO", influenceScore: "10", coreDecisionRole: "Economic Buyer", top3Priorities: "Hit quota, increase pipeline, prove ROI", dealFlowAIMessagingFocus: "ROI case studies, enterprise pricing" },
-      { role: "Sales Ops Manager", influenceScore: "8", coreDecisionRole: "Gatekeeper + Champion", top3Priorities: "Process efficiency, adoption metrics", dealFlowAIMessagingFocus: "Implementation guides, integration docs" }
+      { role: "VP Sales / CRO", influenceScore: "10", coreDecisionRole: "Economic Buyer", top3Priorities: "Hit quota, increase pipeline, prove ROI", dealFlowAIMessagingFocus: "ROI case studies, enterprise pricing", preferredContactChannel: "LinkedIn", primaryObjectionType: "No budget", contentFormatPreference: "ROI calc" },
+      { role: "Sales Ops Manager", influenceScore: "8", coreDecisionRole: "Gatekeeper + Champion", top3Priorities: "Process efficiency, adoption metrics", dealFlowAIMessagingFocus: "Implementation guides, integration docs", preferredContactChannel: "Email", primaryObjectionType: "Too risky / need a pilot first", contentFormatPreference: "Demo" },
+      { role: "Operations Lead", influenceScore: "7", coreDecisionRole: "Champion", top3Priorities: "Process gaps, implementation risk", dealFlowAIMessagingFocus: "Implementation ease, process automation", preferredContactChannel: "Email", primaryObjectionType: "Already have an existing solution", contentFormatPreference: "Case study" },
+      { role: "Technical Lead", influenceScore: "6", coreDecisionRole: "Champion", top3Priorities: "Integrations, system performance", dealFlowAIMessagingFocus: "API docs, integration guides", preferredContactChannel: "Phone", primaryObjectionType: "Need board or leadership approval", contentFormatPreference: "1-pager" }
     ],
     purchasingJourneyMapping: [
       { stage: "Awareness", duration: "Week 1-2", customerActions: "Reads content, attends webinars", customerNeedsQuestions: "What problems can AI solve?", channelPreferences: "LinkedIn, Google Search", dealFlowAIAssetsEngagement: "SEO content, thought leadership" },
-      { stage: "Consideration", duration: "Week 2-4", customerActions: "Downloads assets, requests demo", customerNeedsQuestions: "Does this integrate with my stack?", channelPreferences: "Website, G2/Capterra", dealFlowAIAssetsEngagement: "Personalized demo, case studies" }
+      { stage: "Consideration", duration: "Week 2-4", customerActions: "Downloads assets, requests demo", customerNeedsQuestions: "Does this integrate with my stack?", channelPreferences: "Website, G2/Capterra", dealFlowAIAssetsEngagement: "Personalized demo, case studies" },
+      { stage: "Decision", duration: "Week 4-6", customerActions: "Vendor comparison, internal approval, pilot scoping", customerNeedsQuestions: "What's the ROI and implementation timeline?", channelPreferences: "1:1 calls, proposal reviews", dealFlowAIAssetsEngagement: "Custom proposals, ROI calculators" },
+      { stage: "Closed-Won", duration: "Week 6-8", customerActions: "Onboarding trigger, handoff SOP, success criteria set", customerNeedsQuestions: "How do we get up and running quickly?", channelPreferences: "CS onboarding calls", dealFlowAIAssetsEngagement: "Onboarding playbooks, success plan" },
+      { stage: "Retention", duration: "Month 2-6", customerActions: "QBR cadence, expansion signals, upsell trigger", customerNeedsQuestions: "How can we get more value?", channelPreferences: "CS check-ins", dealFlowAIAssetsEngagement: "QBR templates, upsell playbooks" },
+      { stage: "Expansion", duration: "Ongoing", customerActions: "Second-site or second-team rollout, land-and-expand path", customerNeedsQuestions: "How do we scale this across teams?", channelPreferences: "Account management", dealFlowAIAssetsEngagement: "Expansion playbooks, multi-team pricing" }
     ],
     table4LeadScoringFramework: {
       criteria: [
         { category: "Firmographics", criterion: "B2B SaaS Industry", points: "15" },
-        { category: "Firmographics", criterion: "Uses Salesforce/HubSpot", points: "10" }
+        { category: "Firmographics", criterion: "Uses Salesforce/HubSpot", points: "10" },
+        { category: "Trigger Events", criterion: "Trigger event detected (expo, expansion, tariff hike)", points: "8" },
+        { category: "Behavioral", criterion: "LinkedIn activity (engaged with industry-relevant content)", points: "5" },
+        { category: "Firmographics", criterion: "Multi-site operations confirmed", points: "5" },
+        { category: "Firmographics", criterion: "No existing solution or analytics layer confirmed", points: "5" },
+        { category: "Decision Making", criterion: "Budget authority confirmed", points: "7" }
       ],
       qualificationThresholds: { mql: "40 points", sql: "70 points", sal: "80+ points" }
     },
     table5ChannelEffectiveness: [
       { channel: "LinkedIn Outbound", icpSegmentsBestFor: "All Tiers", monthlyLeadVolume: "120", conversionRate: "8.5%", costPerAcquisition: "$1,200", ltvToCacRatio: "12:1", budgetAllocation: "35%", optimizationRecommendations: "Focus on VP Sales roles" },
-      { channel: "Paid Search", icpSegmentsBestFor: "Tiers 1-3", monthlyLeadVolume: "80", conversionRate: "5.2%", costPerAcquisition: "$1,800", ltvToCacRatio: "8:1", budgetAllocation: "25%", optimizationRecommendations: "High-intent keywords only" }
+      { channel: "Paid Search", icpSegmentsBestFor: "Tiers 1-3", monthlyLeadVolume: "80", conversionRate: "5.2%", costPerAcquisition: "$1,800", ltvToCacRatio: "8:1", budgetAllocation: "25%", optimizationRecommendations: "High-intent keywords only" },
+      { channel: "Cold Email Outbound", icpSegmentsBestFor: "Tiers 1-2", monthlyLeadVolume: "150", conversionRate: "6.0%", costPerAcquisition: "$900", ltvToCacRatio: "15:1", budgetAllocation: "20%", optimizationRecommendations: "Personalize to pain points" },
+      { channel: "Industry Events / Expos", icpSegmentsBestFor: "Tier 1", monthlyLeadVolume: "30", conversionRate: "12.0%", costPerAcquisition: "$2,500", ltvToCacRatio: "10:1", budgetAllocation: "10%", optimizationRecommendations: "Sponsor speaking slots" },
+      { channel: "Content / SEO", icpSegmentsBestFor: "All Tiers", monthlyLeadVolume: "60", conversionRate: "4.5%", costPerAcquisition: "$600", ltvToCacRatio: "20:1", budgetAllocation: "10%", optimizationRecommendations: "Focus on problem-focused content" }
     ],
     crossTeamAlignmentGuidelines: {
       raciFramework: [],
       communicationCadenceSlas: [],
-      sharedSLAs: ["MQL to SDR assignment: <24h", "Hot lead follow-up: <15m"]
+      sharedSLAs: [
+        { sla: "MQL to SDR assignment: <24h", owner: "SDR Manager", escalationPath: "Head of Sales" },
+        { sla: "Hot lead follow-up: <15m", owner: "SDR on duty", escalationPath: "Sales Ops Lead" }
+      ],
+      weeklyReviewMeeting: { cadence: "Every Monday at 10am ET", owner: "Head of Sales Ops" },
+      hotLeadCriteria: "ICP match + budget confirmed + trigger event"
     },
     icpValidationChecklist: {
       preQualificationChecklist: ["B2B SaaS?", "10-250 employees?", "CRM in use?"],
       quarterlyValidationReview: ["Review ICP performance", "Collect team feedback", "Check market shifts"],
       dataSourcesForValidation: ["CRM data", "Product analytics", "Win/loss interviews"],
-      icpUpdateTriggers: ["Close rate drops", "Market shifts", "Product launches"]
+      icpUpdateTriggers: ["Close rate drops", "Market shifts", "Product launches"],
+      quarterlyReviewOwner: "Head of GTM",
+      scoringThresholdForRevision: "Close rate <15%",
+      reviewChecklist: ["Win/loss ratio", "Close rate by tier", "Churn signals"]
+    },
+    sectionACompetitiveLandscape: [
+      { competitorName: "Apollo.io", coreOffering: "Sales intelligence platform", keyWeakness: "Limited AI analysis capabilities", companyDifferentiator: "Full GTM AI playbooks with lead scoring and meeting analysis", positioningStatement: `${companyName} doesn't just find leads; it turns them into closed deals with AI-powered GTM strategy.` },
+      { competitorName: "Gong", coreOffering: "Conversation intelligence", keyWeakness: "No proactive lead scoring or ICP matching", companyDifferentiator: "End-to-end GTM platform from lead gen to close", positioningStatement: `While Gong analyzes calls, ${companyName} orchestrates your entire GTM motion.` }
+    ],
+    sectionBMessagingAndPositioning: [
+      { painPoint: "Manual lead qualification takes too long", valuePillar: "Efficiency", hookLine: "Stop wasting 30% of your sales team's time on bad leads.", supportingProofPoint: "Customers reduce lead qualification time by 70% in 30 days.", cta: "Start your free audit", personaMessaging: [
+        { persona: "VP Sales", messaging: "Hit your quota faster by focusing only on high-conversion leads." },
+        { persona: "Sales Ops Manager", messaging: "Automate your lead routing and scoring to reduce manual work." }
+      ] }
+    ],
+    sectionCObjectionHandlingMatrix: [
+      { objection: "No budget", personaMostLikelyToRaiseIt: "VP Sales / CRO", responseFramework: "Highlight ROI and cost savings from efficiency gains.", supportingAsset: "ROI Calculator" },
+      { objection: "Already have an existing solution", personaMostLikelyToRaiseIt: "Operations Lead", responseFramework: "Show how we complement and enhance their current stack.", supportingAsset: "Integration Guide" },
+      { objection: "Not a priority right now", personaMostLikelyToRaiseIt: "VP Sales / CRO", responseFramework: "Highlight pain points and cost of inaction.", supportingAsset: "Pain Point Deck" },
+      { objection: "Too risky / need a pilot first", personaMostLikelyToRaiseIt: "Sales Ops Manager / Technical Lead", responseFramework: "Offer a low-risk pilot with clear success metrics.", supportingAsset: "Pilot Agreement Template" },
+      { objection: "Need board or leadership approval", personaMostLikelyToRaiseIt: "All", responseFramework: "Provide a clear business case with ROI projections.", supportingAsset: "Board Deck Template" }
+    ],
+    sectionDTamSamSom: {
+      tam: "20,000 B2B SaaS companies in target markets",
+      sam: "4,000 companies actively experiencing primary pain points",
+      som: "200 companies (5% of SAM) in first 12 months"
+    },
+    sectionEPartnerAndChannelStrategy: {
+      referralPartners: ["Sales consultants", "CRM implementation firms", "GTM agencies"],
+      partnerIncentiveModel: "10% referral commission for closed deals",
+      coMarketingOpportunities: ["Industry expos", "GTM summits", "Trade publications"]
+    },
+    sectionFRiskRegister: [
+      { risk: "Competitive displacement", likelihood: "Medium", impact: "High", mitigation: "Focus on customer success and land-and-expand strategies." },
+      { risk: "Low outreach reply rates", likelihood: "High", impact: "Medium", mitigation: "A/B test messaging and continuously optimize." },
+      { risk: "Proof / case study gap", likelihood: "Medium", impact: "Medium", mitigation: "Offer free pilots in exchange for case studies." },
+      { risk: "Long or stalled sales cycles", likelihood: "Medium", impact: "High", mitigation: "Implement clear milestones and checkpoints." },
+      { risk: "Key person dependency", likelihood: "Low", impact: "High", mitigation: "Document processes and train the team." }
+    ],
+    campaignSuccessMetrics: {
+      pipelineGeneratedTargetByTier: [
+        { tier: "Tier 1", target: "$2M" },
+        { tier: "Tier 2", target: "$1M" },
+        { tier: "Tier 3", target: "$500k" }
+      ],
+      mqlToSqlConversionRateTarget: "25%",
+      cacTargetByChannel: [
+        { channel: "LinkedIn Outbound", target: "$1,200" },
+        { channel: "Paid Search", target: "$1,800" },
+        { channel: "Cold Email Outbound", target: "$900" }
+      ],
+      dealVelocityBenchmarkByTier: [
+        { tier: "Tier 1", days: "45" },
+        { tier: "Tier 2", days: "60" },
+        { tier: "Tier 3", days: "90" }
+      ]
     }
   };
 }
@@ -506,10 +583,10 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
   // Table 1
   if (analysis.table1FirmographicDemographic?.length) {
     md += `## 3. Table 1: Firmographic & Demographic Segmentation\n\n`;
-    md += `| Priority Tier | Industry | Company Size | ARR Range | Location | Notes |\n`;
-    md += `|---------------|----------|--------------|-----------|----------|-------|\n`;
+    md += `| Priority Tier | Industry | Company Size | ARR Range | Location | Notes | Primary Cost Driver | Current Solution Status | Number of Sites/Teams/Locations | Sustainability/ESG/Compliance Commitment |\n`;
+    md += `|---------------|----------|--------------|-----------|----------|-------|--------------------|-------------------------|---------------------------------|------------------------------------------|\n`;
     for (let entry of analysis.table1FirmographicDemographic) {
-      md += `| ${entry.priorityTier} | ${entry.industryVertical} | ${entry.companySize} | ${entry.arrRange} | ${entry.location} | ${entry.notes} |\n`;
+      md += `| ${entry.priorityTier} | ${entry.industryVertical} | ${entry.companySize} | ${entry.arrRange} | ${entry.location} | ${entry.notes} | ${entry.primaryCostDriver || ''} | ${entry.currentSolutionStatus || ''} | ${entry.numberOfSitesTeamsLocations || ''} | ${entry.sustainabilityEsgComplianceCommitment || ''} |\n`;
     }
     md += `\n`;
   }
@@ -523,10 +600,10 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
   // Table 2
   if (analysis.table2PainPointAnalysis?.length) {
     md += `## 5. Table 2: Pain Point Analysis\n\n`;
-    md += `| Pain Point | Severity | Business Impact | Root Cause | DealFlow Solution |\n`;
-    md += `|------------|----------|-----------------|------------|-------------------|\n`;
+    md += `| Pain Point | Severity | Business Impact | Root Cause | DealFlow Solution | Frequency of Pain | How Pain is Currently Discovered | Competitor/Current Solution in Use |\n`;
+    md += `|------------|----------|-----------------|------------|-------------------|------------------|---------------------------------|-------------------------------------|\n`;
     for (let entry of analysis.table2PainPointAnalysis) {
-      md += `| ${entry.painPoint} | ${entry.severity} | ${entry.businessImpact} | ${entry.rootCause} | ${entry.dealFlowAISolution} |\n`;
+      md += `| ${entry.painPoint} | ${entry.severity} | ${entry.businessImpact} | ${entry.rootCause} | ${entry.dealFlowAISolution} | ${entry.frequencyOfPain || ''} | ${entry.howPainIsCurrentlyDiscovered || ''} | ${entry.competitorCurrentSolutionInUse || ''} |\n`;
     }
     md += `\n`;
   }
@@ -534,10 +611,10 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
   // Table 3
   if (analysis.table3DecisionMakerInfluence?.length) {
     md += `## 6. Table 3: Decision-Maker Influence Matrix\n\n`;
-    md += `| Role | Influence Score | Core Role | Top 3 Priorities |\n`;
-    md += `|------|-----------------|-----------|------------------|\n`;
+    md += `| Role | Influence Score | Core Role | Top 3 Priorities | DealFlow AI Messaging Focus | Preferred Contact Channel | Primary Objection Type | Content Format Preference |\n`;
+    md += `|------|-----------------|-----------|------------------|-----------------------------|--------------------------|----------------------|---------------------------|\n`;
     for (let entry of analysis.table3DecisionMakerInfluence) {
-      md += `| ${entry.role} | ${entry.influenceScore} | ${entry.coreDecisionRole} | ${entry.top3Priorities} |\n`;
+      md += `| ${entry.role} | ${entry.influenceScore} | ${entry.coreDecisionRole} | ${entry.top3Priorities} | ${entry.dealFlowAIMessagingFocus} | ${entry.preferredContactChannel || ''} | ${entry.primaryObjectionType || ''} | ${entry.contentFormatPreference || ''} |\n`;
     }
     md += `\n`;
   }
@@ -549,7 +626,8 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
       md += `### ${stage.stage} (${stage.duration})\n\n`;
       md += `- **Customer Actions**: ${stage.customerActions}\n`;
       md += `- **Customer Needs**: ${stage.customerNeedsQuestions}\n`;
-      md += `- **Channel Preferences**: ${stage.channelPreferences}\n\n`;
+      md += `- **Channel Preferences**: ${stage.channelPreferences}\n`;
+      md += `- **DealFlow AI Assets & Engagement**: ${stage.dealFlowAIAssetsEngagement}\n\n`;
     }
   }
 
@@ -570,10 +648,10 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
   // Table 5
   if (analysis.table5ChannelEffectiveness?.length) {
     md += `## 9. Table 5: Channel Effectiveness Analysis\n\n`;
-    md += `| Channel | Conversion Rate | CAC | LTV:CAC | Budget Allocation |\n`;
-    md += `|---------|-----------------|-----|---------|-------------------|\n`;
+    md += `| Channel | ICP Segments Best For | Monthly Lead Volume | Conversion Rate | CAC | LTV:CAC | Budget Allocation | Optimization Recommendations |\n`;
+    md += `|---------|-----------------------|---------------------|-----------------|-----|---------|-------------------|----------------------------|\n`;
     for (let entry of analysis.table5ChannelEffectiveness) {
-      md += `| ${entry.channel} | ${entry.conversionRate} | ${entry.costPerAcquisition} | ${entry.ltvToCacRatio} | ${entry.budgetAllocation} |\n`;
+      md += `| ${entry.channel} | ${entry.icpSegmentsBestFor} | ${entry.monthlyLeadVolume} | ${entry.conversionRate} | ${entry.costPerAcquisition} | ${entry.ltvToCacRatio} | ${entry.budgetAllocation} | ${entry.optimizationRecommendations} |\n`;
     }
     md += `\n`;
   }
@@ -581,8 +659,20 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
   if (analysis.crossTeamAlignmentGuidelines) {
     md += `## 10. Cross-Team Alignment Guidelines\n\n`;
     md += `### Shared SLAs\n\n`;
-    for (let sla of analysis.crossTeamAlignmentGuidelines.sharedSLAs) {
-      md += `- ${sla}\n`;
+    if (Array.isArray(analysis.crossTeamAlignmentGuidelines.sharedSLAs)) {
+      for (const sla of analysis.crossTeamAlignmentGuidelines.sharedSLAs) {
+        if (typeof sla === 'string') {
+          md += `- ${sla}\n`;
+        } else if (typeof sla === 'object' && sla !== null && 'sla' in sla) {
+          md += `- **${sla.sla}** (Owner: ${sla.owner}, Escalation Path: ${sla.escalationPath})\n`;
+        }
+      }
+    }
+    if (analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting) {
+      md += `\n### Weekly Review Meeting\n\n- Cadence: ${analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.cadence}\n- Owner: ${analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.owner}\n\n`;
+    }
+    if (analysis.crossTeamAlignmentGuidelines.hotLeadCriteria) {
+      md += `### Hot Lead Criteria\n\n${analysis.crossTeamAlignmentGuidelines.hotLeadCriteria}\n\n`;
     }
     md += `\n`;
   }
@@ -601,6 +691,96 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
     for (let trigger of analysis.icpValidationChecklist.icpUpdateTriggers) {
       md += `- ${trigger}\n`;
     }
+    if (analysis.icpValidationChecklist.quarterlyReviewOwner) {
+      md += `\n### Quarterly Review Owner\n\n${analysis.icpValidationChecklist.quarterlyReviewOwner}\n\n`;
+    }
+    if (analysis.icpValidationChecklist.scoringThresholdForRevision) {
+      md += `### Scoring Threshold for Revision\n\n${analysis.icpValidationChecklist.scoringThresholdForRevision}\n\n`;
+    }
+    if (analysis.icpValidationChecklist.reviewChecklist?.length) {
+      md += `### Review Checklist\n\n${analysis.icpValidationChecklist.reviewChecklist.map(i => `- ${i}`).join("\n")}\n\n`;
+    }
+  }
+
+  // New Sections A-F
+  if (analysis.sectionACompetitiveLandscape?.length) {
+    md += `## A. Competitive Landscape\n\n`;
+    md += `| Competitor Name | Core Offering | Key Weakness | Company Differentiator | Positioning Statement |\n`;
+    md += `|-----------------|---------------|--------------|-----------------------|------------------------|\n`;
+    for (const competitor of analysis.sectionACompetitiveLandscape) {
+      md += `| ${competitor.competitorName} | ${competitor.coreOffering} | ${competitor.keyWeakness} | ${competitor.companyDifferentiator} | ${competitor.positioningStatement} |\n`;
+    }
+    md += `\n`;
+  }
+
+  if (analysis.sectionBMessagingAndPositioning?.length) {
+    md += `## B. Messaging & Positioning\n\n`;
+    for (const msg of analysis.sectionBMessagingAndPositioning) {
+      md += `### Pain Point: ${msg.painPoint}\n\n`;
+      md += `- **Value Pillar**: ${msg.valuePillar}\n`;
+      md += `- **Hook Line**: ${msg.hookLine}\n`;
+      md += `- **Supporting Proof Point**: ${msg.supportingProofPoint}\n`;
+      md += `- **CTA**: ${msg.cta}\n\n`;
+      if (msg.personaMessaging?.length) {
+        md += `#### Persona-Specific Messaging\n\n`;
+        for (const personaMsg of msg.personaMessaging) {
+          md += `- **${personaMsg.persona}**: ${personaMsg.messaging}\n`;
+        }
+        md += `\n`;
+      }
+    }
+  }
+
+  if (analysis.sectionCObjectionHandlingMatrix?.length) {
+    md += `## C. Objection Handling Matrix\n\n`;
+    md += `| Objection | Persona Most Likely to Raise It | Response Framework | Supporting Asset |\n`;
+    md += `|-----------|---------------------------------|--------------------|------------------|\n`;
+    for (const obj of analysis.sectionCObjectionHandlingMatrix) {
+      md += `| ${obj.objection} | ${obj.personaMostLikelyToRaiseIt} | ${obj.responseFramework} | ${obj.supportingAsset} |\n`;
+    }
+    md += `\n`;
+  }
+
+  if (analysis.sectionDTamSamSom) {
+    md += `## D. TAM / SAM / SOM\n\n`;
+    md += `- **TAM**: ${analysis.sectionDTamSamSom.tam}\n`;
+    md += `- **SAM**: ${analysis.sectionDTamSamSom.sam}\n`;
+    md += `- **SOM**: ${analysis.sectionDTamSamSom.som}\n\n`;
+  }
+
+  if (analysis.sectionEPartnerAndChannelStrategy) {
+    md += `## E. Partner & Channel Strategy\n\n`;
+    md += `### Referral Partners\n\n${analysis.sectionEPartnerAndChannelStrategy.referralPartners.map(i => `- ${i}`).join("\n")}\n\n`;
+    md += `### Partner Incentive Model\n\n${analysis.sectionEPartnerAndChannelStrategy.partnerIncentiveModel}\n\n`;
+    md += `### Co-Marketing Opportunities\n\n${analysis.sectionEPartnerAndChannelStrategy.coMarketingOpportunities.map(i => `- ${i}`).join("\n")}\n\n`;
+  }
+
+  if (analysis.sectionFRiskRegister?.length) {
+    md += `## F. Risk Register\n\n`;
+    md += `| Risk | Likelihood | Impact | Mitigation |\n`;
+    md += `|------|------------|--------|------------|\n`;
+    for (const risk of analysis.sectionFRiskRegister) {
+      md += `| ${risk.risk} | ${risk.likelihood} | ${risk.impact} | ${risk.mitigation} |\n`;
+    }
+    md += `\n`;
+  }
+
+  if (analysis.campaignSuccessMetrics) {
+    md += `## Campaign Success Metrics\n\n`;
+    md += `### Pipeline Generated Target by Tier\n\n`;
+    for (const tier of analysis.campaignSuccessMetrics.pipelineGeneratedTargetByTier) {
+      md += `- **${tier.tier}**: ${tier.target}\n`;
+    }
+    md += `\n- **MQL → SQL Conversion Rate Target**: ${analysis.campaignSuccessMetrics.mqlToSqlConversionRateTarget}\n\n`;
+    md += `### CAC Target by Channel\n\n`;
+    for (const channel of analysis.campaignSuccessMetrics.cacTargetByChannel) {
+      md += `- **${channel.channel}**: ${channel.target}\n`;
+    }
+    md += `\n### Deal Velocity Benchmark by Tier\n\n`;
+    for (const tier of analysis.campaignSuccessMetrics.dealVelocityBenchmarkByTier) {
+      md += `- **${tier.tier}**: ${tier.days} days to close\n`;
+    }
+    md += `\n`;
   }
 
   return md;
@@ -619,7 +799,14 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
     { id: "scoring", icon: <TrendingUp />, title: "8. Table 4: Lead Scoring" },
     { id: "channels", icon: <Target />, title: "9. Table 5: Channels" },
     { id: "alignment", icon: <CheckCircle2 />, title: "10. Cross-Team Alignment" },
-    { id: "checklist", icon: <Check />, title: "11. Validation Checklist" }
+    { id: "checklist", icon: <Check />, title: "11. Validation Checklist" },
+    { id: "competitive", icon: <Shield />, title: "A. Competitive Landscape" },
+    { id: "messaging", icon: <FileText />, title: "B. Messaging & Positioning" },
+    { id: "objections", icon: <IconAlertObjection />, title: "C. Objection Handling" },
+    { id: "tamsamsom", icon: <TrendingUp />, title: "D. TAM/SAM/SOM" },
+    { id: "partners", icon: <Users />, title: "E. Partner Strategy" },
+    { id: "risks", icon: <Shield />, title: "F. Risk Register" },
+    { id: "metrics", icon: <TrendingUp />, title: "Campaign Success Metrics" }
   ];
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -708,6 +895,10 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Company Size</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">ARR Range</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Location</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Primary Cost Driver</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Current Solution</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Sites/Teams</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">ESG/Compliance</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Notes</th>
                 </tr>
               </thead>
@@ -719,6 +910,10 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                     <td className="p-3 text-sm text-slate-300">{entry.companySize}</td>
                     <td className="p-3 text-sm text-slate-300">{entry.arrRange}</td>
                     <td className="p-3 text-sm text-slate-300">{entry.location}</td>
+                    <td className="p-3 text-sm text-slate-300">{entry.primaryCostDriver}</td>
+                    <td className="p-3 text-sm text-slate-300">{entry.currentSolutionStatus}</td>
+                    <td className="p-3 text-sm text-slate-300">{entry.numberOfSitesTeamsLocations}</td>
+                    <td className="p-3 text-sm text-slate-300">{entry.sustainabilityEsgComplianceCommitment}</td>
                     <td className="p-3 text-sm text-slate-400">{entry.notes}</td>
                   </tr>
                 ))}
@@ -764,6 +959,9 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Pain Point</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Severity</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Business Impact</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Frequency</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">How Discovered</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Current Solution</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">DealFlow Solution</th>
                 </tr>
               </thead>
@@ -777,6 +975,9 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                       </span>
                     </td>
                     <td className="p-3 text-sm text-slate-300">{p.businessImpact}</td>
+                    <td className="p-3 text-sm text-slate-300">{p.frequencyOfPain}</td>
+                    <td className="p-3 text-sm text-slate-300">{p.howPainIsCurrentlyDiscovered}</td>
+                    <td className="p-3 text-sm text-slate-300">{p.competitorCurrentSolutionInUse}</td>
                     <td className="p-3 text-sm text-teal-300">{p.dealFlowAISolution}</td>
                   </tr>
                 ))}
@@ -795,6 +996,9 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Influence</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Core Role</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Top Priorities</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Preferred Channel</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Primary Objection</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Content Preference</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Messaging</th>
                 </tr>
               </thead>
@@ -805,6 +1009,9 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                     <td className="p-3 text-sm text-purple-300 font-semibold">{d.influenceScore}/10</td>
                     <td className="p-3 text-sm text-slate-300">{d.coreDecisionRole}</td>
                     <td className="p-3 text-sm text-slate-300">{d.top3Priorities}</td>
+                    <td className="p-3 text-sm text-slate-300">{d.preferredContactChannel}</td>
+                    <td className="p-3 text-sm text-slate-300">{d.primaryObjectionType}</td>
+                    <td className="p-3 text-sm text-slate-300">{d.contentFormatPreference}</td>
                     <td className="p-3 text-sm text-teal-300">{d.dealFlowAIMessagingFocus}</td>
                   </tr>
                 ))}
@@ -828,6 +1035,7 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                   <p className="text-sm text-slate-300"><strong className="text-slate-200">Customer Actions:</strong> {stage.customerActions}</p>
                   <p className="text-sm text-slate-300"><strong className="text-slate-200">Needs:</strong> {stage.customerNeedsQuestions}</p>
                   <p className="text-sm text-slate-300"><strong className="text-slate-200">Channels:</strong> {stage.channelPreferences}</p>
+                  <p className="text-sm text-slate-300"><strong className="text-slate-200">DealFlow Assets:</strong> {stage.dealFlowAIAssetsEngagement}</p>
                 </div>
               </div>
             ))}
@@ -885,10 +1093,12 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                 <tr className="border-b border-white/10">
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Channel</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Best For</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Monthly Volume</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Conversion</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">CAC</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">LTV:CAC</th>
                   <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Budget</th>
+                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Optimization</th>
                 </tr>
               </thead>
               <tbody>
@@ -896,10 +1106,12 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
                   <tr key={i} className="border-b border-white/5">
                     <td className="p-3 text-sm text-slate-200">{ch.channel}</td>
                     <td className="p-3 text-sm text-slate-300">{ch.icpSegmentsBestFor}</td>
+                    <td className="p-3 text-sm text-slate-300">{ch.monthlyLeadVolume}</td>
                     <td className="p-3 text-sm text-teal-300 font-semibold">{ch.conversionRate}</td>
                     <td className="p-3 text-sm text-slate-300">{ch.costPerAcquisition}</td>
                     <td className="p-3 text-sm text-green-300 font-semibold">{ch.ltvToCacRatio}</td>
                     <td className="p-3 text-sm text-slate-300">{ch.budgetAllocation}</td>
+                    <td className="p-3 text-sm text-slate-300">{ch.optimizationRecommendations}</td>
                   </tr>
                 ))}
               </tbody>
@@ -909,19 +1121,48 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
 
         {/* Section 10: Cross-Team Alignment */}
         <GTMSection title="10. Cross-Team Alignment Guidelines" id="alignment" icon={<CheckCircle2 />}>
-          <Card className="border-white/10 bg-white/[0.03]">
-            <CardContent className="p-6">
-              <h4 className="font-semibold text-white mb-4">Shared SLAs</h4>
-              <ul className="space-y-2">
-                {analysis.crossTeamAlignmentGuidelines?.sharedSLAs.map((sla, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-teal-400" aria-hidden="true" />
-                    <span className="text-slate-300">{sla}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="border-white/10 bg-white/[0.03]">
+              <CardContent className="p-6">
+                <h4 className="font-semibold text-white mb-4">Shared SLAs</h4>
+                <ul className="space-y-2">
+                  {analysis.crossTeamAlignmentGuidelines?.sharedSLAs.map((sla, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5" aria-hidden="true" />
+                      <div className="space-y-1">
+                        <p className="text-slate-300 font-medium">{typeof sla === 'string' ? sla : sla.sla}</p>
+                        {typeof sla === 'object' && sla !== null && (
+                          <p className="text-xs text-slate-400">
+                            Owner: {sla.owner} • Escalation: {sla.escalationPath}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {analysis.crossTeamAlignmentGuidelines?.weeklyReviewMeeting && (
+              <Card className="border-white/10 bg-white/[0.03]">
+                <CardContent className="p-6">
+                  <h4 className="font-semibold text-white mb-4">Weekly Review Meeting</h4>
+                  <p className="text-slate-300">
+                    <strong>Cadence:</strong> {analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.cadence} • <strong>Owner:</strong> {analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.owner}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {analysis.crossTeamAlignmentGuidelines?.hotLeadCriteria && (
+              <Card className="border-white/10 bg-white/[0.03]">
+                <CardContent className="p-6">
+                  <h4 className="font-semibold text-white mb-4">Hot Lead Criteria</h4>
+                  <p className="text-slate-300">{analysis.crossTeamAlignmentGuidelines.hotLeadCriteria}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </GTMSection>
 
         {/* Section 11: Validation Checklist */}
@@ -952,6 +1193,39 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
               </ul>
             </div>
           </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {analysis.icpValidationChecklist?.quarterlyReviewOwner && (
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
+                <h4 className="font-semibold text-white mb-4">Quarterly Review Owner</h4>
+                <p className="text-slate-300">{analysis.icpValidationChecklist.quarterlyReviewOwner}</p>
+              </div>
+            )}
+
+            {analysis.icpValidationChecklist?.scoringThresholdForRevision && (
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
+                <h4 className="font-semibold text-white mb-4">Scoring Threshold for Revision</h4>
+                <p className="text-slate-300">{analysis.icpValidationChecklist.scoringThresholdForRevision}</p>
+              </div>
+            )}
+          </div>
+
+          {analysis.icpValidationChecklist?.reviewChecklist?.length && (
+            <div className="mt-6 rounded-xl bg-white/[0.02] border border-white/10 p-6">
+              <h4 className="font-semibold text-white mb-4">Review Checklist</h4>
+              <ul className="space-y-2">
+                {analysis.icpValidationChecklist.reviewChecklist.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded border border-white/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                      <Check className="w-3 h-3 text-teal-400 opacity-0 group-hover:opacity-100" />
+                    </div>
+                    <span className="text-slate-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-6 rounded-xl bg-teal-500/5 border border-teal-500/10 p-6">
             <h4 className="font-semibold text-teal-300 mb-2">Data Sources for Validation</h4>
             <ul className="flex flex-wrap gap-2">
@@ -963,6 +1237,214 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
             </ul>
           </div>
         </GTMSection>
+
+        {/* Section A: Competitive Landscape */}
+        {analysis.sectionACompetitiveLandscape?.length && (
+          <GTMSection title="A. Competitive Landscape" id="competitive" icon={<Shield />}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse" role="table">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Competitor</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Core Offering</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Key Weakness</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Our Differentiator</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Positioning Statement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.sectionACompetitiveLandscape.map((comp, i) => (
+                    <tr key={i} className="border-b border-white/5">
+                      <td className="p-3 text-sm text-slate-200">{comp.competitorName}</td>
+                      <td className="p-3 text-sm text-slate-300">{comp.coreOffering}</td>
+                      <td className="p-3 text-sm text-slate-300">{comp.keyWeakness}</td>
+                      <td className="p-3 text-sm text-teal-300">{comp.companyDifferentiator}</td>
+                      <td className="p-3 text-sm text-slate-300">{comp.positioningStatement}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Section B: Messaging & Positioning */}
+        {analysis.sectionBMessagingAndPositioning?.length && (
+          <GTMSection title="B. Messaging & Positioning" id="messaging" icon={<FileText />}>
+            <div className="space-y-6">
+              {analysis.sectionBMessagingAndPositioning.map((msg, i) => (
+                <Card key={i} className="border-white/10 bg-white/[0.03]">
+                  <CardContent className="p-6">
+                    <h4 className="font-semibold text-white mb-4">Pain Point: {msg.painPoint}</h4>
+                    <p className="text-slate-300 mb-2"><strong>Value Pillar:</strong> {msg.valuePillar}</p>
+                    <p className="text-slate-300 mb-2"><strong>Hook Line:</strong> {msg.hookLine}</p>
+                    <p className="text-slate-300 mb-4"><strong>Supporting Proof Point:</strong> {msg.supportingProofPoint}</p>
+                    <p className="text-slate-300 mb-4"><strong>CTA:</strong> {msg.cta}</p>
+                    {msg.personaMessaging?.length && (
+                      <div className="mt-4">
+                        <h5 className="font-semibold text-slate-200 mb-2">Persona-Specific Messaging</h5>
+                        <ul className="space-y-2">
+                          {msg.personaMessaging.map((pm, j) => (
+                            <li key={j} className="text-slate-300"><strong>{pm.persona}:</strong> {pm.messaging}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Section C: Objection Handling Matrix */}
+        {analysis.sectionCObjectionHandlingMatrix?.length && (
+          <GTMSection title="C. Objection Handling Matrix" id="objections" icon={<IconAlertObjection />}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse" role="table">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Objection</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Persona Most Likely to Raise It</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Response Framework</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Supporting Asset</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.sectionCObjectionHandlingMatrix.map((obj, i) => (
+                    <tr key={i} className="border-b border-white/5">
+                      <td className="p-3 text-sm text-slate-200">{obj.objection}</td>
+                      <td className="p-3 text-sm text-slate-300">{obj.personaMostLikelyToRaiseIt}</td>
+                      <td className="p-3 text-sm text-slate-300">{obj.responseFramework}</td>
+                      <td className="p-3 text-sm text-teal-300">{obj.supportingAsset}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Section D: TAM/SAM/SOM */}
+        {analysis.sectionDTamSamSom && (
+          <GTMSection title="D. TAM/SAM/SOM" id="tamsamsom" icon={<TrendingUp />}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
+                <h4 className="font-semibold text-teal-300 mb-2">TAM</h4>
+                <p className="text-lg text-white">{analysis.sectionDTamSamSom.tam}</p>
+              </div>
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
+                <h4 className="font-semibold text-teal-300 mb-2">SAM</h4>
+                <p className="text-lg text-white">{analysis.sectionDTamSamSom.sam}</p>
+              </div>
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
+                <h4 className="font-semibold text-teal-300 mb-2">SOM</h4>
+                <p className="text-lg text-white">{analysis.sectionDTamSamSom.som}</p>
+              </div>
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Section E: Partner & Channel Strategy */}
+        {analysis.sectionEPartnerAndChannelStrategy && (
+          <GTMSection title="E. Partner & Channel Strategy" id="partners" icon={<Users />}>
+            <div className="space-y-6">
+              {analysis.sectionEPartnerAndChannelStrategy.referralPartners?.length && (
+                <div>
+                  <h4 className="font-semibold text-white mb-4">Referral Partners</h4>
+                  <ul className="space-y-2">
+                    {analysis.sectionEPartnerAndChannelStrategy.referralPartners.map((p, i) => (
+                      <li key={i} className="flex items-center gap-2 text-slate-300">
+                        <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {analysis.sectionEPartnerAndChannelStrategy.partnerIncentiveModel && (
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Partner Incentive Model</h4>
+                  <p className="text-slate-300">{analysis.sectionEPartnerAndChannelStrategy.partnerIncentiveModel}</p>
+                </div>
+              )}
+              {analysis.sectionEPartnerAndChannelStrategy.coMarketingOpportunities?.length && (
+                <div>
+                  <h4 className="font-semibold text-white mb-4">Co-Marketing Opportunities</h4>
+                  <ul className="space-y-2">
+                    {analysis.sectionEPartnerAndChannelStrategy.coMarketingOpportunities.map((o, i) => (
+                      <li key={i} className="flex items-center gap-2 text-slate-300">
+                        <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                        {o}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Section F: Risk Register */}
+        {analysis.sectionFRiskRegister?.length && (
+          <GTMSection title="F. Risk Register" id="risks" icon={<Shield />}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse" role="table">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Risk</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Likelihood</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Impact</th>
+                    <th className="text-left p-3 text-sm font-semibold text-teal-300">Mitigation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.sectionFRiskRegister.map((risk, i) => (
+                    <tr key={i} className="border-b border-white/5">
+                      <td className="p-3 text-sm text-slate-200">{risk.risk}</td>
+                      <td className="p-3 text-sm text-slate-300">{risk.likelihood}</td>
+                      <td className="p-3 text-sm text-slate-300">{risk.impact}</td>
+                      <td className="p-3 text-sm text-slate-300">{risk.mitigation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </GTMSection>
+        )}
+
+        {/* Campaign Success Metrics */}
+        {analysis.campaignSuccessMetrics && (
+          <GTMSection title="Campaign Success Metrics" id="metrics" icon={<TrendingUp />}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
+                <h4 className="font-semibold text-white mb-4">Pipeline Generated Target by Tier</h4>
+                <ul className="space-y-2">
+                  {analysis.campaignSuccessMetrics.pipelineGeneratedTargetByTier.map((t, i) => (
+                    <li key={i} className="text-slate-300"><strong>{t.tier}:</strong> {t.target}</li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-slate-300">
+                  <strong>MQL → SQL Conversion Rate Target:</strong> {analysis.campaignSuccessMetrics.mqlToSqlConversionRateTarget}
+                </p>
+              </div>
+              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
+                <h4 className="font-semibold text-white mb-4">CAC Target by Channel</h4>
+                <ul className="space-y-2">
+                  {analysis.campaignSuccessMetrics.cacTargetByChannel.map((c, i) => (
+                    <li key={i} className="text-slate-300"><strong>{c.channel}:</strong> {c.target}</li>
+                  ))}
+                </ul>
+                <h4 className="font-semibold text-white mt-6 mb-4">Deal Velocity Benchmark by Tier</h4>
+                <ul className="space-y-2">
+                  {analysis.campaignSuccessMetrics.dealVelocityBenchmarkByTier.map((t, i) => (
+                    <li key={i} className="text-slate-300"><strong>{t.tier}:</strong> {t.days}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </GTMSection>
+        )}
       </div>
     </div>
   );
@@ -1170,6 +1652,10 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">ARR Range</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Location</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Notes</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Primary Cost Driver</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Current Solution Status</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Number of Sites/Teams</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">ESG/Compliance</th>`;
     html += `</tr>`;
     html += `</thead>`;
     html += `<tbody>`;
@@ -1181,6 +1667,10 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
       html += `<td style="padding:12px; color: #334155;">${entry.arrRange}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.location}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.notes}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.primaryCostDriver || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.currentSolutionStatus || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.numberOfSitesTeamsLocations || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.sustainabilityEsgComplianceCommitment || ''}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;
@@ -1205,6 +1695,9 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Severity</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Business Impact</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">DealFlow Solution</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Frequency</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">How Discovered</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Current Solution</th>`;
     html += `</tr>`;
     html += `</thead>`;
     html += `<tbody>`;
@@ -1214,6 +1707,9 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
       html += `<td style="padding:12px; color: #334155;">${entry.severity}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.businessImpact}</td>`;
       html += `<td style="padding:12px; color: #0f172a; font-weight: 600;">${entry.dealFlowAISolution}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.frequencyOfPain || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.howPainIsCurrentlyDiscovered || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.competitorCurrentSolutionInUse || ''}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;
@@ -1229,7 +1725,10 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Influence Score</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Core Role</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Top 3 Priorities</th>`;
-    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">DealFlow Messaging Focus</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">DealFlow Messaging</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Preferred Channel</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Primary Objection</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Content Preference</th>`;
     html += `</tr>`;
     html += `</thead>`;
     html += `<tbody>`;
@@ -1240,6 +1739,9 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
       html += `<td style="padding:12px; color: #334155;">${entry.coreDecisionRole}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.top3Priorities}</td>`;
       html += `<td style="padding:12px; color: #0f172a; font-weight: 600;">${entry.dealFlowAIMessagingFocus}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.preferredContactChannel || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.primaryObjectionType || ''}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.contentFormatPreference || ''}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;
@@ -1254,6 +1756,7 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
       html += `<p style="line-height: 1.7; color: #334155; margin: 8px 0;"><strong>Customer Actions:</strong> ${stage.customerActions}</p>`;
       html += `<p style="line-height: 1.7; color: #334155; margin: 8px 0;"><strong>Customer Needs:</strong> ${stage.customerNeedsQuestions}</p>`;
       html += `<p style="line-height: 1.7; color: #334155; margin: 8px 0;"><strong>Channel Preferences:</strong> ${stage.channelPreferences}</p>`;
+      html += `<p style="line-height: 1.7; color: #334155; margin: 8px 0;"><strong>DealFlow Assets:</strong> ${stage.dealFlowAIAssetsEngagement}</p>`;
       html += `</div>`;
     }
   }
@@ -1294,10 +1797,12 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<tr style="border-bottom:2px solid #e2e8f0;">`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Channel</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Best For</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Monthly Volume</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Conversion Rate</th>`;
-    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Cost Per Acquisition</th>`;
-    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">LTV:CAC Ratio</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">CAC</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">LTV:CAC</th>`;
     html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Budget Allocation</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Optimization</th>`;
     html += `</tr>`;
     html += `</thead>`;
     html += `<tbody>`;
@@ -1305,10 +1810,12 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
       html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
       html += `<td style="padding:12px; color: #334155;">${entry.channel}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.icpSegmentsBestFor}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.monthlyLeadVolume}</td>`;
       html += `<td style="padding:12px; color: #0f172a; font-weight: 600;">${entry.conversionRate}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.costPerAcquisition}</td>`;
       html += `<td style="padding:12px; color: #0f172a; font-weight: 600;">${entry.ltvToCacRatio}</td>`;
       html += `<td style="padding:12px; color: #334155;">${entry.budgetAllocation}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${entry.optimizationRecommendations}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;
@@ -1318,10 +1825,24 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">10. Cross-Team Alignment Guidelines</h2>`;
     html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Shared SLAs</h3>`;
     html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
-    for (let sla of analysis.crossTeamAlignmentGuidelines.sharedSLAs) {
-      html += `<li>${sla}</li>`;
+    if (Array.isArray(analysis.crossTeamAlignmentGuidelines.sharedSLAs)) {
+      for (const sla of analysis.crossTeamAlignmentGuidelines.sharedSLAs) {
+        if (typeof sla === 'string') {
+          html += `<li>${sla}</li>`;
+        } else if (typeof sla === 'object' && sla !== null && 'sla' in sla) {
+          html += `<li><strong>${sla.sla}</strong> (Owner: ${sla.owner}, Escalation: ${sla.escalationPath})</li>`;
+        }
+      }
     }
     html += `</ul>`;
+    if (analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Weekly Review Meeting</h3>`;
+      html += `<p style="line-height: 1.8; color: #334155;">Cadence: ${analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.cadence}, Owner: ${analysis.crossTeamAlignmentGuidelines.weeklyReviewMeeting.owner}</p>`;
+    }
+    if (analysis.crossTeamAlignmentGuidelines.hotLeadCriteria) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Hot Lead Criteria</h3>`;
+      html += `<p style="line-height: 1.8; color: #334155;">${analysis.crossTeamAlignmentGuidelines.hotLeadCriteria}</p>`;
+    }
   }
 
   if (analysis.icpValidationChecklist) {
@@ -1342,6 +1863,157 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
     for (let trigger of analysis.icpValidationChecklist.icpUpdateTriggers) {
       html += `<li>${trigger}</li>`;
+    }
+    html += `</ul>`;
+    if (analysis.icpValidationChecklist.quarterlyReviewOwner) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Quarterly Review Owner</h3>`;
+      html += `<p style="line-height:1.8; color: #334155;">${analysis.icpValidationChecklist.quarterlyReviewOwner}</p>`;
+    }
+    if (analysis.icpValidationChecklist.scoringThresholdForRevision) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Scoring Threshold for Revision</h3>`;
+      html += `<p style="line-height:1.8; color: #334155;">${analysis.icpValidationChecklist.scoringThresholdForRevision}</p>`;
+    }
+    if (analysis.icpValidationChecklist.reviewChecklist?.length) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Review Checklist</h3>`;
+      html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+      for (let item of analysis.icpValidationChecklist.reviewChecklist) {
+        html += `<li>${item}</li>`;
+      }
+      html += `</ul>`;
+    }
+  }
+
+  // New Sections
+  if (analysis.sectionACompetitiveLandscape?.length) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">A. Competitive Landscape</h2>`;
+    html += `<table style="width:100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">`;
+    html += `<thead><tr style="border-bottom:2px solid #e2e8f0;">`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Competitor</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Core Offering</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Key Weakness</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Our Differentiator</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Positioning</th>`;
+    html += `</tr></thead>`;
+    html += `<tbody>`;
+    for (const comp of analysis.sectionACompetitiveLandscape) {
+      html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
+      html += `<td style="padding:12px; color: #334155;">${comp.competitorName}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${comp.coreOffering}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${comp.keyWeakness}</td>`;
+      html += `<td style="padding:12px; color: #0f172a; font-weight:600;">${comp.companyDifferentiator}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${comp.positioningStatement}</td>`;
+      html += `</tr>`;
+    }
+    html += `</tbody></table>`;
+  }
+
+  if (analysis.sectionBMessagingAndPositioning?.length) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">B. Messaging & Positioning</h2>`;
+    for (const msg of analysis.sectionBMessagingAndPositioning) {
+      html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">${msg.painPoint}</h3>`;
+      html += `<p style="line-height: 1.7; color: #334155;"><strong>Value Pillar:</strong> ${msg.valuePillar}</p>`;
+      html += `<p style="line-height: 1.7; color: #334155;"><strong>Hook:</strong> ${msg.hookLine}</p>`;
+      html += `<p style="line-height: 1.7; color: #334155;"><strong>Proof:</strong> ${msg.supportingProofPoint}</p>`;
+      html += `<p style="line-height: 1.7; color: #334155;"><strong>CTA:</strong> ${msg.cta}</p>`;
+      if (msg.personaMessaging?.length) {
+        html += `<h4 style="margin-top: 16px; margin-bottom:8px; color:#1e293b;">Persona-Specific Messaging</h4>`;
+        html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+        for (const pm of msg.personaMessaging) {
+          html += `<li><strong>${pm.persona}:</strong> ${pm.messaging}</li>`;
+        }
+        html += `</ul>`;
+      }
+    }
+  }
+
+  if (analysis.sectionCObjectionHandlingMatrix?.length) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">C. Objection Handling Matrix</h2>`;
+    html += `<table style="width:100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">`;
+    html += `<thead><tr style="border-bottom:2px solid #e2e8f0;">`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Objection</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Persona</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Response</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Supporting Asset</th>`;
+    html += `</tr></thead>`;
+    html += `<tbody>`;
+    for (const obj of analysis.sectionCObjectionHandlingMatrix) {
+      html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
+      html += `<td style="padding:12px; color: #334155;">${obj.objection}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${obj.personaMostLikelyToRaiseIt}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${obj.responseFramework}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${obj.supportingAsset}</td>`;
+      html += `</tr>`;
+    }
+    html += `</tbody></table>`;
+  }
+
+  if (analysis.sectionDTamSamSom) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">D. TAM/SAM/SOM</h2>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    html += `<li><strong>TAM:</strong> ${analysis.sectionDTamSamSom.tam}</li>`;
+    html += `<li><strong>SAM:</strong> ${analysis.sectionDTamSamSom.sam}</li>`;
+    html += `<li><strong>SOM:</strong> ${analysis.sectionDTamSamSom.som}</li>`;
+    html += `</ul>`;
+  }
+
+  if (analysis.sectionEPartnerAndChannelStrategy) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">E. Partner & Channel Strategy</h2>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Referral Partners</h3>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    for (const p of analysis.sectionEPartnerAndChannelStrategy.referralPartners) {
+      html += `<li>${p}</li>`;
+    }
+    html += `</ul>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Partner Incentive Model</h3>`;
+    html += `<p style="line-height:1.8; color: #334155;">${analysis.sectionEPartnerAndChannelStrategy.partnerIncentiveModel}</p>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Co-Marketing Opportunities</h3>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    for (const o of analysis.sectionEPartnerAndChannelStrategy.coMarketingOpportunities) {
+      html += `<li>${o}</li>`;
+    }
+    html += `</ul>`;
+  }
+
+  if (analysis.sectionFRiskRegister?.length) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">F. Risk Register</h2>`;
+    html += `<table style="width:100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">`;
+    html += `<thead><tr style="border-bottom:2px solid #e2e8f0;">`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Risk</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Likelihood</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Impact</th>`;
+    html += `<th style="text-align:left; padding:12px; background:#f8fafc; color: #0f172a;">Mitigation</th>`;
+    html += `</tr></thead>`;
+    html += `<tbody>`;
+    for (const risk of analysis.sectionFRiskRegister) {
+      html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
+      html += `<td style="padding:12px; color: #334155;">${risk.risk}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${risk.likelihood}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${risk.impact}</td>`;
+      html += `<td style="padding:12px; color: #334155;">${risk.mitigation}</td>`;
+      html += `</tr>`;
+    }
+    html += `</tbody></table>`;
+  }
+
+  if (analysis.campaignSuccessMetrics) {
+    html += `<h2 style="margin-top:32px; margin-bottom:16px; color:#1e293b;">Campaign Success Metrics</h2>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Pipeline Targets by Tier</h3>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    for (const t of analysis.campaignSuccessMetrics.pipelineGeneratedTargetByTier) {
+      html += `<li><strong>${t.tier}:</strong> ${t.target}</li>`;
+    }
+    html += `</ul>`;
+    html += `<p style="line-height:1.8; color: #334155;"><strong>MQL → SQL Conversion Target:</strong> ${analysis.campaignSuccessMetrics.mqlToSqlConversionRateTarget}</p>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">CAC Targets by Channel</h3>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    for (const c of analysis.campaignSuccessMetrics.cacTargetByChannel) {
+      html += `<li><strong>${c.channel}:</strong> ${c.target}</li>`;
+    }
+    html += `</ul>`;
+    html += `<h3 style="margin-top:24px; margin-bottom:12px; color:#0f172a;">Deal Velocity Benchmarks</h3>`;
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    for (const t of analysis.campaignSuccessMetrics.dealVelocityBenchmarkByTier) {
+      html += `<li><strong>${t.tier}:</strong> ${t.days} days</li>`;
     }
     html += `</ul>`;
   }

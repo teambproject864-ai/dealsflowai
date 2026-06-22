@@ -172,6 +172,11 @@ export type Table1FirmographicEntry = {
   location: string;
   keyDecisionMakerDemographics: string;
   notes: string;
+  // New columns per requirements
+  primaryCostDriver: string;
+  currentSolutionStatus: string;
+  numberOfSitesTeamsLocations: string;
+  sustainabilityEsgComplianceCommitment: string;
 };
 
 export type Table2PainPointEntry = {
@@ -180,6 +185,10 @@ export type Table2PainPointEntry = {
   businessImpact: string;
   rootCause: string;
   dealFlowAISolution: string;
+  // New columns per requirements
+  frequencyOfPain: string;
+  howPainIsCurrentlyDiscovered: string;
+  competitorCurrentSolutionInUse: string;
 };
 
 export type Table3DecisionMakerEntry = {
@@ -188,6 +197,10 @@ export type Table3DecisionMakerEntry = {
   coreDecisionRole: string;
   top3Priorities: string;
   dealFlowAIMessagingFocus: string;
+  // New columns per requirements
+  preferredContactChannel: string;
+  primaryObjectionType: string;
+  contentFormatPreference: string;
 };
 
 export type Table4LeadScoringEntry = {
@@ -219,7 +232,9 @@ export type PurchasingJourneyStage = {
 export type CrossTeamAlignmentGuidelines = {
   raciFramework: any[];
   communicationCadenceSlas: any[];
-  sharedSLAs: string[];
+  sharedSLAs: Array<{ sla: string; owner: string; escalationPath: string }>;
+  weeklyReviewMeeting: { cadence: string; owner: string };
+  hotLeadCriteria: string;
 };
 
 export type ICPValidationChecklist = {
@@ -227,6 +242,9 @@ export type ICPValidationChecklist = {
   quarterlyValidationReview: string[];
   dataSourcesForValidation: string[];
   icpUpdateTriggers: string[];
+  quarterlyReviewOwner: string;
+  scoringThresholdForRevision: string;
+  reviewChecklist: string[];
 };
 
 export type AnalysisResult = {
@@ -267,7 +285,52 @@ export type AnalysisResult = {
   };
   table5ChannelEffectiveness?: Table5ChannelEntry[];
   crossTeamAlignmentGuidelines?: CrossTeamAlignmentGuidelines;
-  icpValidationChecklist?: ICPValidationChecklist;
+  icpValidationChecklist?: IcpValidationChecklist;
+
+  // New sections per requirements
+  sectionACompetitiveLandscape?: Array<{
+    competitorName: string;
+    coreOffering: string;
+    keyWeakness: string;
+    companyDifferentiator: string;
+    positioningStatement: string;
+  }>;
+  sectionBMessagingAndPositioning?: Array<{
+    painPoint: string;
+    valuePillar: string;
+    hookLine: string;
+    supportingProofPoint: string;
+    cta: string;
+    personaMessaging: Array<{ persona: string; messaging: string }>;
+  }>;
+  sectionCObjectionHandlingMatrix?: Array<{
+    objection: string;
+    personaMostLikelyToRaiseIt: string;
+    responseFramework: string;
+    supportingAsset: string;
+  }>;
+  sectionDTamSamSom?: {
+    tam: string;
+    sam: string;
+    som: string;
+  };
+  sectionEPartnerAndChannelStrategy?: {
+    referralPartners: string[];
+    partnerIncentiveModel: string;
+    coMarketingOpportunities: string[];
+  };
+  sectionFRiskRegister?: Array<{
+    risk: string;
+    likelihood: "High" | "Medium" | "Low";
+    impact: "High" | "Medium" | "Low";
+    mitigation: string;
+  }>;
+  campaignSuccessMetrics?: {
+    pipelineGeneratedTargetByTier: Array<{ tier: string; target: string }>;
+    mqlToSqlConversionRateTarget: string;
+    cacTargetByChannel: Array<{ channel: string; target: string }>;
+    dealVelocityBenchmarkByTier: Array<{ tier: string; days: string }>;
+  };
 };
 
 export const STORAGE_KEY = "dealflow_lead_context_v1";
