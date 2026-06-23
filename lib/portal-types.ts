@@ -260,7 +260,40 @@ export interface Customer {
   serviceConfigurations: Record<string, any>;
   createdAt: string;
   updatedAt: string;
+  businessModel?: "b2b" | "b2c" | "d2c" | "custom";
 }
+
+// --- Modular Business Toolset Structures ---
+export interface B2BBulkOrder {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  status: "pending" | "approved" | "shipped" | "cancelled";
+  orderDate: string;
+  notes?: string;
+}
+
+export interface B2CTransaction {
+  id: string;
+  consumerName: string;
+  itemCount: number;
+  amount: number;
+  paymentStatus: "paid" | "failed" | "refunded";
+  deviceType: "desktop" | "mobile" | "tablet";
+  checkoutTimestamp: string;
+}
+
+export interface D2CBrandingConfig {
+  brandName: string;
+  logoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  customCss?: string;
+  instagramHandle?: string;
+}
+
 
 export interface CustomerResignation {
   id: string;

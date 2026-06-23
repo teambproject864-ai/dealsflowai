@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   DEMO_ADMIN,
+  DEMO_ADMINS,
   DEMO_AGENTS,
   DEMO_CUSTOMERS,
   NEW_CUSTOMERS,
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
     // Fall back to demo/hardcoded config if not found or password verification failed
     if (!user) {
       if (role === "admin") {
+        // Check primary admin via env hash
         if (email.toLowerCase() === DEMO_ADMIN.email.toLowerCase()) {
           const adminHash = process.env.ADMIN_PASSWORD_HASH;
           if (adminHash) {
@@ -92,6 +94,17 @@ export async function POST(req: NextRequest) {
             if (isValidPassword) {
               addAuditLog(email, role, true, "Admin login successful (2FA disabled by policy)", ip, userAgent);
               user = { ...DEMO_ADMIN, role: "admin" as const };
+            }
+          }
+        }
+        // Check additional admins stored with hashed passwords
+        if (!user) {
+          const extraAdmin = DEMO_ADMINS.find((a) => a.email.toLowerCase() === email.toLowerCase());
+          if (extraAdmin) {
+            const isValidPassword = await verifyPassword(password, extraAdmin.hashedPassword);
+            if (isValidPassword) {
+              addAuditLog(email, role, true, "Admin login successful", ip, userAgent);
+              user = { id: extraAdmin.id, email: extraAdmin.email, name: extraAdmin.name, role: "admin" as const };
             }
           }
         }

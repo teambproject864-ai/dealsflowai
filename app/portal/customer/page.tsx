@@ -23,6 +23,11 @@ import {
   BarChart2,
   Check,
   Users,
+  ShoppingBag,
+  Palette,
+  Truck,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gtmPortalConfig } from '@/lib/config';
@@ -35,6 +40,10 @@ import {
   demoScheduledReports,
   demoTickets,
   demoNotificationPreferences,
+  demoCustomers,
+  demoB2BBulkOrders,
+  demoB2CTransactions,
+  demoD2CBrandingConfigs,
 } from '@/lib/portal-demo-data';
 import type {
   Ticket,
@@ -42,6 +51,10 @@ import type {
   NotificationPreferences,
   GTMReportMetric,
   ICPEntry,
+  B2BBulkOrder,
+  B2CTransaction,
+  D2CBrandingConfig,
+  Customer,
 } from '@/lib/portal-types';
 import AuthProvider from '@/components/auth/AuthProvider';
 import LogoutButton from '@/components/auth/LogoutButton';
@@ -49,6 +62,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
+  { id: 'business-toolset', label: 'Operating Model Toolset', icon: Layers },
   { id: 'icp-entries', label: 'ICP Entries', icon: Users },
   { id: 'gtm-analysis', label: 'GTM Analysis', icon: FileText },
   { id: 'tickets', label: 'Support Tickets', icon: TicketIcon },
@@ -102,6 +116,29 @@ function CustomerPortalContent() {
   const [currentAgentAssignment, setCurrentAgentAssignment] = useState<any>(null);
   const [isReassigning, setIsReassigning] = useState(false);
 
+  // Business Model states
+  const [businessModel, setBusinessModel] = useState<"b2b" | "b2c" | "d2c" | "custom">("b2b");
+  const [b2bOrders, setB2bOrders] = useState<B2BBulkOrder[]>(demoB2BBulkOrders);
+  const [b2cTransactions, setB2cTransactions] = useState<B2CTransaction[]>(demoB2CTransactions);
+  const [d2cBranding, setD2cBranding] = useState<D2CBrandingConfig>({
+    brandName: "My Storefront",
+    logoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=150&auto=format&fit=crop&q=60",
+    primaryColor: "#0f766e",
+    secondaryColor: "#0369a1",
+    customCss: "",
+    instagramHandle: "@mystore",
+  });
+  const [customerRecord, setCustomerRecord] = useState<Customer | null>(null);
+
+  // B2C Checkout cart states
+  const [b2cCart, setB2cCart] = useState<Array<{ id: string; name: string; price: number; quantity: number }>>([]);
+  const [b2cCoupon, setB2cCoupon] = useState("");
+  const [b2cDiscountAmount, setB2cDiscountAmount] = useState(0);
+  const [b2cShippingName, setB2cShippingName] = useState("");
+  const [b2cShippingAddress, setB2cShippingAddress] = useState("");
+  const [b2cSelectedDevice, setB2cSelectedDevice] = useState<"desktop" | "mobile" | "tablet">("desktop");
+
+
   // Fetch ICP entries and agent assignment on mount
   useEffect(() => {
     const fetchData = async () => {
@@ -122,6 +159,18 @@ function CustomerPortalContent() {
             (a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime()
           );
           setCurrentAgentAssignment(sorted[0]);
+        }
+
+        // Fetch Customer Config
+        const configRes = await fetch('/api/customer/config');
+        const configData = await configRes.json();
+        if (configData.success && configData.customer) {
+          setCustomerRecord(configData.customer);
+          setBusinessModel(configData.customer.businessModel || "b2b");
+          const cid = configData.customer.id;
+          if (demoD2CBrandingConfigs[cid]) {
+            setD2cBranding(demoD2CBrandingConfigs[cid]);
+          }
         }
       } catch (e) {
         console.error('Error fetching data:', e);
@@ -349,37 +398,213 @@ function CustomerPortalContent() {
         <div className="space-y-8">
           {activeTab === 'dashboard' && (
             <div className="space-y-8">
+              {/* Business Model Banner */}
+              <GlassPanel className="border-slate-700/50 bg-slate-900/50 p-6 rounded-2xl flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "h-12 w-12 rounded-xl flex items-center justify-center border",
+                    businessModel === "b2b" ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400" :
+                    businessModel === "b2c" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                    businessModel === "d2c" ? "bg-pink-500/10 border-pink-500/30 text-pink-400" :
+                    "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                  )}>
+                    {businessModel === "b2b" ? <Layers className="h-6 w-6" /> :
+                     businessModel === "b2c" ? <ShoppingBag className="h-6 w-6" /> :
+                     businessModel === "d2c" ? <Palette className="h-6 w-6" /> :
+                     <Truck className="h-6 w-6" />}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      {businessModel === "b2b" ? "B2B Enterprise Mode" :
+                       businessModel === "b2c" ? "B2C Consumer Retail Mode" :
+                       businessModel === "d2c" ? "D2C Direct Brand Mode" :
+                       "Custom / Emerging Operating Model"}
+                      <span className="text-[10px] uppercase font-extrabold tracking-widest px-2.5 py-0.5 rounded-full border bg-slate-800 text-slate-300 border-slate-700">
+                        Active Workflow
+                      </span>
+                    </h3>
+                    <p className="text-sm text-slate-400">
+                      {businessModel === "b2b" ? "Core deal pipelines adapted for wholesale contracts, bulk orders, and custom terms." :
+                       businessModel === "b2c" ? "Retail engine tracking shopping cart metrics, consumer payments, and checkout flows." :
+                       businessModel === "d2c" ? "Branded experience managing direct customer interactions, themes, and social channels." :
+                       "Flexible deal structure tailored to creators, influencers, and modern business model parameters."}
+                    </p>
+                  </div>
+                </div>
+                <ExtrudedButton 
+                  onClick={() => setActiveTab('business-toolset')}
+                  className="bg-gradient-to-r from-teal-600 to-cyan-600 text-xs py-2 px-4"
+                >
+                  Configure Model Toolset
+                  <ArrowRight className="h-3 w-3 ml-2" />
+                </ExtrudedButton>
+              </GlassPanel>
+
+              {/* Dynamic KPI Cards based on Business Model */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <GlassPanel className="border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Credit Balance</div>
-                    <div className="text-4xl font-bold text-teal-400">{customerCredits.balance}</div>
-                  </CardContent>
-                </GlassPanel>
-                <GlassPanel className="border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Open Tickets</div>
-                    <div className="text-4xl font-bold text-amber-400">
-                      {tickets.filter(t => t.customerId === customerId && t.status !== 'closed').length}
-                    </div>
-                  </CardContent>
-                </GlassPanel>
-                <GlassPanel className="border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Active Reports</div>
-                    <div className="text-4xl font-bold text-blue-400">
-                      {gtmReports.filter(r => r.customerId === customerId).length}
-                    </div>
-                  </CardContent>
-                </GlassPanel>
-                <GlassPanel className="border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Scheduled Reports</div>
-                    <div className="text-4xl font-bold text-purple-400">
-                      {scheduledReports.filter(r => r.customerId === customerId).length}
-                    </div>
-                  </CardContent>
-                </GlassPanel>
+                {businessModel === "b2b" && (
+                  <>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Total Contract Value</div>
+                        <div className="text-4xl font-bold text-indigo-400">
+                          ${b2bOrders.reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Sum of wholesale bulk orders</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Active Pilot Deals</div>
+                        <div className="text-4xl font-bold text-teal-400">
+                          {b2bOrders.filter(o => o.status === "pending").length}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Orders awaiting approval</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Bulk Discount Savings</div>
+                        <div className="text-4xl font-bold text-emerald-400">
+                          $2,160
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Saved via tiered quantities</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Avg. Wholesale Size</div>
+                        <div className="text-4xl font-bold text-violet-400">
+                          ${(b2bOrders.reduce((sum, o) => sum + o.totalAmount, 0) / (b2bOrders.length || 1)).toFixed(0)}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Average bulk transaction</div>
+                      </CardContent>
+                    </GlassPanel>
+                  </>
+                )}
+
+                {businessModel === "b2c" && (
+                  <>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Checkout Sales</div>
+                        <div className="text-4xl font-bold text-emerald-400">
+                          ${b2cTransactions.filter(t => t.paymentStatus === "paid").reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Simulated consumer revenue</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Conversion Rate</div>
+                        <div className="text-4xl font-bold text-teal-400">
+                          {((b2cTransactions.filter(t => t.paymentStatus === "paid").length / (b2cTransactions.length || 1)) * 100).toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Paid vs total checkouts</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Cart Abandonment</div>
+                        <div className="text-4xl font-bold text-rose-400">
+                          {((b2cTransactions.filter(t => t.paymentStatus === "failed").length / (b2cTransactions.length || 1)) * 100).toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Failed checkout runs</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Simulated Volume</div>
+                        <div className="text-4xl font-bold text-cyan-400">
+                          {b2cTransactions.length} items
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Total transaction run count</div>
+                      </CardContent>
+                    </GlassPanel>
+                  </>
+                )}
+
+                {businessModel === "d2c" && (
+                  <>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Avg. Order Value</div>
+                        <div className="text-4xl font-bold text-pink-400">
+                          $87.20
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Direct storefront size</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Brand NPS</div>
+                        <div className="text-4xl font-bold text-teal-400">
+                          78 <span className="text-xs text-slate-400">/ 100</span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Direct loyalty consensus</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Social ROI</div>
+                        <div className="text-4xl font-bold text-purple-400">
+                          3.4x
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Ad campaign yield multiplier</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Active Brand Channels</div>
+                        <div className="text-4xl font-bold text-orange-400">
+                          {d2cBranding.instagramHandle ? "2 Active" : "1 Active"}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">{d2cBranding.instagramHandle || "Direct web only"}</div>
+                      </CardContent>
+                    </GlassPanel>
+                  </>
+                )}
+
+                {businessModel === "custom" && (
+                  <>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Platform Credits</div>
+                        <div className="text-4xl font-bold text-amber-400">
+                          {customerCredits.balance}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Available processing balance</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Open Tickets</div>
+                        <div className="text-4xl font-bold text-indigo-400">
+                          {tickets.filter(t => t.customerId === customerId && t.status !== 'closed').length}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Active support request tickets</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Active GTM Reports</div>
+                        <div className="text-4xl font-bold text-cyan-400">
+                          {gtmReports.filter(r => r.customerId === customerId).length}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Market consensus reports</div>
+                      </CardContent>
+                    </GlassPanel>
+                    <GlassPanel className="border-slate-700">
+                      <CardContent className="pt-6">
+                        <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Scheduled reports</div>
+                        <div className="text-4xl font-bold text-violet-400">
+                          {scheduledReports.filter(r => r.customerId === customerId).length}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">Automated deliveries</div>
+                      </CardContent>
+                    </GlassPanel>
+                  </>
+                )}
               </div>
               
               {currentAgentAssignment && (
@@ -474,6 +699,609 @@ function CustomerPortalContent() {
                   </CardContent>
                 </GlassPanel>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'business-toolset' && (
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">
+                    Operating Model Toolset
+                  </h2>
+                  <p className="text-slate-400 text-sm">
+                    Access modular applications configured for your business type
+                  </p>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-2">
+                  <span className="text-xs text-slate-500 font-semibold">Active Model:</span>
+                  <span className={cn(
+                    "text-xs px-2.5 py-1 rounded-md font-extrabold uppercase",
+                    businessModel === "b2b" ? "bg-indigo-950 border border-indigo-700 text-indigo-400" :
+                    businessModel === "b2c" ? "bg-emerald-950 border border-emerald-700 text-emerald-400" :
+                    businessModel === "d2c" ? "bg-pink-950 border border-pink-700 text-pink-400" :
+                    "bg-amber-950 border border-amber-700 text-amber-400"
+                  )}>
+                    {businessModel.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              {businessModel === "b2b" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Bulk Order Form */}
+                  <GlassPanel className="lg:col-span-1 border-slate-700" tilt={false}>
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-slate-100">Process Bulk Wholesale Order</CardTitle>
+                      <p className="text-xs text-slate-400 mt-1">Submit bulk quantity requirements</p>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target as HTMLFormElement);
+                        const qty = Number(formData.get("quantity"));
+                        const price = Number(formData.get("unitPrice"));
+                        let total = qty * price;
+                        // Tiered discounts: >100 get 10% off, >500 get 20% off
+                        if (qty >= 500) {
+                          total = total * 0.8;
+                        } else if (qty >= 100) {
+                          total = total * 0.9;
+                        }
+                        const newOrd: B2BBulkOrder = {
+                          id: `b2b-ord-${Date.now()}`,
+                          productName: formData.get("productName") as string,
+                          quantity: qty,
+                          unitPrice: price,
+                          totalAmount: total,
+                          status: "pending",
+                          orderDate: new Date().toISOString(),
+                          notes: formData.get("notes") as string,
+                        };
+                        setB2bOrders([newOrd, ...b2bOrders]);
+                        alert("Bulk order submitted successfully! Awaiting agent approval.");
+                        (e.target as HTMLFormElement).reset();
+                      }} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Product Line</Label>
+                          <select name="productName" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                            <option value="Enterprise Seat Licenses (Tier 1)">Enterprise Seat Licenses (Tier 1) - $45/ea</option>
+                            <option value="API Infrastructure Pack">API Infrastructure Pack - $200/ea</option>
+                            <option value="Advanced Security Module">Advanced Security Module - $15/ea</option>
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Quantity</Label>
+                            <Input type="number" name="quantity" min="1" defaultValue="150" className="bg-slate-800 border-slate-700 text-slate-200" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Unit Price ($)</Label>
+                            <Input type="number" name="unitPrice" min="1" defaultValue="45" className="bg-slate-800 border-slate-700 text-slate-200" required />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Contract Notes</Label>
+                          <textarea name="notes" placeholder="e.g. Q3 extension request..." className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" rows={3}></textarea>
+                        </div>
+                        <div className="bg-indigo-950/30 border border-indigo-900/50 p-4 rounded-xl space-y-2 text-xs">
+                          <p className="font-semibold text-indigo-300">Volume Discounts Rules:</p>
+                          <ul className="list-disc pl-4 text-slate-400 space-y-1">
+                            <li>100+ units: 10% wholesale discount</li>
+                            <li>500+ units: 20% enterprise discount</li>
+                          </ul>
+                        </div>
+                        <ExtrudedButton type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
+                          Submit Wholesale Order
+                        </ExtrudedButton>
+                      </form>
+                    </CardContent>
+                  </GlassPanel>
+
+                  {/* Bulk Orders List */}
+                  <GlassPanel className="lg:col-span-2 border-slate-700" tilt={false}>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="text-xl font-bold text-slate-100">B2B Bulk Orders Log</CardTitle>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const csvContent = "data:text/csv;charset=utf-8,ID,Product,Quantity,Unit Price,Total,Status,Date\n" 
+                            + b2bOrders.map(o => `${o.id},${o.productName},${o.quantity},${o.unitPrice},${o.totalAmount},${o.status},${o.orderDate}`).join("\n");
+                          const encodedUri = encodeURI(csvContent);
+                          const link = document.createElement("a");
+                          link.setAttribute("href", encodedUri);
+                          link.setAttribute("download", "b2b_wholesale_orders.csv");
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="text-xs text-indigo-400 hover:underline flex items-center gap-1"
+                      >
+                        <Download className="h-3 w-3" /> Export CSV
+                      </button>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto">
+                      <table className="w-full text-left text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-400">
+                            <th className="pb-3 pr-2">ID</th>
+                            <th className="pb-3">Product</th>
+                            <th className="pb-3 text-center">Qty</th>
+                            <th className="pb-3 text-right">Total</th>
+                            <th className="pb-3 text-center">Status</th>
+                            <th className="pb-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/40">
+                          {b2bOrders.map(o => (
+                            <tr key={o.id} className="text-slate-300">
+                              <td className="py-3 font-mono text-xs pr-2">{o.id.substring(0, 12)}</td>
+                              <td className="py-3 font-medium">{o.productName}</td>
+                              <td className="py-3 text-center font-bold text-slate-200">{o.quantity}</td>
+                              <td className="py-3 text-right text-teal-400 font-semibold">${o.totalAmount.toLocaleString()}</td>
+                              <td className="py-3 text-center">
+                                <span className={cn(
+                                  "px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
+                                  o.status === "approved" ? "bg-emerald-950 border-emerald-800 text-emerald-400" :
+                                  o.status === "shipped" ? "bg-blue-950 border-blue-800 text-blue-400" :
+                                  "bg-amber-950 border-amber-800 text-amber-400"
+                                )}>
+                                  {o.status}
+                                </span>
+                              </td>
+                              <td className="py-3 text-center">
+                                <button 
+                                  type="button"
+                                  onClick={() => alert(`Invoice generated for ${o.id}.\nSubtotal: $${o.quantity * o.unitPrice}\nDiscount applied: -$${(o.quantity * o.unitPrice) - o.totalAmount}\nTotal due: $${o.totalAmount}`)}
+                                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                                >
+                                  Invoice
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CardContent>
+                  </GlassPanel>
+                </div>
+              )}
+
+              {businessModel === "b2c" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Checkout Simulator Widget */}
+                  <GlassPanel className="lg:col-span-1 border-slate-700" tilt={false}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl font-bold text-slate-100">B2C Retail Checkout Simulator</CardTitle>
+                        <select 
+                          value={b2cSelectedDevice} 
+                          onChange={(e) => setB2cSelectedDevice(e.target.value as any)}
+                          className="bg-slate-800 border border-slate-700 text-xs text-slate-300 rounded px-2 py-1 focus:outline-none"
+                        >
+                          <option value="desktop">Desktop view</option>
+                          <option value="mobile">Mobile view</option>
+                          <option value="tablet">Tablet view</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">Stress-test simulated payment gateway flows</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Product catalog selection */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-slate-400">Add Item to Cart:</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const existing = b2cCart.find(i => i.id === "p1");
+                              if (existing) {
+                                setB2cCart(b2cCart.map(i => i.id === "p1" ? { ...i, quantity: i.quantity + 1 } : i));
+                              } else {
+                                setB2cCart([...b2cCart, { id: "p1", name: "Premium Mug", price: 19.95, quantity: 1 }]);
+                              }
+                            }}
+                            className="bg-slate-800 hover:bg-slate-700 text-[10px] p-2 rounded text-slate-200 border border-slate-700 flex flex-col items-center"
+                          >
+                            <span>Mug</span>
+                            <span className="text-teal-400 font-bold">$19.95</span>
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const existing = b2cCart.find(i => i.id === "p2");
+                              if (existing) {
+                                setB2cCart(b2cCart.map(i => i.id === "p2" ? { ...i, quantity: i.quantity + 1 } : i));
+                              } else {
+                                setB2cCart([...b2cCart, { id: "p2", name: "Organic Hoodie", price: 59.90, quantity: 1 }]);
+                              }
+                            }}
+                            className="bg-slate-800 hover:bg-slate-700 text-[10px] p-2 rounded text-slate-200 border border-slate-700 flex flex-col items-center"
+                          >
+                            <span>Hoodie</span>
+                            <span className="text-teal-400 font-bold">$59.90</span>
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const existing = b2cCart.find(i => i.id === "p3");
+                              if (existing) {
+                                setB2cCart(b2cCart.map(i => i.id === "p3" ? { ...i, quantity: i.quantity + 1 } : i));
+                              } else {
+                                setB2cCart([...b2cCart, { id: "p3", name: "Travel Tumbler", price: 34.50, quantity: 1 }]);
+                              }
+                            }}
+                            className="bg-slate-800 hover:bg-slate-700 text-[10px] p-2 rounded text-slate-200 border border-slate-700 flex flex-col items-center"
+                          >
+                            <span>Tumbler</span>
+                            <span className="text-teal-400 font-bold">$34.50</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Shopping Cart Summary */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800">
+                          <span>Simulated Shopping Cart</span>
+                          {b2cCart.length > 0 && (
+                            <button type="button" onClick={() => setB2cCart([])} className="text-[10px] text-rose-400 hover:underline">Clear</button>
+                          )}
+                        </div>
+                        {b2cCart.length === 0 ? (
+                          <div className="text-center py-4 text-xs text-slate-500">Cart is empty</div>
+                        ) : (
+                          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                            {b2cCart.map(item => (
+                              <div key={item.id} className="flex justify-between text-xs text-slate-300">
+                                <span>{item.name} <span className="text-slate-500">x{item.quantity}</span></span>
+                                <span className="font-semibold text-slate-200">${(item.price * item.quantity).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {b2cCart.length > 0 && (
+                          <div className="pt-2 border-t border-slate-800 space-y-2 text-xs">
+                            <div className="flex items-center gap-2">
+                              <Input 
+                                type="text" 
+                                placeholder="Coupon (e.g. SAVE20)" 
+                                value={b2cCoupon}
+                                onChange={(e) => setB2cCoupon(e.target.value.toUpperCase())}
+                                className="h-8 bg-slate-800 border-slate-700 text-xs py-1"
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  if (b2cCoupon === "SAVE20") {
+                                    const subtotal = b2cCart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+                                    setB2cDiscountAmount(subtotal * 0.2);
+                                    alert("Coupon SAVE20 applied successfully! (20% off)");
+                                  } else {
+                                    alert("Invalid coupon code.");
+                                  }
+                                }}
+                                className="bg-slate-800 border border-slate-700 px-3 py-1 rounded hover:bg-slate-700"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                            {b2cDiscountAmount > 0 && (
+                              <div className="flex justify-between text-emerald-400 font-semibold">
+                                <span>Discount</span>
+                                <span>-${b2cDiscountAmount.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-sm font-bold text-white border-t border-slate-800/50 pt-2">
+                              <span>Estimated Total</span>
+                              <span>
+                                ${(
+                                  b2cCart.reduce((sum, i) => sum + i.price * i.quantity, 0) - b2cDiscountAmount
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Customer Checkout Form */}
+                      {b2cCart.length > 0 && (
+                        <div className="space-y-3 pt-2">
+                          <div className="space-y-1">
+                            <Label className="text-slate-400 text-xs">Shipping Name</Label>
+                            <Input 
+                              type="text" 
+                              placeholder="e.g. John Smith" 
+                              value={b2cShippingName}
+                              onChange={(e) => setB2cShippingName(e.target.value)}
+                              className="h-8 bg-slate-800 border-slate-700 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-slate-400 text-xs">Address</Label>
+                            <Input 
+                              type="text" 
+                              placeholder="123 Main St, New York" 
+                              value={b2cShippingAddress}
+                              onChange={(e) => setB2cShippingAddress(e.target.value)}
+                              className="h-8 bg-slate-800 border-slate-700 text-xs"
+                            />
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const total = b2cCart.reduce((sum, i) => sum + i.price * i.quantity, 0) - b2cDiscountAmount;
+                                const newTx: B2CTransaction = {
+                                  id: `b2c-tx-${Date.now()}`,
+                                  consumerName: b2cShippingName || "Guest Checkout",
+                                  itemCount: b2cCart.reduce((sum, i) => sum + i.quantity, 0),
+                                  amount: total,
+                                  paymentStatus: "paid",
+                                  deviceType: b2cSelectedDevice,
+                                  checkoutTimestamp: new Date().toISOString(),
+                                };
+                                setB2cTransactions([newTx, ...b2cTransactions]);
+                                setB2cCart([]);
+                                setB2cCoupon("");
+                                setB2cDiscountAmount(0);
+                                setB2cShippingName("");
+                                setB2cShippingAddress("");
+                                alert("Simulated checkout transaction completed successfully!");
+                              }}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs"
+                            >
+                              Simulate Successful Checkout
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const total = b2cCart.reduce((sum, i) => sum + i.price * i.quantity, 0) - b2cDiscountAmount;
+                                const newTx: B2CTransaction = {
+                                  id: `b2c-tx-${Date.now()}`,
+                                  consumerName: b2cShippingName || "Guest Checkout",
+                                  itemCount: b2cCart.reduce((sum, i) => sum + i.quantity, 0),
+                                  amount: total,
+                                  paymentStatus: "failed",
+                                  deviceType: b2cSelectedDevice,
+                                  checkoutTimestamp: new Date().toISOString(),
+                                };
+                                setB2cTransactions([newTx, ...b2cTransactions]);
+                                alert("Checkout simulated as failed/abandoned.");
+                              }}
+                              className="bg-slate-800 border border-slate-700 text-slate-400 font-bold px-3 py-2 rounded-xl text-xs"
+                            >
+                              Fail/Abandon
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </GlassPanel>
+
+                  {/* Transactions Feed */}
+                  <GlassPanel className="lg:col-span-2 border-slate-700" tilt={false}>
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-slate-100">Simulated Retail Sales Feed</CardTitle>
+                      <p className="text-xs text-slate-400 mt-1">Real-time consumer event transaction streams</p>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto">
+                      <table className="w-full text-left text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                            <th className="pb-3">Transaction ID</th>
+                            <th className="pb-3">Buyer Name</th>
+                            <th className="pb-3 text-center">Items</th>
+                            <th className="pb-3 text-right">Amount</th>
+                            <th className="pb-3 text-center">Device</th>
+                            <th className="pb-3 text-center">Payment</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/40">
+                          {b2cTransactions.map(tx => (
+                            <tr key={tx.id} className="text-slate-300">
+                              <td className="py-3 font-mono text-xs">{tx.id.substring(0, 15)}</td>
+                              <td className="py-3 font-medium">{tx.consumerName}</td>
+                              <td className="py-3 text-center font-semibold text-slate-200">{tx.itemCount}</td>
+                              <td className="py-3 text-right font-semibold text-teal-400">${tx.amount.toFixed(2)}</td>
+                              <td className="py-3 text-center text-xs uppercase text-slate-400 font-mono">{tx.deviceType}</td>
+                              <td className="py-3 text-center">
+                                <span className={cn(
+                                  "px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
+                                  tx.paymentStatus === "paid" 
+                                    ? "bg-emerald-950 border-emerald-800 text-emerald-400" 
+                                    : "bg-rose-950 border-rose-800 text-rose-400"
+                                )}>
+                                  {tx.paymentStatus}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CardContent>
+                  </GlassPanel>
+                </div>
+              )}
+
+              {businessModel === "d2c" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Branding customizer */}
+                  <GlassPanel className="lg:col-span-1 border-slate-700" tilt={false}>
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-slate-100">Brand Customization Studio</CardTitle>
+                      <p className="text-xs text-slate-400 mt-1">Configure white-label client overrides</p>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target as HTMLFormElement);
+                        const updatedConfig: D2CBrandingConfig = {
+                          brandName: formData.get("brandName") as string,
+                          logoUrl: formData.get("logoUrl") as string,
+                          primaryColor: formData.get("primaryColor") as string,
+                          secondaryColor: formData.get("secondaryColor") as string,
+                          customCss: formData.get("customCss") as string,
+                          instagramHandle: formData.get("instagramHandle") as string,
+                        };
+                        setD2cBranding(updatedConfig);
+                        
+                        // Persist to server config
+                        try {
+                          await fetch('/api/customer/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              companyName: updatedConfig.brandName,
+                              serviceConfigurations: {
+                                ...customerRecord?.serviceConfigurations,
+                                branding: updatedConfig
+                              }
+                            })
+                          });
+                        } catch (err) {
+                          console.error("Failed to sync branding with server:", err);
+                        }
+
+                        alert("Branding configuration updated successfully!");
+                      }} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Brand Name</Label>
+                          <Input type="text" name="brandName" defaultValue={d2cBranding.brandName} className="bg-slate-800 border-slate-700 text-slate-200" required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Brand Logo URL</Label>
+                          <Input type="text" name="logoUrl" defaultValue={d2cBranding.logoUrl} className="bg-slate-800 border-slate-700 text-slate-200 text-xs" required />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Primary Color</Label>
+                            <div className="flex gap-2 items-center">
+                              <Input type="color" name="primaryColor" defaultValue={d2cBranding.primaryColor} className="w-10 h-10 p-0 border-0 bg-transparent rounded cursor-pointer" />
+                              <span className="font-mono text-xs uppercase text-slate-300">{d2cBranding.primaryColor}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Secondary Color</Label>
+                            <div className="flex gap-2 items-center">
+                              <Input type="color" name="secondaryColor" defaultValue={d2cBranding.secondaryColor} className="w-10 h-10 p-0 border-0 bg-transparent rounded cursor-pointer" />
+                              <span className="font-mono text-xs uppercase text-slate-300">{d2cBranding.secondaryColor}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Instagram Handle</Label>
+                          <Input type="text" name="instagramHandle" defaultValue={d2cBranding.instagramHandle} className="bg-slate-800 border-slate-700 text-slate-200" placeholder="@my_brand" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Custom CSS Snippets</Label>
+                          <textarea name="customCss" defaultValue={d2cBranding.customCss} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs font-mono" rows={3}></textarea>
+                        </div>
+                        <ExtrudedButton type="submit" className="w-full bg-pink-600 hover:bg-pink-700">
+                          Save Brand Themes
+                        </ExtrudedButton>
+                      </form>
+                    </CardContent>
+                  </GlassPanel>
+
+                  {/* Brand Live Preview Card */}
+                  <GlassPanel className="lg:col-span-2 border-slate-700" tilt={false}>
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-slate-100">Live Custom Brand Preview</CardTitle>
+                      <p className="text-xs text-slate-400 mt-1">Real-time storefront checkout and email preview</p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Simulated branded checkout card */}
+                      <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950 p-6 space-y-6 relative shadow-2xl">
+                        {/* Branded header */}
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                          <div className="flex items-center gap-3">
+                            {d2cBranding.logoUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={d2cBranding.logoUrl} alt="Logo" className="h-10 w-10 rounded-full border object-cover border-slate-700" />
+                            )}
+                            <span className="font-bold text-lg text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+                              {d2cBranding.brandName}
+                            </span>
+                          </div>
+                          {d2cBranding.instagramHandle && (
+                            <span className="text-xs text-slate-400 font-semibold">{d2cBranding.instagramHandle}</span>
+                          )}
+                        </div>
+
+                        {/* Branded hero graphic */}
+                        <div 
+                          className="rounded-xl py-8 px-6 text-center space-y-2 border border-slate-800"
+                          style={{
+                            background: `linear-gradient(135deg, ${d2cBranding.primaryColor}20, ${d2cBranding.secondaryColor}10)`
+                          }}
+                        >
+                          <h4 className="text-xl font-extrabold text-white" style={{ color: d2cBranding.primaryColor }}>
+                            Checkout Complete!
+                          </h4>
+                          <p className="text-xs text-slate-300">Thank you for purchasing from our premium store.</p>
+                        </div>
+
+                        {/* Branded Action Buttons */}
+                        <div className="flex gap-4">
+                          <button 
+                            type="button"
+                            className="flex-1 text-white font-bold py-2.5 rounded-xl text-xs transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: d2cBranding.primaryColor }}
+                          >
+                            Track Shipment
+                          </button>
+                          <button 
+                            type="button"
+                            className="flex-1 text-white font-bold py-2.5 rounded-xl text-xs border transition-opacity hover:opacity-90"
+                            style={{ 
+                              borderColor: d2cBranding.secondaryColor,
+                              backgroundColor: `${d2cBranding.secondaryColor}15`
+                            }}
+                          >
+                            Continue Shopping
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* CSS application indicator */}
+                      {d2cBranding.customCss && (
+                        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+                          <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Applied stylesheet configurations:</p>
+                          <pre className="text-[10px] text-slate-300 font-mono">{d2cBranding.customCss}</pre>
+                        </div>
+                      )}
+                    </CardContent>
+                  </GlassPanel>
+                </div>
+              )}
+
+              {businessModel === "custom" && (
+                <GlassPanel className="border-slate-700" tilt={false}>
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-bold text-slate-100">Emerging Business Model Config</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      Custom and emerging operating models allow you to configure ad-hoc data properties. 
+                      You can define customizable JSON parameters below to align with your unique logistics:
+                    </p>
+                    <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+                      <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-800 pb-2">
+                        <span>JSON Configuration Parameters</span>
+                        <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded">Flex Mode</span>
+                      </div>
+                      <pre className="text-xs text-indigo-300 font-mono leading-relaxed">
+{`{
+  "businessType": "creator-brand",
+  "hasLiveSubscription": true,
+  "supportedPayouts": ["stripe", "paypal"],
+  "commissionStructure": "15% flat per referral"
+}`}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </GlassPanel>
+              )}
             </div>
           )}
 

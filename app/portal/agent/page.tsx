@@ -38,6 +38,7 @@ import {
   demoChatMessages,
   demoAgentMetrics,
   demoAgentCredits,
+  demoCustomers,
 } from "@/lib/portal-demo-data";
 import type { AgentCredits, FileAttachment } from "@/lib/types";
 import type { TaskStatus } from "@/lib/portal-types";
@@ -418,11 +419,28 @@ function AgentPortalContent() {
                   (() => {
                     const lead = leads.find((l) => l.id === selectedLeadId);
                     if (!lead) return null;
+                    
+                    const matchedCustomer = demoCustomers.find(
+                      (c) => c.id === lead.customerId || c.companyName.toLowerCase() === lead.companyName.toLowerCase()
+                    );
+                    const businessModel = matchedCustomer?.businessModel || "b2b";
+                    
                     return (
                       <GlassPanel tilt={false} className="border-slate-700/50 space-y-6">
                         <CardHeader className="border-b border-slate-800 pb-4">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-2xl text-slate-100 font-bold">{lead.companyName}</CardTitle>
+                            <div className="flex items-center gap-3">
+                              <CardTitle className="text-2xl text-slate-100 font-bold">{lead.companyName}</CardTitle>
+                              <span className={cn(
+                                "text-xs px-2.5 py-0.5 rounded-full font-extrabold uppercase border",
+                                businessModel === "b2b" ? "bg-indigo-950 border-indigo-800 text-indigo-400" :
+                                businessModel === "b2c" ? "bg-emerald-950 border-emerald-800 text-emerald-400" :
+                                businessModel === "d2c" ? "bg-pink-950 border-pink-800 text-pink-400" :
+                                "bg-amber-950 border-amber-800 text-amber-400"
+                              )}>
+                                {businessModel}
+                              </span>
+                            </div>
                             {(lead.websiteUrl || lead.website) && (
                               <a
                                 href={lead.websiteUrl || lead.website}
@@ -437,6 +455,35 @@ function AgentPortalContent() {
                           <p className="text-sm text-slate-400 mt-1">Contact: {lead.name} ({lead.emailPersonal})</p>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-4">
+                          {/* Business Model specifics */}
+                          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                            <h4 className="text-sm font-semibold text-teal-400">Business Model Parameters ({businessModel.toUpperCase()})</h4>
+                            {businessModel === "b2b" && (
+                              <div className="text-xs text-slate-300 space-y-1">
+                                <p><strong>Operational Model:</strong> Enterprise Wholesale Deals & Custom Pilot Contracts</p>
+                                <p><strong>Metrics:</strong> Total Contract Value, Wholesale Order Volume, Tiered Discount Rates</p>
+                              </div>
+                            )}
+                            {businessModel === "b2c" && (
+                              <div className="text-xs text-slate-300 space-y-1">
+                                <p><strong>Operational Model:</strong> Direct Retail Storefront & Consumer Transactions</p>
+                                <p><strong>Metrics:</strong> Conversion Rate, Shopping Cart Abandonment, Simulated Checkout Payments</p>
+                              </div>
+                            )}
+                            {businessModel === "d2c" && (
+                              <div className="text-xs text-slate-300 space-y-1">
+                                <p><strong>Operational Model:</strong> Direct-to-Customer Branding & White-Label Customization</p>
+                                <p><strong>Metrics:</strong> Brand Sentiment, Instagram ROI, Custom Stylesheets</p>
+                              </div>
+                            )}
+                            {businessModel === "custom" && (
+                              <div className="text-xs text-slate-300 space-y-1">
+                                <p><strong>Operational Model:</strong> Custom Creator-Brand & Subscription Referrals</p>
+                                <p><strong>Metrics:</strong> System Credit Reserves, Flat Commission Payout Rules</p>
+                              </div>
+                            )}
+                          </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <h4 className="text-md font-semibold text-teal-400 mb-2">Offer Promise & Pain Point</h4>

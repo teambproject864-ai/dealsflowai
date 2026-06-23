@@ -53,6 +53,14 @@ interface DemoCustomer {
   role: "customer";
 }
 
+interface DemoAdmin {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  name: string;
+  role: "admin";
+}
+
 // --- Demo User Data (replace with real DB in production) ---
 export const DEMO_ADMIN = {
   id: "admin-1",
@@ -60,6 +68,18 @@ export const DEMO_ADMIN = {
   name: "Administrator",
   role: "admin" as const,
 };
+
+// Additional admin accounts with stored hashed passwords (same pattern as agents)
+export const DEMO_ADMINS: DemoAdmin[] = [
+  {
+    id: "admin-2",
+    email: "admin1@dealflow.ai",
+    // Hashed password for "Pranee@1909"
+    hashedPassword: "$2b$12$77aZxmlj.Kf9JztgXuehGOSdn46SXvvme3tpbosdOfwKh78Qj50iO",
+    name: "Admin One",
+    role: "admin",
+  },
+];
 
 export const DEMO_AGENTS: DemoAgent[] = [
   {

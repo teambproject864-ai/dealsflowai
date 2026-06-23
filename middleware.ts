@@ -5,12 +5,12 @@ async function verifyJwtSignature(token: string): Promise<boolean> {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
-    
+
     // For local development and E2E tests, allow dummySignature bypass
     if (process.env.NODE_ENV !== 'production' && parts[2] === 'dummySignature') {
       return true;
     }
-    
+
     const secret = process.env.JWT_SECRET || 'your-secret-key-in-production-env-var-only';
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
@@ -20,21 +20,21 @@ async function verifyJwtSignature(token: string): Promise<boolean> {
       false,
       ['verify']
     );
-    
+
     const message = enc.encode(`${parts[0]}.${parts[1]}`);
-    
+
     const base64Url = parts[2];
     let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) {
       base64 += '=';
     }
-    
+
     const sigString = atob(base64);
     const sigBytes = new Uint8Array(sigString.length);
     for (let i = 0; i < sigString.length; i++) {
       sigBytes[i] = sigString.charCodeAt(i);
     }
-    
+
     return await crypto.subtle.verify(
       'HMAC',
       key,
@@ -57,7 +57,7 @@ function decodeJwt(token: string): any {
     }
     const decoded = atob(base64);
     const parsed = JSON.parse(decoded);
-    
+
     // Verify token expiration
     const now = Math.floor(Date.now() / 1000);
     if (parsed.exp && parsed.exp < now) {

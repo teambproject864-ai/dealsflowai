@@ -116,6 +116,7 @@ function AdminPortalContent() {
     companyName: "",
     industry: "",
     assignedAgentId: "",
+    businessModel: "b2b",
     serviceConfigs: {
       gtmReports: true,
       leadScoring: false,
@@ -294,9 +295,22 @@ function AdminPortalContent() {
     setLocalAuditLogs([newLog, ...localAuditLogs]);
   };
 
+  const fetchCustomers = async () => {
+    try {
+      const res = await fetch("/api/admin/customers");
+      const data = await res.json();
+      if (data.success) {
+        setCustomers(data.customers);
+      }
+    } catch (error) {
+      console.error("Failed to load customers list:", error);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
     fetchAuditLogs();
+    fetchCustomers();
   }, []);
 
   useEffect(() => {
@@ -306,6 +320,40 @@ function AdminPortalContent() {
       fetchPasswordRequests();
     }
   }, [activeTab]);
+
+  const handleUpdateBusinessModel = async (customerId: string, newModel: string) => {
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, businessModel: newModel }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCustomers(customers.map(c => c.id === customerId ? { ...c, businessModel: newModel as any } : c));
+        addAuditLog("other", `Updated customer ${customerId} business model to ${newModel}`, customerId, "customer");
+        setNotification({
+          type: "success",
+          title: "Business Model Updated",
+          message: `Successfully set to ${newModel.toUpperCase()}`,
+        });
+      } else {
+        setNotification({
+          type: "error",
+          title: "Update Failed",
+          message: data.error || "Failed to update business model",
+        });
+      }
+    } catch (err) {
+      setNotification({
+        type: "error",
+        title: "Error",
+        message: "Failed to connect to server",
+      });
+    } finally {
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
 
   const handleReassign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -497,6 +545,11 @@ function AdminPortalContent() {
     ? (demoCustomerFeedback.reduce((sum, f) => sum + f.rating, 0) / demoCustomerFeedback.length).toFixed(1)
     : "0";
 
+  const b2bCount = customers.filter(c => c.businessModel === "b2b" || !c.businessModel).length;
+  const b2cCount = customers.filter(c => c.businessModel === "b2c").length;
+  const d2cCount = customers.filter(c => c.businessModel === "d2c").length;
+  const customCount = customers.filter(c => c.businessModel === "custom").length;
+
   const handleCreateAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -570,7 +623,6 @@ function AdminPortalContent() {
     setTimeout(() => setNotification(null), 5000);
   };
   
-  // Customer onboarding handler
   const handleOnboardCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     const newCustomer = {
@@ -586,6 +638,7 @@ function AdminPortalContent() {
       serviceConfigurations: onboardFormData.serviceConfigs,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      businessModel: onboardFormData.businessModel as any || "b2b",
     };
     setCustomers([newCustomer, ...customers]);
     addAuditLog("customer_onboard", `Onboarded new customer: ${onboardFormData.name}`, newCustomer.id, "customer");
@@ -597,6 +650,7 @@ function AdminPortalContent() {
       companyName: "",
       industry: "",
       assignedAgentId: "",
+      businessModel: "b2b",
       serviceConfigs: {
         gtmReports: true,
         leadScoring: false,
@@ -887,6 +941,20 @@ function AdminPortalContent() {
                     </select>
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="business-model" className="text-slate-300">Business Model</Label>
+                    <select
+                      id="business-model"
+                      value={onboardFormData.businessModel}
+                      onChange={(e) => setOnboardFormData({ ...onboardFormData, businessModel: e.target.value })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    >
+                      <option value="b2b">B2B Enterprise</option>
+                      <option value="b2c">B2C Retail</option>
+                      <option value="d2c">D2C Brand</option>
+                      <option value="custom">Custom Creator</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <Label className="text-slate-300">Service Configurations</Label>
                     <div className="space-y-2">
                       <label className="flex items-center gap-2">
@@ -1102,7 +1170,33 @@ function AdminPortalContent() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              <GlassPanel tilt={true} className="border-slate-700/50">
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-slate-300 text-lg">Operating Models</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>B2B:</span>
+                      <span className="font-bold text-indigo-400">{b2bCount}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>B2C:</span>
+                      <span className="font-bold text-emerald-400">{b2cCount}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>D2C:</span>
+                      <span className="font-bold text-pink-400">{d2cCount}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Custom:</span>
+                      <span className="font-bold text-amber-400">{customCount}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+
               <GlassPanel tilt={true} className="border-slate-700/50">
                 <CardHeader>
                   <CardTitle className="text-slate-300 text-lg">Total Agents</CardTitle>
@@ -1413,6 +1507,17 @@ function AdminPortalContent() {
                             >
                               {customer.status}
                             </span>
+                            <span
+                              className={cn(
+                                "px-3 py-1 rounded-full text-xs font-semibold uppercase border",
+                                customer.businessModel === "b2b" ? "bg-indigo-950/80 border-indigo-800 text-indigo-400" :
+                                customer.businessModel === "b2c" ? "bg-emerald-950/80 border-emerald-800 text-emerald-400" :
+                                customer.businessModel === "d2c" ? "bg-pink-950/80 border-pink-800 text-pink-400" :
+                                "bg-amber-950/80 border-amber-800 text-amber-400"
+                              )}
+                            >
+                              {customer.businessModel || "b2b"}
+                            </span>
                           </div>
                           <p className="text-sm text-slate-300 mt-1">{customer.companyName}</p>
                           <p className="text-xs text-slate-400 mt-2">
@@ -1423,6 +1528,19 @@ function AdminPortalContent() {
                           </p>
                         </div>
                         <div className="flex flex-col gap-2">
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-500 font-bold block">Business Model</label>
+                            <select
+                              value={customer.businessModel || "b2b"}
+                              onChange={(e) => handleUpdateBusinessModel(customer.id, e.target.value)}
+                              className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 w-32"
+                            >
+                              <option value="b2b">B2B Enterprise</option>
+                              <option value="b2c">B2C Retail</option>
+                              <option value="d2c">D2C Brand</option>
+                              <option value="custom">Custom Creator</option>
+                            </select>
+                          </div>
                           {customer.status !== "resigned" && (
                             <ExtrudedButton
                               className="bg-red-600 hover:bg-red-700 text-xs px-4 h-9 gap-1"

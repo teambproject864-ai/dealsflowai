@@ -17,7 +17,11 @@ import type {
   CustomerResignation,
   Document,
   AuditLogEntry,
+  B2BBulkOrder,
+  B2CTransaction,
+  D2CBrandingConfig,
 } from "@/lib/portal-types";
+
 
 // Demo users
 export const demoUsers: PortalUser[] = [
@@ -758,6 +762,7 @@ export const demoCustomers: Customer[] = [
     },
     createdAt: "2024-03-10T00:00:00Z",
     updatedAt: "2024-03-10T00:00:00Z",
+    businessModel: "b2b",
   },
   {
     id: "customer-anil",
@@ -776,6 +781,7 @@ export const demoCustomers: Customer[] = [
     },
     createdAt: "2026-06-15T00:00:00Z",
     updatedAt: "2026-06-15T00:00:00Z",
+    businessModel: "b2c",
   },
   {
     id: "customer-john",
@@ -794,8 +800,114 @@ export const demoCustomers: Customer[] = [
     },
     createdAt: "2025-01-01T00:00:00Z",
     updatedAt: "2026-06-10T00:00:00Z",
+    businessModel: "d2c",
+  },
+  {
+    id: "customer-creator",
+    name: "Emerging Creator",
+    email: "creator@youtube.io",
+    phone: "+1-555-444-3333",
+    companyName: "CreatorBrand",
+    industry: "Media",
+    status: "active",
+    assignedAgentId: "agent-praneeth",
+    assignedAgentName: "Praneeth",
+    serviceConfigurations: {
+      gtmReports: true,
+      leadScoring: true,
+      aiCalls: false,
+    },
+    createdAt: "2026-06-18T00:00:00Z",
+    updatedAt: "2026-06-18T00:00:00Z",
+    businessModel: "custom",
   },
 ];
+
+// Mock data for B2B Bulk Orders
+export const demoB2BBulkOrders: B2BBulkOrder[] = [
+  {
+    id: "b2b-ord-1",
+    productName: "Enterprise Seat Licenses (Tier 1)",
+    quantity: 120,
+    unitPrice: 45,
+    totalAmount: 4860, // 10% discount applied for >100 units
+    status: "approved",
+    orderDate: "2026-06-10T10:00:00Z",
+    notes: "Q3 Seat expansion.",
+  },
+  {
+    id: "b2b-ord-2",
+    productName: "API Infrastructure Pack",
+    quantity: 15,
+    unitPrice: 200,
+    totalAmount: 3000,
+    status: "shipped",
+    orderDate: "2026-06-14T14:30:00Z",
+    notes: "Pre-paid contract.",
+  },
+  {
+    id: "b2b-ord-3",
+    productName: "Advanced Security Module",
+    quantity: 500,
+    unitPrice: 15,
+    totalAmount: 6000, // 20% discount applied for >500 units
+    status: "pending",
+    orderDate: "2026-06-22T09:00:00Z",
+    notes: "Awaiting pilot approval.",
+  },
+];
+
+// Mock data for B2C Transactions
+export const demoB2CTransactions: B2CTransaction[] = [
+  {
+    id: "b2c-tx-1",
+    consumerName: "Alice Smith",
+    itemCount: 2,
+    amount: 89.90,
+    paymentStatus: "paid",
+    deviceType: "mobile",
+    checkoutTimestamp: "2026-06-22T18:45:00Z",
+  },
+  {
+    id: "b2c-tx-2",
+    consumerName: "Bob Jones",
+    itemCount: 1,
+    amount: 45.00,
+    paymentStatus: "paid",
+    deviceType: "desktop",
+    checkoutTimestamp: "2026-06-23T11:20:00Z",
+  },
+  {
+    id: "b2c-tx-3",
+    consumerName: "Charlie Brown",
+    itemCount: 5,
+    amount: 245.50,
+    paymentStatus: "failed",
+    deviceType: "tablet",
+    checkoutTimestamp: "2026-06-23T15:05:00Z",
+  },
+];
+
+// Mock data for D2C Branding Configurations
+export const demoD2CBrandingConfigs: Record<string, D2CBrandingConfig> = {
+  "customer-john": {
+    brandName: "TechStartup Premium Goods",
+    logoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=150&auto=format&fit=crop&q=60",
+    primaryColor: "#6366f1", // Indigo
+    secondaryColor: "#ec4899", // Pink
+    customCss: ".brand-header { font-weight: 800; letter-spacing: -0.05em; }",
+    instagramHandle: "@techstartup_goods",
+  },
+  "customer-demo": {
+    brandName: "Demo Brand Co",
+    logoUrl: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=150&auto=format&fit=crop&q=60",
+    primaryColor: "#0d9488", // Teal
+    secondaryColor: "#0891b2", // Cyan
+    customCss: "",
+    instagramHandle: "@demo_brand_co",
+  },
+};
+
 
 // Demo Customer Resignations
 export const demoCustomerResignations: CustomerResignation[] = [
