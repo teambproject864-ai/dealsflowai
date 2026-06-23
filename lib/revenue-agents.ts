@@ -3,6 +3,9 @@ import { PERSONAS } from "@/prompts/personas";
 import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE, RevenueAgentProfile } from "@/lib/types";
 import { assignFairRandomAgent } from "./agent-assignment";
 
+// Re-export so callers can `import type { RevenueAgentProfile } from "@/lib/revenue-agents"`
+export type { RevenueAgentProfile };
+
 // Use the new agent names from lib/types.ts
 import { AGENT_FULL_NAMES, AGENT_EXPERTISE } from "./types";
 

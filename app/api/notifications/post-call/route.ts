@@ -1,11 +1,17 @@
 // app/api/notifications/post-call/route.ts
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 import { hfInfer } from '@/lib/huggingface';
 import { sendEmailWithRetry, sendSMS } from '@/lib/notifications';
 import { detectNoShow, hashRecipient, interpolateTemplate, redactMeetingLink } from '@/lib/post-meeting';
 import { fetchGoogleCalendarEvent } from '@/lib/google-meet';
 import { requireAuth } from '@/lib/auth';
+
+function db() {
+  const instance = getDb();
+  if (!instance) throw new Error('Firestore is not configured');
+  return instance;
+}
 
 export async function POST(req: Request) {
   // ── Authentication ─────────────────────────────────────────
@@ -25,14 +31,14 @@ export async function POST(req: Request) {
     if (!existing.empty) return NextResponse.json({ success: true, skipped: true });
 
     const [callDoc, transcriptDoc, notesDoc] = await Promise.all([
-      db.collection('calls').doc(callId).get(),
-      db.collection('transcripts').doc(callId).get(),
-      db.collection('notes').doc(callId).get()
+      db().collection('calls').doc(callId).get(),
+      db().collection('transcripts').doc(callId).get(),
+      db().collection('notes').doc(callId).get()
     ]);
 
     const callData = callDoc.data();
     const leadId = typeof callData?.leadId === "string" && callData.leadId ? callData.leadId : null;
-    const leadDoc = leadId ? await db.collection('leads').doc(leadId).get() : null;
+    const leadDoc = leadId ? await db().collection('leads').doc(leadId).get() : null;
     const leadData = leadDoc?.exists ? leadDoc.data() : null;
 
     const segments = transcriptDoc.data()?.segments || [];
@@ -70,7 +76,7 @@ export async function POST(req: Request) {
       { merge: true }
     );
 
-    const templatesDoc = await db.collection("notification_templates").doc("post_meeting").get().catch(() => null);
+    const templatesDoc = await db().collection("notification_templates").doc("post_meeting").get().catch(() => null);
     const templates = templatesDoc?.exists ? (templatesDoc.data() as any) : {};
     const momSubjectTpl = String(templates?.momSubject || process.env.MOM_EMAIL_SUBJECT_TEMPLATE || "Minutes of Meeting: Dealflow.ai x {{companyName}}");
     const noShowSubjectTpl = String(templates?.noShowSubject || process.env.NO_SHOW_EMAIL_SUBJECT_TEMPLATE || "pls join the meeting and {{meetingLinkFull}}");
@@ -167,7 +173,7 @@ export async function POST(req: Request) {
       </div>
     `;
 
-    const momLogRef = db.collection("notification_logs").doc();
+    const momLogRef = db().collection("notification_logs").doc();
     await momLogRef.set({
       type: "mom_post_call",
       callId,
@@ -183,7 +189,7 @@ export async function POST(req: Request) {
       if (recipients.length > 0) {
         await sendEmailWithRetry({ to: recipients, subject: momSubject, body: momHtml });
         await momLogRef.update({ status: "success", sentAt: new Date().toISOString() });
-        await db.collection("audit_logs").add({
+        await db().collection("audit_logs").add({
           type: "mom_sent",
           callId,
           leadId,
@@ -194,7 +200,7 @@ export async function POST(req: Request) {
         });
       } else {
         await momLogRef.update({ status: "skipped", reason: "no_valid_recipients", sentAt: new Date().toISOString() });
-        await db.collection("audit_logs").add({
+        await db().collection("audit_logs").add({
           type: "mom_sent",
           callId,
           leadId,
@@ -207,7 +213,7 @@ export async function POST(req: Request) {
       }
     } catch (e: any) {
       await momLogRef.update({ status: "failed", error: e?.message || "failed", failedAt: new Date().toISOString() });
-      await db.collection("audit_logs").add({
+      await db().collection("audit_logs").add({
         type: "mom_sent",
         callId,
         leadId,
@@ -246,7 +252,7 @@ export async function POST(req: Request) {
         </div>
       `;
 
-      const nsLogRef = db.collection("notification_logs").doc();
+      const nsLogRef = db().collection("notification_logs").doc();
       await nsLogRef.set({
         type: "no_show_followup",
         callId,
@@ -261,7 +267,7 @@ export async function POST(req: Request) {
       try {
         await sendEmailWithRetry({ to: recipients, subject: noShowSubject, body: noShowHtml });
         await nsLogRef.update({ status: "success", sentAt: new Date().toISOString() });
-        await db.collection("audit_logs").add({
+        await db().collection("audit_logs").add({
           type: "no_show_followup_sent",
           callId,
           leadId,
@@ -272,7 +278,7 @@ export async function POST(req: Request) {
         });
       } catch (e: any) {
         await nsLogRef.update({ status: "failed", error: e?.message || "failed", failedAt: new Date().toISOString() });
-        await db.collection("audit_logs").add({
+        await db().collection("audit_logs").add({
           type: "no_show_followup_sent",
           callId,
           leadId,
@@ -285,7 +291,7 @@ export async function POST(req: Request) {
       }
     }
 
-    await db.collection('summaries').add({
+    await db().collection('summaries').add({
       callId,
       type: 'post-call',
       content: summaryContent,

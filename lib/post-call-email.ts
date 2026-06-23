@@ -2,6 +2,17 @@
 import { getDb } from './firebase-admin';
 import { sendEmailWithRetry } from './notifications';
 
+// Resolve Firestore instance once at module load; individual functions also
+// call getDb() lazily so they pick up a live instance even if Firebase was
+// not yet initialised when this module was first imported.
+const _db = getDb();
+function db() {
+  // Prefer the module-level instance, fall back to a fresh call.
+  const instance = _db ?? getDb();
+  if (!instance) throw new Error('Firestore is not configured');
+  return instance;
+}
+
 export interface CallTranscript {
   callId: string;
   segments: Array<{
@@ -370,9 +381,9 @@ export async function processAndSendPostCallEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const [callDoc, transcriptDoc, notesDoc] = await Promise.all([
-      db.collection('calls').doc(callId).get(),
-      db.collection('transcripts').doc(callId).get(),
-      db.collection('notes').doc(callId).get()
+      db().collection('calls').doc(callId).get(),
+      db().collection('transcripts').doc(callId).get(),
+      db().collection('notes').doc(callId).get()
     ]);
 
     if (!callDoc.exists) {
@@ -392,7 +403,7 @@ export async function processAndSendPostCallEmail(
 
     let leadData: any = null;
     if (callData.leadId) {
-      const leadDoc = await db.collection('leads').doc(callData.leadId).get();
+      const leadDoc = await db().collection('leads').doc(callData.leadId).get();
       leadData = leadDoc.data() || null;
     }
 
@@ -410,7 +421,7 @@ export async function processAndSendPostCallEmail(
       body: emailHtml
     });
 
-    await db.collection('post_call_reports').add({
+    await db().collection('post_call_reports').add({
       callId,
       analysis,
       sentTo: stakeholderEmail,
@@ -424,7 +435,7 @@ export async function processAndSendPostCallEmail(
   } catch (error: any) {
     console.error(`[PostCallEmail] Failed to process call ${callId}:`, error);
     
-    await db.collection('post_call_reports').add({
+    await db().collection('post_call_reports').add({
       callId,
       sentTo: stakeholderEmail,
       sentAt: new Date().toISOString(),
@@ -441,13 +452,13 @@ export async function getCompletedCallsForDay(): Promise<Array<{ callId: string;
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-  const snapshot = await db.collection('calls')
+  const snapshot = await db().collection('calls')
     .where('status', '==', 'completed')
     .where('updatedAtMs', '>=', startOfDay.getTime())
     .where('updatedAtMs', '<=', endOfDay.getTime())
     .get();
 
-  return snapshot.docs.map(doc => ({
+  return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
     callId: doc.id,
     leadId: doc.data().leadId
   }));
@@ -481,7 +492,7 @@ export async function executeEndOfDayEmailRun(stakeholderEmail: string): Promise
     }
   }
 
-  await db.collection('post_call_batch_runs').add({
+  await db().collection('post_call_batch_runs').add({
     email: stakeholderEmail,
     processedAt: new Date().toISOString(),
     ...results

@@ -2,7 +2,11 @@
 import { executeEndOfDayEmailRun, processAndSendPostCallEmail } from './post-call-email';
 import { getDb } from './firebase-admin';
 
-const db = getDb();
+function db() {
+  const instance = getDb();
+  if (!instance) throw new Error('Firestore is not configured');
+  return instance;
+}
 
 export interface SchedulerConfig {
   defaultStakeholderEmail: string;
@@ -107,7 +111,7 @@ export async function triggerIndividualCallEmail(
 
 async function logSchedulerEvent(type: string, data: Record<string, any>) {
   try {
-    await db.collection('scheduler_events').add({
+    await db().collection('scheduler_events').add({
       type,
       ...data,
       timestamp: new Date().toISOString(),
@@ -133,7 +137,7 @@ export async function getSchedulerStatus(): Promise<{
   };
 }> {
   try {
-    const lastRunDoc = await db.collection('post_call_batch_runs')
+    const lastRunDoc = await db().collection('post_call_batch_runs')
       .orderBy('processedAt', 'desc')
       .limit(1)
       .get();

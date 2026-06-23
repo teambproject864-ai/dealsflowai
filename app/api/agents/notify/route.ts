@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 import { sendEmailWithRetry } from "@/lib/notifications";
 import { type AgentAssignmentNotification, AGENT_FULL_NAMES } from "@/lib/types";
 
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       sentAt: new Date().toISOString(),
     };
     
-    await db.collection("agent_notifications").add(logData);
+    await getDb()!.collection("agent_notifications").add(logData);
     
     return NextResponse.json({
       success: true,

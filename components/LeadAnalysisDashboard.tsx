@@ -698,7 +698,7 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
       md += `### Scoring Threshold for Revision\n\n${analysis.icpValidationChecklist.scoringThresholdForRevision}\n\n`;
     }
     if (analysis.icpValidationChecklist.reviewChecklist?.length) {
-      md += `### Review Checklist\n\n${analysis.icpValidationChecklist.reviewChecklist.map(i => `- ${i}`).join("\n")}\n\n`;
+      md += `### Review Checklist\n\n${analysis.icpValidationChecklist.reviewChecklist.map((i: string) => `- ${i}`).join("\n")}\n\n`;
     }
   }
 
@@ -1171,7 +1171,7 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
             <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
               <h4 className="font-semibold text-white mb-4">Pre-Qualification Checklist</h4>
               <ul className="space-y-2">
-                {analysis.icpValidationChecklist?.preQualificationChecklist.map((item, i) => (
+                {analysis.icpValidationChecklist?.preQualificationChecklist.map((item: string, i: number) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded border border-white/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
                       <Check className="w-3 h-3 text-teal-400 opacity-0 group-hover:opacity-100" />
@@ -1184,7 +1184,7 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
             <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
               <h4 className="font-semibold text-white mb-4">ICP Update Triggers</h4>
               <ul className="space-y-2">
-                {analysis.icpValidationChecklist?.icpUpdateTriggers.map((item, i) => (
+                {analysis.icpValidationChecklist?.icpUpdateTriggers.map((item: string, i: number) => (
                   <li key={i} className="flex items-center gap-2">
                     <IconAlertObjection className="w-4 h-4 text-amber-400" aria-hidden="true" />
                     <span className="text-slate-300">{item}</span>
@@ -1214,7 +1214,7 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
             <div className="mt-6 rounded-xl bg-white/[0.02] border border-white/10 p-6">
               <h4 className="font-semibold text-white mb-4">Review Checklist</h4>
               <ul className="space-y-2">
-                {analysis.icpValidationChecklist.reviewChecklist.map((item, i) => (
+                {analysis.icpValidationChecklist.reviewChecklist.map((item: string, i: number) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded border border-white/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
                       <Check className="w-3 h-3 text-teal-400 opacity-0 group-hover:opacity-100" />
@@ -1229,7 +1229,7 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
           <div className="mt-6 rounded-xl bg-teal-500/5 border border-teal-500/10 p-6">
             <h4 className="font-semibold text-teal-300 mb-2">Data Sources for Validation</h4>
             <ul className="flex flex-wrap gap-2">
-              {analysis.icpValidationChecklist?.dataSourcesForValidation.map((ds, i) => (
+              {analysis.icpValidationChecklist?.dataSourcesForValidation.map((ds: string, i: number) => (
                 <li key={i} className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 text-slate-300 text-sm border border-white/10">
                   {ds}
                 </li>
