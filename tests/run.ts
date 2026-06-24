@@ -1,3 +1,6 @@
+import { loadEnvConfig } from "@next/env";
+loadEnvConfig(process.cwd());
+
 import assert from "assert";
 import { parseIcsEvents, parseIcsDate } from "@/lib/ics";
 import { extractConferenceUrl, selectJoinCandidates } from "@/lib/calendar-events";

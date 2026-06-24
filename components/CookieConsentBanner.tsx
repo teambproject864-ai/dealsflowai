@@ -6,7 +6,7 @@ import { ShieldCheck, Info, X } from "lucide-react";
 import Link from "next/link";
 
 export function CookieConsentBanner() {
-  const { user } = useCurrentUser();
+  const { user, isLoading } = useCurrentUser();
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   
@@ -28,6 +28,34 @@ export function CookieConsentBanner() {
     }
   }, []);
 
+  // Sync locally stored consent to Firestore when the user logs in
+  useEffect(() => {
+    if (!isLoading && user) {
+      const storedConsent = localStorage.getItem("dealflow_cookie_consent");
+      const synced = localStorage.getItem("dealflow_cookie_synced");
+      if (storedConsent && synced !== "true") {
+        const purposes = JSON.parse(localStorage.getItem("dealflow_cookie_purposes") || '["essential"]');
+        const doNotSell = localStorage.getItem("dealflow_cookie_donotsell") === "true";
+        
+        fetch("/api/consent", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            consentVersion: "v1.0",
+            purposes,
+            doNotSell,
+          }),
+        }).then(res => {
+          if (res.ok) {
+            localStorage.setItem("dealflow_cookie_synced", "true");
+          }
+        }).catch(err => console.error("Failed to sync consent on login:", err));
+      }
+    }
+  }, [user, isLoading]);
+
   const saveConsent = async (
     purposes: string[],
     doNotSell: boolean,
@@ -36,12 +64,13 @@ export function CookieConsentBanner() {
     localStorage.setItem("dealflow_cookie_consent", status);
     localStorage.setItem("dealflow_cookie_purposes", JSON.stringify(purposes));
     localStorage.setItem("dealflow_cookie_donotsell", String(doNotSell));
+    localStorage.setItem("dealflow_cookie_synced", "false");
     setIsVisible(false);
 
     // Sync with Firestore if the user is authenticated
     if (user) {
       try {
-        await fetch("/api/consent", {
+        const res = await fetch("/api/consent", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -52,6 +81,9 @@ export function CookieConsentBanner() {
             doNotSell,
           }),
         });
+        if (res.ok) {
+          localStorage.setItem("dealflow_cookie_synced", "true");
+        }
       } catch (err) {
         console.error("Failed to sync cookie consent with database:", err);
       }

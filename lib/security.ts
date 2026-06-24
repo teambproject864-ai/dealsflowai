@@ -180,18 +180,28 @@ export function decryptLead(lead: any): any {
   if (!lead) return lead;
   const key = getAESKey();
   const result = { ...lead };
+  const fallbackKey = createHash('sha256').update('default-fallback-key-dealflow-value').digest();
+
   if (result.contactEmail && typeof result.contactEmail === 'string' && result.contactEmail.includes(':')) {
     try {
       result.contactEmail = decryptAES(result.contactEmail, key);
     } catch (e) {
-      console.warn("Failed to decrypt contactEmail:", e);
+      try {
+        result.contactEmail = decryptAES(result.contactEmail, fallbackKey);
+      } catch (err) {
+        console.warn("Failed to decrypt contactEmail with both primary and fallback keys:", err);
+      }
     }
   }
   if (result.contactPhone && typeof result.contactPhone === 'string' && result.contactPhone.includes(':')) {
     try {
       result.contactPhone = decryptAES(result.contactPhone, key);
     } catch (e) {
-      console.warn("Failed to decrypt contactPhone:", e);
+      try {
+        result.contactPhone = decryptAES(result.contactPhone, fallbackKey);
+      } catch (err) {
+        console.warn("Failed to decrypt contactPhone with both primary and fallback keys:", err);
+      }
     }
   }
   return result;
