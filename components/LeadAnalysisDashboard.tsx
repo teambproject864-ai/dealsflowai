@@ -189,20 +189,16 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
   const [regenerating, setRegenerating] = useState(false);
 
   // Ref to prevent multiple runs
-  const hasInitializedRef = useRef(false);
+  const lastProcessedLeadIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Reset if leadId changes
-    if (leadId !== hasInitializedRef.current) {
-      hasInitializedRef.current = false;
-    }
-
     async function runAnalysis(forceRegenerate = false) {
-      if (!forceRegenerate && hasInitializedRef.current) {
+      // Skip if we've already processed this leadId and not forcing regenerate
+      if (!forceRegenerate && lastProcessedLeadIdRef.current === leadId) {
         return;
       }
 
-      hasInitializedRef.current = true;
+      lastProcessedLeadIdRef.current = leadId;
       
       if (forceRegenerate) {
         setRegenerating(true);
