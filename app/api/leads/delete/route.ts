@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
+import { logAuditEvent } from "@/lib/audit-logger";
 
 async function verifyToken(req: Request) {
   const authHeader = req.headers.get("authorization") ?? "";
@@ -60,13 +61,7 @@ export async function DELETE(req: Request) {
     await leadRef.delete();
 
     // ── Audit log ────────────────────────────────────────────
-    await db.collection("audit_log").add({
-      action:    "GDPR_ERASURE",
-      leadId,
-      userId:    uid,
-      timestamp: new Date().toISOString(),
-      deletedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await logAuditEvent(req, uid, "GDPR_ERASURE", { leadId });
 
     return NextResponse.json({ success: true, message: "Lead data erased." });
   } catch (error: any) {

@@ -5,6 +5,7 @@ import { sendEmailWithRetry } from "@/lib/notifications";
 import { ensureBotForCall } from "@/lib/call-bot";
 import { createCallSchema, CallRecord, LeadRecord } from "@/lib/types";
 import { loadServiceAccount } from "@/lib/service-account";
+import { decryptLead } from "@/lib/security";
 
 export async function POST(req: Request) {
   try {
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
     void (async () => {
       try {
         const leadDoc = await db.collection("leads").doc(leadId).get();
-        const lead = leadDoc.data() as LeadRecord | undefined;
+        const lead = decryptLead(leadDoc.data()) as LeadRecord | undefined;
         const companyName = lead?.companyName || "a prospect";
         const leadEmail = String(lead?.contactEmail || "").trim();
         const canNotifyLead = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail);

@@ -47,6 +47,8 @@ function ensureFirebaseApp(): admin.app.App | null {
 
 /** Returns Firestore bound to the named Admin app, or null if Firebase not configured */
 export function getDb(): admin.firestore.Firestore | null {
+  const mock = (globalThis as any).firestoreMock;
+  if (mock) return mock;
   if (!firestoreInstance) {
     const app = ensureFirebaseApp();
     if (app) {

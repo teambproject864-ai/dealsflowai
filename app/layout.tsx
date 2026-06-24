@@ -7,6 +7,7 @@ import { AIChatAssistant } from "@/components/AIChatAssistant";
 import { VoiceCallWidget } from "@/components/VoiceCallWidget";
 import { LiveChatWidget } from "@/components/LiveChatWidget";
 import { ImmersiveLayout } from "@/components/immersive/ImmersiveLayout";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({
@@ -106,6 +107,7 @@ export default function RootLayout({
         <AIChatAssistant />
         <VoiceCallWidget />
         <LiveChatWidget />
+        <CookieConsentBanner />
       </body>
     </html>
   );

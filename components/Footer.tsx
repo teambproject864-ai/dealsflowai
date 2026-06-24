@@ -21,6 +21,8 @@ export function Footer() {
       { name: "Privacy Policy", href: "/privacy" },
       { name: "Terms of Service", href: "/terms" },
       { name: "Security", href: "/security" },
+      { name: "Do Not Sell My Info", href: "/account/privacy" },
+      { name: "Privacy Preferences", href: "/account/privacy" },
     ],
   };
 

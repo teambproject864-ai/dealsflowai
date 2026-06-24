@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendMeetingActivationNotification } from "@/lib/notifications";
 import { isValidMeetingUrl } from "@/lib/meeting-utils";
 import { db } from "@/lib/firebase-admin";
+import { decryptLead } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    const leadData = leadDoc.data()!;
+    const leadData = decryptLead(leadDoc.data()!);
 
     await sendMeetingActivationNotification({
       meetingUrl,

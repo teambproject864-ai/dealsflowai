@@ -5,6 +5,7 @@ import { createGoogleMeetLink } from "@/lib/google-meet";
 import { sendEmailWithRetry } from "@/lib/notifications";
 import { ensureBotForCall } from "@/lib/call-bot";
 import { immediateCallSchema, CallRecord, LeadRecord } from "@/lib/types";
+import { decryptLead } from "@/lib/security";
 
 const DEFAULT_MAX_IMMEDIATE_CALLS = 3;
 
@@ -29,45 +30,41 @@ export async function POST(req: Request) {
       );
     }
 
-    const db = getDb();
     const body = await req.json();
     const validated = immediateCallSchema.safeParse(body);
 
     if (!validated.success) {
       return NextResponse.json(
-        { success: false, error: "Invalid request body", details: validated.error.format() },
+        { success: false, error: "Invalid request payload", details: validated.error.flatten() },
         { status: 400 }
       );
     }
 
-    const { leadId, analysisId, personaKey } = validated.data;
+    const { leadId, personaKey, analysisId } = validated.data;
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json(
+        { success: false, error: "Database not available" },
+        { status: 500 }
+      );
+    }
 
-    const maxImmediateCalls = parseMaxImmediateCalls();
-    const activeSnapshot = await db
+    // Check rate limit on immediate calls per lead
+    const maxCalls = parseMaxImmediateCalls();
+    const snap = await db
       .collection("calls")
-      .where("status", "==", "in-progress")
-      .limit(50)
+      .where("leadId", "==", leadId)
+      .where("status", "==", "scheduled")
       .get();
-
-    const now = Date.now();
-    const recentThresholdMs = now - 2 * 60 * 1000;
-    const activeImmediateCount = activeSnapshot.docs.reduce((count, doc) => {
-      const data = doc.data() as CallRecord;
-      if (data.callMode !== "immediate") return count;
-      
-      const lastSeenMs = data.updatedAtMs || 0;
-      if (lastSeenMs && lastSeenMs < recentThresholdMs) return count;
-      return count + 1;
-    }, 0);
-
-    if (activeImmediateCount >= maxImmediateCalls) {
+    
+    if (snap.size >= maxCalls) {
       return NextResponse.json(
         {
           success: false,
-          available: false,
-          error: "No immediate slots available right now.",
+          error: "Limit exceeded",
+          message: `Too many active calls. A lead is allowed at most ${maxCalls} simultaneous scheduled/immediate calls.`,
         },
-        { status: 409 }
+        { status: 429 }
       );
     }
 
@@ -95,7 +92,7 @@ export async function POST(req: Request) {
 
     try {
       const leadDoc = await db.collection("leads").doc(leadId).get();
-      const lead = leadDoc.data() as LeadRecord | undefined;
+      const lead = decryptLead(leadDoc.data()) as LeadRecord | undefined;
       const companyName = lead?.companyName || "a prospect";
 
       const start = new Date();

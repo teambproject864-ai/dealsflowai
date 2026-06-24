@@ -16,6 +16,7 @@ import {
 import * as THREE from "three";
 import { GtmMilestone, seedGtmMilestones } from "@/lib/seed-data";
 import { useFirestoreCollection } from "@/lib/firestore-realtime";
+import { OnboardingTour } from "./OnboardingTour";
 
 // ─── Milestone Node ────────────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ function MilestoneNode({
         {/* Click detail panel */}
         {isSelected && (
           <Html distanceFactor={8} position={[0, 1.6, 0]}>
-            <div className="pointer-events-none w-[220px] rounded-xl border border-white/10 bg-slate-900/90 p-3 backdrop-blur-md shadow-2xl">
+            <div className="pointer-events-none w-[clamp(180px,40vw,240px)] rounded-xl border border-white/10 bg-slate-900/90 p-3 backdrop-blur-md shadow-2xl hidden md:block">
               <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 {milestone.territory}
               </div>
@@ -360,8 +361,63 @@ export function GtmLaunchRoadmap3D() {
     );
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (milestones.length === 0) return;
+    const currentIndex = milestones.findIndex((m) => m.id === selectedId);
+    if (e.key === "Tab" || e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % milestones.length;
+      setSelectedId(milestones[nextIndex].id);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + milestones.length) % milestones.length;
+      setSelectedId(milestones[prevIndex].id);
+    } else if (e.key === "Escape") {
+      setSelectedId(null);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (selectedId) {
+        setSelectedId(null);
+      } else {
+        setSelectedId(milestones[0].id);
+      }
+    }
+  };
+
   return (
-    <div className="relative h-full w-full">
+    <div
+      className="relative h-full w-full focus-within:ring-2 focus-within:ring-teal-500/50 focus-within:outline-none rounded-3xl overflow-hidden"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="region"
+      aria-label="3D GTM Launch Roadmap. Use Arrow keys or Tab key to cycle through milestones, and Escape to clear selection."
+    >
+      <OnboardingTour sceneKey="gtm" />
+      {/* Screen-reader accessible GTM milestones data table */}
+      <table className="sr-only">
+        <caption>GTM Launch Roadmap Milestones</caption>
+        <thead>
+          <tr>
+            <th scope="col">Milestone</th>
+            <th scope="col">Status</th>
+            <th scope="col">Completion</th>
+            <th scope="col">Owner</th>
+            <th scope="col">Territory</th>
+          </tr>
+        </thead>
+        <tbody>
+          {milestones.map((m) => (
+            <tr key={m.id}>
+              <td>{m.title}</td>
+              <td>{m.status}</td>
+              <td>{m.completionPct}%</td>
+              <td>{m.owner}</td>
+              <td>{m.territory}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       <Canvas shadows dpr={dpr} onClick={() => setSelectedId(null)}>
         <PerformanceMonitor
           onIncline={() => { setDpr(2); setPerf("high"); }}
@@ -439,6 +495,38 @@ export function GtmLaunchRoadmap3D() {
       <div className="pointer-events-none absolute bottom-6 left-6 text-[10px] uppercase tracking-widest text-slate-500">
         Real-time sync · {milestones.length} milestones
       </div>
+
+      {/* Mobile / Responsive Bottom Sheet for Milestone Details */}
+      {selectedMilestone && (
+        <div className="absolute bottom-4 left-4 right-4 bg-slate-950/90 border border-white/10 p-4 rounded-2xl backdrop-blur-md flex justify-between items-center z-20 pointer-events-auto md:hidden animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-2 w-2 rounded-full"
+              style={{
+                backgroundColor:
+                  selectedMilestone.status === "completed" ? "#10b981" :
+                  selectedMilestone.status === "in-progress" ? "#f59e0b" : "#6366f1"
+              }}
+            />
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {selectedMilestone.territory} · {selectedMilestone.owner}
+              </div>
+              <div className="text-sm font-bold text-white">{selectedMilestone.title}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                {selectedMilestone.completionPct}% complete · Due: {selectedMilestone.dueDate}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setSelectedId(null)}
+            className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 active:bg-white/10"
+            style={{ minHeight: "44px", minWidth: "44px" }}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }

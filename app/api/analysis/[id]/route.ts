@@ -2,15 +2,18 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { getInMemoryAnalyses } from "@/lib/memory-storage";
 import { loadServiceAccount } from "@/lib/service-account";
+import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
 
 export const dynamic = "force-dynamic";
 
 const inMemoryAnalyses = getInMemoryAnalyses();
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rateLimitResponse = await checkRateLimitSensitive(req);
+  if (rateLimitResponse) return rateLimitResponse;
   try {
     const { id: analysisId } = await params;
 

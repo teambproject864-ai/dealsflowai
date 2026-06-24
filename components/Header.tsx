@@ -301,13 +301,7 @@ export function Header() {
 
   return (
     <header className={headerClasses} suppressHydrationWarning>
-      {/* Skip-to-content link for accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-5 focus:left-5 focus:z-[1000] focus:px-5 focus:py-2.5 focus:rounded-2xl focus:bg-gradient-to-r from-teal-600 to-cyan-500 focus:text-white focus:font-semibold focus:outline-none focus:ring-4 focus:ring-teal-500/30 shadow-lg shadow-teal-600/30"
-      >
-        Skip to main content
-      </a>
+    
       <div
         className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 sm:gap-5 transition-all duration-500 ${
           isScrolled ? "h-16" : "h-20"
