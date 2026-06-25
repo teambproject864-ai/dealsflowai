@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 // Mock data generator for offline mode
-function generateMockCompleteGTM(companyName: string): AnalysisResult {
+function generateMockCompleteGTM(companyName: string, formData?: any): AnalysisResult {
   return {
     executiveSummary: `${companyName} has strong potential for growth with a B2B SaaS offering. The GTM analysis identifies key segments, channels, and messaging strategies to accelerate pipeline and close rates.`,
     icpDefinition: {
@@ -48,8 +48,32 @@ function generateMockCompleteGTM(companyName: string): AnalysisResult {
       ]
     },
     table1FirmographicDemographic: [
-      { priorityTier: "Tier 1", industryVertical: "SalesTech/MarTech", companySize: "25-100 employees", arrRange: "$2M-$20M", location: "United States (West/Northeast)", keyDecisionMakerDemographics: "VP Sales, 35-50yo, data-driven", notes: "Highest conversion, fastest sales cycles", primaryCostDriver: "Tooling", currentSolutionStatus: "Basic", numberOfSitesTeamsLocations: "2-5", sustainabilityEsgComplianceCommitment: "Yes" },
-      { priorityTier: "Tier 2", industryVertical: "FinTech B2B SaaS", companySize: "50-150 employees", arrRange: "$5M-$50M", location: "US/EU", keyDecisionMakerDemographics: "CRO/Director of Sales", notes: "High ACV, higher retention", primaryCostDriver: "Headcount", currentSolutionStatus: "None", numberOfSitesTeamsLocations: "5-10", sustainabilityEsgComplianceCommitment: "In Progress" }
+      { 
+        priorityTier: "Tier 1", 
+        industryVertical: "SalesTech/MarTech", 
+        companySize: "25-100 employees", 
+        arrRange: "$2M-$20M", 
+        location: formData?.targetGeographicRegionsText || "United States (West/Northeast)", 
+        keyDecisionMakerDemographics: "VP Sales, 35-50yo, data-driven", 
+        notes: "Highest conversion, fastest sales cycles", 
+        primaryCostDriver: "Tooling", 
+        currentSolutionStatus: "Basic", 
+        numberOfSitesTeamsLocations: "2-5", 
+        sustainabilityEsgComplianceCommitment: "Yes" 
+      },
+      { 
+        priorityTier: "Tier 2", 
+        industryVertical: "FinTech B2B SaaS", 
+        companySize: "50-150 employees", 
+        arrRange: "$5M-$50M", 
+        location: formData?.targetGeographicRegionsText || "US/EU", 
+        keyDecisionMakerDemographics: "CRO/Director of Sales", 
+        notes: "High ACV, higher retention", 
+        primaryCostDriver: "Headcount", 
+        currentSolutionStatus: "None", 
+        numberOfSitesTeamsLocations: "5-10", 
+        sustainabilityEsgComplianceCommitment: "In Progress" 
+      }
     ],
     behavioralPsychographicTraits: {
       observableBehavioralPatterns: ["Downloads sales automation content", "Attends GTM webinars", "Active on LinkedIn Sales", "Uses multiple SaaS tools"],
@@ -252,7 +276,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         }
         
         if (fallbackData) {
-          const mockData = generateMockCompleteGTM(fallbackData.companyName || "Company");
+          const mockData = generateMockCompleteGTM(fallbackData.companyName || "Company", fallbackData);
           setAnalysis(mockData);
           setIsOfflineData(true);
           if (leadId) await saveLeadOffline(leadId, fallbackData as any, mockData, false);
@@ -402,14 +426,6 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
 
   return (
     <div className="space-y-12">
-      {isOfflineData && (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-950/60 backdrop-blur-md p-4 text-amber-200 text-sm flex items-center gap-3" role="status" aria-live="polite">
-          <WifiOff className="w-5 h-5 flex-shrink-0 text-amber-400 animate-pulse" aria-hidden="true" />
-          <div>
-            <strong>Viewing Offline Analysis Report</strong> — This GTM readout was generated locally from cache because you are currently offline. It will synchronize with our AI pipeline automatically once you are back online.
-          </div>
-        </div>
-      )}
 
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="space-y-8">
           {/* Header & Action Controls */}
@@ -537,7 +553,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         </AnimatePresence>
 
         {hasCompleteGTM ? (
-          <CompleteGTMDisplay analysis={analysis} />
+          <CompleteGTMDisplay analysis={analysis} context={context} setAnalysis={setAnalysis} />
         ) : (
           <LegacyGTMDisplay analysis={analysis} />
         )}
@@ -584,7 +600,21 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
 
   let md = `# ${analysis.companyName || "Company"} - GTM Analysis Playbook\n\n`;
   
-  if (analysis.executiveSummary) md += `## 1. Executive Summary\n\n${analysis.executiveSummary}\n\n`;
+  // Input Customer Data section
+  md += `## Input Customer Data\n\n`;
+  md += `> **User-Provided**: Data you submitted in the intake form\n\n`;
+  if (context?.form) {
+    md += `- **Company Name**: ${context.form.companyName || "Not provided"}\n`;
+    md += `- **Website**: ${context.form.websiteUrl || "Not provided"}\n`;
+    md += `- **Contact Name**: ${context.form.name || "Not provided"}\n`;
+    md += `- **Contact Email**: ${context.form.emailPersonal || "Not provided"}\n`;
+    md += `- **Target Industries**: ${Array.isArray(context.form.targetIndustries) ? context.form.targetIndustries.join(", ") : "Not provided"}\n`;
+    md += `- **Target Geographic Regions**: ${context.form.targetGeographicRegionsText || "Not provided"}\n`;
+    md += `- **ICP Description**: ${context.form.icpDescription || "Not provided"}\n`;
+  }
+  md += `\n`;
+  
+  if (analysis.executiveSummary) md += `## 1. Executive Summary\n\n> **AI-Generated**: Analysis output from DealFlow AI\n\n${analysis.executiveSummary}\n\n`;
   if (analysis.icpDefinition) {
     md += `## 2. ICP Definition\n\n### Inclusion Criteria\n\n${analysis.icpDefinition.inclusionCriteria.map(i => `- ${i}`).join("\n")}\n\n### Exclusion Criteria\n\n${analysis.icpDefinition.exclusionCriteria.map(e => `- ${e}`).join("\n")}\n\n`;
   }
@@ -796,8 +826,9 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
 }
 
 // Component to display complete GTM analysis
-function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
+function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: AnalysisResult, context: StoredLeadContext | null, setAnalysis?: (analysis: AnalysisResult) => void }) {
   const sections = [
+    { id: "input-data", icon: <FileText />, title: "Input Customer Data" },
     { id: "executive", icon: <FileText />, title: "1. Executive Summary" },
     { id: "icp", icon: <Target />, title: "2. ICP Definition" },
     { id: "firmographics", icon: <Users />, title: "3. Table 1: Firmographics" },
@@ -819,6 +850,78 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
   ];
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, any>>(
+    context?.form ? { ...context.form } : {}
+  );
+
+  // Helper to render input field
+  const InputField = ({ label, name, value, type = "text" }: { label: string, name: string, value: string | string[] | undefined, type?: "text" | "textarea" }) => {
+    if (isEditing) {
+      if (type === "textarea") {
+        return (
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-400">{label}</label>
+            <textarea
+              value={editForm[name] || ""}
+              onChange={(e) => setEditForm({ ...editForm, [name]: e.target.value })}
+              className="w-full bg-slate-900/50 border border-white/10 rounded-lg p-2 text-white text-sm"
+              rows={3}
+            />
+          </div>
+        );
+      }
+      if (Array.isArray(value)) {
+        return (
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-400">{label}</label>
+            <input
+              value={editForm[name]?.join(", ") || ""}
+              onChange={(e) => setEditForm({ ...editForm, [name]: e.target.value.split(",").map(s => s.trim()) })}
+              className="w-full bg-slate-900/50 border border-white/10 rounded-lg p-2 text-white text-sm"
+            />
+          </div>
+        );
+      }
+      return (
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-slate-400">{label}</label>
+          <input
+            type={type}
+            value={editForm[name] || ""}
+            onChange={(e) => setEditForm({ ...editForm, [name]: e.target.value })}
+            className="w-full bg-slate-900/50 border border-white/10 rounded-lg p-2 text-white text-sm"
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-slate-400">{label}</label>
+          <p className="text-slate-300">
+            {Array.isArray(value) ? value.join(", ") : (value || "Not provided")}
+          </p>
+        </div>
+      );
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!setAnalysis) return;
+    const newMockData = generateMockCompleteGTM(
+      editForm.companyName || "Company",
+      editForm
+    );
+    setAnalysis(newMockData);
+  };
+
+  const handleSaveEdit = () => {
+    // Save editForm to lead context
+    if (context) {
+      saveLeadContext({ ...context.form, ...editForm }, null);
+    }
+    setIsEditing(false);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -854,7 +957,57 @@ function CompleteGTMDisplay({ analysis }: { analysis: AnalysisResult }) {
       </div>
 
       <div className="lg:col-span-9 space-y-6">
+        {/* Input Customer Data Section */}
+        <GTMSection title="Input Customer Data" id="input-data" icon={<FileText />}>
+          <div className="rounded-xl bg-blue-950/20 border border-blue-500/20 p-6 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                  User-Provided
+                </span>
+                <p className="text-sm text-slate-400">Data you submitted in the intake form</p>
+              </div>
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700 text-white">
+                      Save
+                    </Button>
+                    <Button onClick={() => setIsEditing(false)} className="bg-slate-600 hover:bg-slate-700 text-white">
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Edit
+                  </Button>
+                )}
+                <Button onClick={handleRegenerate} className="bg-purple-600 hover:bg-purple-700 text-white">
+                  Regenerate Analysis
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Company Name" name="companyName" value={context?.form?.companyName} />
+              <InputField label="Website" name="websiteUrl" value={context?.form?.websiteUrl} />
+              <InputField label="Contact Name" name="name" value={context?.form?.name} />
+              <InputField label="Contact Email" name="emailPersonal" value={context?.form?.emailPersonal} />
+              <InputField label="Target Industries" name="targetIndustries" value={context?.form?.targetIndustries} />
+              <InputField label="Target Geographic Regions" name="targetGeographicRegionsText" value={context?.form?.targetGeographicRegionsText} type="textarea" />
+              <InputField label="ICP Description" name="icpDescription" value={context?.form?.icpDescription} type="textarea" />
+            </div>
+          </div>
+        </GTMSection>
+
         {/* Section 1: Executive Summary */}
+        <div className="rounded-xl bg-purple-950/10 border border-purple-500/10 p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+              AI-Generated
+            </span>
+            <p className="text-sm text-slate-400">Analysis output from DealFlow AI</p>
+          </div>
+        </div>
         <GTMSection title="1. Executive Summary" id="executive" icon={<FileText />}>
           <p className="text-slate-300 leading-relaxed">{analysis.executiveSummary}</p>
         </GTMSection>
@@ -1636,7 +1789,23 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     <h1 style="margin-bottom: 24px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px;">${analysis.companyName || "Company"} - GTM Analysis Playbook</h1>
   `;
 
+  // Input Customer Data section
+  html += `<h2 style="margin-top: 32px; margin-bottom: 16px; color: #1e293b;">Input Customer Data</h2>`;
+  html += `<p style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 16px; color: #1e3a8a;"><strong>User-Provided</strong>: Data you submitted in the intake form</p>`;
+  if (context?.form) {
+    html += `<ul style="margin-left:24px; margin-bottom:16px; line-height:1.8; color: #334155;">`;
+    html += `<li><strong>Company Name:</strong> ${context.form.companyName || "Not provided"}</li>`;
+    html += `<li><strong>Website:</strong> ${context.form.websiteUrl || "Not provided"}</li>`;
+    html += `<li><strong>Contact Name:</strong> ${context.form.name || "Not provided"}</li>`;
+    html += `<li><strong>Contact Email:</strong> ${context.form.emailPersonal || "Not provided"}</li>`;
+    html += `<li><strong>Target Industries:</strong> ${Array.isArray(context.form.targetIndustries) ? context.form.targetIndustries.join(", ") : "Not provided"}</li>`;
+    html += `<li><strong>Target Geographic Regions:</strong> ${context.form.targetGeographicRegionsText || "Not provided"}</li>`;
+    html += `<li><strong>ICP Description:</strong> ${context.form.icpDescription || "Not provided"}</li>`;
+    html += `</ul>`;
+  }
+
   if (analysis.executiveSummary) {
+    html += `<p style="background: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 12px; margin-bottom: 16px; color: #4c1d9d;"><strong>AI-Generated</strong>: Analysis output from DealFlow AI</p>`;
     html += `<h2 style="margin-top: 32px; margin-bottom: 16px; color: #1e293b;">1. Executive Summary</h2>`;
     html += `<p style="line-height: 1.8; color: #334155;">${analysis.executiveSummary}</p>`;
   }

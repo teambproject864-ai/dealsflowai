@@ -330,6 +330,7 @@ async function analyzeCompany(state: typeof AnalysisState.State) {
     const websiteUrl = state.companyData?.websiteUrl || "";
     const additionalLeadDetails = state.companyData?.additionalDetails || "";
     const websiteContent = state.websiteContent;
+as     const analysisId = state.companyData?.analysisId || undefined; // Pass analysisId if available
 
     const ctx = { companyName, websiteUrl, additionalLeadDetails, websiteContent };
 
@@ -337,7 +338,7 @@ async function analyzeCompany(state: typeof AnalysisState.State) {
     const sectionPromises = SECTION_TASKS.map(async (task) => {
       try {
         const jsonSystemPrompt = `${task.systemPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON, NO EXPLANATIONS, NO MARKDOWN, NO TEXT OUTSIDE OF JSON. Ensure no trailing commas.`;
-        const rawResult = await performDynamicInferenceJSON(task.userPrompt(ctx), jsonSystemPrompt, { requestType: "gtm-analysis" });
+        const rawResult = await performDynamicInferenceJSON(task.userPrompt(ctx), jsonSystemPrompt, { requestType: analysisId ? `gtm-analysis-${analysisId}` : "gtm-analysis" });
         const validated = task.schema.parse(rawResult);
         console.log(`[analysisGraph] Successfully processed section: ${task.id}`);
         return { [task.id]: validated };

@@ -7,6 +7,7 @@ import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
 import { db } from "@/lib/firebase-admin";
 import { encryptLead, decryptLead } from "@/lib/security";
 import { logAuditEvent } from "@/lib/audit-logger";
+import { terminateLLMJobsForAnalysis } from "@/lib/llm-job-tracker";
 
 export const maxDuration = 120; // Extended from 60 to allow more time
 export const dynamic = "force-dynamic";
@@ -52,6 +53,9 @@ export async function POST(req: Request) {
     console.log("[analyze/route] Starting analysis request...");
     const { leadId, companyData: providedData } = await req.json();
 
+    // Generate analysis ID early to track LLM jobs
+    analysisId = uuidv4();
+
     let companyData = providedData;
     if (!companyData && leadId) {
       companyData = inMemoryLeads.get(leadId);
@@ -74,15 +78,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // Add analysisId to companyData so it's available in analysisGraph
+    const companyDataWithAnalysisId = { ...companyData, analysisId };
+
     console.log("[analyze/route] Invoking analysis graph...");
-    const graphState = await analysisGraph.invoke({ companyData });
+    const graphState = await analysisGraph.invoke({ companyData: companyDataWithAnalysisId });
 
     if (graphState.error) {
       throw new Error(graphState.error);
     }
 
     const analysis = graphState.analysisResult;
-    analysisId = uuidv4();
     success = true;
 
     const analysisRecord = {
@@ -136,6 +142,16 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : "Failed to analyze company";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   } finally {
+    // Terminate all LLM jobs associated with this analysis, whether successful or failed
+    if (analysisId) {
+      try {
+        console.log(`[analyze/route] Terminating LLM jobs for analysis ${analysisId}`);
+        terminateLLMJobsForAnalysis(`gtm-analysis-${analysisId}`);
+      } catch (terminateErr) {
+        console.error(`[analyze/route] Failed to terminate LLM jobs for analysis ${analysisId}:`, terminateErr);
+      }
+    }
+
     // Record performance metrics
     const durationMs = Date.now() - startTime;
     console.log(`[analyze/route] Request complete. Duration: ${durationMs}ms, Success: ${success}`);

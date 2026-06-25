@@ -161,15 +161,6 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
-  
-  // New state for post-submission flow
-  const [leadId, setLeadId] = useState<string | null>(null);
-  const [postSubmissionStep, setPostSubmissionStep] = useState<number | null>(null);
-  const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
-  const [assignedAgent, setAssignedAgent] = useState<any | null>(null);
-  const [credentials, setCredentials] = useState<{ email: string; password: string }>({ email: "", password: "" });
-  const [isSubmittingAgent, setIsSubmittingAgent] = useState(false);
-  const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
   const { user } = useCurrentUser();
 
@@ -296,16 +287,22 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       return;
     }
 
+    // Combine validated schema data with original user input (including targetGeographicRegionsText)
+    const combinedData = {
+      ...fullValidation.data,
+      targetGeographicRegionsText: data.targetGeographicRegionsText,
+    };
+
     // --- Submit (online/offline) ---
     try {
       const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
       const leadPayload = {
-        companyName: fullValidation.data.companyName,
-        contactName: fullValidation.data.name,
-        contactEmail: fullValidation.data.emailPersonal,
+        companyName: combinedData.companyName,
+        contactName: combinedData.name,
+        contactEmail: combinedData.emailPersonal,
         contactPhone: "", // We don't collect phone in intake form yet, so leave empty
         source: "intake_form",
-        ...fullValidation.data, // Include all data for full storage
+        ...combinedData, // Include all data for full storage
       };
       const res = await fetch("/api/leads/save", {
         method: "POST",
@@ -314,8 +311,8 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       });
       const result = await res.json();
       if (result.success && result.leadId) {
-        saveLeadContext(fullValidation.data, null);
-        await saveLeadOffline(result.leadId, fullValidation.data, null, true);
+        saveLeadContext(combinedData as any, null);
+        await saveLeadOffline(result.leadId, combinedData as any, null, true);
         // Skip agent selection step, go directly to analysis!
         if (onComplete) {
           onComplete();
@@ -329,8 +326,8 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
     } catch (error) {
       console.warn("API save failed, caching offline:", error);
       const tempLeadId = "offline-" + Math.random().toString(36).substring(2, 11);
-      saveLeadContext(fullValidation.data, null);
-      await saveLeadOffline(tempLeadId, fullValidation.data, null, false);
+      saveLeadContext(combinedData as any, null);
+      await saveLeadOffline(tempLeadId, combinedData as any, null, false);
       router.push(`/analysis?leadId=${tempLeadId}`);
     } finally {
       setSubmitting(false);
@@ -985,254 +982,29 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* --- Post-submission screens --- */}
-      {postSubmissionStep === 0 && (
-        <div className="relative z-10 space-y-6">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-300/90">
-                Step 1 of 2
-              </p>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Select Your Agent</h2>
-            </div>
-            <div className="flex gap-1">
-              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
-              <span className="h-1.5 w-3.5 rounded-full bg-white/10" />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-3">
-            <GlassPanel
-              key="automatic"
-              tilt={false}
-              onClick={() => setSelectedAgentKey("automatic")}
-              className={`border-slate-700/50 cursor-pointer transition-all ${
-                selectedAgentKey === "automatic"
-                  ? "border-teal-500/70 bg-teal-500/10 shadow-lg shadow-teal-500/20"
-                  : "hover:border-teal-500/30 hover:bg-white/[0.02]"
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 via-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
-                  <span className="text-white font-bold text-lg">A</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Automatically Assign Agent</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    The system will match the best available qualified agent to your requirement.
-                  </p>
-                </div>
-                {selectedAgentKey === "automatic" && (
-                  <CheckCircle2 className="w-6 h-6 text-teal-400" />
-                )}
-              </div>
-            </GlassPanel>
-
-            {getRevenueAgentCatalog().map((agent) => (
-              <GlassPanel
-                key={agent.key}
-                tilt={false}
-                onClick={() => setSelectedAgentKey(agent.key)}
-                className={`border-slate-700/50 cursor-pointer transition-all ${
-                  selectedAgentKey === agent.key
-                    ? "border-teal-500/70 bg-teal-500/10 shadow-lg shadow-teal-500/20"
-                    : "hover:border-teal-500/30 hover:bg-white/[0.02]"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-purple-600 flex items-center justify-center shrink-0">
-                    <span className="text-white font-bold text-lg">{agent.name.charAt(0)}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{agent.name}</h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {agent.expertise.join(", ")}
-                    </p>
-                  </div>
-                  {selectedAgentKey === agent.key && (
-                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
-                  )}
-                </div>
-              </GlassPanel>
-            ))}
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPostSubmissionStep(null);
-              }}
-              className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl"
-            >
-              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
-            </Button>
-            <Button
-              disabled={!selectedAgentKey || isSubmittingAgent}
-              onClick={async () => {
-                if (!leadId) return;
-                setIsSubmittingAgent(true);
-                try {
-                  const res = await fetch("/api/agent-assignments", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leadId, agentKey: selectedAgentKey }),
-                  });
-                  const result = await res.json();
-                  if (result.success) {
-                    setAssignedAgent(result.assignment);
-                    if (user) {
-                      if (onComplete) {
-                        onComplete();
-                      } else {
-                        router.push(`/analysis?leadId=${leadId}`);
-                      }
-                    } else {
-                      setPostSubmissionStep(1);
-                    }
-                  }
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSubmittingAgent(false);
-                }
-              }}
-              className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
-            >
-              {isSubmittingAgent ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Assigning...
-                </>
-              ) : (
-                <>
-                  Continue <IconArrowRight className="h-4 w-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {postSubmissionStep === 1 && (
-        <div className="relative z-10 space-y-6">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-300/90">
-                Step 2 of 2
-              </p>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Create Your Account</h2>
-            </div>
-            <div className="flex gap-1">
-              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
-              <span className="h-1.5 w-3.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
-            </div>
-          </div>
-
-          <GlassPanel tilt={false} className="border-slate-700/50">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="creds-email">Email Address</Label>
-                <Input
-                  id="creds-email"
-                  type="email"
-                  value={credentials.email}
-                  onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                  placeholder="you@company.com"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="creds-password">Password</Label>
-                <Input
-                  id="creds-password"
-                  type="password"
-                  value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                  placeholder="Create a password"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                />
-              </div>
-            </div>
-          </GlassPanel>
-
-          <div className="flex justify-between gap-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPostSubmissionStep(0);
-              }}
-              className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl"
-            >
-              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
-            </Button>
-            <Button
-              disabled={!credentials.email || !credentials.password || isSubmittingCreds}
-              onClick={async () => {
-                if (!leadId) return;
-                setIsSubmittingCreds(true);
-                try {
-                  await fetch("/api/customer-credentials", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      leadId,
-                      email: credentials.email,
-                      password: credentials.password,
-                    }),
-                  });
-                  // Success! Redirect to /analysis as before or trigger onComplete!
-                  if (onComplete) {
-                    onComplete();
-                  } else {
-                    router.push(`/analysis?leadId=${leadId}`);
-                  }
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSubmittingCreds(false);
-                }
-              }}
-              className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all"
-            >
-              {isSubmittingCreds ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...
-                </>
-              ) : (
-                <>
-                  Complete & Continue <IconArrowRight className="h-4 w-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* --- Regular step navigation only when not in post-submission flow --- */}
-      {postSubmissionStep === null && (
-        <div className="mt-8 flex justify-between gap-4 relative z-10">
-          {step > 0 ? (
-            <Button variant="outline" onClick={back} className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl">
-              <IconArrowLeft className="h-4 w-4 mr-2" /> Back
-            </Button>
-          ) : (
-            <div />
-          )}
-          <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
-              </>
-            ) : step === stepTitles.length - 1 ? (
-              "Submit"
-            ) : (
-              <>
-                Next <IconArrowRight className="h-4 w-4 ml-2" />
-              </>
-            )}
+      {/* --- Regular step navigation --- */}
+      <div className="mt-8 flex justify-between gap-4 relative z-10">
+        {step > 0 ? (
+          <Button variant="outline" onClick={back} className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl">
+            <IconArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
-        </div>
-      )}
+        ) : (
+          <div />
+        )}
+        <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+            </>
+          ) : step === stepTitles.length - 1 ? (
+            "Submit"
+          ) : (
+            <>
+              Next <IconArrowRight className="h-4 w-4 ml-2" />
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

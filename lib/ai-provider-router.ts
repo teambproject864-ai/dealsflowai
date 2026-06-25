@@ -1,6 +1,7 @@
 import { hfInfer, hfInferJSON } from './huggingface';
 import { nvInfer, nvInferJSON } from './nvidia';
 import { kimiInfer, kimiInferJSON } from './kimi';
+import { startLLMJob, completeLLMJob } from './llm-job-tracker';
 
 // Define supported AI providers
 export const SUPPORTED_PROVIDERS = ['huggingface', 'nvidia', 'kimi'] as const;
@@ -178,6 +179,18 @@ export async function performDynamicInference(
   
   let lastError: any;
   let lastProvider: SupportedAIProvider | null = null;
+  let activeJobId: string | null = null;
+  let activeProviderModel: string | null = null;
+  
+  // Get the model name for each provider (for tracking)
+  const getProviderModel = (provider: SupportedAIProvider): string => {
+    switch (provider) {
+      case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
+      case 'nvidia': return 'nvidia/nemotron';
+      case 'kimi': return 'kimi-v1';
+      default: return 'unknown-model';
+    }
+  };
   
   for (const provider of providersToTry) {
     try {
@@ -186,10 +199,32 @@ export async function performDynamicInference(
       if (lastProvider) {
         logProviderSelection(attributes, provider, lastProvider);
       }
+      
+      // Extract analysisId from requestType (format: "gtm-analysis-<analysisId>")
+      let extractedAnalysisId: string | undefined;
+      if (attributes.requestType?.startsWith("gtm-analysis-")) {
+        extractedAnalysisId = attributes.requestType.replace("gtm-analysis-", "");
+      }
+      
+      // Start LLM job tracking
+      const model = getProviderModel(provider);
+      activeJobId = startLLMJob(provider, model, extractedAnalysisId);
+      activeProviderModel = model;
+      
       const result = await infer(prompt, systemPrompt, options);
+      
+      // Complete job on success
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "completed");
+      }
+      
       console.log(`[AI Provider Router] Success with provider: ${provider}`);
       return result;
     } catch (error) {
+      // Complete job as failed
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "failed", error instanceof Error ? error.message : "Unknown error");
+      }
       lastError = error;
       lastProvider = provider;
       console.error(
@@ -224,6 +259,17 @@ export async function performDynamicInferenceJSON(
   
   let lastError: any;
   let lastProvider: SupportedAIProvider | null = null;
+  let activeJobId: string | null = null;
+  
+  // Get the model name for each provider (for tracking)
+  const getProviderModel = (provider: SupportedAIProvider): string => {
+    switch (provider) {
+      case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
+      case 'nvidia': return 'nvidia/nemotron';
+      case 'kimi': return 'kimi-v1';
+      default: return 'unknown-model';
+    }
+  };
   
   for (const provider of providersToTry) {
     try {
@@ -232,10 +278,31 @@ export async function performDynamicInferenceJSON(
       if (lastProvider) {
         logProviderSelection(attributes, provider, lastProvider);
       }
+      
+      // Extract analysisId from requestType (format: "gtm-analysis-<analysisId>")
+      let extractedAnalysisId: string | undefined;
+      if (attributes.requestType?.startsWith("gtm-analysis-")) {
+        extractedAnalysisId = attributes.requestType.replace("gtm-analysis-", "");
+      }
+      
+      // Start LLM job tracking
+      const model = getProviderModel(provider);
+      activeJobId = startLLMJob(provider, model, extractedAnalysisId);
+      
       const result = await inferJSON(prompt, systemPrompt, options);
+      
+      // Complete job on success
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "completed");
+      }
+      
       console.log(`[AI Provider Router] Success with provider: ${provider} (JSON)`);
       return result;
     } catch (error) {
+      // Complete job as failed
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "failed", error instanceof Error ? error.message : "Unknown error");
+      }
       lastError = error;
       lastProvider = provider;
       console.error(
