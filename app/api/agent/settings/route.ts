@@ -58,13 +58,13 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: true, message: "Mock updated successfully (db not configured)" });
     }
 
-    await db.collection("users").doc(user.id).update({
+    await db.collection("users").doc(user.id).set({
       ...(phoneNumber !== undefined && { phoneNumber }),
       ...(countryCode !== undefined && { countryCode }),
       ...(callConversationFramework !== undefined && { callConversationFramework }),
       ...(whatsAppMessageParameters !== undefined && { whatsAppMessageParameters }),
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
     return NextResponse.json({ success: true, message: "Settings updated successfully" });
   } catch (error: any) {
