@@ -25,7 +25,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
-const IntakeForm = lazy(() => import("@/components/IntakeForm").then((m) => ({ default: m.IntakeForm })));
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
@@ -538,6 +537,8 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
                   <Link
                     href="/analysis/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => trackEvent("cta_start_analysis", { surface: "hero_v3", abVariant })}
                     className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base transition-all duration-300 shadow-lg shadow-violet-500/25 hover:-translate-y-0.5"
                   >
@@ -803,7 +804,7 @@ export default function HomePage() {
               </p>
               
               {/* Blurred Sample Report Card */}
-              <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 p-5 bg-white dark:bg-white/3 overflow-hidden shadow-md">
+              <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 p-5 bg-white dark:bg-slate-900/40 overflow-hidden shadow-md">
                 {/* Blur backdrop overlay */}
                 <div className="absolute inset-0 bg-white/20 dark:bg-slate-950/40 backdrop-blur-[3px] z-10 flex flex-col items-center justify-center p-4">
                   <div className="bg-slate-900/90 text-white text-xs px-3.5 py-1.5 rounded-xl border border-white/10 font-bold shadow-lg z-20 flex items-center gap-1">
@@ -841,25 +842,70 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Right Column: Intake Form */}
+            {/* Right Column: Launch GTM Assessment */}
             <div className="lg:col-span-7">
-              <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-6 bg-white dark:bg-white/3 shadow-xl">
-                <ErrorBoundary>
-                  <Suspense fallback={
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                      <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Loading form...</p>
-                    </div>
-                  }>
-                    <IntakeForm />
-                  </Suspense>
-                </ErrorBoundary>
-                <div className="text-center mt-4 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5 select-none">
-                  {/* Lock icon */}
-                  <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span>Your data is never sold or shared</span>
+              <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 bg-white dark:bg-slate-900/40 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[350px]">
+                {/* Decorative background glow */}
+                <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-violet-600/10 blur-[80px] pointer-events-none" />
+                <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-teal-600/10 blur-[80px] pointer-events-none" />
+
+                <div className="space-y-6 relative z-10">
+                  <div className="inline-flex p-3 rounded-2xl bg-violet-500/10 text-violet-500 border border-violet-500/20">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      RevOps Assessment Questionnaire
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                      Calibrate our autonomous revenue models for your pipeline. Complete the intake form in a secure, isolated browser tab.
+                    </p>
+                  </div>
+
+                  {/* Benefit highlights */}
+                  <ul className="space-y-3.5 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-3">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span>6 RevOps qualification questions</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span>Get a detailed PDF readout report instantly</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="pt-6 relative z-10 space-y-4">
+                  <Link
+                    href="/analysis/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackEvent("cta_start_analysis", { surface: "gtm_section_card_v3", abVariant })}
+                    className="w-full justify-center group inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 shadow-lg shadow-violet-500/20 hover:-translate-y-0.5"
+                  >
+                    <span>Launch GTM Assessment</span>
+                    <svg className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </Link>
+
+                  <div className="text-center text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5 select-none">
+                    <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Your data is never sold or shared</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1254,6 +1300,8 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <Link
                 href="/analysis/new"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => trackEvent("cta_start_analysis", { surface: "bottom_cta_v3", abVariant })}
                 className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-bold text-base transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
               >

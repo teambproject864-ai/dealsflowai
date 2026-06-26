@@ -330,7 +330,7 @@ async function analyzeCompany(state: typeof AnalysisState.State) {
     const websiteUrl = state.companyData?.websiteUrl || "";
     const additionalLeadDetails = state.companyData?.additionalDetails || "";
     const websiteContent = state.websiteContent;
-as     const analysisId = state.companyData?.analysisId || undefined; // Pass analysisId if available
+    const analysisId = state.companyData?.analysisId || undefined; // Pass analysisId if available
 
     const ctx = { companyName, websiteUrl, additionalLeadDetails, websiteContent };
 

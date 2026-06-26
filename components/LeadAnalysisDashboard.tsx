@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { loadLeadContext, StoredLeadContext } from "@/lib/lead-context";
+import { loadLeadContext, saveLeadContext, StoredLeadContext } from "@/lib/lead-context";
 import { BookingWidget } from "@/components/BookingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -222,7 +222,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         return;
       }
 
-      lastProcessedLeadIdRef.current = leadId;
+      lastProcessedLeadIdRef.current = leadId || null;
       
       if (forceRegenerate) {
         setRegenerating(true);
@@ -230,8 +230,9 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         setError(null);
       }
       
+      let stored = null;
       try {
-        const stored = loadLeadContext();
+        stored = loadLeadContext();
         setContext(stored);
 
         let companyData = stored?.form;
@@ -609,7 +610,7 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
     md += `- **Contact Name**: ${context.form.name || "Not provided"}\n`;
     md += `- **Contact Email**: ${context.form.emailPersonal || "Not provided"}\n`;
     md += `- **Target Industries**: ${Array.isArray(context.form.targetIndustries) ? context.form.targetIndustries.join(", ") : "Not provided"}\n`;
-    md += `- **Target Geographic Regions**: ${context.form.targetGeographicRegionsText || "Not provided"}\n`;
+    md += `- **Target Geographic Regions**: ${Array.isArray(context.form.targetGeographics) ? context.form.targetGeographics.join(", ") : "Not provided"}\n`;
     md += `- **ICP Description**: ${context.form.icpDescription || "Not provided"}\n`;
   }
   md += `\n`;
@@ -993,7 +994,7 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
               <InputField label="Contact Name" name="name" value={context?.form?.name} />
               <InputField label="Contact Email" name="emailPersonal" value={context?.form?.emailPersonal} />
               <InputField label="Target Industries" name="targetIndustries" value={context?.form?.targetIndustries} />
-              <InputField label="Target Geographic Regions" name="targetGeographicRegionsText" value={context?.form?.targetGeographicRegionsText} type="textarea" />
+              <InputField label="Target Geographic Regions" name="targetGeographics" value={context?.form?.targetGeographics} />
               <InputField label="ICP Description" name="icpDescription" value={context?.form?.icpDescription} type="textarea" />
             </div>
           </div>
@@ -1799,7 +1800,7 @@ function renderMarkdownToHtml(analysis: AnalysisResult | null, context: StoredLe
     html += `<li><strong>Contact Name:</strong> ${context.form.name || "Not provided"}</li>`;
     html += `<li><strong>Contact Email:</strong> ${context.form.emailPersonal || "Not provided"}</li>`;
     html += `<li><strong>Target Industries:</strong> ${Array.isArray(context.form.targetIndustries) ? context.form.targetIndustries.join(", ") : "Not provided"}</li>`;
-    html += `<li><strong>Target Geographic Regions:</strong> ${context.form.targetGeographicRegionsText || "Not provided"}</li>`;
+    html += `<li><strong>Target Geographic Regions:</strong> ${Array.isArray(context.form.targetGeographics) ? context.form.targetGeographics.join(", ") : "Not provided"}</li>`;
     html += `<li><strong>ICP Description:</strong> ${context.form.icpDescription || "Not provided"}</li>`;
     html += `</ul>`;
   }
