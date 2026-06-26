@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const { callId } = await req.json();
     if (!callId) return NextResponse.json({ error: "Missing callId" }, { status: 400 });
 
-    const existing = await db
+    const existing = await db()
       .collection("summaries")
       .where("callId", "==", callId)
       .where("type", "==", "post-call")
