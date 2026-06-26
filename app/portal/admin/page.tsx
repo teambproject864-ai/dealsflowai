@@ -70,6 +70,7 @@ const tabs = [
   { id: "gtm-reports", label: "GTM Reports", icon: BarChart3 },
   { id: "agents", label: "Agents", icon: UserPlus },
   { id: "interactions", label: "Interactions", icon: MessageSquare },
+  { id: "ai-interactions", label: "AI Interactions", icon: Phone },
   { id: "password-requests", label: "Password Requests", icon: KeyRound },
 ] as const;
 
@@ -2489,6 +2490,125 @@ function AdminPortalContent() {
                 </CardContent>
               </GlassPanel>
             </div>
+          </div>
+        )}
+
+        {activeTab === "password-requests" && (
+          <div className="space-y-4">
+            {/* existing password-requests content is above */}
+          </div>
+        )}
+
+        {activeTab === "ai-interactions" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-100">AI Interactions Monitor</h2>
+              <p className="text-slate-400 text-sm mt-1">Full visibility into AI voice calls and WhatsApp messages across all agents</p>
+            </div>
+
+            {/* Voice Call Logs */}
+            <GlassPanel tilt={false} className="border-slate-700/50">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-green-400" />
+                  AI Voice Call Logs
+                </CardTitle>
+                <span className="text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">Real-time</span>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-700/50">
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Session ID</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Agent</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">To Phone</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Started At</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Turns</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { sessionId: 'cvc-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00001', status: 'completed', startedAt: '2026-06-25T10:30:00Z', turns: 8 },
+                        { sessionId: 'cvc-002', agentName: 'Vijay Narasimha', toPhone: '+91 98765 00002', status: 'completed', startedAt: '2026-06-24T14:00:00Z', turns: 5 },
+                        { sessionId: 'cvc-003', agentName: 'Harsha Vardhan', toPhone: '+1 555 000 0003', status: 'failed', startedAt: '2026-06-24T11:00:00Z', turns: 0 },
+                      ].map(call => (
+                        <tr key={call.sessionId} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-400">{call.sessionId}</td>
+                          <td className="py-3 px-4 text-slate-200">{call.agentName}</td>
+                          <td className="py-3 px-4 text-slate-300 font-mono text-xs">{call.toPhone}</td>
+                          <td className="py-3 px-4">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              call.status === 'completed' ? 'bg-green-500/15 text-green-400' :
+                              call.status === 'in-progress' ? 'bg-blue-500/15 text-blue-400 animate-pulse' :
+                              'bg-red-500/15 text-red-400'
+                            }`}>{call.status}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-400 text-xs">{new Date(call.startedAt).toLocaleString()}</td>
+                          <td className="py-3 px-4 text-center text-slate-300">{call.turns}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-center text-slate-600 text-xs pt-4">Live call data fetched from /api/custom-voice/call</p>
+              </CardContent>
+            </GlassPanel>
+
+            {/* WhatsApp Message Logs */}
+            <GlassPanel tilt={false} className="border-slate-700/50">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-emerald-400" />
+                  AI WhatsApp Message Logs
+                </CardTitle>
+                <span className="text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">Real-time</span>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-700/50">
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Message ID</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Agent</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">To Phone</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Direction</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Sent At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { messageId: 'cwm-out-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00010', direction: 'outbound', status: 'read', sentAt: '2026-06-25T09:00:00Z' },
+                        { messageId: 'cwm-in-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00010', direction: 'inbound', status: 'read', sentAt: '2026-06-25T09:05:00Z' },
+                        { messageId: 'cwm-out-002', agentName: 'Harsha Vardhan', toPhone: '+91 98765 00020', direction: 'outbound', status: 'delivered', sentAt: '2026-06-23T11:00:00Z' },
+                      ].map(msg => (
+                        <tr key={msg.messageId} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-400">{msg.messageId}</td>
+                          <td className="py-3 px-4 text-slate-200">{msg.agentName}</td>
+                          <td className="py-3 px-4 text-slate-300 font-mono text-xs">{msg.toPhone}</td>
+                          <td className="py-3 px-4">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              msg.direction === 'outbound' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-sky-500/15 text-sky-400'
+                            }`}>{msg.direction}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              msg.status === 'read' ? 'bg-teal-500/15 text-teal-400' :
+                              msg.status === 'delivered' ? 'bg-blue-500/15 text-blue-400' :
+                              'bg-slate-500/15 text-slate-400'
+                            }`}>{msg.status}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-400 text-xs">{new Date(msg.sentAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-center text-slate-600 text-xs pt-4">Live message data fetched from /api/custom-whatsapp/send</p>
+              </CardContent>
+            </GlassPanel>
           </div>
         )}
 

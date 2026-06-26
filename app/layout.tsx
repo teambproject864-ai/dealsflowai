@@ -22,6 +22,7 @@ const serif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3089"),
   title: "DEALFLOW AI — GTM & Revenue Operations",
   description:
     "AI agents for revenue teams. Pipeline intelligence, persistent memory, and autonomous outreach — from ICP to closed deal.",

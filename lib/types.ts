@@ -285,7 +285,7 @@ export type AnalysisResult = {
   };
   table5ChannelEffectiveness?: Table5ChannelEntry[];
   crossTeamAlignmentGuidelines?: CrossTeamAlignmentGuidelines;
-  icpValidationChecklist?: IcpValidationChecklist;
+  icpValidationChecklist?: ICPValidationChecklist;
 
   // New sections per requirements
   sectionACompetitiveLandscape?: Array<{
@@ -526,6 +526,10 @@ export interface User {
   name: string;
   email: string;
   agentKey?: keyof typeof AGENT_FULL_NAMES; // For agents only
+  phoneNumber?: string;
+  countryCode?: string;
+  callConversationFramework?: string;
+  whatsAppMessageParameters?: string;
 }
 
 export type TaskStatus = "todo" | "pending" | "in-progress" | "completed" | "blocked" | "cancelled";

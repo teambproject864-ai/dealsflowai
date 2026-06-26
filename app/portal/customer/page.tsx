@@ -28,6 +28,7 @@ import {
   Truck,
   Layers,
   ArrowRight,
+  Phone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gtmPortalConfig } from '@/lib/config';
@@ -71,6 +72,7 @@ const tabs = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'feedback', label: 'Feedback', icon: Star },
+  { id: 'ai-communications', label: 'AI Interactions', icon: Phone },
 ] as const;
 
 export default function CustomerPortal() {
@@ -2063,6 +2065,83 @@ function CustomerPortalContent() {
                     <ExtrudedButton className="bg-gradient-to-r from-teal-600 to-cyan-600">
                       <Check className="h-4 w-4 mr-2" /> Submit Feedback
                     </ExtrudedButton>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'ai-communications' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">AI Interactions</h2>
+                  <p className="text-slate-400 text-sm mt-1">Voice calls and WhatsApp messages handled by your dedicated AI agent</p>
+                </div>
+              </div>
+
+              {/* AI Voice Call History */}
+              <GlassPanel tilt={false} className="border-slate-700/50">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-green-400" />
+                    AI Voice Call History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Demo call records */}
+                    {[
+                      { id: 'cvc-001', agentName: 'Ashok', date: '2026-06-25T10:30:00Z', duration: '4m 32s', status: 'completed', summary: 'Discussed pipeline optimization and scheduled a follow-up demo.' },
+                      { id: 'cvc-002', agentName: 'Vijay', date: '2026-06-24T14:00:00Z', duration: '2m 15s', status: 'completed', summary: 'Introduced DealFlow AI capabilities and shared GTM analysis report.' },
+                    ].map(call => (
+                      <div key={call.id} className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/30">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-100 text-sm">{call.agentName} — AI Voice Call</p>
+                            <p className="text-slate-400 text-xs mt-0.5">{new Date(call.date).toLocaleString()} · {call.duration}</p>
+                            <p className="text-slate-300 text-sm mt-2">{call.summary}</p>
+                          </div>
+                          <span className={`ml-4 shrink-0 text-xs px-2 py-1 rounded-full font-medium ${
+                            call.status === 'completed' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'
+                          }`}>{call.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-center text-slate-600 text-xs pt-2">Real-time call logs will appear here once AI calls are initiated by your agent.</p>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+
+              {/* WhatsApp Message History */}
+              <GlassPanel tilt={false} className="border-slate-700/50">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-emerald-400" />
+                    WhatsApp Messages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { id: 'cwm-001', agentName: 'Ashok', date: '2026-06-25T09:00:00Z', content: 'Hi, this is Ashok from DealFlow AI. I noticed your recent pipeline analysis. Would you be open to a quick call this week?', status: 'read', direction: 'outbound' },
+                      { id: 'cwm-002', agentName: 'Harsha', date: '2026-06-23T11:00:00Z', content: 'Your GTM analysis report is ready! Click here to view your customized growth strategy.', status: 'delivered', direction: 'outbound' },
+                    ].map(msg => (
+                      <div key={msg.id} className={`p-4 rounded-xl border ${
+                        msg.direction === 'outbound' ? 'bg-emerald-900/10 border-emerald-700/20 ml-8' : 'bg-slate-800/50 border-slate-700/30 mr-8'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs text-slate-400">{msg.agentName} · {new Date(msg.date).toLocaleString()}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            msg.status === 'read' ? 'bg-teal-500/15 text-teal-400' :
+                            msg.status === 'delivered' ? 'bg-blue-500/15 text-blue-400' :
+                            'bg-slate-500/15 text-slate-400'
+                          }`}>{msg.status}</span>
+                        </div>
+                        <p className="text-slate-200 text-sm">{msg.content}</p>
+                      </div>
+                    ))}
+                    <p className="text-center text-slate-600 text-xs pt-2">Live WhatsApp message logs will appear here as your AI agent engages with you.</p>
                   </div>
                 </CardContent>
               </GlassPanel>

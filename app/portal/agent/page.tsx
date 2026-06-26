@@ -30,7 +30,12 @@ import {
   XCircle,
   Download,
   FileText,
+  Settings,
+  PhoneCall,
+  Send,
+  ChevronDown,
 } from "lucide-react";
+import { COUNTRIES, formatPhoneNumber, isPhoneValid } from "@/lib/countries";
 import { cn } from "@/lib/utils";
 import {
   demoUsers,
@@ -57,6 +62,7 @@ const tabs = [
   { id: "playbook", label: "ICP Playbook", icon: FileText },
   { id: "metrics", label: "My Metrics", icon: Star },
   { id: "credits", label: "Credits", icon: Zap },
+  { id: "voice-whatsapp", label: "Voice & WhatsApp", icon: Settings },
 ] as const;
 
 function AgentPortalContent() {
@@ -82,6 +88,26 @@ function AgentPortalContent() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [playbookContent, setPlaybookContent] = useState<string>("");
   const [icpEntries, setIcpEntries] = useState<any[]>([]);
+
+  // Voice & WhatsApp Settings State
+  const [countrySearch, setCountrySearch] = useState("");
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES.find(c => c.code === "US") || COUNTRIES[0]);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [callFramework, setCallFramework] = useState("");
+  const [whatsAppParams, setWhatsAppParams] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  // Voice call state
+  const [callToPhone, setCallToPhone] = useState("");
+  const [isInitiatingCall, setIsInitiatingCall] = useState(false);
+  const [activeCallSession, setActiveCallSession] = useState<{sessionId: string; callSid: string; status: string} | null>(null);
+  // WhatsApp state
+  const [waToPhone, setWaToPhone] = useState("");
+  const [waCustomerName, setWaCustomerName] = useState("");
+  const [waCustomContent, setWaCustomContent] = useState("");
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+  const [waSentMessages, setWaSentMessages] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadLeads() {
@@ -125,6 +151,126 @@ function AgentPortalContent() {
     loadIcpEntries();
   }, []);
 
+  // Load agent Voice & WhatsApp settings
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/agent/settings");
+        const data = await res.json();
+        if (data.success && data.settings) {
+          const s = data.settings;
+          setPhoneInput(s.phoneNumber || "");
+          setCallFramework(s.callConversationFramework || "");
+          setWhatsAppParams(s.whatsAppMessageParameters || "");
+          const country = COUNTRIES.find(c => c.code === s.countryCode) || COUNTRIES[0];
+          setSelectedCountry(country);
+          setSettingsLoaded(true);
+        }
+      } catch (err) {
+        // Settings load failed silently — use defaults
+        setSettingsLoaded(true);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const res = await fetch("/api/agent/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: `${selectedCountry.prefix} ${phoneInput}`.trim(),
+          countryCode: selectedCountry.code,
+          callConversationFramework: callFramework,
+          whatsAppMessageParameters: whatsAppParams,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Settings Saved", "Your Voice & WhatsApp settings have been saved.");
+      } else {
+        showToast("error", "Save Failed", data.error || "Could not save settings.");
+      }
+    } catch (err) {
+      showToast("error", "Save Failed", "Network error while saving settings.");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleInitiateCall = async () => {
+    if (!callToPhone.trim()) {
+      showToast("error", "Missing Phone", "Please enter a phone number to call.");
+      return;
+    }
+    setIsInitiatingCall(true);
+    try {
+      const res = await fetch("/api/custom-voice/call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toPhone: callToPhone.trim(),
+          callFramework,
+          agentName: currentAgentName,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActiveCallSession({ sessionId: data.sessionId, callSid: data.callSid, status: "ringing" });
+        showToast("success", "Call Initiated", `Ringing ${callToPhone}... Session: ${data.sessionId}`);
+        setCallToPhone("");
+      } else {
+        showToast("error", "Call Failed", data.error || "Failed to initiate call.");
+      }
+    } catch (err) {
+      showToast("error", "Call Failed", "Network error while initiating call.");
+    } finally {
+      setIsInitiatingCall(false);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!waToPhone.trim()) {
+      showToast("error", "Missing Phone", "Please enter a recipient phone number.");
+      return;
+    }
+    setIsSendingWhatsApp(true);
+    try {
+      const res = await fetch("/api/custom-whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toPhone: waToPhone.trim(),
+          customerName: waCustomerName || "Valued Customer",
+          whatsAppParameters: whatsAppParams,
+          customContent: waCustomContent || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWaSentMessages(prev => [{ ...data, sentAt: new Date().toISOString() }, ...prev]);
+        showToast("success", "Message Sent", "WhatsApp message sent successfully.");
+        setWaToPhone("");
+        setWaCustomerName("");
+        setWaCustomContent("");
+      } else {
+        showToast("error", "Send Failed", data.error || "Failed to send WhatsApp message.");
+      }
+    } catch (err) {
+      showToast("error", "Send Failed", "Network error while sending WhatsApp.");
+    } finally {
+      setIsSendingWhatsApp(false);
+    }
+  };
+
+  const filteredCountries = COUNTRIES.filter(c =>
+    c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    c.prefix.includes(countrySearch) ||
+    c.code.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
   // Determine current agent ID based on authenticated user
   const currentAgentId = user?.id || "agent-vijay";
 
@@ -146,6 +292,8 @@ function AgentPortalContent() {
     setShowNotification({ type, title, message });
     setTimeout(() => setShowNotification(null), 3000);
   };
+
+
 
   // Format file size
   const formatFileSize = (bytes: number): string => {
@@ -1493,6 +1641,255 @@ function AgentPortalContent() {
                   </CardContent>
                 </GlassPanel>
               </div>
+            </div>
+          )}
+
+          {activeTab === "voice-whatsapp" && (
+            <div className="space-y-8">
+              {/* ─── Agent Settings Section ─── */}
+              <GlassPanel tilt={false} className="border-teal-700/30">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-teal-400" />
+                    Voice & WhatsApp Configuration
+                  </CardTitle>
+                  <ExtrudedButton
+                    className="bg-teal-600 hover:bg-teal-700 gap-2"
+                    onClick={handleSaveSettings}
+                    disabled={isSavingSettings}
+                  >
+                    {isSavingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    Save Settings
+                  </ExtrudedButton>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Phone Number with Country Dropdown */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Your Agent Phone Number</label>
+                    <div className="flex gap-2 relative">
+                      {/* Country Dropdown Trigger */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="h-10 px-3 rounded-xl bg-slate-800 border border-slate-700 hover:border-teal-500 text-slate-100 text-sm flex items-center gap-2 min-w-[140px] transition-colors"
+                          onClick={() => setShowCountryDropdown(p => !p)}
+                        >
+                          <span className="font-mono text-teal-300">{selectedCountry.prefix}</span>
+                          <span className="text-slate-400 text-xs">{selectedCountry.code}</span>
+                          <ChevronDown className="h-3 w-3 ml-auto text-slate-500" />
+                        </button>
+                        {showCountryDropdown && (
+                          <div className="absolute top-12 left-0 z-50 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                            <div className="p-2 border-b border-slate-700">
+                              <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2">
+                                <Search className="h-4 w-4 text-slate-400" />
+                                <input
+                                  type="text"
+                                  className="bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none w-full"
+                                  placeholder="Search country..."
+                                  value={countrySearch}
+                                  onChange={(e) => setCountrySearch(e.target.value)}
+                                  autoFocus
+                                />
+                              </div>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {filteredCountries.map(c => (
+                                <button
+                                  key={c.code}
+                                  type="button"
+                                  className={cn(
+                                    "w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-slate-800 transition-colors",
+                                    selectedCountry.code === c.code && "bg-teal-600/20 text-teal-300"
+                                  )}
+                                  onClick={() => {
+                                    setSelectedCountry(c);
+                                    setShowCountryDropdown(false);
+                                    setCountrySearch("");
+                                    setPhoneInput(""); // Reset masking on country change
+                                  }}
+                                >
+                                  <span className="font-mono text-teal-400 w-14 shrink-0">{c.prefix}</span>
+                                  <span className="text-slate-300">{c.name}</span>
+                                </button>
+                              ))}
+                              {filteredCountries.length === 0 && (
+                                <p className="text-slate-500 text-sm text-center py-4">No countries found</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Masked Phone Input */}
+                      <Input
+                        placeholder={selectedCountry.placeholder}
+                        value={phoneInput}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value, selectedCountry.mask);
+                          setPhoneInput(formatted);
+                        }}
+                        className={cn(
+                          "flex-1 bg-slate-800 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl font-mono",
+                          phoneInput && !isPhoneValid(phoneInput, selectedCountry.mask) && "border-amber-500/50"
+                        )}
+                      />
+                    </div>
+                    {phoneInput && !isPhoneValid(phoneInput, selectedCountry.mask) && (
+                      <p className="text-amber-400 text-xs flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Format: {selectedCountry.mask.replace(/9/g, "0")}
+                      </p>
+                    )}
+                    {phoneInput && isPhoneValid(phoneInput, selectedCountry.mask) && (
+                      <p className="text-teal-400 text-xs flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Valid number — Full: {selectedCountry.prefix} {phoneInput}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Call Conversation Framework */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <PhoneCall className="h-4 w-4 text-green-400" />
+                      Call Conversation Framework
+                    </label>
+                    <p className="text-xs text-slate-500">Define talking points, objectives, pain points, and mandatory disclosures for AI voice calls.</p>
+                    <Textarea
+                      rows={6}
+                      placeholder={`Core Objectives:\n- Introduce DealFlow AI\n- Identify revenue challenges\n\nMandatory Disclosures:\n- Call is recorded for quality assurance`}
+                      value={callFramework}
+                      onChange={(e) => setCallFramework(e.target.value)}
+                      className="bg-slate-800 border-slate-700 focus:border-teal-500 text-white placeholder-slate-600 rounded-xl resize-none"
+                    />
+                    <p className="text-slate-600 text-xs text-right">{callFramework.length} characters</p>
+                  </div>
+
+                  {/* WhatsApp Message Parameters */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-green-400" />
+                      WhatsApp Message Parameters
+                    </label>
+                    <p className="text-xs text-slate-500">Specify tone, call-to-action, personalization rules, and brand guidelines for AI-generated WhatsApp messages.</p>
+                    <Textarea
+                      rows={5}
+                      placeholder={`Tone: Professional, friendly\nCTA: Schedule a 15-minute discovery call\nPersonalization: Address by first name\nBrand: DealFlow AI — data-driven, consultative`}
+                      value={whatsAppParams}
+                      onChange={(e) => setWhatsAppParams(e.target.value)}
+                      className="bg-slate-800 border-slate-700 focus:border-teal-500 text-white placeholder-slate-600 rounded-xl resize-none"
+                    />
+                    <p className="text-slate-600 text-xs text-right">{whatsAppParams.length} characters</p>
+                  </div>
+                </CardContent>
+              </GlassPanel>
+
+              {/* ─── Initiate AI Voice Call ─── */}
+              <GlassPanel tilt={false} className="border-green-700/30">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                    <PhoneCall className="h-5 w-5 text-green-400" />
+                    AI Voice Call — Initiate Outbound Call
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {activeCallSession && (
+                    <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center gap-3">
+                      <div className="h-3 w-3 bg-green-400 rounded-full animate-pulse" />
+                      <div>
+                        <p className="text-green-300 font-medium text-sm">Call Active — {activeCallSession.status}</p>
+                        <p className="text-slate-500 text-xs font-mono">Session: {activeCallSession.sessionId}</p>
+                      </div>
+                      <ExtrudedButton size="sm" variant="outline" className="ml-auto text-red-400 border-red-500/30 hover:bg-red-500/10" onClick={() => setActiveCallSession(null)}>
+                        <X className="h-4 w-4 mr-1" /> End
+                      </ExtrudedButton>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Recipient phone (e.g. +1 555 000 0000)"
+                      value={callToPhone}
+                      onChange={(e) => setCallToPhone(e.target.value)}
+                      className="flex-1 bg-slate-800 border-slate-700 focus:border-green-500 text-white placeholder-slate-500 rounded-xl font-mono"
+                    />
+                    <ExtrudedButton
+                      className="bg-green-600 hover:bg-green-700 gap-2 px-6"
+                      onClick={handleInitiateCall}
+                      disabled={isInitiatingCall}
+                    >
+                      {isInitiatingCall ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4" />}
+                      {isInitiatingCall ? "Connecting..." : "Start AI Call"}
+                    </ExtrudedButton>
+                  </div>
+                  <p className="text-slate-600 text-xs">The AI agent will call this number and conduct a conversation using your Call Conversation Framework above.</p>
+                </CardContent>
+              </GlassPanel>
+
+              {/* ─── Send AI WhatsApp Message ─── */}
+              <GlassPanel tilt={false} className="border-emerald-700/30">
+                <CardHeader>
+                  <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
+                    <Send className="h-5 w-5 text-emerald-400" />
+                    AI WhatsApp Message — Compose & Send
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-300">Recipient Phone Number</label>
+                      <Input
+                        placeholder="+91 98765 43210"
+                        value={waToPhone}
+                        onChange={(e) => setWaToPhone(e.target.value)}
+                        className="bg-slate-800 border-slate-700 focus:border-emerald-500 text-white placeholder-slate-500 rounded-xl font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-300">Customer Name (for personalization)</label>
+                      <Input
+                        placeholder="e.g. Anil Kumar"
+                        value={waCustomerName}
+                        onChange={(e) => setWaCustomerName(e.target.value)}
+                        className="bg-slate-800 border-slate-700 focus:border-emerald-500 text-white placeholder-slate-500 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-300">Custom Message (optional — leave blank for AI-generated)</label>
+                    <Textarea
+                      rows={4}
+                      placeholder="Leave blank to let the AI generate a message based on your WhatsApp parameters above..."
+                      value={waCustomContent}
+                      onChange={(e) => setWaCustomContent(e.target.value)}
+                      className="bg-slate-800 border-slate-700 focus:border-emerald-500 text-white placeholder-slate-600 rounded-xl resize-none"
+                    />
+                  </div>
+                  <ExtrudedButton
+                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    onClick={handleSendWhatsApp}
+                    disabled={isSendingWhatsApp}
+                  >
+                    {isSendingWhatsApp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {isSendingWhatsApp ? "Sending..." : "Send WhatsApp Message"}
+                  </ExtrudedButton>
+
+                  {/* Recent sent messages */}
+                  {waSentMessages.length > 0 && (
+                    <div className="space-y-2 pt-4 border-t border-slate-700/50">
+                      <p className="text-sm font-medium text-slate-300">Recently Sent</p>
+                      {waSentMessages.slice(0, 3).map((msg, i) => (
+                        <div key={i} className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/30">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-slate-400 font-mono">{msg.messageId}</span>
+                            <span className="text-xs px-2 py-0.5 bg-emerald-500/15 text-emerald-400 rounded-full">{msg.status}</span>
+                          </div>
+                          <p className="text-sm text-slate-300 line-clamp-2">{msg.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </GlassPanel>
             </div>
           )}
         </div>

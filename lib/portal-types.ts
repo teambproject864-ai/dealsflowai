@@ -6,6 +6,10 @@ export interface PortalUser {
   name: string;
   role: "admin" | "agent" | "customer";
   createdAt: string;
+  phoneNumber?: string;
+  countryCode?: string;
+  callConversationFramework?: string;
+  whatsAppMessageParameters?: string;
 }
 
 export type TaskStatus = "todo" | "in-progress" | "completed" | "blocked";

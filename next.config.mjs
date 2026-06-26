@@ -55,9 +55,19 @@ if (process.env.NODE_ENV === "production") {
 const nextConfig = {
   // Enable React Strict Mode
   reactStrictMode: true,
-  webpack: (config, { dev }) => {
+  // Suppress Node.js deprecation warnings from third-party packages (e.g., googleapis url.parse DEP0169)
+  serverExternalPackages: ["googleapis", "google-auth-library", "twilio"],
+  webpack: (config, { dev, isServer }) => {
     if (dev) {
       config.cache = false;
+    }
+    // Suppress Node.js deprecation warnings from third-party packages in webpack
+    if (isServer) {
+      config.ignoreWarnings = [
+        ...(config.ignoreWarnings || []),
+        { message: /url\.parse/ },
+        { message: /DEP0169/ },
+      ];
     }
     return config;
   },
@@ -65,7 +75,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   async redirects() {
-
     return [
       {
         source: '/exit',

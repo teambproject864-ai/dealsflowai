@@ -191,6 +191,15 @@ export async function POST(req: Request) {
       })();
     } catch (e: any) {
       const msg = e?.message || "google_meet_create_failed";
+      const isCalendarNotEnabled =
+        msg.includes("Google Calendar API has not been used") ||
+        msg.includes("API has not been enabled") ||
+        msg.includes("accessNotConfigured") ||
+        msg.includes("Google credentials missing") ||
+        msg.includes("Unable to detect a Project Id") ||
+        msg.includes("Could not load the default credentials") ||
+        msg.includes("GOOGLE_CALENDAR_ID");
+
       await callRef.update({
         status: "failed",
         error: msg,
@@ -209,12 +218,15 @@ export async function POST(req: Request) {
         createdAt: new Date().toISOString(),
       });
 
-      const status = msg.includes("Google Calendar API has not been used") ? 503 : 500;
+      const status = isCalendarNotEnabled ? 503 : 500;
       return NextResponse.json(
         {
           success: false,
           available: false,
-          error: msg,
+          error: isCalendarNotEnabled
+            ? "Google Calendar API is not configured for this project. Enable it at https://console.cloud.google.com/apis/library/calendar-json.googleapis.com and ensure GOOGLE_CALENDAR_ID is set in .env.local."
+            : msg,
+          details: isCalendarNotEnabled ? undefined : msg,
         },
         { status }
       );

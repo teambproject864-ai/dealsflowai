@@ -5,7 +5,16 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, role = "agent" } = await request.json();
+    const {
+      name,
+      email,
+      password,
+      role = "agent",
+      phoneNumber = "",
+      countryCode = "US",
+      callConversationFramework = "",
+      whatsAppMessageParameters = ""
+    } = await request.json().catch(() => ({}));
 
     // Validate inputs
     if (!name || !email || !password) {
@@ -32,6 +41,10 @@ export async function POST(request: Request) {
       name,
       email,
       role,
+      phoneNumber,
+      countryCode,
+      callConversationFramework,
+      whatsAppMessageParameters,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isActive: true,
