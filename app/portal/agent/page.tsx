@@ -102,6 +102,49 @@ function AgentPortalContent() {
   const [callToPhone, setCallToPhone] = useState("");
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
   const [activeCallSession, setActiveCallSession] = useState<{sessionId: string; callSid: string; status: string} | null>(null);
+  
+  // Poll call status when active call exists
+  useEffect(() => {
+    if (!activeCallSession) return;
+    
+    // If it's a mock call (callSid starts with "MOCK_CALL_"), simulate status transitions
+    if (activeCallSession.callSid.startsWith("MOCK_CALL_")) {
+      const timeouts: NodeJS.Timeout[] = [];
+      
+      // Simulate ringing → in-progress after 2s
+      timeouts.push(
+        setTimeout(() => {
+          setActiveCallSession(prev => prev ? { ...prev, status: "in-progress" } : null);
+        }, 2000)
+      );
+      
+      // Simulate in-progress → completed after 8s
+      timeouts.push(
+        setTimeout(() => {
+          setActiveCallSession(prev => prev ? { ...prev, status: "completed" } : null);
+        }, 10000)
+      );
+      
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
+    }
+    
+    // Real call polling
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/custom-voice/call?sessionId=${encodeURIComponent(activeCallSession.sessionId)}`);
+        const data = await res.json();
+        if (data.session) {
+          setActiveCallSession(prev => prev ? { ...prev, status: data.session.status } : null);
+        }
+      } catch (e) {
+        console.error("Failed to poll call status:", e);
+      }
+    }, 2000);
+    
+    return () => clearInterval(pollInterval);
+  }, [activeCallSession?.sessionId]);
   // WhatsApp state
   const [waToPhone, setWaToPhone] = useState("");
   const [waCustomerName, setWaCustomerName] = useState("");
