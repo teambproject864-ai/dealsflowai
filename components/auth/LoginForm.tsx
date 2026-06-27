@@ -235,6 +235,13 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   const [touched, setTouched] = useState({ email: false, password: false, name: false });
   const [shakeError, setShakeError] = useState(false);
 
+  // Verification & CAPTCHA states
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [requiresCaptcha, setRequiresCaptcha] = useState(false);
+  const [captchaPassed, setCaptchaPassed] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useCurrentUser();
@@ -243,6 +250,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   const emailId = useId();
   const passwordId = useId();
   const nameId = useId();
+  const verificationCodeId = useId();
 
   useEffect(() => {
     if (searchParams.get("signup") === "true") setIsLogin(false);
@@ -254,6 +262,10 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
     setTouched({ email: false, password: false, name: false });
     setFormData({ email: "", password: "", name: "" });
     setIsPasswordVisible(false);
+    setIsVerifying(false);
+    setRequiresCaptcha(false);
+    setCaptchaPassed(false);
+    setVerificationCode("");
   }, [isLogin]);
 
   useEffect(() => {
@@ -293,23 +305,75 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
       const payload = isLogin
-        ? { email: formData.email, password: formData.password, role }
+        ? { 
+            email: formData.email, 
+            password: formData.password, 
+            role,
+            captchaToken: captchaPassed ? "dealflow-secure-captcha-pass-token" : undefined
+          }
         : { email: formData.email, password: formData.password, name: formData.name, role };
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
+
       if (data.success) {
-        setSuccessMessage(isLogin ? "Welcome back! Redirecting…" : "Account created! Redirecting…");
-        setTimeout(() => { window.location.replace(redirectUrl); }, 800);
+        if (data.requiresVerification) {
+          setSuccessMessage(data.message);
+          setVerificationEmail(formData.email);
+          setIsVerifying(true);
+        } else {
+          setSuccessMessage(isLogin ? "Welcome back! Redirecting…" : "Account created! Redirecting…");
+          setTimeout(() => { window.location.replace(redirectUrl); }, 800);
+        }
       } else {
+        if (data.requiresCaptcha) {
+          setRequiresCaptcha(true);
+        }
+        if (data.requiresVerification) {
+          setVerificationEmail(formData.email);
+          setIsVerifying(true);
+        }
         setApiError(data.error || "An error occurred. Please try again.");
         triggerShake();
       }
     } catch {
       setApiError("Network error. Please check your connection and try again.");
+      triggerShake();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verificationCode.length !== 6) {
+      setApiError("Please enter a valid 6-digit verification code.");
+      triggerShake();
+      return;
+    }
+    setApiError(null);
+    setSuccessMessage(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail || formData.email, code: verificationCode }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSuccessMessage("Account verified! Redirecting...");
+        setTimeout(() => { window.location.replace(redirectUrl); }, 800);
+      } else {
+        setApiError(data.error || "Verification failed. Please check the code.");
+        triggerShake();
+      }
+    } catch {
+      setApiError("Network error. Please check your connection.");
       triggerShake();
     } finally {
       setIsSubmitting(false);
@@ -569,192 +633,284 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
             </AnimatePresence>
 
             {/* Form */}
-            <motion.form
-              onSubmit={handleSubmit}
-              noValidate
-              className="space-y-4"
-              animate={shakeError ? { x: [0, -7, 7, -5, 5, -2, 2, 0] } : { x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Name — signup only */}
-              <AnimatePresence>
-                {!isLogin && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
+            {isVerifying ? (
+              <motion.form
+                onSubmit={handleVerifySubmit}
+                noValidate
+                className="space-y-4"
+                animate={shakeError ? { x: [0, -7, 7, -5, 5, -2, 2, 0] } : { x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={verificationCodeId}
+                    className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"
                   >
-                    <Field id={nameId} label="Full Name" icon={User} error={nameError} touched={touched.name}>
-                      <AuthInput
-                        id={nameId}
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleChange("name", e.target.value)}
-                        onBlur={() => handleBlur("name")}
-                        placeholder="Jane Smith"
-                        disabled={isSubmitting}
-                        required={!isLogin}
-                        autoComplete="name"
-                        aria-invalid={touched.name && !!nameError}
-                        aria-describedby={touched.name && nameError ? `${nameId}-error` : undefined}
-                        hasError={touched.name && !!nameError}
-                        isValid={touched.name && !nameError}
-                      />
-                    </Field>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Email */}
-              <Field id={emailId} label="Email Address" icon={Mail} error={emailError} touched={touched.email}>
-                <AuthInput
-                  id={emailId}
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  onBlur={() => handleBlur("email")}
-                  placeholder="you@company.com"
-                  disabled={isSubmitting}
-                  required
-                  autoComplete="email"
-                  aria-invalid={touched.email && !!emailError}
-                  aria-describedby={touched.email && emailError ? `${emailId}-error` : undefined}
-                  hasError={touched.email && !!emailError}
-                  isValid={touched.email && !emailError}
-                />
-              </Field>
-
-              {/* Password */}
-              <Field id={passwordId} label="Password" icon={Lock} error={passwordError} touched={touched.password}>
-                <div className="relative">
+                    <Shield className="h-3.5 w-3.5 text-teal-400/80" />
+                    MFA Verification Code
+                  </label>
                   <AuthInput
-                    id={passwordId}
-                    type={isPasswordVisible ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => handleChange("password", e.target.value)}
-                    onBlur={() => handleBlur("password")}
-                    placeholder={isLogin ? "••••••••" : "Min. 8 characters"}
+                    id={verificationCodeId}
+                    type="text"
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••••"
                     disabled={isSubmitting}
                     required
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                    aria-invalid={touched.password && !!passwordError}
-                    aria-describedby={
-                      touched.password && passwordError
-                        ? `${passwordId}-error`
-                        : !isLogin
-                        ? `${passwordId}-strength`
-                        : undefined
-                    }
-                    hasError={touched.password && !!passwordError}
-                    isValid={touched.password && !passwordError}
-                    className="pr-11"
+                    className="text-center text-lg font-bold tracking-[0.5em] focus:tracking-[0.5em]"
                   />
+                  <p className="text-xs text-slate-400 leading-normal">
+                    Enter the 6-digit verification code sent to <strong>{verificationEmail || formData.email}</strong> to activate your customer account.
+                  </p>
+                </div>
+
+                <div className="pt-2">
                   <button
-                    type="button"
-                    onClick={() => setIsPasswordVisible((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 hover:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 transition-colors"
-                    aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                    type="submit"
+                    disabled={isSubmitting || verificationCode.length !== 6}
+                    className={cn(
+                      "w-full relative flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl font-semibold text-sm text-white",
+                      "transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
+                      "disabled:opacity-60 disabled:cursor-not-allowed bg-gradient-to-r hover:brightness-110 active:scale-[0.98]",
+                      rc.accent,
+                      rc.glow
+                    )}
                   >
-                    {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Verifying Account…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Activate & Log In</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </button>
                 </div>
 
-                {/* Password strength */}
+                <p className="mt-4 text-center text-xs text-slate-500">
+                  Did not get the code?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsVerifying(false);
+                      setSuccessMessage(null);
+                      setApiError(null);
+                    }}
+                    className="font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    Back to Register
+                  </button>
+                </p>
+              </motion.form>
+            ) : (
+              <motion.form
+                onSubmit={handleSubmit}
+                noValidate
+                className="space-y-4"
+                animate={shakeError ? { x: [0, -7, 7, -5, 5, -2, 2, 0] } : { x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Name — signup only */}
                 <AnimatePresence>
-                  {!isLogin && formData.password && (
+                  {!isLogin && (
                     <motion.div
-                      id={`${passwordId}-strength`}
-                      role="region"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="overflow-hidden pt-2"
-                      aria-label={`Password strength: ${strength.label}`}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
                     >
-                      <div className="flex gap-1 mb-1" aria-hidden>
-                        {[1, 2, 3, 4].map((i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "h-1 flex-1 rounded-full transition-all duration-300",
-                              i <= strength.score ? strength.bg : "bg-slate-700/60"
-                            )}
-                          />
-                        ))}
-                      </div>
-                      {strength.label && (
-                        <p className={cn("text-[11px] font-semibold", strength.color)}>
-                          {strength.label}
-                        </p>
-                      )}
+                      <Field id={nameId} label="Full Name" icon={User} error={nameError} touched={touched.name}>
+                        <AuthInput
+                          id={nameId}
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => handleChange("name", e.target.value)}
+                          onBlur={() => handleBlur("name")}
+                          placeholder="Jane Smith"
+                          disabled={isSubmitting}
+                          required={!isLogin}
+                          autoComplete="name"
+                          aria-invalid={touched.name && !!nameError}
+                          aria-describedby={touched.name && nameError ? `${nameId}-error` : undefined}
+                          hasError={touched.name && !!nameError}
+                          isValid={touched.name && !nameError}
+                        />
+                      </Field>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </Field>
 
-              {/* Forgot password */}
-              {isLogin && (
-                <div className="flex justify-end -mt-2">
+                {/* Email */}
+                <Field id={emailId} label="Email Address" icon={Mail} error={emailError} touched={touched.email}>
+                  <AuthInput
+                    id={emailId}
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    onBlur={() => handleBlur("email")}
+                    placeholder="you@company.com"
+                    disabled={isSubmitting}
+                    required
+                    autoComplete="email"
+                    aria-invalid={touched.email && !!emailError}
+                    aria-describedby={touched.email && emailError ? `${emailId}-error` : undefined}
+                    hasError={touched.email && !!emailError}
+                    isValid={touched.email && !emailError}
+                  />
+                </Field>
+
+                {/* Password */}
+                <Field id={passwordId} label="Password" icon={Lock} error={passwordError} touched={touched.password}>
+                  <div className="relative">
+                    <AuthInput
+                      id={passwordId}
+                      type={isPasswordVisible ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => handleChange("password", e.target.value)}
+                      onBlur={() => handleBlur("password")}
+                      placeholder={isLogin ? "••••••••" : "Min. 8 characters"}
+                      disabled={isSubmitting}
+                      required
+                      autoComplete={isLogin ? "current-password" : "new-password"}
+                      aria-invalid={touched.password && !!passwordError}
+                      aria-describedby={
+                        touched.password && passwordError
+                          ? `${passwordId}-error`
+                          : !isLogin
+                          ? `${passwordId}-strength`
+                          : undefined
+                      }
+                      hasError={touched.password && !!passwordError}
+                      isValid={touched.password && !passwordError}
+                      className="pr-11"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordVisible((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 hover:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 transition-colors"
+                      aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                    >
+                      {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {/* Password strength */}
+                  <AnimatePresence>
+                    {!isLogin && formData.password && (
+                      <motion.div
+                        id={`${passwordId}-strength`}
+                        role="region"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden pt-2"
+                        aria-label={`Password strength: ${strength.label}`}
+                      >
+                        <div className="flex gap-1 mb-1" aria-hidden>
+                          {[1, 2, 3, 4].map((i) => (
+                            <div
+                              key={i}
+                              className={cn(
+                                "h-1 flex-1 rounded-full transition-all duration-300",
+                                i <= strength.score ? strength.bg : "bg-slate-700/60"
+                              )}
+                            />
+                          ))}
+                        </div>
+                        {strength.label && (
+                          <p className={cn("text-[11px] font-semibold", strength.color)}>
+                            {strength.label}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Field>
+
+                {/* Forgot password */}
+                {isLogin && (
+                  <div className="flex justify-end -mt-2">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/auth/forgot-password")}
+                      className="text-xs font-semibold text-teal-400 hover:text-teal-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 rounded transition-colors"
+                    >
+                      Forgot your password?
+                    </button>
+                  </div>
+                )}
+
+                {/* CAPTCHA Safeguard validation checkbox */}
+                {isLogin && requiresCaptcha && (
+                  <div className="flex items-center gap-3 p-3 px-4 rounded-xl bg-slate-800/50 border border-teal-500/20 my-2">
+                    <input
+                      type="checkbox"
+                      id="captcha-checkbox"
+                      checked={captchaPassed}
+                      onChange={(e) => setCaptchaPassed(e.target.checked)}
+                      className="h-4.5 w-4.5 rounded border-slate-700 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0 focus:ring-opacity-25 cursor-pointer"
+                      disabled={isSubmitting}
+                    />
+                    <label htmlFor="captcha-checkbox" className="text-xs text-slate-300 font-medium select-none cursor-pointer">
+                      Verify you are human (SafeGuard Check)
+                    </label>
+                  </div>
+                )}
+
+                {/* Submit button */}
+                <div className="pt-1">
                   <button
-                    type="button"
-                    onClick={() => router.push("/auth/forgot-password")}
-                    className="text-xs font-semibold text-teal-400 hover:text-teal-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 rounded transition-colors"
+                    type="submit"
+                    id="auth-submit-btn"
+                    disabled={isSubmitting || !!successMessage}
+                    className={cn(
+                      "w-full relative flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl font-semibold text-sm text-white",
+                      "transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
+                      "disabled:opacity-60 disabled:cursor-not-allowed",
+                      "shadow-xl",
+                      !isSubmitting && !successMessage && cn(
+                        "bg-gradient-to-r hover:brightness-110 active:scale-[0.98]",
+                        rc.accent,
+                        rc.glow
+                      ),
+                      isSubmitting || successMessage ? "bg-slate-700" : ""
+                    )}
                   >
-                    Forgot your password?
+                    {/* Shimmer overlay */}
+                    {!isSubmitting && !successMessage && (
+                      <span className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                        <span className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] -translate-x-full hover:translate-x-full transition-transform duration-700" />
+                      </span>
+                    )}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{isLogin ? "Signing in…" : "Creating account…"}</span>
+                      </>
+                    ) : successMessage ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <span>Success!</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{isLogin ? "Sign In" : "Create Account"}</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </button>
                 </div>
-              )}
-
-              {/* Submit button */}
-              <div className="pt-1">
-                <button
-                  type="submit"
-                  id="auth-submit-btn"
-                  disabled={isSubmitting || !!successMessage}
-                  className={cn(
-                    "w-full relative flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl font-semibold text-sm text-white",
-                    "transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
-                    "disabled:opacity-60 disabled:cursor-not-allowed",
-                    "shadow-xl",
-                    !isSubmitting && !successMessage && cn(
-                      "bg-gradient-to-r hover:brightness-110 active:scale-[0.98]",
-                      rc.accent,
-                      rc.glow
-                    ),
-                    isSubmitting || successMessage ? "bg-slate-700" : ""
-                  )}
-                >
-                  {/* Shimmer overlay */}
-                  {!isSubmitting && !successMessage && (
-                    <span className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                      <span className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] -translate-x-full hover:translate-x-full transition-transform duration-700" />
-                    </span>
-                  )}
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{isLogin ? "Signing in…" : "Creating account…"}</span>
-                    </>
-                  ) : successMessage ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span>Success!</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{isLogin ? "Sign In" : "Create Account"}</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.form>
+              </motion.form>
+            )}
 
             {/* Toggle mode */}
-            {allowRegistration && (
+            {allowRegistration && !isVerifying && (
               <p className="mt-6 text-center text-sm text-slate-500">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
                 <button

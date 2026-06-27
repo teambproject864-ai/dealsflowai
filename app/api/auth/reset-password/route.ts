@@ -22,6 +22,8 @@ function getJwtSecret(): string {
   return secret;
 }
 
+const USED_TOKENS = new Set<string>();
+
 export async function POST(request: NextRequest) {
   try {
     const { token, newPassword } = await request.json();
@@ -29,6 +31,13 @@ export async function POST(request: NextRequest) {
     if (!token || !newPassword) {
       return NextResponse.json(
         { success: false, error: "Token and new password are required" },
+        { status: 400 }
+      );
+    }
+
+    if (USED_TOKENS.has(token)) {
+      return NextResponse.json(
+        { success: false, error: "Reset token has already been used" },
         { status: 400 }
       );
     }
@@ -88,6 +97,8 @@ export async function POST(request: NextRequest) {
         });
       }
     }
+
+    USED_TOKENS.add(token);
 
     return NextResponse.json({
       success: true,

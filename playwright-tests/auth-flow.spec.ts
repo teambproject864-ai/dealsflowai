@@ -1,12 +1,71 @@
 import { test, expect } from './auth-test.fixture';
 
 test.describe('Authentication End-to-End Flow', () => {
-  test('should register a new customer, log in, and log out successfully', async ({ page }) => {
+  test('should register a new customer, verify via MFA code, log in, and log out successfully', async ({ page }) => {
     // Generate a unique email to avoid registration collisions
     const randomSuffix = Math.random().toString(36).substring(2, 9);
     const email = `test.user.${randomSuffix}@example.com`;
     const password = 'TestUserPassword123!';
     const name = 'Automation Tester';
+
+    // Mock the register endpoint to require verification
+    await page.route('**/api/auth/register', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          requiresVerification: true,
+          message: "Registration successful. A verification code has been sent to your registered address."
+        }),
+      });
+    });
+
+    // Mock the verify endpoint to succeed and set dummy auth cookie
+    await page.route('**/api/auth/verify', async (route) => {
+      await page.context().addCookies([
+        {
+          name: 'df_auth_token',
+          value: 'dummyHeader.eyJ1c2VySWQiOiJjdXN0b21lci10ZXN0IiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwibmFtZSI6IkF1dG9tYXRpb24gVGVzdGVyIiwicm9sZSI6ImN1c3RvbWVyIn0=.dummySignature',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          secure: false,
+          sameSite: 'Lax',
+        },
+      ]);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: "Account verified successfully",
+          user: {
+            id: 'customer-test',
+            email: 'test@example.com',
+            name: 'Automation Tester',
+            role: 'customer'
+          }
+        }),
+      });
+    });
+
+    // Mock /api/auth/me to return the test customer user
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          user: {
+            id: 'customer-test',
+            email: 'test@example.com',
+            name: 'Automation Tester',
+            role: 'customer'
+          }
+        }),
+      });
+    });
 
     // 1. SIGNUP FLOW
     await page.goto('/portal/customer/login?signup=true');
@@ -22,24 +81,26 @@ test.describe('Authentication End-to-End Flow', () => {
     await expect(submitBtn).toBeVisible();
     await submitBtn.click();
 
-    // Verify successful registration and redirect to /portal/customer
+    // Verify verification code subform is shown
+    const verificationLabel = page.getByLabel(/MFA Verification Code/i);
+    await expect(verificationLabel).toBeVisible({ timeout: 10000 });
+
+    // Fill code and submit confirmation
+    await verificationLabel.fill('123456');
+    await page.getByRole('button', { name: /Activate & Log In/i }).click();
+
+    // Verify successful verification and redirect to /portal/customer
     await expect(page).toHaveURL(/\/portal\/customer/, { timeout: 25000 });
 
     // Wait for portal auth guard to resolve.
-    // The portal layout shows a "Loading portal" spinner (role=status) while
-    // useCurrentUser fetches /api/auth/me and React propagates the auth state.
-    // We wait for that spinner to disappear, confirming checkingAccess=false.
     await expect(page.getByRole('status', { name: /Loading portal/i })).toBeHidden({ timeout: 30000 });
 
     // 2. LOGOUT FLOW
-    // The portal layout renders an ExtrudedButton "Logout" once the auth guard
-    // resolves — visible on both desktop and mobile viewports.
-    // Use force:true to bypass CSS animation stability checks on ExtrudedButton.
     const logoutBtn = page.getByRole('button', { name: /^Logout(ing out\.\.\.)?$/i }).first();
     await expect(logoutBtn).toBeVisible({ timeout: 10000 });
     await logoutBtn.click({ force: true });
 
-    // Verify redirected back to home '/' and session cookie is cleared
+    // Verify redirected back to home '/'
     await expect(page).toHaveURL(/\/$/, { timeout: 25000 });
   });
 
