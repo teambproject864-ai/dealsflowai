@@ -34,6 +34,23 @@ import {
   PhoneCall,
   Send,
   ChevronDown,
+  Briefcase,
+  Mail,
+  Linkedin,
+  Mic2,
+  Users2,
+  BookOpen,
+  Newspaper,
+  FileSpreadsheet,
+  MessageCircle,
+  VideoIcon,
+  Music2,
+  PenTool,
+  Brain,
+  SearchIcon,
+  CreditCard,
+  Users3,
+  CalendarCheck,
 } from "lucide-react";
 import { COUNTRIES, formatPhoneNumber, isPhoneValid } from "@/lib/countries";
 import { cn } from "@/lib/utils";
@@ -60,6 +77,7 @@ const tabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "calls", label: "Calls", icon: Phone },
   { id: "playbook", label: "ICP Playbook", icon: FileText },
+  { id: "workspace", label: "Workspace", icon: Briefcase },
   { id: "metrics", label: "My Metrics", icon: Star },
   { id: "credits", label: "Credits", icon: Zap },
   { id: "voice-whatsapp", label: "Voice & WhatsApp", icon: Settings },
@@ -942,6 +960,275 @@ function AgentPortalContent() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "workspace" && (
+            <div className="space-y-8">
+              <GlassPanel tilt={false} className="border-slate-700/50">
+                <CardHeader className="border-b border-slate-800 pb-4">
+                  <CardTitle className="text-2xl text-slate-100 font-bold flex items-center gap-3">
+                    <Briefcase className="h-7 w-7 text-teal-400" />
+                    Marketing & Outreach Workspace
+                  </CardTitle>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Comprehensive library of outreach, content, and engagement strategies
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-8">
+                  {/* Outreach & Direct Engagement */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-5 w-5 text-teal-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Outreach & Direct Engagement</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {[
+                        "Cold email outreach (sequences, personalization at scale)",
+                        "LinkedIn outreach / social selling",
+                        "Cold calling / SDR outreach",
+                        "Account-based marketing (ABM) campaigns"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-teal-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Influencer & Creator Partnerships */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="h-5 w-5 text-purple-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Influencer & Creator Partnerships</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        "Affiliate marketing programs",
+                        "PR outreach / journalist pitching (HARO, etc.)"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Written Content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-blue-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Written Content</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        "Blog posts (educational, SEO-focused, thought leadership)",
+                        "Guest posting on other sites",
+                        "Case studies / customer success stories",
+                        "Whitepapers & ebooks (gated for lead gen)",
+                        "Newsletters (email digests)",
+                        "Press releases",
+                        "Comparison pages (\"X vs Y\" content for SEO)",
+                        "Glossary / definition pages (SEO long-tail)",
+                        "Documentation-as-marketing (great docs that rank in search)"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Social Media Posts */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-5 w-5 text-pink-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Social Media Posts</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        "LinkedIn posts (company page + founder/employee personal brand)",
+                        "Twitter/X threads",
+                        "Instagram posts/reels",
+                        "Facebook posts/ads",
+                        "Reddit engagement (organic, community-driven)",
+                        "Quora answers"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-pink-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Video Content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <VideoIcon className="h-5 w-5 text-emerald-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Video Content</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {[
+                        "Auto video generation (AI tools turning blog posts/scripts into videos)",
+                        "Explainer videos / product demos",
+                        "YouTube tutorials",
+                        "Short-form video (Reels, TikTok, YouTube Shorts)",
+                        "Webinars (live + recorded)",
+                        "Customer testimonial videos",
+                        "Founder vlogs / behind-the-scenes",
+                        "Animated product walkthroughs"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-emerald-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Audio */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Music2 className="h-5 w-5 text-yellow-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Audio</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        "Podcasts (own podcast + guest appearances)",
+                        "AI-generated audio summaries of content"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-yellow-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Visual/Design Content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <PenTool className="h-5 w-5 text-indigo-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Visual/Design Content</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        "Infographics",
+                        "Carousel posts (LinkedIn/Instagram)",
+                        "Memes (industry-specific humor)",
+                        "Data visualizations / original research graphics",
+                        "Slide decks shared publicly (SlideShare-style)"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-indigo-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI-Generated / Automated Content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-5 w-5 text-purple-400" />
+                      <h3 className="text-xl font-bold text-slate-100">AI-Generated / Automated Content</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {[
+                        "AI blog post generation (then human-edited)",
+                        "AI video generation (Synthesia, HeyGen-style avatar videos)",
+                        "AI image generation for visuals",
+                        "AI-personalized email content",
+                        "Auto-generated social posts from long-form content (repurposing)",
+                        "AI voiceovers for videos",
+                        "Chatbot-driven content delivery"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* SEO-Specific Tactics */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <SearchIcon className="h-5 w-5 text-green-400" />
+                      <h3 className="text-xl font-bold text-slate-100">SEO-Specific Tactics</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        "Keyword-targeted landing pages",
+                        "Programmatic SEO (auto-generated pages at scale, e.g., \"best tool for X city/industry\")",
+                        "Backlink building campaigns",
+                        "Internal linking strategy content"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-green-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Paid Promotion */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-orange-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Paid Promotion</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        "Google Ads / search ads",
+                        "LinkedIn Ads",
+                        "Retargeting ads",
+                        "Sponsored newsletter placements",
+                        "Podcast sponsorships"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-orange-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Community-Driven Content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Users3 className="h-5 w-5 text-cyan-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Community-Driven Content</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        "User-generated content (UGC) campaigns",
+                        "Review site presence (G2, Capterra, TrustRadius)",
+                        "Community Q&A / forums",
+                        "Open-source contributions (if applicable) as marketing"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Events */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <CalendarCheck className="h-5 w-5 text-rose-400" />
+                      <h3 className="text-xl font-bold text-slate-100">Events</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        "Webinars",
+                        "Virtual summits / conferences",
+                        "Local meetups",
+                        "Trade show presence"
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-rose-500/40 transition-all">
+                          <p className="text-sm text-slate-200">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </GlassPanel>
             </div>
           )}
 
