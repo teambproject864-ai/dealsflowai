@@ -23,9 +23,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "toPhone is required" }, { status: 400 });
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "";
+    const isProduction = process.env.NODE_ENV === "production";
+    const isLocalhost = !appUrl || appUrl.includes("localhost") || appUrl.includes("127.0.0.1");
+
+    // Enforce public URL validation in production
+    if (isProduction && isLocalhost) {
+      return NextResponse.json({
+        success: false,
+        error: "Production environment requires a valid public NEXT_PUBLIC_APP_URL (cannot be empty or localhost).",
+      }, { status: 400 });
+    }
+
     const sessionId = `cvc-${uuidv4()}`;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3089";
-    const webhookUrl = `${appUrl}/api/custom-voice/webhook?sessionId=${sessionId}&agentId=${user.id}`;
+    const webhookUrl = `${appUrl || "http://localhost:3089"}/api/custom-voice/webhook?sessionId=${sessionId}&agentId=${user.id}`;
 
     // Create session record in Firestore
     await saveCallSession({
@@ -46,16 +57,14 @@ export async function POST(req: NextRequest) {
       const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
       const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN?.trim();
       const twilioFrom = process.env.TWILIO_PHONE_NUMBER?.trim();
+      const isTwilioConfigured = !!(twilioAccountSid && twilioAuthToken && twilioFrom);
 
-      if (twilioAccountSid && twilioAuthToken && twilioFrom) {
-        // Check if appUrl is localhost (Twilio can't reach localhost URLs)
-        const isLocalhost = appUrl.includes("localhost") || appUrl.includes("127.0.0.1");
-        
+      if (isTwilioConfigured) {
         if (isLocalhost) {
           // Sandbox/mock mode for localhost development
           callSid = `MOCK_CALL_${sessionId}`;
           await saveCallSession({ sessionId, callSid, status: "ringing" });
-          console.log("[CustomVoice] Running on localhost — mock call initiated:", callSid);
+          console.warn("[CustomVoice] Running on localhost but Twilio is configured. Twilio requires a public URL. Initiated MOCK call. Set NEXT_PUBLIC_APP_URL to your public ngrok URL to test real calls.");
         } else {
           const twilio = (await import("twilio")).default;
           const client = twilio(twilioAccountSid, twilioAuthToken);
@@ -64,13 +73,22 @@ export async function POST(req: NextRequest) {
             from: twilioFrom,
             url: webhookUrl,
             method: "POST",
+            fallbackUrl: `${appUrl}/api/custom-voice/audio-fallback?sessionId=${sessionId}`,
+            fallbackMethod: "POST",
             statusCallback: `${appUrl}/api/custom-voice/webhook?sessionId=${sessionId}&event=status`,
             statusCallbackMethod: "POST",
+            statusCallbackEvent: ["initiated", "ringing", "answered", "completed", "failed"],
           });
           callSid = call.sid;
           await saveCallSession({ sessionId, callSid, status: "ringing" });
         }
       } else {
+        if (isProduction) {
+          return NextResponse.json({
+            success: false,
+            error: "Twilio credentials are not configured.",
+          }, { status: 500 });
+        }
         // Sandbox/mock mode — simulate a call SID for testing
         callSid = `MOCK_CALL_${sessionId}`;
         await saveCallSession({ sessionId, callSid, status: "ringing" });
@@ -78,7 +96,10 @@ export async function POST(req: NextRequest) {
       }
     } catch (twilioErr: any) {
       console.error("[CustomVoice] Twilio call initiation failed:", twilioErr.message);
-      // Fall back to mock mode if call fails
+      if (isProduction) {
+        throw twilioErr;
+      }
+      // Fall back to mock mode if call fails in development
       callSid = `MOCK_CALL_${sessionId}`;
       await saveCallSession({ sessionId, callSid, status: "ringing" });
       console.log("[CustomVoice] Falling back to mock call after failure:", callSid);

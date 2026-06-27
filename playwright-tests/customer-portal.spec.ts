@@ -4,8 +4,8 @@ test.describe('Customer Portal - Authentication & Navigation', () => {
   test.beforeEach(async ({ authenticatedCustomer }) => {
     await authenticatedCustomer.goto('/portal/customer');
     await expect(authenticatedCustomer.getByText(/Dashboard/i).first()).toBeVisible();
-    // Hide the booking FAB to prevent overlaps on mobile viewports
-    await authenticatedCustomer.addStyleTag({ content: '[aria-label="Book a call"] { display: none !important; }' }).catch(() => {});
+    // Wait for Next.js client-side hydration to complete
+    await authenticatedCustomer.waitForTimeout(2000);
   });
 
   test('should allow customer to log in and access customer portal', async ({ authenticatedCustomer }) => {

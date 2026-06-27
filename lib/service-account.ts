@@ -60,6 +60,9 @@ export function loadServiceAccount(): ServiceAccountJson | null {
 
   // Print helpful console warnings if FIREBASE_SERVICE_ACCOUNT_PATH is incorrectly set to standard firebase.json config
   const saPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH?.trim();
+  if (saPath === "none" || saPath === "mock") {
+    return null;
+  }
   if (saPath) {
     const resolved = path.isAbsolute(saPath) ? saPath : path.join(cwd, saPath);
     if (fs.existsSync(resolved)) {

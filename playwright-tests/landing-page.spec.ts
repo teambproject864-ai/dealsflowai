@@ -1,12 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './auth-test.fixture';
 
 test.describe('Landing Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Wait for the loader to disappear to ensure the page is fully hydrated and interactive
     await expect(page.getByText('Initializing experience')).toBeHidden();
-    // Hide the booking FAB to prevent overlaps on mobile viewports
-    await page.addStyleTag({ content: '[aria-label="Book a call"] { display: none !important; }' }).catch(() => {});
     // Wait a brief moment for client-side routing to fully hydrate and attach event listeners
     await page.waitForTimeout(2000);
   });

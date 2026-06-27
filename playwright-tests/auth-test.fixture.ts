@@ -8,6 +8,31 @@ interface CustomFixtures {
 
 // Extend base test with custom fixtures
 export const test = base.extend<CustomFixtures>({
+  // Overriding standard page fixture to inject style tag on every page load
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      const appendStyle = () => {
+        const root = document.documentElement || document.head || document.body;
+        if (!root) return false;
+        if (!document.getElementById('playwright-hide-overlays')) {
+          const s = document.createElement('style');
+          s.id = 'playwright-hide-overlays';
+          s.textContent = '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }';
+          root.appendChild(s);
+        }
+        return true;
+      };
+
+      appendStyle();
+
+      const observer = new MutationObserver(() => {
+        appendStyle();
+      });
+      observer.observe(document, { childList: true, subtree: true });
+    });
+    await use(page);
+  },
+
   // Fixture for authenticated admin user
   authenticatedAdmin: async ({ page, context }, use) => {
     // Set cookie with correct name matching lib/auth.ts AUTH_COOKIE_NAME = "df_auth_token"

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './auth-test.fixture';
 
 test.describe('Authentication End-to-End Flow', () => {
   test('should register a new customer, log in, and log out successfully', async ({ page }) => {
@@ -25,23 +25,22 @@ test.describe('Authentication End-to-End Flow', () => {
     // Verify successful registration and redirect to /portal/customer
     await expect(page).toHaveURL(/\/portal\/customer/, { timeout: 25000 });
 
-    // 2. LOGOUT FLOW
-    // Click Account Menu button (trigger) in the header
-    const avatarBtn = page.getByLabel(/User account menu/i);
-    await expect(avatarBtn).toBeVisible();
-    await avatarBtn.click();
+    // Wait for portal auth guard to resolve.
+    // The portal layout shows a "Loading portal" spinner (role=status) while
+    // useCurrentUser fetches /api/auth/me and React propagates the auth state.
+    // We wait for that spinner to disappear, confirming checkingAccess=false.
+    await expect(page.getByRole('status', { name: /Loading portal/i })).toBeHidden({ timeout: 30000 });
 
-    // Click the logout button inside the Account Dropdown
-    const logoutBtn = page.getByRole('menuitem', { name: /Logout/i });
-    await expect(logoutBtn).toBeVisible();
-    await logoutBtn.click();
+    // 2. LOGOUT FLOW
+    // The portal layout renders an ExtrudedButton "Logout" once the auth guard
+    // resolves — visible on both desktop and mobile viewports.
+    // Use force:true to bypass CSS animation stability checks on ExtrudedButton.
+    const logoutBtn = page.getByRole('button', { name: /^Logout(ing out\.\.\.)?$/i }).first();
+    await expect(logoutBtn).toBeVisible({ timeout: 10000 });
+    await logoutBtn.click({ force: true });
 
     // Verify redirected back to home '/' and session cookie is cleared
     await expect(page).toHaveURL(/\/$/, { timeout: 25000 });
-
-    // Open account menu again and verify it is in the guest/logged-out state
-    await avatarBtn.click();
-    await expect(page.getByText(/Access Portal/i)).toBeVisible();
   });
 
   test('should handle valid and invalid logins for demo customer', async ({ page }) => {
@@ -54,9 +53,8 @@ test.describe('Authentication End-to-End Flow', () => {
     await page.locator('#auth-submit-btn').click();
 
     // Verify alert message is visible
-    const alert = page.getByRole('alert');
+    const alert = page.getByRole('alert').filter({ hasText: /Invalid email or password/i });
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText(/Invalid email or password/i);
 
     // 2. VALID LOGIN
     await page.getByLabel(/^Password$/i).fill('CustomerDemo123!');

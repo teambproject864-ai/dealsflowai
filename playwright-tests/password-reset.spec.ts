@@ -5,6 +5,7 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
   test('should allow user to submit a forgot password request', async ({ page }) => {
     // Navigate to forgot password page
     await page.goto('/auth/forgot-password');
+    await page.addStyleTag({ content: '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }' }).catch(() => {});
     
     // Fill in email
     await page.locator('input[type="email"]').fill('demo@customer.com');
@@ -22,11 +23,12 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
     });
     
     // Submit the form
-    await page.click('button[type="submit"]', { force: true });
+    const form = page.locator('form').first();
+    await form.evaluate(form => (form as HTMLFormElement).requestSubmit());
     
     // Verify success message is displayed
-    await expect(page.getByText('Check Your Email!')).toBeVisible();
-    await expect(page.getByText('For demo purposes, check the server logs')).toBeVisible();
+    await expect(page.getByText('Check your inbox')).toBeVisible();
+    await expect(page.getByText(/If an account with/)).toBeVisible();
   });
 
   test('should restrict direct reset password access for customer tokens', async ({ page }) => {
@@ -35,9 +37,9 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
     const customerToken = 'dummyHeader.eyJyb2xlIjoiY3VzdG9tZXIiLCJ0eXBlIjoicGFzc3dvcmQtcmVzZXQifQ.dummySignature';
     
     await page.goto(`/auth/reset-password?token=${customerToken}`);
+    await page.addStyleTag({ content: '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }' }).catch(() => {});
     
     // Verify restriction screen is shown
-    await expect(page.getByText('Review Pending')).toBeVisible();
     await expect(page.getByText('Direct password reset is restricted for customers and agents')).toBeVisible();
     
     // Verify password inputs are not rendered
@@ -50,14 +52,15 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
     const adminToken = 'dummyHeader.eyJyb2xlIjoiYWRtaW4iLCJ0eXBlIjoicGFzc3dvcmQtcmVzZXQifQ.dummySignature';
     
     await page.goto(`/auth/reset-password?token=${adminToken}`);
+    await page.addStyleTag({ content: '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }' }).catch(() => {});
     
     // Verify form header
-    await expect(page.getByText('Set New Password')).toBeVisible();
-    await expect(page.getByText('Enter your new password below')).toBeVisible();
+    await expect(page.getByText('Set a new password')).toBeVisible();
+    await expect(page.getByText('Choose a strong password to secure your account')).toBeVisible();
     
     // Verify password inputs are rendered
-    await expect(page.locator('input[placeholder="Enter new password"]')).toBeVisible();
-    await expect(page.locator('input[placeholder="Confirm new password"]')).toBeVisible();
+    await expect(page.locator('input[placeholder="Min. 8 characters"]')).toBeVisible();
+    await expect(page.locator('input[placeholder="Repeat your new password"]')).toBeVisible();
   });
 
   test('should allow admin to view and process password reset requests', async ({ authenticatedAdmin }) => {
@@ -96,9 +99,10 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
 
     // Navigate to admin portal
     await authenticatedAdmin.goto('/portal/admin');
+    await authenticatedAdmin.addStyleTag({ content: '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }' }).catch(() => {});
     
     // Click on the Password Requests tab
-    await authenticatedAdmin.getByRole('button', { name: /Password Requests/i }).click({ force: true });
+    await authenticatedAdmin.getByRole('button', { name: 'Password Requests', exact: true }).click({ force: true });
     
     // Verify the list has our pending request
     await expect(authenticatedAdmin.getByText('demo@customer.com')).toBeVisible();

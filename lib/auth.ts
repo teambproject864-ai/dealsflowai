@@ -106,7 +106,7 @@ export const DEMO_CUSTOMERS: DemoCustomer[] = [
     id: "customer-demo",
     email: "demo@customer.com",
     // Hashed password for "CustomerDemo123!"
-    hashedPassword: "$2b$12$R7o34Nx1z9Y0P5q7V8b4A0Qw7e2Z1x3P5q7V8b4A0Qw7e2Z1x3P5q7V",
+    hashedPassword: "$2b$12$ziqpS85cgY.OpbyEtNnU0uvhUbHRySFERSDzoIYt3YLf5xmP6lFDi",
     name: "Demo Customer",
     role: "customer",
   },

@@ -108,7 +108,7 @@ export function CookieConsentBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-[9999] animate-in slide-in-from-bottom duration-500">
+    <div id="cookie-consent-banner" className="fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-[9999] animate-in slide-in-from-bottom duration-500">
       <div className="bg-slate-950/95 border border-white/10 p-5 rounded-3xl df-glass shadow-[0_15px_40px_rgba(0,0,0,0.5)] backdrop-blur-3xl text-white">
         <div className="flex items-start gap-3.5">
           <div className="p-2 rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-500/10 border border-teal-500/20 text-teal-400">
