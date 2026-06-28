@@ -28,6 +28,7 @@ import { runHeaderTests } from "@/tests/headers.test";
 import { runAuditLoggerTests } from "@/tests/audit-logger.test";
 import { encryptLead, decryptLead } from "@/lib/security";
 import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
+import { runIntegratedSystemTests } from "@/tests/integrated-system.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -300,6 +301,7 @@ async function main() {
     runPrivacyTests,
     runHeaderTests,
     runAuditLoggerTests,
+    runIntegratedSystemTests,
   ];
 
   for (const t of tests) {
