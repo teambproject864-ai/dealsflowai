@@ -6,10 +6,13 @@ async function testConfigHeaders() {
   assert.strictEqual(nextConfig.reactStrictMode, true, "reactStrictMode should be enabled");
   
   if (typeof nextConfig.headers === "function") {
+    const prevNodeEnv = process.env.NODE_ENV;
+    (process.env as any).NODE_ENV = 'production';
     const headersList = await nextConfig.headers();
+    (process.env as any).NODE_ENV = prevNodeEnv;
     
     // Find the catch-all route headers
-    const catchAllRoute = headersList.find((h: any) => h.source === "/(.*)");
+    const catchAllRoute = headersList.find((h: any) => h.source === "/(.*)" || h.source === "/((?!api|_next/static|_next/image|favicon.ico).*)");
     assert.ok(catchAllRoute, "Catch-all headers route should be defined");
 
     const permissionsPolicy = catchAllRoute.headers.find((h: any) => h.key === "Permissions-Policy");

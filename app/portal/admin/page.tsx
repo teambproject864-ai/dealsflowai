@@ -2493,11 +2493,6 @@ function AdminPortalContent() {
           </div>
         )}
 
-        {activeTab === "password-requests" && (
-          <div className="space-y-4">
-            {/* existing password-requests content is above */}
-          </div>
-        )}
 
         {activeTab === "ai-interactions" && (
           <div className="space-y-6">
