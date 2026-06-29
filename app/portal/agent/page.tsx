@@ -643,7 +643,7 @@ function AgentPortalContent() {
     }, 2000);
     
     return () => clearInterval(pollInterval);
-  }, [activeCallSession?.sessionId]);
+  }, [activeCallSession]);
 
   // WhatsApp state
   const [waToPhone, setWaToPhone] = useState("");

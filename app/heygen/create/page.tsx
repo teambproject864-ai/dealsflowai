@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Loader2, Video, User } from "lucide-react";
 import { GlassPanel, ExtrudedButton } from "@/components/immersive";
 import { Input } from "@/components/ui/input";
@@ -132,11 +133,15 @@ export default function HeyGenCreate() {
                   }`}
                 >
                   {avatar.thumbnailUrl ? (
-                    <img
-                      src={avatar.thumbnailUrl}
-                      alt={avatar.name}
-                      className="w-full aspect-square rounded-lg object-cover mb-3"
-                    />
+                    <div className="w-full aspect-square rounded-lg mb-3 overflow-hidden relative">
+                      <Image
+                        src={avatar.thumbnailUrl}
+                        alt={avatar.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <div className="w-full aspect-square rounded-lg bg-slate-800 flex items-center justify-center mb-3">
                       <User className="h-12 w-12 text-slate-400" />

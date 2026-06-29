@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bot,
@@ -31,6 +31,59 @@ export default function BrowserAgentPage() {
     controller.setRouter(router);
     setConnectionStatus(controller.getConnectionStatus());
   }, [router, controller]);
+
+  const addTask = useCallback((partialTask: Omit<Task, "id" | "startTime">) => {
+    const newTask: Task = {
+      id: Date.now().toString(),
+      startTime: new Date(),
+      ...partialTask,
+    };
+    setTasks((prev) => [newTask, ...prev]);
+    trackEvent("browser_agent_task_added", { type: partialTask.type });
+  }, []);
+
+  const processTask = useCallback(async (input: string, type: "text" | "voice") => {
+    const taskId = Date.now().toString();
+    addTask({
+      type,
+      input,
+      status: "in_progress",
+    });
+
+    try {
+      const result = await controller.processCommand(input, type);
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? result
+            : task
+        )
+      );
+      trackEvent("browser_agent_task_completed", { type });
+    } catch (error) {
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? {
+                id: taskId,
+                type,
+                input,
+                status: "failed",
+                startTime: new Date(),
+                endTime: new Date(),
+                error: (error as Error).message,
+              }
+            : task
+        )
+      );
+      trackEvent("browser_agent_task_failed", { type, error: (error as Error).message });
+    }
+  }, [addTask, controller]);
+
+  const handleVoiceCommand = useCallback((transcript: string) => {
+    setInputText(transcript);
+    processTask(transcript, "voice");
+  }, [processTask]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -72,19 +125,9 @@ export default function BrowserAgentPage() {
 
       recognitionRef.current = recognition;
     }
-  }, []);
+  }, [handleVoiceCommand, addTask]);
 
-  const addTask = (partialTask: Omit<Task, "id" | "startTime">) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      startTime: new Date(),
-      ...partialTask,
-    };
-    setTasks((prev) => [newTask, ...prev]);
-    trackEvent("browser_agent_task_added", { type: partialTask.type });
-  };
-
-  const toggleListening = () => {
+  const toggleListening = useCallback(() => {
     if (!recognitionRef.current) return;
 
     if (isListening) {
@@ -92,57 +135,14 @@ export default function BrowserAgentPage() {
     } else {
       recognitionRef.current.start();
     }
-  };
+  }, [isListening]);
 
-  const handleVoiceCommand = (transcript: string) => {
-    setInputText(transcript);
-    processTask(transcript, "voice");
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
     processTask(inputText, "text");
     setInputText("");
-  };
-
-  const processTask = async (input: string, type: "text" | "voice") => {
-    const taskId = Date.now().toString();
-    addTask({
-      type,
-      input,
-      status: "in_progress",
-    });
-
-    try {
-      const result = await controller.processCommand(input, type);
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId
-            ? result
-            : task
-        )
-      );
-      trackEvent("browser_agent_task_completed", { type });
-    } catch (error) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId
-            ? {
-                id: taskId,
-                type,
-                input,
-                status: "failed",
-                startTime: new Date(),
-                endTime: new Date(),
-                error: (error as Error).message,
-              }
-            : task
-        )
-      );
-      trackEvent("browser_agent_task_failed", { type, error: (error as Error).message });
-    }
-  };
+  }, [inputText, processTask]);
 
   const clearTasks = () => {
     setTasks([]);

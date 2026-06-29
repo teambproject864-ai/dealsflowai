@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Loader2, Search, Play, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
 import { GlassPanel, ExtrudedButton } from "@/components/immersive";
 import { Input } from "@/components/ui/input";
@@ -132,10 +133,12 @@ export default function HeyGenLibrary() {
               <div className="p-5">
                 {video.thumbnailUrl ? (
                   <div className="relative aspect-video bg-slate-800 rounded-lg mb-4 overflow-hidden">
-                    <img
+                    <Image
                       src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover"
+                      alt={video.title || "Video"}
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                     {video.videoUrl && (
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
