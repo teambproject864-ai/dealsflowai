@@ -99,6 +99,9 @@ test.describe('Password Management - Forgot & Reset Password Flow', () => {
 
     // Navigate to admin portal
     await authenticatedAdmin.goto('/portal/admin');
+    await expect(authenticatedAdmin.getByRole('heading', { name: 'Administrator Dashboard' })).toBeVisible();
+    // Wait for Next.js client-side hydration to complete
+    await authenticatedAdmin.waitForTimeout(2000);
     await authenticatedAdmin.addStyleTag({ content: '[aria-label="Book a call"], #cookie-consent-banner { display: none !important; }' }).catch(() => {});
     
     // Click on the Password Requests tab
