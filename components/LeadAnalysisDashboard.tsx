@@ -28,15 +28,26 @@ import Link from "next/link";
 
 // Mock data generator for offline mode
 function generateMockCompleteGTM(companyName: string, formData?: any): AnalysisResult {
+  // Extract all relevant fields from form data
+  const targetIndustries = formData?.targetIndustries ? formData.targetIndustries.join(", ") : "SalesTech/MarTech";
+  const targetGeographies = formData?.targetGeographics ? formData.targetGeographics.join(", ") : "United States (West/Northeast)";
+  const targetCompanySizes = formData?.targetCompanySizes ? formData.targetCompanySizes.join(", ") : "25-100 employees";
+  const icpDescription = formData?.icpDescription || "B2B SaaS companies with existing outbound sales motion";
+  const companyDescription = formData?.companyDescription || `${companyName} is a B2B SaaS company.`;
+  const keyChallenges = formData?.keyChallenges || "Manual lead qualification, pipeline visibility issues, long sales cycles.";
+  const primaryOutcome = formData?.primaryOutcome || "Accelerate pipeline and increase close rates";
+  const commonObjections = formData?.commonObjections || "No budget, too risky, not a priority right now";
+  
   return {
-    executiveSummary: `${companyName} has strong potential for growth with a B2B SaaS offering. The GTM analysis identifies key segments, channels, and messaging strategies to accelerate pipeline and close rates.`,
+    executiveSummary: `${companyName} has strong growth potential as a ${targetIndustries} company. ${companyDescription} This analysis identifies key segments, channels, and messaging strategies to achieve ${primaryOutcome}. Key challenges include ${keyChallenges} - we'll address these with targeted outreach, content, and sales process optimization.`,
     icpDefinition: {
       inclusionCriteria: [
-        "B2B SaaS companies with 10-250 employees",
-        "Revenue of $500k to $50M ARR",
-        "Uses Salesforce or HubSpot CRM",
-        "Located in North America or Europe",
-        "Has existing outbound sales motion"
+        `${icpDescription}`,
+        `Industry: ${targetIndustries}`,
+        `Company size: ${targetCompanySizes}`,
+        `Geography: ${targetGeographies}`,
+        "Uses Salesforce or HubSpot CRM (or similar)",
+        "Has existing outbound or inbound motion"
       ],
       exclusionCriteria: [
         "B2C companies",
@@ -50,11 +61,11 @@ function generateMockCompleteGTM(companyName: string, formData?: any): AnalysisR
     table1FirmographicDemographic: [
       { 
         priorityTier: "Tier 1", 
-        industryVertical: "SalesTech/MarTech", 
-        companySize: "25-100 employees", 
+        industryVertical: targetIndustries, 
+        companySize: targetCompanySizes, 
         arrRange: "$2M-$20M", 
-        location: formData?.targetGeographicRegionsText || "United States (West/Northeast)", 
-        keyDecisionMakerDemographics: "VP Sales, 35-50yo, data-driven", 
+        location: targetGeographies, 
+        keyDecisionMakerDemographics: formData?.targetSeniorities ? formData.targetSeniorities.join(", ") : "VP Sales, CRO, 35-50yo, data-driven", 
         notes: "Highest conversion, fastest sales cycles", 
         primaryCostDriver: "Tooling", 
         currentSolutionStatus: "Basic", 
@@ -63,11 +74,11 @@ function generateMockCompleteGTM(companyName: string, formData?: any): AnalysisR
       },
       { 
         priorityTier: "Tier 2", 
-        industryVertical: "FinTech B2B SaaS", 
-        companySize: "50-150 employees", 
+        industryVertical: targetIndustries, 
+        companySize: targetCompanySizes, 
         arrRange: "$5M-$50M", 
-        location: formData?.targetGeographicRegionsText || "US/EU", 
-        keyDecisionMakerDemographics: "CRO/Director of Sales", 
+        location: targetGeographies, 
+        keyDecisionMakerDemographics: formData?.targetSeniorities ? formData.targetSeniorities.join(", ") : "CRO/Director of Sales", 
         notes: "High ACV, higher retention", 
         primaryCostDriver: "Headcount", 
         currentSolutionStatus: "None", 
@@ -209,8 +220,9 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
   const [zoom, setZoom] = useState(100);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Regenerate state
+  // Regenerate and feedback states
   const [regenerating, setRegenerating] = useState(false);
+  const [userFeedback, setUserFeedback] = useState("");
 
   // Ref to prevent multiple runs
   const lastProcessedLeadIdRef = useRef<string | null>(null);
@@ -260,7 +272,12 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
         const res = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ leadId, companyData, regenerate: forceRegenerate })
+          body: JSON.stringify({
+            leadId,
+            companyData,
+            regenerate: forceRegenerate,
+            feedback: forceRegenerate ? (stored?.feedback || userFeedback) : undefined
+          })
         });
 
         const data = await res.json();
@@ -430,37 +447,95 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
 
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="space-y-8">
           {/* Header & Action Controls */}
-          <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-white mb-2" id="analysis-title">
-                GTM AI Analysis <span className="text-teal-400">Playbook</span>
-              </h1>
-              <p className="text-lg text-slate-400" aria-describedby="analysis-title">
-                Complete 11-section analysis for {analysis.companyName || "your company"}
-              </p>
+          <div className="flex flex-col gap-6 mb-8">
+            <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight text-white mb-2" id="analysis-title">
+                  GTM AI Analysis <span className="text-teal-400">Playbook</span>
+                </h1>
+                <p className="text-lg text-slate-400" aria-describedby="analysis-title">
+                  Complete 11-section analysis for {analysis.companyName || "your company"}
+                </p>
+              </div>
             </div>
+            {/* Feedback & Regeneration Section */}
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="user-feedback" className="text-sm font-semibold text-slate-300 mb-2 block">
+                    Provide Feedback to Improve Analysis
+                  </Label>
+                  <textarea
+                    id="user-feedback"
+                    value={userFeedback}
+                    onChange={(e) => setUserFeedback(e.target.value)}
+                    placeholder="What would you like to change in the analysis? E.g., Focus more on a specific region, adjust ICP, include certain competitors, etc."
+                    className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/30 transition-all"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex items-end gap-3">
+                  <Button
+                    onClick={() => {
+                      // Save feedback and regenerate
+                      if (context) {
+                        saveLeadContext(context.form, context.analysis, userFeedback);
+                        setContext({ ...context, feedback: userFeedback });
+                      }
+                      // Call the regenerate function we attached to window
+                      const win = window as any;
+                      if (win.regenerateAnalysis) win.regenerateAnalysis();
+                    }}
+                    disabled={loading || regenerating}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    aria-label="Regenerate analysis with feedback"
+                  >
+                    {regenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                        Regenerating with Feedback...
+                      </>
+                    ) : (
+                      <>
+                        <IconRefreshPipeline className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Regenerate with Feedback
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Regenerate without feedback
+                      const win = window as any;
+                      if (win.regenerateAnalysis) win.regenerateAnalysis();
+                    }}
+                    disabled={loading || regenerating}
+                    className="bg-slate-600 hover:bg-slate-700 text-white"
+                    aria-label="Regenerate analysis without feedback"
+                  >
+                    {regenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <IconRefreshPipeline className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Regenerate
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            {/* Other Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <Button
-                onClick={() => {
-                  // Call the regenerate function we attached to window
-                  const win = window as any;
-                  if (win.regenerateAnalysis) win.regenerateAnalysis();
-                }}
-                disabled={loading || regenerating}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-                aria-label="Regenerate analysis"
+                onClick={() => setShowViewer(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                aria-label="View analysis document in viewer"
               >
-                {regenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
-                    Regenerating...
-                  </>
-                ) : (
-                  <>
-                    <IconRefreshPipeline className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Regenerate Analysis
-                  </>
-                )}
+                <FileText className="w-4 h-4 mr-2" aria-hidden="true" />
+                View Document
               </Button>
               <Button
                 onClick={() => setShowViewer(true)}
@@ -612,6 +687,11 @@ function generateFullMarkdownReport(analysis: AnalysisResult | null, context: St
     md += `- **Target Industries**: ${Array.isArray(context.form.targetIndustries) ? context.form.targetIndustries.join(", ") : "Not provided"}\n`;
     md += `- **Target Geographic Regions**: ${Array.isArray(context.form.targetGeographics) ? context.form.targetGeographics.join(", ") : "Not provided"}\n`;
     md += `- **ICP Description**: ${context.form.icpDescription || "Not provided"}\n`;
+  }
+  // User Feedback section
+  if (context?.feedback) {
+    md += `\n## User Feedback for Regeneration\n\n`;
+    md += `> **Feedback Provided for This Analysis**: ${context.feedback}\n\n`;
   }
   md += `\n`;
   

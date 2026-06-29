@@ -58,9 +58,6 @@ const nextConfig = {
   // Suppress Node.js deprecation warnings from third-party packages (e.g., googleapis url.parse DEP0169)
   serverExternalPackages: ["googleapis", "google-auth-library", "twilio"],
   webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      config.cache = false;
-    }
     // Suppress Node.js deprecation warnings from third-party packages in webpack
     if (isServer) {
       config.ignoreWarnings = [
@@ -89,7 +86,7 @@ const nextConfig = {
     }
     return [
       {
-        source: '/(.*)',
+        source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
         headers: [
           {
             key: 'X-Frame-Options',

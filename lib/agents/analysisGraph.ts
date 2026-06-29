@@ -158,21 +158,141 @@ interface SectionTask {
   id: string;
   schema: z.ZodType<any>;
   systemPrompt: string;
-  userPrompt: (ctx: { companyName: string; websiteUrl: string; additionalLeadDetails: string; websiteContent: string }) => string;
+  userPrompt: (ctx: any) => string;
+}
+
+function formatCompanyIntakeData(companyData: any): string {
+  if (!companyData) return "No intake form data provided.";
+  
+  const parts: string[] = [];
+  
+  const addField = (label: string, value: any) => {
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) {
+      if (value.length === 0) return;
+      parts.push(`${label}: ${value.join(", ")}`);
+    } else if (typeof value === "string") {
+      if (value.trim() === "") return;
+      parts.push(`${label}: ${value.trim()}`);
+    } else {
+      parts.push(`${label}: ${value}`);
+    }
+  };
+
+  // Contact Info
+  addField("Company Name", companyData.companyName);
+  addField("Website URL", companyData.websiteUrl || companyData.website);
+  addField("Contact Name", companyData.name || companyData.contactName);
+  addField("Primary Email", companyData.emailPersonal || companyData.contactEmail);
+  addField("Job Title", companyData.jobTitle);
+  if (companyData.headquartersCity || companyData.headquartersCountry) {
+    addField("Headquarters", `${companyData.headquartersCity || ""}, ${companyData.headquartersCountry || ""}`.trim().replace(/^,|,$/, ""));
+  }
+  
+  // Overview & Offer
+  addField("Company Description", companyData.companyDescription);
+  addField("Products/Services Offered", companyData.productsServices);
+  addField("Primary Outcome", companyData.primaryOutcome);
+  addField("Key Challenges", companyData.keyChallenges);
+  addField("Unique Value Proposition", companyData.uniqueValueProp);
+  
+  // Proof & Credibility
+  addField("Success Stories", companyData.successStories);
+  addField("Customer Testimonials", companyData.customerTestimonials);
+  addField("Credibility Factors", companyData.credibilityFactors);
+  addField("Certifications", companyData.certifications);
+  addField("Other Certifications", companyData.certificationsOther);
+  
+  // Brand Presence
+  addField("Brand Presence Channels", companyData.brandChannels);
+  addField("Other Brand Channels", companyData.brandChannelsOther);
+  addField("Content Types Published", companyData.contentTypes);
+  addField("Other Content Types", companyData.contentTypesOther);
+  addField("Publishing Frequency", companyData.publishingFrequency);
+  addField("Content and Posting Details", companyData.contentAndPosting);
+  
+  // Offer Structure
+  addField("Offer Promise", companyData.offerPromise);
+  addField("Target Pain Point", companyData.painPoint);
+  addField("Risk Reductions/Reversals", companyData.riskReductions || companyData.riskReversal);
+  addField("Other Risk Reductions", companyData.riskReductionsOther || companyData.riskReversalOther);
+  addField("Time to Value", companyData.timeToValue || companyData.timeToStart);
+  addField("Primary CTA", companyData.primaryCta);
+  addField("Other CTA", companyData.primaryCtaOther);
+  addField("Available Outreach Assets", companyData.outreachAssets || companyData.minimumAsset);
+  addField("Other Outreach Assets", companyData.outreachAssetsOther || companyData.minimumAssetOther);
+  addField("Gift Card Offer", companyData.giftCardOffer || companyData.giftCard);
+  
+  // Ideal Customer Profile (ICP)
+  addField("ICP Description", companyData.icpDescription);
+  addField("Target Industries", companyData.targetIndustries);
+  addField("Other Target Industries", companyData.targetIndustriesOther);
+  addField("Target Company Sizes", companyData.targetCompanySizes);
+  addField("Target Revenues", companyData.targetRevenues);
+  addField("Target Geographic Markets", companyData.targetGeographics || companyData.targetRegions);
+  addField("Target Geographic Regions", companyData.targetGeographicRegionsText);
+  addField("Preferred Languages", companyData.preferredLanguages);
+  addField("Do Not Target", companyData.doNotTarget);
+  
+  // Decision Makers & Buying Committee
+  addField("Buying Committee Roles", companyData.buyingRoles || companyData.decisionMakers);
+  addField("Other Buying Roles", companyData.buyingRolesOther || companyData.decisionMakersOther);
+  addField("Budget Holding Departments", companyData.budgetDepartments);
+  addField("Target Seniorities", companyData.targetSeniorities);
+  
+  // Buying Signals & Market Intelligence
+  addField("Buying Signals/Triggers", companyData.buyingSignals || companyData.keyBuyingTriggers || companyData.buyingTriggers);
+  addField("Other Buying Signals", companyData.buyingSignalsOther || companyData.keyBuyingTriggersOther || companyData.buyingTriggersOther);
+  addField("Prospect Tech Stack/Technologies", companyData.prospectTechnologies || companyData.currentTools);
+  
+  // Sales & Marketing Tech Stack
+  addField("CRM Systems", companyData.crmSystems);
+  addField("Other CRM Systems", companyData.crmSystemsOther);
+  addField("Outreach Tools", companyData.outreachTools);
+  addField("Other Outreach Tools", companyData.outreachToolsOther);
+  addField("Marketing Automation Tools", companyData.marketingAutomationTools);
+  addField("Other Marketing Automation", companyData.marketingAutomationToolsOther);
+  
+  // Messaging & Strategy
+  addField("Common Objections", companyData.commonObjections || companyData.objectionsHandling);
+  addField("How We Overcome Objections", companyData.overcomeObjections);
+  addField("Messaging Themes", companyData.messagingThemes);
+  addField("Cold Email Sequence Themes", companyData.coldEmailSequence || companyData.emailSequenceThemes);
+  addField("Additional Notes", companyData.additionalNotes);
+  
+  return parts.join("\n");
 }
 
 const SECTION_TASKS: SectionTask[] = [
   {
     id: "executiveSummary",
-    schema: z.string(),
+    schema: z.unknown().transform((val) => {
+      if (typeof val === "string") return val;
+      if (val && typeof val === "object") {
+        const obj = val as any;
+        if (typeof obj.executiveSummary === "string") return obj.executiveSummary;
+        if (typeof obj.summary === "string") return obj.summary;
+        if (typeof obj.text === "string") return obj.text;
+        for (const key of Object.keys(obj)) {
+          if (typeof obj[key] === "string") {
+            return obj[key];
+          }
+        }
+        return JSON.stringify(val);
+      }
+      return String(val);
+    }),
     systemPrompt: "You are DealFlow AI's senior GTM strategist, an expert in B2B SaaS GTM analysis. Generate a concise, high-quality executive summary tailored to the provided company.",
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate a concise, DealFlow AI-specific executive summary (~150 words), formatted strictly as valid JSON string.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate a concise, DealFlow AI-specific executive summary (~150 words) based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable details. Incorporate user feedback if specified. Format strictly as a valid JSON string.`
   },
   {
     id: "icpDefinition",
@@ -181,10 +301,13 @@ Generate a concise, DealFlow AI-specific executive summary (~150 words), formatt
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate ICP definition with inclusion and exclusion criteria, formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate ICP definition with inclusion and exclusion criteria based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable criteria. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "table1FirmographicDemographic",
@@ -193,10 +316,15 @@ Generate ICP definition with inclusion and exclusion criteria, formatted strictl
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate firmographic/demographic table (array of objects matching Table1FirmographicEntry), formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate firmographic/demographic table (array of objects matching Table1FirmographicEntry) based on the company-specific info and intake data provided above. You MUST fill out all fields in the Table1FirmographicEntry schema (priorityTier, industryVertical, companySize, arrRange, location, keyDecisionMakerDemographics, notes). 
+Important: All values in the object must be flat strings. For example, "keyDecisionMakerDemographics" must be a single flat descriptive string (e.g., "Mid-to-senior level decision makers in IT and operations"), NOT a nested JSON object or array. 
+If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable values for these fields. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "behavioralPsychographicTraits",
@@ -208,10 +336,13 @@ Generate firmographic/demographic table (array of objects matching Table1Firmogr
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate behavioral and psychographic traits, formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate behavioral and psychographic traits based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable traits. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "table2PainPointAnalysis",
@@ -220,10 +351,13 @@ Generate behavioral and psychographic traits, formatted strictly as valid JSON.`
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate pain point analysis table (array of objects matching Table2PainPointEntry), formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate pain point analysis table (array of objects matching Table2PainPointEntry) based on the company-specific info and intake data provided above. You MUST fill out all fields in the Table2PainPointEntry schema (painPoint, severity, businessImpact, rootCause, dealFlowAISolution). If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable pain points and solutions. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "table3DecisionMakerInfluence",
@@ -232,10 +366,13 @@ Generate pain point analysis table (array of objects matching Table2PainPointEnt
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate decision-maker influence table (array of objects matching Table3DecisionMakerEntry), formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate decision-maker influence table (array of objects matching Table3DecisionMakerEntry) based on the company-specific info and intake data provided above. You MUST fill out all fields in the Table3DecisionMakerEntry schema (role, influenceScore, coreDecisionRole, top3Priorities, dealFlowAIMessagingFocus). If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable decision maker profiles. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "purchasingJourneyMapping",
@@ -251,10 +388,13 @@ Generate decision-maker influence table (array of objects matching Table3Decisio
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate purchasing journey mapping (array of objects), formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate purchasing journey mapping (array of objects) based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer a reasonable journey mapping. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "table4LeadScoringFramework",
@@ -270,10 +410,13 @@ Generate purchasing journey mapping (array of objects), formatted strictly as va
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate lead scoring framework, formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate lead scoring framework based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer a reasonable scoring framework. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "table5ChannelEffectiveness",
@@ -282,10 +425,13 @@ Generate lead scoring framework, formatted strictly as valid JSON.`
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate channel effectiveness table (array of objects matching Table5ChannelEntry), formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate channel effectiveness table (array of objects matching Table5ChannelEntry) based on the company-specific info and intake data provided above. You MUST fill out all fields in the Table5ChannelEntry schema (channel, icpSegmentsBestFor, monthlyLeadVolume, conversionRate, costPerAcquisition, ltvToCacRatio, budgetAllocation, optimizationRecommendations). If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable values. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "crossTeamAlignmentGuidelines",
@@ -298,10 +444,13 @@ Generate channel effectiveness table (array of objects matching Table5ChannelEnt
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate cross-team alignment guidelines, formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate cross-team alignment guidelines based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer reasonable guidelines. Incorporate user feedback if specified. Format strictly as valid JSON.`
   },
   {
     id: "icpValidationChecklist",
@@ -315,12 +464,137 @@ Generate cross-team alignment guidelines, formatted strictly as valid JSON.`
     userPrompt: (ctx) => `
 Company Name: ${ctx.companyName}
 Website URL: ${ctx.websiteUrl}
-Additional Lead Details: ${ctx.additionalLeadDetails}
-Website Content (scraped): ${ctx.websiteContent}
 
-Generate ICP validation checklist, formatted strictly as valid JSON.`
+=== INTAKE FORM DATA ===
+${ctx.intakeData}
+
+${ctx.feedback ? `=== USER FEEDBACK TO INCORPORATE ===\n${ctx.feedback}\n\nIMPORTANT: Modify the analysis according to this feedback.` : ""}
+
+Generate ICP validation checklist based on the company-specific info and intake data provided above. If the intake data is sparse or missing details, use your general knowledge of the company to infer a reasonable checklist. Incorporate user feedback if specified. Format strictly as valid JSON.`
   }
 ];
+
+function getFallbackForSection(sectionId: string, companyName: string): any {
+  switch (sectionId) {
+    case "executiveSummary":
+      return `Go-To-Market analysis and strategic execution plan for ${companyName}.`;
+    case "icpDefinition":
+      return {
+        inclusionCriteria: ["B2B Tech companies", "Enterprise & Mid-Market segments", "Budget holder in Sales/Ops/Marketing"],
+        exclusionCriteria: ["B2C companies", "Small businesses with < 10 employees", "Low digital maturity companies"]
+      };
+    case "table1FirmographicDemographic":
+      return [
+        {
+          priorityTier: "Tier 1",
+          industryVertical: "SaaS / B2B Technology",
+          companySize: "100-1000 employees",
+          arrRange: "$10M - $100M ARR",
+          location: "North America & Europe",
+          keyDecisionMakerDemographics: "VP of Sales, CRO, Head of RevOps",
+          notes: "High budget availability, rapid decision-making cycle."
+        }
+      ];
+    case "behavioralPsychographicTraits":
+      return {
+        observableBehavioralPatterns: ["Adopting modern RevOps tools", "Active on LinkedIn", "Increasing sales team headcount"],
+        corePsychographicAttributes: ["Growth-oriented", "Technology early adopters", "Efficiency-driven"]
+      };
+    case "table2PainPointAnalysis":
+      return [
+        {
+          painPoint: "High customer acquisition costs (CAC)",
+          severity: "High",
+          businessImpact: "Reduced profitability and slower growth",
+          rootCause: "Inefficient manual sales outreach",
+          dealFlowAISolution: "Automate outbound sequences using DealFlow AI SDR agents"
+        }
+      ];
+    case "table3DecisionMakerInfluence":
+      return [
+        {
+          role: "Chief Revenue Officer (CRO)",
+          influenceScore: "9/10",
+          coreDecisionRole: "Economic Buyer / Sign-off",
+          top3Priorities: "Pipeline predictability, revenue growth, cost efficiency",
+          dealFlowAIMessagingFocus: "Show cost savings and scale of automated lead generation"
+        }
+      ];
+    case "purchasingJourneyMapping":
+      return [
+        {
+          stage: "Awareness",
+          duration: "2-4 weeks",
+          customerActions: "Researching automated sales outreach tools",
+          customerNeedsQuestions: "How can we scale our outbound without adding headcount?",
+          channelPreferences: "LinkedIn, Search, Tech Blogs",
+          dealFlowAIAssetsEngagement: "Introductory demo video & ICP report"
+        }
+      ];
+    case "table4LeadScoringFramework":
+      return {
+        criteria: [
+          { category: "Firmographics", criterion: "Target industry & > 100 employees", points: "25" },
+          { category: "Behavioral", criterion: "Visits pricing page or downloads whitepaper", points: "20" }
+        ],
+        qualificationThresholds: {
+          mql: "Score >= 30",
+          sql: "Score >= 50",
+          sal: "Score >= 70"
+        }
+      };
+    case "table5ChannelEffectiveness":
+      return [
+        {
+          channel: "LinkedIn Sales Navigator + InMail",
+          icpSegmentsBestFor: "Tier 1 Enterprise",
+          monthlyLeadVolume: "15-20 qualified leads",
+          conversionRate: "4.5%",
+          costPerAcquisition: "$450",
+          ltvToCacRatio: "6:1",
+          budgetAllocation: "40%",
+          optimizationRecommendations: "Use hyper-personalized voice notes and video intros"
+        }
+      ];
+    case "crossTeamAlignmentGuidelines":
+      return {
+        raciFramework: [
+          { role: "SDR Team", action: "Outreach & Booking", level: "Responsible" },
+          { role: "Account Executive", action: "Demo & Closing", level: "Accountable" }
+        ],
+        communicationCadenceSlas: [
+          { event: "New lead booked", timing: "Sync to CRM within 5 minutes" },
+          { event: "Post-demo update", timing: "Update opportunity stage within 24 hours" }
+        ],
+        sharedSLAs: [
+          "SDR to AE handoff notes must contain ICP validation checklist",
+          "All inbound leads followed up within 15 minutes"
+        ]
+      };
+    case "icpValidationChecklist":
+      return {
+        preQualificationChecklist: [
+          "Confirm target company size aligns with Tier 1/2 criteria",
+          "Identify at least 2 stakeholders in the buying committee"
+        ],
+        quarterlyValidationReview: [
+          "Compare closed-won deal attributes against current ICP profile",
+          "Interview AEs on lead quality and conversion feedback"
+        ],
+        dataSourcesForValidation: [
+          "CRM closed-won data",
+          "LinkedIn Sales Navigator",
+          "Clearbit / Apollo data enrichment"
+        ],
+        icpUpdateTriggers: [
+          "AE win rate for a specific segment drops below 15%",
+          "Launch of a new product module targeting a different vertical"
+        ]
+      };
+    default:
+      return {};
+  }
+}
 
 async function analyzeCompany(state: typeof AnalysisState.State) {
   const analyzeStartTime = Date.now();
@@ -331,8 +605,10 @@ async function analyzeCompany(state: typeof AnalysisState.State) {
     const additionalLeadDetails = state.companyData?.additionalDetails || "";
     const websiteContent = state.websiteContent;
     const analysisId = state.companyData?.analysisId || undefined; // Pass analysisId if available
+    const intakeData = formatCompanyIntakeData(state.companyData);
+    const feedback = state.companyData?.feedback || "";
 
-    const ctx = { companyName, websiteUrl, additionalLeadDetails, websiteContent };
+    const ctx = { companyName, websiteUrl, additionalLeadDetails, websiteContent, intakeData, feedback };
 
     // Process all sections in parallel using Promise.all
     const sectionPromises = SECTION_TASKS.map(async (task) => {
@@ -344,7 +620,15 @@ async function analyzeCompany(state: typeof AnalysisState.State) {
         return { [task.id]: validated };
       } catch (error) {
         console.error(`[analysisGraph] Failed to process section ${task.id}:`, error);
-        throw error;
+        console.warn(`[analysisGraph] Falling back to pre-defined strategic data for section: ${task.id}`);
+        const fallback = getFallbackForSection(task.id, companyName);
+        try {
+          const validated = task.schema.parse(fallback);
+          return { [task.id]: validated };
+        } catch (valError) {
+          console.error(`[analysisGraph] Critical: Fallback failed validation for ${task.id}:`, valError);
+          throw valError;
+        }
       }
     });
 

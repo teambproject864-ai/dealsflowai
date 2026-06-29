@@ -27,7 +27,7 @@ export function ExperienceChrome({ children }: { children: ReactNode }) {
   }, []);
 
   const isPortal = pathname.startsWith("/portal");
-  const showLoader = mounted && !isPortal;
+  const showLoader = false; // Disable CinematicLoader to load home page directly
 
   return (
     <ExperienceProvider>

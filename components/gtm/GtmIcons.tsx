@@ -788,6 +788,30 @@ export function IconUser(props: IconProps) {
   return IconUserStakeholder(props);
 }
 
+/** Bar Chart 2 for GTM strategy visualization */
+export function IconBarChart2(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M18 17V7M13 17V9M8 17v-6" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Key for API key management */
+export function IconKey(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M21 2l-2 2m-7.618 7.618a5.5 5.5 0 0 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z" />
+      <path d="M15.5 4h-2a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2" />
+    </>,
+    props.className,
+    props
+  );
+}
+
 /** Map legacy Lucide icon names from feature definitions to GTM icons */
 export function getGtmFeatureIcon(iconName: string): ComponentType<IconProps> {
   const map: Record<string, ComponentType<IconProps>> = {
@@ -801,6 +825,8 @@ export function getGtmFeatureIcon(iconName: string): ComponentType<IconProps> {
     Mail: IconEmailSequence,
     Phone: IconPhoneDialer,
     BarChart: IconKpiStackedBars,
+    BarChart2: IconBarChart2,
+    Key: IconKey,
     Settings: IconPlaybookSettings,
     Lock: IconLockVault,
     Workflow: IconPipelineCrm,

@@ -423,6 +423,28 @@ export const APP_FEATURES: Feature[] = [
     updatedAt: "2026-06-28T00:00:00Z",
     version: 1,
   },
+  {
+    id: "gtm-strategy-optimization",
+    name: "GTM Strategy Optimization",
+    description: "12 core GTM strategies with 60+ sub-options including ICP definition, competitive analysis, messaging/positioning, channel strategy, sales process, customer success, and more.",
+    category: "GTM & Sales",
+    iconName: "BarChart2",
+    status: "active",
+    isNew: true,
+    updatedAt: "2026-06-29T00:00:00Z",
+    version: 1,
+  },
+  {
+    id: "api-key-management",
+    name: "Multi-LLM API Key Management",
+    description: "Manage API keys for Hugging Face, NVIDIA, and KIMI with clear mappings to which keys power which GTM strategies and sub-options.",
+    category: "Settings & Integration",
+    iconName: "Key",
+    status: "active",
+    isNew: true,
+    updatedAt: "2026-06-29T00:00:00Z",
+    version: 1,
+  },
 ];
 
 export const getIconComponent = (iconName: string) => getGtmFeatureIcon(iconName);

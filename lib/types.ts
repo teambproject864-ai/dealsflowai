@@ -338,6 +338,7 @@ export const STORAGE_KEY = "dealflow_lead_context_v1";
 export type StoredLeadContext = {
   form: IntakeFormData;
   analysis: AnalysisResult | null;
+  feedback?: string; // New: User feedback for regeneration
   updatedAt: string;
 };
 

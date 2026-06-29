@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
   try {
     console.log("[analyze/route] Starting analysis request...");
-    const { leadId, companyData: providedData } = await req.json();
+    const { leadId, companyData: providedData, regenerate, feedback } = await req.json();
 
     // Generate analysis ID early to track LLM jobs
     analysisId = uuidv4();
@@ -78,8 +78,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Add analysisId to companyData so it's available in analysisGraph
-    const companyDataWithAnalysisId = { ...companyData, analysisId };
+    // Add analysisId, regenerate, and feedback to companyData so it's available in analysisGraph
+    const companyDataWithAnalysisId = { 
+      ...companyData, 
+      analysisId,
+      regenerate,
+      feedback: feedback || companyData?.feedback || ""
+    };
 
     console.log("[analyze/route] Invoking analysis graph...");
     const graphState = await analysisGraph.invoke({ companyData: companyDataWithAnalysisId });
@@ -95,6 +100,7 @@ export async function POST(req: Request) {
       id: analysisId,
       leadId,
       companyName: companyData.companyName || null,
+      feedback: feedback || companyData?.feedback || null,
       ...analysis,
       createdAt: new Date().toISOString(),
     };

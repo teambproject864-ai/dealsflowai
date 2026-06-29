@@ -5,10 +5,11 @@ import type { AnalysisResult, IntakeFormData, StoredLeadContext } from "./types"
 export type { StoredLeadContext } from "./types";
 import { STORAGE_KEY } from "./types";
 
-export function saveLeadContext(form: IntakeFormData, analysis: AnalysisResult | null) {
+export function saveLeadContext(form: IntakeFormData, analysis: AnalysisResult | null, feedback?: string) {
   const payload: StoredLeadContext = {
     form,
     analysis,
+    feedback,
     updatedAt: new Date().toISOString(),
   };
   try {
