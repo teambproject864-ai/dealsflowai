@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import type { RevenueAgentProfile } from "@/lib/revenue-agents";
 import { formatAnalysisSummaryText } from "@/lib/report-formatter";
 import dynamic from "next/dynamic";
@@ -267,6 +268,17 @@ export function BookingWidget({
   const [voiceConfirmationQueued, setVoiceConfirmationQueued] = useState(false);
   const [calendlyLoading, setCalendlyLoading] = useState(true);
   const [password, setPassword] = useState("");
+  const handleGeneratePassword = () => {
+    const cleanName = formData.name.trim().replace(/[^a-zA-Z0-9]/g, "") || "User";
+    const cleanCompany = formData.company.trim().replace(/[^a-zA-Z0-9]/g, "") || "Company";
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const generated = `${cleanName}@${cleanCompany}!${suffix}`;
+    const finalPassword = generated.length < 12 ? generated + "12345".substring(0, 12 - generated.length) : generated;
+    setPassword(finalPassword);
+    if (formErrors.password) {
+      setFormErrors({ ...formErrors, password: "" });
+    }
+  };
   const [assignedAgent, setAssignedAgent] = useState<any | null>(null);
 
   // Setup Calendly event listener to validate and register successful bookings
@@ -1158,11 +1170,13 @@ export function BookingWidget({
                             formErrors.phone ? "border-red-500/50" : "border-white/10 focus:border-teal-500"
                           }`}
                         />
-                        {formErrors.phone && (
-                          <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1">
-                            <AlertCircle className="h-3 w-3" /> {formErrors.phone}
-                          </span>
-                        )}
+                        <div className="min-h-[16px] relative">
+                          {formErrors.phone && (
+                            <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1 absolute top-0 left-0">
+                              <AlertCircle className="h-3 w-3" /> {formErrors.phone}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Portal Email field */}
@@ -1184,37 +1198,47 @@ export function BookingWidget({
                             formErrors.email ? "border-red-500/50" : "border-white/10 focus:border-teal-500"
                           }`}
                         />
-                        {formErrors.email && (
-                          <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1">
-                            <AlertCircle className="h-3 w-3" /> {formErrors.email}
-                          </span>
-                        )}
+                        <div className="min-h-[16px] relative">
+                          {formErrors.email && (
+                            <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1 absolute top-0 left-0">
+                              <AlertCircle className="h-3 w-3" /> {formErrors.email}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Portal Password field */}
                       <div className="space-y-2">
-                        <Label htmlFor="ai-password" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
-                          <Lock className="h-3.5 w-3.5 text-teal-400" />
-                          Portal Password <span className="text-red-400">*</span>
-                        </Label>
-                        <input
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="ai-password" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 text-teal-400" />
+                            Portal Password <span className="text-red-400">*</span>
+                          </Label>
+                          <button
+                            type="button"
+                            onClick={handleGeneratePassword}
+                            className="text-[10px] font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider transition-colors px-2.5 py-1 rounded bg-slate-800/80 border border-slate-700/50"
+                          >
+                            Auto-generate
+                          </button>
+                        </div>
+                        <PasswordInput
                           id="ai-password"
-                          type="password"
                           placeholder="Create secure password"
                           value={password}
                           onChange={(e) => {
                             setPassword(e.target.value);
                             if (formErrors.password) setFormErrors({ ...formErrors, password: "" });
                           }}
-                          className={`w-full bg-black/40 border rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition-all ${
-                            formErrors.password ? "border-red-500/50" : "border-white/10 focus:border-teal-500"
-                          }`}
+                          hasError={!!formErrors.password}
                         />
-                        {formErrors.password && (
-                          <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1">
-                            <AlertCircle className="h-3 w-3" /> {formErrors.password}
-                          </span>
-                        )}
+                        <div className="min-h-[16px] relative">
+                          {formErrors.password && (
+                            <span className="text-[11px] text-red-400 flex items-center gap-1 mt-1 absolute top-0 left-0">
+                              <AlertCircle className="h-3 w-3" /> {formErrors.password}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 

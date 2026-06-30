@@ -29,6 +29,7 @@ import {
   Layers,
   ArrowRight,
   Phone,
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gtmPortalConfig } from '@/lib/config';
@@ -60,6 +61,7 @@ import type {
 import AuthProvider from '@/components/auth/AuthProvider';
 import LogoutButton from '@/components/auth/LogoutButton';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { MarketingStrategyModule } from '@/components/MarketingStrategyModule';
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
@@ -73,6 +75,7 @@ const tabs = [
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'feedback', label: 'Feedback', icon: Star },
   { id: 'ai-communications', label: 'AI Interactions', icon: Phone },
+  { id: 'marketing-strategy', label: 'Marketing Strategy', icon: Target },
 ] as const;
 
 export default function CustomerPortal() {
@@ -97,10 +100,18 @@ function CustomerPortalContent() {
   const [gtmRegion, setGtmRegion] = useState('All');
   const [gtmSegment, setGtmSegment] = useState('All');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [documents, setDocuments] = useState<Array<{id: string, name: string, type: string, size: string, date: string}>>([
-    { id: '1', name: 'Q4 2024 GTM Strategy.pdf', type: 'pdf', size: '2.4 MB', date: '2024-12-01' },
-    { id: '2', name: 'Competitor Analysis.xlsx', type: 'xlsx', size: '1.1 MB', date: '2024-11-28' },
-  ]);
+  const [documents, setDocuments] = useState<Array<{
+    id: string;
+    name: string;
+    type: string;
+    size: string;
+    version: string;
+    updatedAt: string;
+    updateNotes: string;
+    isNew: boolean;
+  }>>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [showVersionNotice, setShowVersionNotice] = useState(false);
   const [chatMessages, setChatMessages] = useState([...demoChatMessages.filter(m => m.sessionId === 'session-1')]);
   const [newMessage, setNewMessage] = useState('');
   const [icpEntries, setIcpEntries] = useState<ICPEntry[]>([]);
@@ -141,7 +152,7 @@ function CustomerPortalContent() {
   const [b2cSelectedDevice, setB2cSelectedDevice] = useState<"desktop" | "mobile" | "tablet">("desktop");
 
 
-  // Fetch ICP entries and agent assignment on mount
+  // Fetch ICP entries, agent assignment, and documents on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -174,8 +185,21 @@ function CustomerPortalContent() {
             setD2cBranding(demoD2CBrandingConfigs[cid]);
           }
         }
+
+        // Fetch Documents
+        const docsRes = await fetch('/api/customer/documents');
+        const docsData = await docsRes.json();
+        if (docsData.success) {
+          setDocuments(docsData.documents);
+          const hasUpdates = docsData.documents.some((d: any) => d.isNew);
+          if (hasUpdates) {
+            setShowVersionNotice(true);
+          }
+        }
       } catch (e) {
         console.error('Error fetching data:', e);
+      } finally {
+        setLoadingDocs(false);
       }
     };
     fetchData();
@@ -202,6 +226,25 @@ function CustomerPortalContent() {
       alert('Error reassigning agent');
     } finally {
       setIsReassigning(false);
+    }
+  };
+
+  const handleDownloadDoc = async (docId: string, docName: string) => {
+    try {
+      const response = await fetch(`/api/customer/documents/download?id=${docId}`);
+      if (!response.ok) throw new Error("Failed to download document");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = docName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to download document");
     }
   };
 
@@ -2002,15 +2045,38 @@ function CustomerPortalContent() {
 
           {activeTab === 'documents' && (
             <div className="space-y-8">
+              {showVersionNotice && (
+                <div className="bg-amber-950/40 border border-amber-500/20 p-4 rounded-2xl flex items-start gap-3">
+                  <Bell className="h-5 w-5 text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+                  <div className="flex-1">
+                    <p className="font-bold text-white text-sm">Document Updates Available</p>
+                    <p className="text-xs text-slate-400 mt-1">One or more of your assigned GTM Analysis or ICP documents has been updated to a newer version. Please check the version badges and update notes below.</p>
+                  </div>
+                  <button onClick={() => setShowVersionNotice(false)} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800 border border-slate-700">Dismiss</button>
+                </div>
+              )}
+
               <GlassPanel tilt={false} className="border-slate-700">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-2xl font-bold text-slate-100">Your Documents</CardTitle>
-                  <ExtrudedButton className="bg-gradient-to-r from-purple-600 to-pink-600">
-                    <Upload className="h-4 w-4 mr-2" /> Upload Documents
-                  </ExtrudedButton>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {documents.length === 0 ? (
+                  {loadingDocs ? (
+                    <div className="space-y-3">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50 animate-pulse">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-slate-700/50 rounded-lg" />
+                            <div className="space-y-2">
+                              <div className="h-4 w-40 bg-slate-700/50 rounded" />
+                              <div className="h-3 w-24 bg-slate-700/50 rounded" />
+                            </div>
+                          </div>
+                          <div className="h-8 w-24 bg-slate-700/50 rounded-lg" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : documents.length === 0 ? (
                     <div className="text-center py-8 text-slate-400">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No documents uploaded yet</p>
@@ -2018,17 +2084,32 @@ function CustomerPortalContent() {
                   ) : (
                     <div className="space-y-3">
                       {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-700/50 rounded-lg">
+                        <div key={doc.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-slate-700/50 gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 bg-slate-700/50 rounded-lg mt-0.5">
                               <FileText className="h-5 w-5 text-slate-300" />
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-slate-200">{doc.name}</p>
-                              <p className="text-xs text-slate-400">{doc.size} • {doc.date}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-medium text-slate-200">{doc.name}</p>
+                                <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-700 text-slate-300">
+                                  v{doc.version}
+                                </span>
+                                {doc.isNew && (
+                                  <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
+                                    Recently Updated
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-400">Size: {doc.size} • Last Updated: {new Date(doc.updatedAt).toLocaleDateString()}</p>
+                              {doc.updateNotes && (
+                                <p className="text-xs text-slate-500 bg-slate-900/30 border border-white/5 rounded-lg p-2 mt-1 leading-normal italic">
+                                  Notes: {doc.updateNotes}
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <ExtrudedButton variant="outline" size="sm">
+                          <ExtrudedButton variant="outline" size="sm" onClick={() => handleDownloadDoc(doc.id, doc.name)}>
                             <Download className="h-4 w-4 mr-1" /> Download
                           </ExtrudedButton>
                         </div>
@@ -2145,6 +2226,27 @@ function CustomerPortalContent() {
                   </div>
                 </CardContent>
               </GlassPanel>
+            </div>
+          )}
+
+          {activeTab === 'marketing-strategy' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-extrabold text-slate-100 tracking-tight">Marketing Channels & Strategy</h2>
+                  <p className="text-slate-400 text-sm mt-2">
+                    Review and adjust target marketing parameters to calculate fit scores dynamically.
+                  </p>
+                </div>
+              </div>
+              <MarketingStrategyModule
+                initialIcpData={{
+                  industry: customerRecord?.industry || undefined,
+                  companySize: undefined,
+                  geography: undefined,
+                  businessModel: businessModel || undefined
+                }}
+              />
             </div>
           )}
         </div>

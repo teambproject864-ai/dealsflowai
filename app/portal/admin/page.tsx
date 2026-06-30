@@ -30,6 +30,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import {
   demoUsers,
   demoTasks,
@@ -95,6 +96,21 @@ function AdminPortalContent() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+
+  const handleGenerateResetPassword = () => {
+    if (!selectedRequest) return;
+    const cleanEmail = selectedRequest.email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") || "User";
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    setNewPassword(`Reset@${cleanEmail}!${suffix}`);
+  };
+
+  const handleGenerateAgentPassword = () => {
+    const cleanName = formData.name.trim().replace(/[^a-zA-Z0-9]/g, "") || "Agent";
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const finalPassword = `Agent@${cleanName}!${suffix}`;
+    setFormData((prev) => ({ ...prev, password: finalPassword }));
+  };
+
   const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
   const [addingAgentFromReassign, setAddingAgentFromReassign] = useState(false);
   
@@ -818,14 +834,22 @@ function AdminPortalContent() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agent-password" className="text-slate-300">Password</Label>
-                    <Input
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="agent-password" className="text-slate-300">Password</Label>
+                      <button
+                        type="button"
+                        onClick={handleGenerateAgentPassword}
+                        className="text-[10px] font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider transition-colors px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
+                      >
+                        Auto-generate
+                      </button>
+                    </div>
+                    <PasswordInput
                       id="agent-password"
-                      type="password"
                       placeholder="Create a secure password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl pr-10"
                       required
                       minLength={6}
                     />
@@ -2712,17 +2736,25 @@ function AdminPortalContent() {
 
             <form onSubmit={handleProcessReset} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateResetPassword}
+                    className="text-[10px] font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider transition-colors px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
+                  >
+                    Auto-generate
+                  </button>
+                </div>
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   placeholder="Minimum 8 characters"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  minLength={8}
+                  className="bg-slate-900 border-slate-700 text-white pr-10"
                   required
+                  minLength={8}
                   autoFocus
-                  className="bg-slate-900 border-slate-700 text-white"
                 />
               </div>
 

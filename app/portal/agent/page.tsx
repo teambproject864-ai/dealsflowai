@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
-import {
+import { MarketingStrategyModule } from "@/components/MarketingStrategyModule";
+import { Menu,
   Users,
   CheckCircle2,
   Clock,
@@ -484,8 +485,76 @@ Our primary objective is to engage audiences interested in "${prom}" while direc
 - Key Metrics to Track: CTR, engagement rate, task conversions`;
 }
 
+interface ICPProfile {
+  id: string;
+  name: string;
+  industry: string;
+  companySize: string;
+  geography: string;
+  painPoints: string[];
+  metrics: {
+    conversionRate: string;
+    salesCycle: string;
+    cac: string;
+    leadResponse: string;
+  };
+}
+
+const DEMO_ICP_PROFILES: ICPProfile[] = [
+  {
+    id: "icp-enterprise-saas",
+    name: "Enterprise B2B SaaS",
+    industry: "Software & Technology",
+    companySize: "500-5000 employees",
+    geography: "North America, Europe",
+    painPoints: ["High customer churn", "Inefficient sales pipeline", "Siloed customer data"],
+    metrics: {
+      conversionRate: "24.5%",
+      salesCycle: "45 days",
+      cac: "$1,200",
+      leadResponse: "< 10 mins"
+    }
+  },
+  {
+    id: "icp-midmarket-healthcare",
+    name: "Mid-Market HealthTech Providers",
+    industry: "Healthcare / Biotech",
+    companySize: "100-500 employees",
+    geography: "US East Coast",
+    painPoints: ["HIPAA compliance roadblocks", "Manual patient scheduling", "Legacy EHR integrations"],
+    metrics: {
+      conversionRate: "18.2%",
+      salesCycle: "30 days",
+      cac: "$850",
+      leadResponse: "< 15 mins"
+    }
+  },
+  {
+    id: "icp-fintech-seed",
+    name: "Early-stage FinTech Disruptors",
+    industry: "Financial Services",
+    companySize: "10-100 employees",
+    geography: "Global / Remote",
+    painPoints: ["Fraud prevention scaling", "KYC drop-off rates", "Multi-currency processing"],
+    metrics: {
+      conversionRate: "12.8%",
+      salesCycle: "14 days",
+      cac: "$320",
+      leadResponse: "< 5 mins"
+    }
+  }
+];
+
 function AgentPortalContent() {
   const { user, isLoading: userLoading } = useCurrentUser();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedIcpProfileId, setSelectedIcpProfileId] = useState<string>("icp-enterprise-saas");
+  const [playbookTemplate, setPlaybookTemplate] = useState({
+    gtmTactics: "",
+    outreachScripts: "",
+    qualifyingCriteria: ""
+  });
+  const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("requirements");
@@ -496,6 +565,7 @@ function AgentPortalContent() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [isStateSynced, setIsStateSynced] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
   // Dialer & Call State Additions
   const [dialedNumber, setDialedNumber] = useState("");
@@ -503,6 +573,43 @@ function AgentPortalContent() {
   const [outboundCallDuration, setOutboundCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isHeld, setIsHeld] = useState(false);
+
+  const handleGeneratePlaybook = (profileId: string) => {
+    const profile = DEMO_ICP_PROFILES.find(p => p.id === profileId) || DEMO_ICP_PROFILES[0];
+    
+    const gtm = `1. Channels: Outbound Email, LinkedIn Social Selling, Search Retargeting
+2. Target Persona: VP of Sales, Head of RevOps in ${profile.industry}
+3. Monthly Budget: $2,500 (LinkedIn Ads), $500 (Cold Email Infrastructure)
+4. Trigger Event: Executive job changes or recent funding announcements in ${profile.companySize} firms.`;
+
+    const outreach = `--- EMAIL TEMPLATE ---
+Subject: Solving ${profile.painPoints[0]} at {{companyName}}
+
+Hi {{firstName}},
+
+I noticed {{companyName}} is expanding in ${profile.geography}. Many companies in the ${profile.industry} space with ${profile.companySize} struggle with ${profile.painPoints[0]} and ${profile.painPoints[1]}.
+
+We built DealFlow.AI specifically to help SDRs automate and personalize these sequences. Would you be open to a brief 10-minute chat next Tuesday at 2 PM?
+
+Best,
+{{agentName}}
+
+--- COLD CALL SCRIPT ---
+"Hi {{firstName}}, this is {{agentName}} from DealFlow.AI. I'm calling because we help ${profile.industry} firms with ${profile.companySize} solve ${profile.painPoints[0]}..."`;
+
+    const qualifying = `1. Budget: Has active budget for outbound tools (minimum $500/mo).
+2. Authority: Decision maker is Manager, Director, or VP level.
+3. Need: Experiencing high customer churn or slow pipeline velocity.
+4. Timeline: Intends to purchase/deploy a solution within 30-90 days.
+5. Score threshold: Must pass 3 out of 5 BANT alignment checks.`;
+
+    setPlaybookTemplate({
+      gtmTactics: gtm,
+      outreachScripts: outreach,
+      qualifyingCriteria: qualifying
+    });
+    setIsEditingPlaybook(true);
+  };
 
   // Sync state with localStorage to allow seamless sharing with dedicated workspace page
   useEffect(() => {
@@ -653,46 +760,34 @@ function AgentPortalContent() {
   const [waSentMessages, setWaSentMessages] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadLeads() {
+    async function loadAllData() {
       try {
-        const res = await fetch("/api/leads");
-        const data = await res.json();
-        if (data.success) {
-          setLeads(data.leads);
-          if (data.leads.length > 0) {
-            setSelectedLeadId(data.leads[0].id);
-            setActiveWorkspaceLeadId(data.leads[0].id);
+        const [leadsRes, playbookRes, icpRes] = await Promise.all([
+          fetch("/api/leads").then((r) => r.json()),
+          fetch("/api/playbook").then((r) => r.json()),
+          fetch("/api/customer/icp").then((r) => r.json()),
+        ]);
+
+        if (leadsRes.success) {
+          setLeads(leadsRes.leads);
+          if (leadsRes.leads.length > 0) {
+            setSelectedLeadId(leadsRes.leads[0].id);
+            setActiveWorkspaceLeadId(leadsRes.leads[0].id);
           }
         }
-      } catch (err) {
-        console.error("Failed to load leads:", err);
-      }
-    }
-    async function loadPlaybook() {
-      try {
-        const res = await fetch("/api/playbook");
-        const data = await res.json();
-        if (data.success) {
-          setPlaybookContent(data.content);
+        if (playbookRes.success) {
+          setPlaybookContent(playbookRes.content);
+        }
+        if (icpRes.success) {
+          setIcpEntries(icpRes.icpEntries);
         }
       } catch (err) {
-        console.error("Failed to load playbook:", err);
+        console.error("Failed to load agent workspace data:", err);
+      } finally {
+        setLoadingData(false);
       }
     }
-    async function loadIcpEntries() {
-      try {
-        const res = await fetch("/api/customer/icp");
-        const data = await res.json();
-        if (data.success) {
-          setIcpEntries(data.icpEntries);
-        }
-      } catch (err) {
-        console.error("Failed to load ICP entries:", err);
-      }
-    }
-    loadLeads();
-    loadPlaybook();
-    loadIcpEntries();
+    loadAllData();
   }, []);
 
   // Load agent Voice & WhatsApp settings
@@ -965,10 +1060,10 @@ function AgentPortalContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative font-sans antialiased overflow-x-hidden selection:bg-teal-500/30 selection:text-teal-200">
+    <div className="min-h-screen bg-slate-950 text-white relative font-sans antialiased flex flex-col lg:flex-row">
       {/* Background glow effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none z-0" />
 
       {/* Notification Toast */}
       {showNotification && (
@@ -1008,85 +1103,212 @@ function AgentPortalContent() {
         </div>
       )}
 
-      {/* Agent Portal Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-b from-slate-950 to-slate-950/90 backdrop-blur-xl border-b border-slate-900 shadow-lg shadow-black/30">
-        <div className="container mx-auto px-6 py-4.5">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500/20 via-cyan-500/10 to-transparent flex items-center justify-center border border-teal-500/30 shadow-md shadow-teal-500/5">
-                  <Users className="h-5 w-5 text-teal-400 animate-pulse" />
-                </div>
-                DealFlow Agent Platform
-              </h1>
-              <p className="text-xs text-slate-400 mt-1">
-                Connected Agent: <span className="text-teal-300 font-bold">{currentAgentName}</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Quick Status Stats Widget */}
-              <div className="bg-slate-900/60 border border-slate-850 px-5 py-2.5 rounded-2xl flex items-center gap-6 shadow-inner">
-                <div className="text-center">
-                  <p className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">My Tasks</p>
-                  <p className="text-base font-extrabold text-teal-400 mt-0.5">{agentTasks.length}</p>
-                </div>
-                <div className="h-7 w-px bg-slate-800" />
-                <div className="text-center">
-                  <p className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">Avg Rating</p>
-                  <p className="text-base font-extrabold text-amber-400 mt-0.5 flex items-center justify-center gap-1">
-                    {agentMetrics?.averageRating.toFixed(1) || "0"}
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  </p>
-                </div>
-                {agentCredits && (
-                  <>
-                    <div className="h-7 w-px bg-slate-800" />
-                    <div className="text-center">
-                      <p className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">Credits</p>
-                      <p className="text-base font-extrabold text-violet-400 mt-0.5">{agentCredits.balance}</p>
-                    </div>
-                  </>
-                )}
+      {/* Mobile Sticky Top Header with Hamburger and basic status */}
+      <header className="lg:hidden sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900 px-6 py-4 flex items-center justify-between">
+        <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+          <Users className="h-5 w-5 text-teal-400" />
+          DealFlow Agent
+        </h1>
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-teal-400 hover:text-teal-300"
+          aria-label="Toggle Navigation"
+        >
+          {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </header>
+
+      {/* Desktop Left Sidebar / Mobile Overlay Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 lg:sticky lg:h-screen w-[280px] bg-slate-950/80 backdrop-blur-2xl border-r border-slate-900/60 p-6 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 shrink-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="space-y-8 flex-1 overflow-y-auto pr-1">
+          {/* Brand/Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                <Users className="h-4.5 w-4.5 text-teal-400" />
               </div>
-              <LogoutButton />
+              DealFlow Agent
+            </h2>
+            <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Connected Agent info card */}
+          <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1">
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Connected Agent</p>
+            <p className="text-sm font-bold text-teal-300 truncate">{currentAgentName}</p>
+          </div>
+
+          {/* Structured Navigation Groups */}
+          <nav className="space-y-6">
+            {/* Section 1: Core Workflows */}
+            <div className="space-y-2">
+              <p className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold px-3">Core Workflows</p>
+              <div className="space-y-1">
+                {[
+                  { id: "requirements", label: "Requirements", icon: Users },
+                  { id: "icp-entries", label: "ICP Entries", icon: FileText },
+                  { id: "playbook", label: "ICP Playbook", icon: BookOpen },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-205 text-left border border-transparent",
+                        isActive
+                          ? "bg-teal-500/10 text-teal-300 border-teal-500/20 shadow-md shadow-teal-500/5"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Section 2: Communications */}
+            <div className="space-y-2">
+              <p className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold px-3">Communications</p>
+              <div className="space-y-1">
+                {[
+                  { id: "chat", label: "Chat Support", icon: MessageSquare },
+                  { id: "calls", label: "Agent Dialer", icon: Phone },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-205 text-left border border-transparent",
+                        isActive
+                          ? "bg-teal-500/10 text-teal-300 border-teal-500/20 shadow-md shadow-teal-500/5"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Section 3: System & Analytics */}
+            <div className="space-y-2">
+              <p className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold px-3">System & Analytics</p>
+              <div className="space-y-1">
+                {[
+                  { id: "tasks", label: "Agent Tasks", icon: CheckCircle2 },
+                  { id: "metrics", label: "My Metrics", icon: Star },
+                  { id: "credits", label: "Credit Balance", icon: Zap },
+                  { id: "voice-whatsapp", label: "Voice & WhatsApp", icon: Settings },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-205 text-left border border-transparent",
+                        isActive
+                          ? "bg-teal-500/10 text-teal-300 border-teal-500/20 shadow-md shadow-teal-500/5"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+                {/* External workspace push */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/portal/agent/workspace");
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/30 border border-transparent text-left"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  Campaign Workspace
+                </button>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        {/* Footer Logout */}
+        <div className="border-t border-slate-900/60 pt-4 mt-auto">
+          <LogoutButton />
+        </div>
+      </aside>
+
+      {/* Sidebar background overlay on mobile */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden"
+        />
+      )}
+
+      {/* Main content pane */}
+      <main className="flex-1 min-w-0 z-10 flex flex-col">
+        {/* Top bar on desktop */}
+        <div className="hidden lg:flex sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 px-8 py-4.5 justify-between items-center">
+          <div>
+            <p className="text-xs text-slate-400">Platform Portal / <span className="text-teal-300 font-bold capitalize">{activeTab.replace("-", " ")}</span></p>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-5 bg-slate-900/40 border border-slate-850 px-4 py-1.5 rounded-xl text-xs font-bold">
+              <div className="text-center">
+                <span className="text-[10px] text-slate-500 font-normal">Active Tasks:</span>{" "}
+                <span className="text-teal-400 font-extrabold">{agentTasks.length}</span>
+              </div>
+              <div className="h-4 w-px bg-slate-800" />
+              <div className="text-center">
+                <span className="text-[10px] text-slate-500 font-normal">Rating:</span>{" "}
+                <span className="text-amber-400 font-extrabold">{agentMetrics?.averageRating.toFixed(1) || "0"}</span>
+              </div>
+              {agentCredits && (
+                <>
+                  <div className="h-4 w-px bg-slate-800" />
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-500 font-normal">Credits:</span>{" "}
+                    <span className="text-violet-400 font-extrabold">{agentCredits.balance}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Premium Tab Selector Frame */}
-        <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-2xl flex flex-wrap gap-2.5 shadow-xl shadow-black/40 relative">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  if (tab.id === "workspace") {
-                    router.push("/portal/agent/workspace");
-                  } else {
-                    setActiveTab(tab.id);
-                  }
-                }}
-                className={cn(
-                  "relative flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold transition-all duration-300 outline-none focus:ring-2 focus:ring-teal-500/50",
-                  isActive
-                    ? "bg-gradient-to-r from-teal-500/20 via-cyan-500/10 to-teal-500/5 border border-teal-500/30 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.15)] shadow-teal-500/10"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon className={cn("h-4 w-4", isActive ? "text-teal-400" : "text-slate-400")} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
 
         {/* Tab Content Panels */}
-        <div className="mt-6">
+        <div className="p-6 lg:p-8 overflow-y-auto">
           {activeTab === "requirements" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Requirements Selector */}
@@ -1096,7 +1318,17 @@ function AgentPortalContent() {
                   Assigned Requirements
                 </h3>
                 <div className="space-y-3">
-                  {leads.length === 0 ? (
+                  {loadingData ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-850 animate-pulse space-y-3">
+                          <div className="h-4 w-32 bg-slate-850 rounded" />
+                          <div className="h-3 w-20 bg-slate-850 rounded" />
+                          <div className="h-3.5 w-24 bg-slate-850 rounded" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : leads.length === 0 ? (
                     <GlassPanel tilt={false} className="border-slate-800/50">
                       <CardContent className="py-12 text-center">
                         <Users className="h-10 w-10 text-slate-700 mx-auto mb-3" />
@@ -1254,7 +1486,22 @@ function AgentPortalContent() {
           {activeTab === "icp-entries" && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-100">Assigned ICP Entries</h2>
-              {icpEntries.length === 0 ? (
+              {loadingData ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-850 animate-pulse space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 bg-slate-850 rounded" />
+                          <div className="h-3 w-20 bg-slate-850 rounded" />
+                        </div>
+                        <div className="h-5 w-12 bg-slate-850 rounded-full" />
+                      </div>
+                      <div className="h-10 w-full bg-slate-850 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : icpEntries.length === 0 ? (
                 <GlassPanel tilt={false} className="border-slate-800">
                   <CardContent className="py-20 text-center">
                     <FileText className="h-16 w-16 text-slate-700 mx-auto mb-4" />
@@ -2094,78 +2341,171 @@ function AgentPortalContent() {
           )}
 
           {activeTab === "playbook" && (
-            <GlassPanel tilt={false} className="border-slate-850 p-6 rounded-2xl">
-              <CardHeader className="border-b border-slate-850 pb-5 p-0 flex flex-row items-center justify-between flex-wrap gap-4 mb-5">
-                <div>
-                  <CardTitle className="text-lg text-slate-100 font-black flex items-center gap-2">
-                    {selectedLead ? `${selectedLead.companyName} Custom ICP Playbook` : "Playbook Guidelines"}
-                  </CardTitle>
-                  <p className="text-slate-400 text-xs mt-1">
-                    SDR compliance guidelines and verified outreach templates
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {selectedLead && (
-                    <ExtrudedButton
-                      className="bg-gradient-to-r from-violet-600 to-pink-600 text-white font-bold h-9 text-xs"
+            <div className="space-y-6">
+              {/* Top row: ICP Profiles Browser */}
+              <div className="space-y-3">
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-teal-400" />
+                  ICP Profiles & Performance Hub
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {DEMO_ICP_PROFILES.map((profile) => (
+                    <GlassPanel
+                      key={profile.id}
+                      tilt={false}
+                      className={cn(
+                        "border p-4 rounded-xl cursor-pointer transition-all duration-300 flex flex-col justify-between",
+                        selectedIcpProfileId === profile.id
+                          ? "border-teal-500 bg-teal-950/20 shadow-lg shadow-teal-500/5"
+                          : "border-slate-850 bg-slate-900/30 hover:border-slate-700"
+                      )}
                       onClick={() => {
-                        try {
-                          const content = generateICPDocument(selectedLead as any);
-                          const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${selectedLead.companyName.replace(/\s+/g, '-')}-icp-playbook.json`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        } catch (e) {
-                          console.error('Failed to download:', e);
-                        }
+                        setSelectedIcpProfileId(profile.id);
+                        handleGeneratePlaybook(profile.id);
                       }}
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Playbook JSON
-                    </ExtrudedButton>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {selectedLead ? (
-                  <div className="space-y-6">
-                    <div className="bg-slate-900 border border-slate-850 rounded-2xl p-5 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-teal-400 animate-pulse" />
-                        <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Playbook Metadata Analysis</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-sm text-slate-200">{profile.name}</h4>
+                          <span className="text-[10px] text-teal-400 font-extrabold uppercase bg-teal-500/10 px-2 py-0.5 rounded">
+                            {profile.industry.split(" ")[0]}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {profile.companySize} • {profile.geography}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {profile.painPoints.map((pain, i) => (
+                            <span key={i} className="text-[9px] bg-slate-850 text-slate-400 px-1.5 py-0.5 rounded border border-white/5">
+                              {pain}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      
-                      {(() => {
-                        try {
-                          const content = generateICPDocument(selectedLead as any);
-                          return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                              <div className="p-3 bg-slate-950 rounded-xl border border-slate-900 leading-relaxed">
-                                <strong className="text-slate-400 block mb-1">Hermes OS Alignment:</strong>
-                                {content["Technical Product Value Proposition Alignment"]?.["Memory OS (Hermes) Alignment"]}
-                              </div>
-                              <div className="p-3 bg-slate-950 rounded-xl border border-slate-900 leading-relaxed">
-                                <strong className="text-slate-400 block mb-1">Clawpatrol Compliance:</strong>
-                                {content["Technical Product Value Proposition Alignment"]?.["Agent Security Firewall (Clawpatrol) Alignment"]}
-                              </div>
-                            </div>
-                          );
-                        } catch (e) {
-                          return null;
-                        }
-                      })()}
+
+                      <div className="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-center">
+                        <div>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest">Conversion</p>
+                          <p className="text-xs font-bold text-teal-400">{profile.metrics.conversionRate}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest">Sales Cycle</p>
+                          <p className="text-xs font-bold text-slate-300">{profile.metrics.salesCycle}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest">CAC</p>
+                          <p className="text-xs font-bold text-violet-400">{profile.metrics.cac}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest">Response</p>
+                          <p className="text-xs font-bold text-amber-400">{profile.metrics.leadResponse}</p>
+                        </div>
+                      </div>
+                    </GlassPanel>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom row: Playbook Editor & Marketing Strategy Module */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <GlassPanel tilt={false} className="border-slate-850 p-6 rounded-2xl flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-850 pb-4 flex-wrap gap-2">
+                      <div>
+                        <h4 className="font-extrabold text-sm text-slate-200">Playbook Generator Canvas</h4>
+                        <p className="text-[10px] text-slate-400">Configure customized outreach templates and scripts</p>
+                      </div>
+                      {isEditingPlaybook && (
+                        <ExtrudedButton
+                          size="sm"
+                          className="bg-gradient-to-r from-violet-600 to-pink-600 text-white font-bold h-8 text-xs"
+                          onClick={() => {
+                            const blob = new Blob([JSON.stringify(playbookTemplate, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${selectedIcpProfileId}-playbook.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5 mr-1" /> Export JSON
+                        </ExtrudedButton>
+                      )}
                     </div>
+
+                    {!isEditingPlaybook ? (
+                      <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
+                        <BookOpen className="h-10 w-10 opacity-30 text-teal-400 animate-pulse" />
+                        <p className="text-xs">Select an ICP Profile card above to generate and edit the playbook template</p>
+                        <ExtrudedButton size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => handleGeneratePlaybook(selectedIcpProfileId)}>
+                          Generate Default Playbook
+                        </ExtrudedButton>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 text-xs">
+                        <div className="space-y-1.5">
+                          <Label className="text-slate-300 font-bold">1. Go-to-Market (GTM) Tactics</Label>
+                          <Textarea
+                            value={playbookTemplate.gtmTactics}
+                            onChange={(e) => setPlaybookTemplate({ ...playbookTemplate, gtmTactics: e.target.value })}
+                            rows={4}
+                            className="bg-slate-950 border-slate-800 text-slate-300 leading-normal"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-slate-300 font-bold">2. Outreach Strategies & Scripts</Label>
+                          <Textarea
+                            value={playbookTemplate.outreachScripts}
+                            onChange={(e) => setPlaybookTemplate({ ...playbookTemplate, outreachScripts: e.target.value })}
+                            rows={6}
+                            className="bg-slate-950 border-slate-800 text-slate-300 font-mono leading-normal"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-slate-300 font-bold">3. BANT Qualifying Criteria</Label>
+                          <Textarea
+                            value={playbookTemplate.qualifyingCriteria}
+                            onChange={(e) => setPlaybookTemplate({ ...playbookTemplate, qualifyingCriteria: e.target.value })}
+                            rows={4}
+                            className="bg-slate-950 border-slate-800 text-slate-300 leading-normal"
+                          />
+                        </div>
+
+                        <div className="pt-2">
+                          <ExtrudedButton
+                            className="w-full bg-teal-600 hover:bg-teal-500 font-bold text-xs"
+                            onClick={() => {
+                              showToast("success", "Playbook Saved", "ICP playbook template changes have been updated successfully.");
+                            }}
+                          >
+                            Save Playbook Template
+                          </ExtrudedButton>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="prose prose-invert max-w-none bg-slate-950/60 border border-slate-850 p-6 rounded-xl font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-400">
-                    {playbookContent || "Select a client lead in the Requirements tab to construct their custom playbook."}
+                </GlassPanel>
+
+                {/* Live Channel Fit & Tactics Recommendations nested next to it */}
+                <div className="space-y-4">
+                  <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1">
+                    <h4 className="font-extrabold text-sm text-slate-200">Playbook Live Recommendations</h4>
+                    <p className="text-[10px] text-slate-400">Dynamically scored channels mapping to the active ICP parameters</p>
                   </div>
-                )}
-              </CardContent>
-            </GlassPanel>
+                  <MarketingStrategyModule
+                    initialIcpData={{
+                      industry: DEMO_ICP_PROFILES.find(p => p.id === selectedIcpProfileId)?.industry || "Software",
+                      companySize: DEMO_ICP_PROFILES.find(p => p.id === selectedIcpProfileId)?.companySize || "10-100",
+                      geography: DEMO_ICP_PROFILES.find(p => p.id === selectedIcpProfileId)?.geography || "US",
+                      businessModel: "b2b"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === "voice-whatsapp" && (
@@ -2262,7 +2602,7 @@ function AgentPortalContent() {
           )}
 
         </div>
-      </div>
+      </main>
       <Unibox />
     </div>
   );

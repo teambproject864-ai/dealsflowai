@@ -203,23 +203,25 @@ function Field({ id, label, icon: Icon, error, touched, children }: FieldProps) 
         {label}
       </label>
       {children}
-      <AnimatePresence mode="wait">
-        {touched && error && (
-          <motion.p
-            key="error"
-            id={`${id}-error`}
-            role="alert"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="flex items-center gap-1 text-xs text-red-400 font-medium overflow-hidden"
-          >
-            <XCircle className="h-3 w-3 shrink-0" />
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      <div className="min-h-[18px] relative w-full">
+        <AnimatePresence mode="wait">
+          {touched && error && (
+            <motion.p
+              key="error"
+              id={`${id}-error`}
+              role="alert"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-1 text-xs text-red-400 font-medium absolute top-0 left-0"
+            >
+              <XCircle className="h-3 w-3 shrink-0" />
+              {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
