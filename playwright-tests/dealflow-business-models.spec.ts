@@ -164,10 +164,12 @@ test.describe('Versatile Dealflow Platform - Business Model Support', () => {
       authenticatedCustomer.on('console', msg => console.log('CUSTOMER BROWSER LOG:', msg.text()));
       authenticatedCustomer.on('pageerror', err => console.log('CUSTOMER BROWSER PAGE ERROR:', err.message));
 
-      // Navigate to portal
-      await authenticatedCustomer.goto('/portal/customer');
-      // Wait for Next.js client-side hydration to complete
-      await authenticatedCustomer.waitForTimeout(2000);
+      // Navigate to portal; domcontentloaded avoids hanging on slow 3rd-party resources
+      await authenticatedCustomer.goto('/portal/customer', { waitUntil: 'domcontentloaded' });
+      // Wait for the page to compile & hydrate (lazy compilation can take >30s on cold start)
+      await authenticatedCustomer.waitForSelector('button, nav', { timeout: 60000 });
+      // Give client-side hydration a moment to settle
+      await authenticatedCustomer.waitForTimeout(1000);
     });
 
     test('should render B2B view by default and support B2B wholesale order placement', async ({ authenticatedCustomer }) => {
