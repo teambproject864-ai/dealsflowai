@@ -53,6 +53,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const nextConfig = {
+  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', 'three-stdlib'],
   // Enable React Strict Mode
   reactStrictMode: true,
   // Image optimization config

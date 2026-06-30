@@ -4,7 +4,13 @@ import {
   createToken,
   setAuthCookie,
   addAuditLog,
+  DEMO_ADMIN,
+  DEMO_ADMINS,
+  DEMO_AGENTS,
+  DEMO_CUSTOMERS,
+  NEW_CUSTOMERS,
 } from "@/lib/auth";
+import bcrypt from "bcrypt";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { loginLockoutLimiter, captchaTriggerLimiter } from "@/lib/rate-limiter-middleware";
@@ -122,6 +128,59 @@ export async function POST(req: NextRequest) {
           name: dbUser.name || (role === "admin" ? "Administrator" : role === "agent" ? "Agent" : "Customer"),
           role: dbUser.role as "admin" | "agent" | "customer",
         };
+      }
+    }
+
+    // Fall back to demo/hardcoded config if not found in db
+    if (!user) {
+      if (role === "admin") {
+        if (email.toLowerCase() === DEMO_ADMIN.email.toLowerCase()) {
+          const adminHash = process.env.ADMIN_PASSWORD_HASH;
+          if (adminHash) {
+            const isValidPassword = await verifyPassword(password, adminHash);
+            if (isValidPassword) {
+              user = { ...DEMO_ADMIN, role: "admin" as const };
+            }
+          } else {
+            // Fallback for local development when ADMIN_PASSWORD_HASH is not set
+            const isValidPassword = await verifyPassword(password, bcrypt.hashSync("Admin123!", 10)); // default fallback password
+            if (isValidPassword) {
+              user = { ...DEMO_ADMIN, role: "admin" as const };
+            }
+          }
+        }
+        if (!user) {
+          const extraAdmin = DEMO_ADMINS.find((a) => a.email.toLowerCase() === email.toLowerCase());
+          if (extraAdmin) {
+            const isValidPassword = await verifyPassword(password, extraAdmin.hashedPassword);
+            if (isValidPassword) {
+              user = { id: extraAdmin.id, email: extraAdmin.email, name: extraAdmin.name, role: "admin" as const };
+            }
+          }
+        }
+      } else if (role === "agent") {
+        const agent = DEMO_AGENTS.find((a) => a.email.toLowerCase() === email.toLowerCase());
+        if (agent) {
+          const isValidPassword = await verifyPassword(password, agent.hashedPassword);
+          if (isValidPassword) {
+            user = { id: agent.id, email: agent.email, name: agent.name, role: "agent" as const };
+          }
+        }
+      } else if (role === "customer") {
+        const customer = [...DEMO_CUSTOMERS, ...NEW_CUSTOMERS].find((c) => c.email.toLowerCase() === email.toLowerCase());
+        if (customer) {
+          // Block unverified customer accounts
+          if ((customer as any).isVerified === false) {
+            return NextResponse.json(
+              { success: false, error: "Please verify your email to activate your account.", requiresVerification: true, email },
+              { status: 403 }
+            );
+          }
+          const isValidPassword = await verifyPassword(password, customer.hashedPassword);
+          if (isValidPassword) {
+            user = { id: customer.id, email: customer.email, name: customer.name, role: "customer" as const };
+          }
+        }
       }
     }
 

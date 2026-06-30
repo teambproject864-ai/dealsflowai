@@ -37,6 +37,100 @@ export interface JwtPayload {
   name: string;
 }
 
+export interface DemoAgent {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  name: string;
+  role: "agent";
+}
+
+export interface DemoCustomer {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  name: string;
+  role: "customer";
+}
+
+export interface DemoAdmin {
+  id: string;
+  email: string;
+  name: string;
+  role: "admin";
+}
+
+// Plaintext passwords for demo users (dynamically hashed in memory on startup)
+const DEV_PASSWORDS = {
+  admin: process.env.ADMIN_PASSWORD || "Admin123!",
+  admin1: process.env.ADMIN1_PASSWORD || "Pranee@1909",
+  praneethAgent: process.env.AGENT_PRANEETH_PASSWORD || "Praneeth123!",
+  ashokAgent: process.env.AGENT_ASHOK_PASSWORD || "AgentAshok456!",
+  demoCustomer: process.env.CUSTOMER_DEMO_PASSWORD || "CustomerDemo123!",
+  praneethCustomer: process.env.CUSTOMER_PRANEETH_PASSWORD || "Praneeth@123",
+  anilCustomer: process.env.CUSTOMER_ANIL_PASSWORD || "Anil@123!",
+};
+
+export const DEMO_ADMIN = {
+  id: "admin-1",
+  email: "admin@dealflow.ai",
+  name: "Administrator",
+  role: "admin" as const,
+};
+
+export const DEMO_ADMINS: (DemoAdmin & { hashedPassword: string })[] = [
+  {
+    id: "admin-2",
+    email: "admin1@dealflow.ai",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.admin1, 10),
+    name: "Admin One",
+    role: "admin",
+  },
+];
+
+export const DEMO_AGENTS: DemoAgent[] = [
+  {
+    id: "agent-praneeth",
+    email: "praneeth@dealflow.ai",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.praneethAgent, 10),
+    name: "Praneeth",
+    role: "agent",
+  },
+  {
+    id: "agent-ashok",
+    email: "agent.ashok@dealflow.ai",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.ashokAgent, 10),
+    name: "Ashok Agent",
+    role: "agent",
+  },
+];
+
+export const DEMO_CUSTOMERS: DemoCustomer[] = [
+  {
+    id: "customer-demo",
+    email: "demo@customer.com",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.demoCustomer, 10),
+    name: "Demo Customer",
+    role: "customer",
+  },
+  {
+    id: "customer-praneeth",
+    email: "praneethburada@gmail.com",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.praneethCustomer, 10),
+    name: "Praneeth Burada",
+    role: "customer",
+  },
+  {
+    id: "customer-anil",
+    email: "anil@cralgo.com",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.anilCustomer, 10),
+    name: "Anil Kumar",
+    role: "customer",
+  },
+];
+
+export let NEW_CUSTOMERS: DemoCustomer[] = [];
+
 // --- Audit Logging ---
 export function addAuditLog(
   email: string,

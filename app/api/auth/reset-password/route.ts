@@ -4,9 +4,6 @@ import jwt from "jsonwebtoken";
 import { db } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import {
-  DEMO_ADMIN,
-  DEMO_AGENTS,
-  DEMO_CUSTOMERS,
   hashPassword,
 } from "@/lib/auth";
 

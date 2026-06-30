@@ -8,6 +8,8 @@ test.describe('Authentication End-to-End Flow', () => {
     const password = 'TestUserPassword123!';
     const name = 'Automation Tester';
 
+    let isLoggedIn = false;
+
     // Mock the register endpoint to require verification
     await page.route('**/api/auth/register', async (route) => {
       await route.fulfill({
@@ -23,6 +25,7 @@ test.describe('Authentication End-to-End Flow', () => {
 
     // Mock the verify endpoint to succeed and set dummy auth cookie
     await page.route('**/api/auth/verify', async (route) => {
+      isLoggedIn = true;
       await page.context().addCookies([
         {
           name: 'df_auth_token',
@@ -52,19 +55,30 @@ test.describe('Authentication End-to-End Flow', () => {
 
     // Mock /api/auth/me to return the test customer user
     await page.route('**/api/auth/me', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          user: {
-            id: 'customer-test',
-            email: 'test@example.com',
-            name: 'Automation Tester',
-            role: 'customer'
-          }
-        }),
-      });
+      if (isLoggedIn) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            user: {
+              id: 'customer-test',
+              email: 'test@example.com',
+              name: 'Automation Tester',
+              role: 'customer'
+            }
+          }),
+        });
+      } else {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            error: "Unauthorized"
+          }),
+        });
+      }
     });
 
     // 1. SIGNUP FLOW
