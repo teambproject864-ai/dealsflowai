@@ -143,11 +143,11 @@ function StatCard({ stat, delay }: { stat: typeof heroStats[0]; delay: number })
       transition={{ delay, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-2xl",
-        "bg-white/5 border border-white/8 backdrop-blur-sm",
+        "bg-white/5 border border-white/10 backdrop-blur-sm",
         "shadow-lg", stat.glow
       )}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/8">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10">
         <stat.icon className={cn("h-4 w-4", stat.color)} />
       </div>
       <div>

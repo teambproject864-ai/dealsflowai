@@ -152,15 +152,15 @@ export function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.2, 1, 0.3, 1] }}
-            className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl border border-white/15 bg-gradient-to-b from-[#070718]/98 to-[#040410]/98 backdrop-blur-3xl shadow-2xl shadow-black/60 overflow-hidden"
+            className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl dropdown-glass shadow-2xl shadow-black/60 overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 bg-white/[0.02]">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-5 py-4 bg-slate-50/50 dark:bg-white/[0.02]">
               <div className="flex items-center gap-2.5">
-                <Bell className="h-5 w-5 text-teal-400" />
-                <span className="font-bold text-sm text-white">Notifications</span>
+                <Bell className="h-5 w-5 text-teal-500 dark:text-teal-400" />
+                <span className="font-bold text-sm text-slate-850 dark:text-white">Notifications</span>
                 {unreadCount > 0 && (
-                  <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/15 text-teal-300 text-[10px] font-bold">
+                  <span className="px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-700 dark:bg-teal-500/20 dark:border-transparent dark:text-teal-300 text-[10px] font-bold">
                     {unreadCount} New
                   </span>
                 )}
@@ -169,7 +169,7 @@ export function NotificationCenter() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 font-medium transition-all duration-300"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-teal-750 dark:text-teal-400 hover:text-teal-850 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-500/10 font-medium transition-all duration-300"
                   >
                     <Check className="h-3.5 w-3.5" />
                     Mark all read
@@ -178,7 +178,7 @@ export function NotificationCenter() {
                 {notifications.length > 0 && (
                   <button
                     onClick={clearAll}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 font-medium transition-all duration-300"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-red-650 dark:text-red-400 hover:text-red-750 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 font-medium transition-all duration-300"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Clear all
@@ -186,7 +186,7 @@ export function NotificationCenter() {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+                  className="p-1.5 rounded-xl text-slate-500 hover:text-slate-850 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -194,14 +194,14 @@ export function NotificationCenter() {
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-[320px] overflow-y-auto divide-y divide-white/5">
+            <div className="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-white/5 scrim-bg">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
-                    <Bell className="h-6 w-6 text-slate-600 opacity-50" />
+                  <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center mb-3">
+                    <Bell className="h-6 w-6 text-slate-650 dark:text-slate-500 opacity-60" />
                   </div>
-                  <p className="text-sm text-slate-400 font-medium">All caught up!</p>
-                  <p className="text-xs text-slate-500 mt-1.5">No new system alerts.</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">All caught up!</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">No new system alerts.</p>
                 </div>
               ) : (
                 notifications.map((notif) => (
@@ -212,7 +212,7 @@ export function NotificationCenter() {
                     transition={{ duration: 0.2 }}
                     onClick={() => toggleRead(notif.id)}
                     className={`relative px-5 py-4 flex gap-3.5 transition-all duration-300 cursor-pointer group ${
-                      notif.unread ? "bg-gradient-to-r from-teal-500/5 to-transparent" : "hover:bg-white/[0.03]"
+                      notif.unread ? "bg-gradient-to-r from-teal-500/10 to-transparent dark:from-teal-500/5 dark:to-transparent" : "hover:bg-slate-100/60 dark:hover:bg-white/[0.03]"
                     }`}
                   >
                     {/* Unread indicator bar */}
@@ -224,21 +224,21 @@ export function NotificationCenter() {
                     )}
 
                     {/* Icon */}
-                    <div className={`p-2.5 rounded-2xl h-fit border border-white/5 bg-white/5 ${notif.unread ? "border-teal-500/20 bg-teal-500/10" : ""}`}>
+                    <div className={`p-2.5 rounded-2xl h-fit border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/5 ${notif.unread ? "border-teal-200 bg-teal-50 dark:border-teal-500/20 dark:bg-teal-500/10" : ""}`}>
                       {getIcon(notif.type)}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <span className={`text-xs font-semibold ${notif.unread ? "text-white" : "text-slate-300"} line-clamp-1`}>
+                        <span className={`text-xs font-semibold ${notif.unread ? "text-slate-950 dark:text-white" : "text-slate-750 dark:text-slate-300"} line-clamp-1`}>
                           {notif.title}
                         </span>
-                        <span className="text-[10px] text-slate-500 flex-shrink-0 mt-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 flex-shrink-0 mt-0.5">
                           {notif.time}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2 mt-1.5">
+                      <p className="text-[11px] text-slate-650 dark:text-slate-400 leading-relaxed line-clamp-2 mt-1.5">
                         {notif.description}
                       </p>
                     </div>
@@ -246,7 +246,7 @@ export function NotificationCenter() {
                     {/* Delete button */}
                     <button
                       onClick={(e) => deleteNotif(notif.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-red-400 transition-all duration-300 self-start"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-red-650 dark:hover:text-red-400 transition-all duration-300 self-start"
                       aria-label="Delete notification"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

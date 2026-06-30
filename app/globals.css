@@ -356,6 +356,39 @@ html {
   border-color: rgba(0, 212, 255, 0.35);
 }
 
+/* ─── Dropdown Glass (WCAG AA Readability) ──────── */
+.dropdown-glass {
+  background: linear-gradient(180deg, rgba(7, 7, 24, 0.90) 0%, rgba(4, 4, 16, 0.95) 100%);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.2), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.1),
+    0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.light .dropdown-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03),
+    0 20px 25px -5px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.scrim-bg {
+  background-color: rgba(7, 7, 24, 0.35);
+}
+
+.light .scrim-bg {
+  background-color: rgba(241, 245, 249, 0.6);
+}
+
 .glow-teal {
   box-shadow: 0 0 30px rgba(20, 184, 166, 0.2), 0 0 60px rgba(20, 184, 166, 0.1);
 }

@@ -108,7 +108,7 @@ function NavDropdown({
         className={`group relative inline-flex items-center gap-2 px-4.5 py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
           isActive
             ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20"
-            : "text-slate-400 hover:text-teal-300 hover:bg-white/8 border border-transparent hover:border-white/15"
+            : "text-slate-400 hover:text-teal-300 hover:bg-white/10 border border-transparent hover:border-white/15"
         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060612]`}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -133,12 +133,11 @@ function NavDropdown({
           />
         )}
       </button>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div
             {...contentAnimationProps}
-            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[360px] rounded-3xl border border-white/15 bg-gradient-to-b from-[#070718]/98 to-[#040410]/98 backdrop-blur-3xl shadow-2xl shadow-black/60 overflow-hidden z-[100] p-3"
+            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[360px] rounded-3xl dropdown-glass shadow-2xl shadow-black/60 overflow-hidden z-[100] p-3"
             role="menu"
             aria-label={`${link.name} Submenu`}
           >
@@ -146,35 +145,35 @@ function NavDropdown({
             <Link
               href={link.href}
               onClick={onClose}
-              className="flex items-center justify-between px-4 py-4 rounded-2xl text-slate-200 hover:text-white hover:bg-white/8 transition-all duration-300 text-xs font-bold group border border-white/5 hover:border-white/10"
+              className="flex items-center justify-between px-4 py-4 rounded-xl text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 text-xs font-bold group border border-slate-200 dark:border-white/5 hover:border-slate-350 dark:hover:border-white/10"
             >
               <span className="flex items-center gap-2.5">
-                <Sparkles className="h-3.5 w-3.5 text-teal-400" />
+                <Sparkles className="h-3.5 w-3.5 text-teal-500 dark:text-teal-400" />
                 <span>View All {link.name}</span>
-                <span className="text-[9px] font-semibold text-teal-300 border border-teal-500/30 bg-teal-500/15 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <span className="text-[9px] font-bold border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/15 px-2.5 py-1 rounded-full text-teal-700 dark:text-teal-300 uppercase tracking-wider">
                   Overview
                 </span>
               </span>
               <ChevronRight className="h-4.5 w-4.5 text-slate-500 group-hover:text-teal-300 transition-all duration-300 group-hover:translate-x-1" />
             </Link>
 
-            <div className="border-t border-white/10 my-2 mx-1" />
+            <div className="border-t border-slate-200 dark:border-white/10 my-2 mx-1" />
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 scrim-bg rounded-2xl p-1.5 border border-slate-200/50 dark:border-white/5">
               {link.subOptions?.map((option) => (
                 <Link
                   key={option.href}
                   href={option.href}
                   onClick={onClose}
-                  className="block px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/8 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 border border-transparent hover:border-white/10"
+                  className="block px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10"
                   role="menuitem"
                 >
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-200 group-hover:text-teal-300 transition-colors duration-300">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-250 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors duration-300">
                       {option.name}
                     </span>
                     {option.description && (
-                      <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-1.5 leading-relaxed">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-400 mt-1.5 leading-relaxed">
                         {option.description}
                       </span>
                     )}
@@ -360,7 +359,7 @@ export function Header() {
                       ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20 shadow-md shadow-teal-500/10"
                       : isAnchor
                         ? "text-slate-400/80 hover:text-teal-300 hover:bg-white/5 border border-transparent hover:border-white/10"
-                        : "text-slate-400 hover:text-teal-300 hover:bg-white/8 border border-transparent hover:border-white/15"
+                        : "text-slate-400 hover:text-teal-300 hover:bg-white/10 border border-transparent hover:border-white/15"
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50`}
                   aria-current={isActive ? "page" : undefined}
                 >

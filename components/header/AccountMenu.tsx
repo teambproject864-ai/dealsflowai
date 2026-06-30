@@ -135,7 +135,7 @@ export function AccountMenu() {
       {/* Account Dropdown */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-3 w-80 rounded-3xl border border-white/15 bg-gradient-to-b from-[#070718]/98 to-[#040410]/98 backdrop-blur-3xl shadow-2xl shadow-black/60 overflow-hidden p-4 space-y-4 transition-all duration-200"
+          className="absolute right-0 mt-3 w-80 rounded-3xl dropdown-glass shadow-2xl shadow-black/60 overflow-hidden p-4 space-y-4 transition-all duration-200"
           role="menu"
           aria-orientation="vertical"
         >
@@ -143,61 +143,61 @@ export function AccountMenu() {
             // Authenticated User Menu
             <>
               {/* User Info */}
-              <div className="flex items-center gap-4 border-b border-white/10 pb-4 px-1">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-500/15 text-teal-300 font-bold text-sm border border-teal-500/20">
+              <div className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 pb-4 px-1">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-500/15 text-teal-700 dark:text-teal-300 font-bold text-sm border border-teal-500/20">
                   {getInitials(user.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-white truncate leading-none mb-1.5">
+                  <div className="font-semibold text-sm text-slate-900 dark:text-white truncate leading-none mb-1.5">
                     {user.name}
                   </div>
-                  <div className="text-xs text-slate-400 truncate leading-none">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate leading-none">
                     {user.email}
                   </div>
-                  <span className="inline-flex mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/15 text-teal-400 border border-teal-500/20">
+                  <span className="inline-flex mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/20 dark:text-teal-400 dark:border-teal-500/20">
                     {user.role}
                   </span>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+                  className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Menu Items */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 scrim-bg rounded-2xl p-1.5 border border-slate-200/50 dark:border-white/5">
                 <Link
                   ref={firstFocusableRef}
                   href="/portal/settings"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-700 dark:text-slate-300 hover:text-violet-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs text-slate-800 dark:text-slate-200 hover:text-violet-755 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
                   role="menuitem"
                 >
-                  <Settings className="h-4.5 w-4.5 text-slate-400" />
+                  <Settings className="h-4.5 w-4.5 text-slate-500 dark:text-slate-400" />
                   <span className="font-semibold">Account Settings</span>
                 </Link>
                 <Link
                   href="/portal/saved"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-slate-700 dark:text-slate-300 hover:text-violet-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs text-slate-800 dark:text-slate-200 hover:text-violet-755 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
                   role="menuitem"
                 >
-                  <User className="h-4.5 w-4.5 text-slate-400" />
+                  <User className="h-4.5 w-4.5 text-slate-500 dark:text-slate-400" />
                   <span className="font-semibold">Saved Items</span>
                 </Link>
               </div>
 
               {/* Logout */}
-              <div className="border-t border-slate-100 dark:border-white/10 pt-3">
+              <div className="border-t border-slate-250 dark:border-white/10 pt-3">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs text-red-600 dark:text-red-400 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 text-left border border-transparent hover:border-red-500/20"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs text-red-650 dark:text-red-400 hover:text-red-750 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-300 text-left border border-transparent hover:border-red-200 dark:hover:border-red-500/20"
                   role="menuitem"
                   data-testid="account-logout-btn"
                 >
-                  <LogOut className="h-4.5 w-4.5 text-red-500 dark:text-red-400" />
+                  <LogOut className="h-4.5 w-4.5 text-red-600 dark:text-red-400" />
                   <span className="font-semibold">Logout</span>
                 </button>
               </div>
@@ -207,29 +207,29 @@ export function AccountMenu() {
             <>
               {/* Header */}
               <div className="flex items-center justify-between px-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   Access Portal
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+                  className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Portal Links */}
-              <div className="px-1 py-1 space-y-2">
+              <div className="px-1.5 py-1.5 space-y-2 scrim-bg rounded-2xl border border-slate-200/50 dark:border-white/5">
                 {portalLinks.map((link, index) => (
                   <Link
                     key={link.href}
                     ref={index === 0 ? firstFocusableRef : undefined}
                     href={link.href}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/15 text-slate-300 hover:text-white transition-all duration-300"
+                    className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/15 text-slate-800 dark:text-slate-200 hover:text-black dark:hover:text-white transition-all duration-300 shadow-sm"
                     role="menuitem"
                   >
-                    <div className={`p-2 rounded-xl bg-white/5 ${link.color}`}>
+                    <div className={`p-2 rounded-xl bg-slate-100 dark:bg-white/5 ${link.color}`}>
                       <link.icon className="h-4.5 w-4.5" />
                     </div>
                     <span className="font-semibold text-sm leading-none">{link.name}</span>
@@ -238,11 +238,11 @@ export function AccountMenu() {
               </div>
 
               {/* Sign In Button */}
-              <div className="border-t border-white/10 pt-3 px-1">
+              <div className="border-t border-slate-200 dark:border-white/10 pt-3 px-1">
                 <Link
                   href="/portal/customer/login"
                   onClick={() => setIsOpen(false)}
-                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs bg-gradient-to-r from-teal-600 to-cyan-500 hover:from-teal-500 hover:to-cyan-400 text-white font-bold transition-all duration-300 shadow-lg shadow-teal-600/30 hover:shadow-teal-500/50"
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs bg-gradient-to-r from-teal-700 to-cyan-600 hover:from-teal-650 hover:to-cyan-550 text-white font-bold transition-all duration-300 shadow-lg shadow-teal-700/20 hover:shadow-teal-650/40"
                   role="menuitem"
                 >
                   <LogIn className="h-4.5 w-4.5" />
