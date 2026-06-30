@@ -55,6 +55,14 @@ if (process.env.NODE_ENV === "production") {
 const nextConfig = {
   // Enable React Strict Mode
   reactStrictMode: true,
+  // Image optimization config
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  // Enable compression
+  compress: true,
   // Suppress Node.js deprecation warnings from third-party packages (e.g., googleapis url.parse DEP0169)
   serverExternalPackages: ["googleapis", "google-auth-library", "twilio"],
   webpack: (config, { dev, isServer }) => {
@@ -81,11 +89,11 @@ const nextConfig = {
     ];
   },
   async headers() {
-    if (process.env.NODE_ENV === 'development') {
-      return [];
-    }
-    return [
-      {
+    const headers = [];
+
+    // Add security headers for production
+    if (process.env.NODE_ENV !== 'development') {
+      headers.push({
         source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
         headers: [
           {
@@ -113,8 +121,30 @@ const nextConfig = {
             value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://app.cal.com https://cal.com https://assets.calendly.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://assets.calendly.com; font-src 'self' data:; connect-src 'self' https://dealflow-ai-651cb.firebaseio.com https://*.firebaseio.com wss://*.firebaseio.com https://dealflow-ai-651cb.appspot.com https://*.googleapis.com https://api.huggingface.co https://calendly.com https://api.elevenlabs.io https://*.twilio.com wss://*.twilio.com; frame-src https://app.cal.com https://cal.com https://calendly.com; worker-src 'self' blob:; child-src 'self' blob:;",
           },
         ],
-      },
-    ];
+      });
+    }
+
+    // Add cache control headers for static assets
+    headers.push({
+      source: '/_next/static/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    });
+    headers.push({
+      source: '/_next/image/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    });
+
+    return headers;
   },
 };
 

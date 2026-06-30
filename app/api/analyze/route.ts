@@ -8,6 +8,9 @@ import { db } from "@/lib/firebase-admin";
 import { encryptLead, decryptLead } from "@/lib/security";
 import { logAuditEvent } from "@/lib/audit-logger";
 import { terminateLLMJobsForAnalysis } from "@/lib/llm-job-tracker";
+import { cached, invalidateCache } from "@/lib/cache";
+import { taskQueue } from "@/lib/task-queue";
+import { perf } from "@/lib/performance";
 
 export const maxDuration = 120; // Extended from 60 to allow more time
 export const dynamic = "force-dynamic";
@@ -17,24 +20,49 @@ const inMemoryAnalyses = getInMemoryAnalyses();
 
 // Performance monitoring store
 interface AnalysisPerformanceEntry {
+  id?: string;
   analysisId: string;
   startTime: number;
   durationMs: number;
   success: boolean;
   modelUsed?: string;
+  createdAt?: string;
 }
-const performanceEntries: AnalysisPerformanceEntry[] = [];
 
 // Endpoint to get performance metrics
 export async function GET() {
+  let metrics: AnalysisPerformanceEntry[] = [];
+  let total = 0;
+  let successCount = 0;
+  let totalDuration = 0;
+
+  try {
+    if (db) {
+      const snap = await db.collection("analysis_metrics")
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
+      metrics = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as AnalysisPerformanceEntry));
+      
+      total = metrics.length;
+      successCount = metrics.filter(m => m.success).length;
+      totalDuration = metrics.reduce((sum, m) => sum + m.durationMs, 0);
+    }
+  } catch (err) {
+    console.error("[GET /api/analyze] Failed to load metrics", err);
+  }
+
   return NextResponse.json({
     success: true,
-    metrics: performanceEntries.slice(-50), // Last 50 entries
+    metrics, // Last 100 entries
     stats: {
-      total: performanceEntries.length,
-      successCount: performanceEntries.filter(e => e.success).length,
-      avgDurationMs: performanceEntries.length > 0 
-        ? Math.round(performanceEntries.reduce((sum, e) => sum + e.durationMs, 0) / performanceEntries.length) 
+      total,
+      successCount,
+      avgDurationMs: total > 0 
+        ? Math.round(totalDuration / total) 
         : 0
     }
   });
@@ -60,9 +88,20 @@ export async function POST(req: Request) {
     if (!companyData && leadId) {
       companyData = inMemoryLeads.get(leadId);
       if (!companyData && db) {
-        const doc = await db.collection("leads").doc(leadId).get();
-        if (doc.exists) {
-          companyData = decryptLead(doc.data() as ExtendedLeadRecord);
+        // Use cache for lead data
+        companyData = await cached(
+          `lead:${leadId}`,
+          async () => {
+            if (!db) return null;
+            const doc = await db.collection("leads").doc(leadId).get();
+            if (doc.exists) {
+              return decryptLead(doc.data() as ExtendedLeadRecord);
+            }
+            return null;
+          },
+          { ttl: 1000 * 60 * 15 } // 15 minute TTL for lead data
+        );
+        if (companyData) {
           inMemoryLeads.set(leadId, companyData as ExtendedLeadRecord);
         }
       }
@@ -87,7 +126,9 @@ export async function POST(req: Request) {
     };
 
     console.log("[analyze/route] Invoking analysis graph...");
-    const graphState = await analysisGraph.invoke({ companyData: companyDataWithAnalysisId });
+    const graphState = await perf.measure("analysisGraph", async () => {
+      return await analysisGraph.invoke({ companyData: companyDataWithAnalysisId });
+    }, { companyName: companyData.companyName });
 
     if (graphState.error) {
       throw new Error(graphState.error);
@@ -105,13 +146,24 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    // Save to Firestore
-    if (db) {
-      await db.collection("analyses").doc(analysisId).set(analysisRecord);
+    // Save to Firestore asynchronously
+    if (db && analysisId) {
+      const safeDb = db;
+      const safeAnalysisId = analysisId;
+      taskQueue.addTask("save-analysis", async () => {
+        if (safeDb && safeAnalysisId) {
+          await safeDb.collection("analyses").doc(safeAnalysisId).set(analysisRecord);
+          console.log(`[TaskQueue] Saved analysis ${safeAnalysisId} to Firestore`);
+          invalidateCache(`analysis:${safeAnalysisId}`);
+        }
+      });
     }
     
-    // Log audit event
-    await logAuditEvent(req, leadId || "unauth-analysis", "ANALYSIS_RUN", { analysisId, companyName: companyData.companyName });
+    // Log audit event asynchronously
+    taskQueue.addTask("log-audit-event", async () => {
+      await logAuditEvent(req, leadId || "unauth-analysis", "ANALYSIS_RUN", { analysisId, companyName: companyData.companyName });
+    });
+    
     inMemoryAnalyses.set(analysisId, analysisRecord);
 
     if (leadId) {
@@ -128,8 +180,17 @@ export async function POST(req: Request) {
           ...leadRecord,
           analysisId,
         };
-        if (db) {
-          await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
+        if (db && analysisId) {
+          const safeDb = db;
+          const safeLeadId = leadId;
+          const safeAnalysisId = analysisId;
+          taskQueue.addTask("save-updated-lead", async () => {
+            if (safeDb && safeLeadId && safeAnalysisId) {
+              await safeDb.collection("leads").doc(safeLeadId).set(encryptLead(updatedLead));
+              console.log(`[TaskQueue] Saved updated lead ${safeLeadId} to Firestore`);
+              invalidateCache(`lead:${safeLeadId}`);
+            }
+          });
         }
         inMemoryLeads.set(leadId, updatedLead);
       }
@@ -163,15 +224,21 @@ export async function POST(req: Request) {
     console.log(`[analyze/route] Request complete. Duration: ${durationMs}ms, Success: ${success}`);
     
     if (analysisId) {
-      performanceEntries.push({
+      const metricEntry: AnalysisPerformanceEntry = {
         analysisId,
         startTime,
         durationMs,
-        success
-      });
-      // Keep only last 100 entries
-      if (performanceEntries.length > 100) {
-        performanceEntries.shift();
+        success,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Save to Firestore
+      if (db) {
+        try {
+          await db.collection("analysis_metrics").doc(analysisId).set(metricEntry);
+        } catch (err) {
+          console.error("[analyze/route] Failed to save performance metric", err);
+        }
       }
     }
   }

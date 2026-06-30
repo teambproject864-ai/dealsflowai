@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  DEMO_ADMIN,
-  DEMO_ADMINS,
-  DEMO_AGENTS,
-  DEMO_CUSTOMERS,
-  NEW_CUSTOMERS,
   verifyPassword,
   createToken,
   setAuthCookie,
@@ -12,18 +7,7 @@ import {
 } from "@/lib/auth";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
-import { RateLimiterMemory } from "rate-limiter-flexible";
-
-// Brute-force lockout and high-risk CAPTCHA trigger limiters
-const loginLockoutLimiter = new RateLimiterMemory({
-  points: 5, // Max 5 failed attempts
-  duration: 900, // Block for 15 minutes (900 seconds)
-});
-
-const captchaTriggerLimiter = new RateLimiterMemory({
-  points: 3, // Require captcha after 3 failed attempts
-  duration: 900,
-});
+import { loginLockoutLimiter, captchaTriggerLimiter } from "@/lib/rate-limiter-middleware";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -77,7 +61,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (requiresCaptcha) {
-      if (!captchaToken || captchaToken !== "dealflow-secure-captcha-pass-token") {
+      const expectedCaptchaToken = process.env.CAPTCHA_SECRET;
+      // If CAPTCHA secret is not configured in env, skip CAPTCHA (for dev only)
+      if (expectedCaptchaToken && (!captchaToken || captchaToken !== expectedCaptchaToken)) {
         addAuditLog(email, role, false, `Access rejected: CAPTCHA verification required from IP: ${ip}`, ip, userAgent);
         return NextResponse.json(
           { success: false, error: "CAPTCHA verification required for high-risk login attempt", requiresCaptcha: true },
@@ -100,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     let user = null;
 
-    // Check Firestore users first
+    // Check Firestore users
     let dbUser = null;
     try {
       const { db } = await import("@/lib/firebase-admin");
@@ -116,7 +102,7 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (e) {
-      logger.warn("[Login] Firestore not configured or failed to connect, checking local fallback", e);
+      logger.warn("[Login] Firestore not configured or failed to connect", e);
     }
 
     if (dbUser) {
@@ -136,53 +122,6 @@ export async function POST(req: NextRequest) {
           name: dbUser.name || (role === "admin" ? "Administrator" : role === "agent" ? "Agent" : "Customer"),
           role: dbUser.role as "admin" | "agent" | "customer",
         };
-      }
-    }
-
-    // Fall back to demo/hardcoded config if not found in db
-    if (!user) {
-      if (role === "admin") {
-        if (email.toLowerCase() === DEMO_ADMIN.email.toLowerCase()) {
-          const adminHash = process.env.ADMIN_PASSWORD_HASH;
-          if (adminHash) {
-            const isValidPassword = await verifyPassword(password, adminHash);
-            if (isValidPassword) {
-              user = { ...DEMO_ADMIN, role: "admin" as const };
-            }
-          }
-        }
-        if (!user) {
-          const extraAdmin = DEMO_ADMINS.find((a) => a.email.toLowerCase() === email.toLowerCase());
-          if (extraAdmin) {
-            const isValidPassword = await verifyPassword(password, extraAdmin.hashedPassword);
-            if (isValidPassword) {
-              user = { id: extraAdmin.id, email: extraAdmin.email, name: extraAdmin.name, role: "admin" as const };
-            }
-          }
-        }
-      } else if (role === "agent") {
-        const agent = DEMO_AGENTS.find((a) => a.email.toLowerCase() === email.toLowerCase());
-        if (agent) {
-          const isValidPassword = await verifyPassword(password, agent.hashedPassword);
-          if (isValidPassword) {
-            user = { id: agent.id, email: agent.email, name: agent.name, role: "agent" as const };
-          }
-        }
-      } else if (role === "customer") {
-        const customer = [...DEMO_CUSTOMERS, ...NEW_CUSTOMERS].find((c) => c.email.toLowerCase() === email.toLowerCase());
-        if (customer) {
-          // Block unverified customer accounts
-          if ((customer as any).isVerified === false) {
-            return NextResponse.json(
-              { success: false, error: "Please verify your email to activate your account.", requiresVerification: true, email },
-              { status: 403 }
-            );
-          }
-          const isValidPassword = await verifyPassword(password, customer.hashedPassword);
-          if (isValidPassword) {
-            user = { id: customer.id, email: customer.email, name: customer.name, role: "customer" as const };
-          }
-        }
       }
     }
 
