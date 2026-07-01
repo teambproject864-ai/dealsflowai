@@ -112,6 +112,33 @@ export async function POST(req: NextRequest) {
     }
 
     if (dbUser) {
+      // Check Lockout
+      if (dbUser.isLocked && dbUser.lockedUntil) {
+        const lockedUntilDate = new Date(dbUser.lockedUntil);
+        if (lockedUntilDate.getTime() > Date.now()) {
+          addAuditLog(email, role, false, `Login attempt blocked: Account is locked until ${dbUser.lockedUntil}`, ip, userAgent);
+          return NextResponse.json(
+            { success: false, error: "This account is temporarily locked due to multiple failed login attempts. Please try again after 15 minutes." },
+            { status: 403 }
+          );
+        } else {
+          // Lock expired: reset it in db
+          try {
+            const { db: fDb } = await import("@/lib/firebase-admin");
+            if (fDb) {
+              await fDb.collection("users").doc(dbUser.id).update({
+                isLocked: false,
+                lockedUntil: null,
+                failedLoginAttempts: 0,
+              });
+            }
+          } catch (e) {}
+          dbUser.isLocked = false;
+          dbUser.lockedUntil = null;
+          dbUser.failedLoginAttempts = 0;
+        }
+      }
+
       // Block unverified customer accounts
       if (role === "customer" && dbUser.isVerified === false) {
         return NextResponse.json(
@@ -122,12 +149,76 @@ export async function POST(req: NextRequest) {
 
       const isValidPassword = await verifyPassword(password, dbUser.hashedPassword);
       if (isValidPassword) {
+        // Enforce password expiration policy (90 days)
+        if (dbUser.passwordUpdatedAt) {
+          const passwordAgeMs = Date.now() - new Date(dbUser.passwordUpdatedAt).getTime();
+          const passwordAgeDays = passwordAgeMs / (1000 * 60 * 60 * 24);
+          if (passwordAgeDays > 90) {
+            addAuditLog(email, role, false, `Login blocked: Password expired (last updated at ${dbUser.passwordUpdatedAt})`, ip, userAgent);
+            return NextResponse.json(
+              { success: false, error: "Your password has expired (90-day policy). Please reset your password.", requiresReset: true, email },
+              { status: 403 }
+            );
+          }
+        } else {
+          // If missing, save current time for backward compatibility
+          try {
+            const { db: fDb } = await import("@/lib/firebase-admin");
+            if (fDb) {
+              await fDb.collection("users").doc(dbUser.id).update({
+                passwordUpdatedAt: new Date().toISOString(),
+              });
+            }
+          } catch (e) {}
+        }
+
+        // Reset failed login attempts on success
+        if (dbUser.failedLoginAttempts > 0) {
+          try {
+            const { db: fDb } = await import("@/lib/firebase-admin");
+            if (fDb) {
+              await fDb.collection("users").doc(dbUser.id).update({
+                failedLoginAttempts: 0,
+              });
+            }
+          } catch (e) {}
+        }
+
         user = {
           id: dbUser.id,
           email: dbUser.email,
           name: dbUser.name || (role === "admin" ? "Administrator" : role === "agent" ? "Agent" : "Customer"),
           role: dbUser.role as "admin" | "agent" | "customer",
         };
+      } else {
+        // Password invalid: increment failedLoginAttempts
+        const newAttempts = (dbUser.failedLoginAttempts || 0) + 1;
+        const updates: any = { failedLoginAttempts: newAttempts };
+        
+        let isLockedNow = false;
+        let lockedUntilStr = null;
+
+        if (newAttempts >= 5) {
+          isLockedNow = true;
+          lockedUntilStr = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins lock
+          updates.isLocked = true;
+          updates.lockedUntil = lockedUntilStr;
+          addAuditLog(email, role, false, `Account locked due to 5 consecutive failed login attempts`, ip, userAgent);
+        }
+
+        try {
+          const { db: fDb } = await import("@/lib/firebase-admin");
+          if (fDb) {
+            await fDb.collection("users").doc(dbUser.id).update(updates);
+          }
+        } catch (e) {}
+
+        if (isLockedNow) {
+          return NextResponse.json(
+            { success: false, error: "This account has been locked for 15 minutes due to multiple failed login attempts." },
+            { status: 403 }
+          );
+        }
       }
     }
 

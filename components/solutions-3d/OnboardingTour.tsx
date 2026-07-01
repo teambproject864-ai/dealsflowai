@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, RotateCw, ZoomIn, Click, MousePointer, Keyboard, X } from "lucide-react";
+import { Sparkles, ArrowRight, RotateCw, ZoomIn, MousePointer, Keyboard, X } from "lucide-react";
 
 interface Step {
   title: string;

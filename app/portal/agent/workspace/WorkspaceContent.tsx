@@ -39,7 +39,7 @@ import {
   Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { demoChatMessages, demoTasks } from "@/lib/portal-demo-data";
+
 
 // The 12 specified strategy & content options matching exactly the user prompt
 const MARKETING_CATEGORIES = [
@@ -549,16 +549,16 @@ export default function WorkspaceContent() {
     // Read synced tasks/messages
     const savedTasks = localStorage.getItem("df_agent_tasks");
     if (savedTasks) {
-      try { setSyncedTasks(JSON.parse(savedTasks)); } catch (e) { setSyncedTasks([...demoTasks]); }
+      try { setSyncedTasks(JSON.parse(savedTasks)); } catch (e) { setSyncedTasks([]); }
     } else {
-      setSyncedTasks([...demoTasks]);
+      setSyncedTasks([]);
     }
 
     const savedMsgs = localStorage.getItem("df_chat_messages");
     if (savedMsgs) {
-      try { setSyncedMessages(JSON.parse(savedMsgs)); } catch (e) { setSyncedMessages([...demoChatMessages]); }
+      try { setSyncedMessages(JSON.parse(savedMsgs)); } catch (e) { setSyncedMessages([]); }
     } else {
-      setSyncedMessages([...demoChatMessages]);
+      setSyncedMessages([]);
     }
 
     loadWorkspaceData();

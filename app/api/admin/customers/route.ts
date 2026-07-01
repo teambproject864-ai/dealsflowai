@@ -1,38 +1,27 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase-admin";
-import { demoCustomers } from "@/lib/portal-demo-data";
+import bcrypt from "bcrypt";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const { errorResponse } = await requireAuth(req, ["admin"]);
+  const { errorResponse } = await requireAuth(req, ["admin", "agent"]);
   if (errorResponse) return errorResponse;
 
   try {
-    let customersList = [...demoCustomers];
+    let customers: any[] = [];
 
     if (db) {
-      const snapshot = await db.collection("customers").get();
-      const firestoreCustomers: any[] = [];
+      const snapshot = await db.collection("customers").orderBy("createdAt", "desc").get();
       snapshot.forEach((doc) => {
-        firestoreCustomers.push({ id: doc.id, ...doc.data() });
-      });
-
-      // Merge firestore with demo data
-      firestoreCustomers.forEach((fc) => {
-        const idx = customersList.findIndex((dc) => dc.id === fc.id);
-        if (idx !== -1) {
-          customersList[idx] = { ...customersList[idx], ...fc };
-        } else {
-          customersList.push(fc);
-        }
+        customers.push({ id: doc.id, ...doc.data() });
       });
     }
 
     return NextResponse.json({
       success: true,
-      customers: customersList,
+      customers,
     });
   } catch (error) {
     console.error("[admin-customers-get] Error:", error);
@@ -49,8 +38,79 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { customerId, businessModel, status, serviceConfigurations } = body;
+    const { action, customerId, name, email, phone, companyName, industry, assignedAgentId, assignedAgentName, businessModel, serviceConfigurations, status } = body;
 
+    if (!db) {
+      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 });
+    }
+
+    if (action === "onboard") {
+      if (!name || !email || !companyName) {
+        return NextResponse.json(
+          { success: false, error: "Name, email, and company name are required" },
+          { status: 400 }
+        );
+      }
+
+      // Check if user already exists
+      const userSnap = await db.collection("users").where("email", "==", email.toLowerCase()).get();
+      if (!userSnap.empty) {
+        return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 409 });
+      }
+
+      const newCustomerId = customerId || `customer-${Date.now()}`;
+      const defaultPassword = `Customer@${companyName.replace(/[^a-zA-Z0-9]/g, "") || "Brand"}!2026`;
+      const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+
+      const customerUser = {
+        id: newCustomerId,
+        email: email.toLowerCase(),
+        name,
+        role: "customer",
+        hashedPassword,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      const customerRecord = {
+        id: newCustomerId,
+        name,
+        email: email.toLowerCase(),
+        phone: phone || "",
+        companyName,
+        industry: industry || "",
+        status: status || "onboarding",
+        assignedAgentId: assignedAgentId || "",
+        assignedAgentName: assignedAgentName || "",
+        businessModel: businessModel || "b2b",
+        serviceConfigurations: serviceConfigurations || { gtmReports: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await db.collection("users").doc(newCustomerId).set(customerUser);
+      await db.collection("customers").doc(newCustomerId).set(customerRecord);
+
+      await db.collection("audit_logs").add({
+        id: `audit-${Date.now()}`,
+        actionType: "customer_onboard",
+        actionDetails: `Admin onboarded new customer: ${name} (${companyName})`,
+        performedBy: user!.id,
+        performedByRole: user!.role,
+        targetId: newCustomerId,
+        targetType: "customer",
+        createdAt: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Customer onboarded successfully",
+        customer: customerRecord,
+        defaultPassword,
+      });
+    }
+
+    // Default update behavior
     if (!customerId) {
       return NextResponse.json(
         { success: false, error: "Customer ID is required" },
@@ -58,15 +118,8 @@ export async function POST(req: Request) {
       );
     }
 
-    let customerToUpdate = demoCustomers.find((c) => c.id === customerId);
-    if (!customerToUpdate && db) {
-      const doc = await db.collection("customers").doc(customerId).get();
-      if (doc.exists) {
-        customerToUpdate = { id: doc.id, ...doc.data() } as any;
-      }
-    }
-
-    if (!customerToUpdate) {
+    const doc = await db.collection("customers").doc(customerId).get();
+    if (!doc.exists) {
       return NextResponse.json(
         { success: false, error: "Customer not found" },
         { status: 404 }
@@ -80,40 +133,33 @@ export async function POST(req: Request) {
     if (businessModel) updatedData.businessModel = businessModel;
     if (status) updatedData.status = status;
     if (serviceConfigurations) updatedData.serviceConfigurations = serviceConfigurations;
-
-    // 1. Update Firestore
-    if (db) {
-      await db.collection("customers").doc(customerId).set(updatedData, { merge: true });
-      await db.collection("audit_logs").add({
-        id: `audit-${Date.now()}`,
-        actionType: "document_update",
-        actionDetails: `Admin updated customer ${customerToUpdate.companyName || customerId} business model to ${businessModel}`,
-        performedBy: user!.id,
-        performedByRole: user!.role,
-        targetId: customerId,
-        targetType: "customer",
-        createdAt: new Date().toISOString(),
-      });
+    if (assignedAgentId) {
+      updatedData.assignedAgentId = assignedAgentId;
+      updatedData.assignedAgentName = assignedAgentName || "";
     }
 
-    // 2. Update demo data in-memory
-    const idx = demoCustomers.findIndex((c) => c.id === customerId);
-    if (idx !== -1) {
-      demoCustomers[idx] = {
-        ...demoCustomers[idx],
-        ...updatedData,
-      };
-    }
+    await db.collection("customers").doc(customerId).set(updatedData, { merge: true });
+
+    await db.collection("audit_logs").add({
+      id: `audit-${Date.now()}`,
+      actionType: "document_update",
+      actionDetails: `Admin updated customer ${customerId} parameters.`,
+      performedBy: user!.id,
+      performedByRole: user!.role,
+      targetId: customerId,
+      targetType: "customer",
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       success: true,
       message: "Customer updated successfully",
-      customer: demoCustomers.find((c) => c.id === customerId),
+      customer: { id: customerId, ...doc.data(), ...updatedData },
     });
   } catch (error) {
     console.error("[admin-customers-post] Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to update customer" },
+      { success: false, error: "Failed to update/onboard customer" },
       { status: 500 }
     );
   }

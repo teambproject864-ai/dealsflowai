@@ -70,13 +70,46 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const hashedPassword = await hashPassword(newPassword);
 
+    // Update the user's password and clear lockout status in Firestore
+    if (db) {
+      const userQuery = await db
+        .collection("users")
+        .where("email", "==", decoded.email.toLowerCase())
+        .where("role", "==", decoded.role)
+        .get();
+
+      if (!userQuery.empty) {
+        const userDoc = userQuery.docs[0];
+        await userDoc.ref.update({
+          hashedPassword,
+          passwordUpdatedAt: new Date().toISOString(),
+          failedLoginAttempts: 0,
+          isLocked: false,
+          lockedUntil: null,
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        // Create user record in Firestore if not existing (e.g. legacy demo config)
+        const userId = decoded.role === "admin" ? `admin-${Date.now()}` : `${decoded.role}-${Date.now()}`;
+        await db.collection("users").doc(userId).set({
+          id: userId,
+          email: decoded.email.toLowerCase(),
+          role: decoded.role,
+          name: decoded.role === "admin" ? "Administrator" : decoded.role === "agent" ? "Agent" : "Customer",
+          hashedPassword,
+          passwordUpdatedAt: new Date().toISOString(),
+          failedLoginAttempts: 0,
+          isLocked: false,
+          lockedUntil: null,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+
     // For demo purposes, log the password reset
     logger.info(
       `[PASSWORD RESET] Password reset successful for ${decoded.email}`
     );
-
-    // In a real app, update the user's password in the database
-    // For this demo, we'll just return success since the demo users are hard-coded
 
     // Mark token as used in Firestore if available
     if (db) {

@@ -9,25 +9,25 @@ export async function POST(req: Request) {
   try {
     const { callId } = await req.json();
 
-    const callDoc = await db.collection('calls').doc(callId).get();
+    const callDoc = await db!.collection('calls').doc(callId).get();
     const callData = callDoc.data();
     if (!callData) throw new Error('Call not found');
 
-    const leadDoc = await db.collection('leads').doc(callData.leadId).get();
+    const leadDoc = await db!.collection('leads').doc(callData.leadId).get();
     const leadData = leadDoc.data();
     if (!leadData) throw new Error('Lead not found');
 
     // Fetch the analysis report
     let analysisData: AnalysisResult | null = null;
     if (callData.analysisId) {
-      const analysisDoc = await db.collection('analyses').doc(callData.analysisId).get();
+      const analysisDoc = await db!.collection('analyses').doc(callData.analysisId).get();
       if (analysisDoc.exists) {
         analysisData = analysisDoc.data() as AnalysisResult;
       }
     }
 
     if (!analysisData) {
-      const analysisSnapshot = await db.collection('analyses')
+      const analysisSnapshot = await db!.collection('analyses')
         .where('leadId', '==', callData.leadId)
         .orderBy('createdAt', 'desc')
         .limit(1)

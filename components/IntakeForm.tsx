@@ -294,12 +294,12 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
     try {
       const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
       const leadPayload = {
+        ...combinedData, // Include all data for full storage
         companyName: combinedData.companyName,
         contactName: combinedData.name,
         contactEmail: combinedData.emailPersonal,
         contactPhone: "", // We don't collect phone in intake form yet, so leave empty
         source: "intake_form",
-        ...combinedData, // Include all data for full storage
       };
       const res = await fetch("/api/leads/save", {
         method: "POST",

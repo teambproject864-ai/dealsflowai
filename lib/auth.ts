@@ -73,7 +73,7 @@ const DEV_PASSWORDS = {
 
 export const DEMO_ADMIN = {
   id: "admin-1",
-  email: "admin@dealflow.ai",
+  email: "admin1@dealflow.ai",
   name: "Administrator",
   role: "admin" as const,
 };
@@ -81,8 +81,8 @@ export const DEMO_ADMIN = {
 export const DEMO_ADMINS: (DemoAdmin & { hashedPassword: string })[] = [
   {
     id: "admin-2",
-    email: "admin1@dealflow.ai",
-    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.admin1, 10),
+    email: "admin@dealflow.ai",
+    hashedPassword: bcrypt.hashSync(DEV_PASSWORDS.admin, 10),
     name: "Admin One",
     role: "admin",
   },

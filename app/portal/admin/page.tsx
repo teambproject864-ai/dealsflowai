@@ -28,103 +28,64 @@ import {
   Check,
   Archive,
   KeyRound,
+  Settings,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import {
-  demoUsers,
-  demoTasks,
-  demoChatMessages,
-  demoCallRecords,
-  demoCustomerFeedback,
-  demoAgentMetrics,
-  demoRequirements,
-  demoGTMReports,
-  demoCustomerGTMData,
-  demoCustomers,
-  demoCustomerResignations,
-  demoDocuments,
-  demoAuditLogs,
-} from "@/lib/portal-demo-data";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-  onSnapshot,
-} from "firebase/firestore";
-import { db, getDb } from "@/lib/firebase-client";
-import { type AgentSession, type AgentAssignmentNotification, getRevenueAgentCatalog, AGENT_FULL_NAMES } from "@/lib/types";
-import { type AuditLogEntry } from "@/lib/portal-types";
+import { getDb } from "@/lib/firebase-client";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import type { AgentSession, AgentAssignmentNotification } from "@/lib/types";
 
 const tabs = [
-  { id: "dashboard", label: "Dashboard", icon: Activity },
-  { id: "llm-manager", label: "LLM Manager", icon: BarChart3 },
-  { id: "bot-monitor", label: "Bot Monitor", icon: Phone },
-  { id: "tasks", label: "Tasks", icon: ClipboardList },
-  { id: "customers", label: "Customers", icon: Users },
-  { id: "resignations", label: "Resignations", icon: UserX },
-  { id: "documents", label: "Documents", icon: FolderOpen },
-  { id: "requirements", label: "Requirements", icon: FileText },
-  { id: "gtm-reports", label: "GTM Reports", icon: BarChart3 },
-  { id: "agents", label: "Agents", icon: UserPlus },
-  { id: "interactions", label: "Interactions", icon: MessageSquare },
-  { id: "ai-interactions", label: "AI Interactions", icon: Phone },
-  { id: "password-requests", label: "Password Requests", icon: KeyRound },
+  { id: "dashboard", label: "Dashboard", icon: Activity, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
+  { id: "llm-manager", label: "LLM Manager", icon: BarChart3, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
+  { id: "bot-monitor", label: "Bot Monitor", icon: Phone, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
+  { id: "tasks", label: "Tasks", icon: ClipboardList, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
+  { id: "customers", label: "Customers", icon: Users, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
+  { id: "resignations", label: "Resignations", icon: UserX, color: "text-pink-400 border-pink-500/30 hover:border-pink-500/60 shadow-pink-500/10" },
+  { id: "documents", label: "Documents", icon: FolderOpen, color: "text-orange-400 border-orange-500/30 hover:border-orange-500/60 shadow-orange-500/10" },
+  { id: "requirements", label: "Requirements", icon: FileText, color: "text-rose-400 border-rose-500/30 hover:border-rose-500/60 shadow-rose-500/10" },
+  { id: "gtm-reports", label: "GTM Reports", icon: BarChart3, color: "text-amber-400 border-amber-500/30 hover:border-amber-500/60 shadow-amber-500/10" },
+  { id: "agents", label: "Agents", icon: UserPlus, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
+  { id: "interactions", label: "Interactions", icon: MessageSquare, color: "text-sky-400 border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10" },
+  { id: "password-requests", label: "Password Requests", icon: KeyRound, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
 
 function AdminPortalContent() {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("dashboard");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [showCreateAgent, setShowCreateAgent] = useState(false);
-  const [agents, setAgents] = useState(demoUsers.filter(u => u.role === "agent"));
+  const [agents, setAgents] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "info";
     title: string;
     message: string;
   } | null>(null);
-  const [requirements, setRequirements] = useState(demoRequirements);
-  const [gtmReports, setGtmReports] = useState(demoGTMReports);
-  const [customerGTMData, setCustomerGTMData] = useState(demoCustomerGTMData);
-  const [showReassignReqModal, setShowReassignReqModal] = useState(false);
+  const [requirements, setRequirements] = useState<any[]>([]);
+  const [gtmReports, setGtmReports] = useState<any[]>([]);
   const [passwordRequests, setPasswordRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [showChangeOwnPassword, setShowChangeOwnPassword] = useState(false);
+  const [ownCurrentPassword, setOwnCurrentPassword] = useState("");
+  const [ownNewPassword, setOwnNewPassword] = useState("");
+  const [changingOwnPassword, setChangingOwnPassword] = useState(false);
 
-  const handleGenerateResetPassword = () => {
-    if (!selectedRequest) return;
-    const cleanEmail = selectedRequest.email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") || "User";
-    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    setNewPassword(`Reset@${cleanEmail}!${suffix}`);
-  };
-
-  const handleGenerateAgentPassword = () => {
-    const cleanName = formData.name.trim().replace(/[^a-zA-Z0-9]/g, "") || "Agent";
-    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const finalPassword = `Agent@${cleanName}!${suffix}`;
-    setFormData((prev) => ({ ...prev, password: finalPassword }));
-  };
-
-  const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
-  const [addingAgentFromReassign, setAddingAgentFromReassign] = useState(false);
+  const [showDirectResetModal, setShowDirectResetModal] = useState(false);
+  const [directResetEmail, setDirectResetEmail] = useState("");
+  const [directResetRole, setDirectResetRole] = useState<"customer" | "agent">("customer");
+  const [directResetPassword, setDirectResetPassword] = useState("");
+  const [directResetting, setDirectResetting] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   
-  // Tasks state
-  const [tasks, setTasks] = useState(demoTasks);
-  const [taskSearch, setTaskSearch] = useState("");
-  const [filterTaskStatus, setFilterTaskStatus] = useState("all");
-  const [filterTaskPriority, setFilterTaskPriority] = useState("all");
-  const [filterTaskAssignee, setFilterTaskAssignee] = useState("all");
-  
-  // Customers state
-  const [customers, setCustomers] = useState(demoCustomers);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [filterCustomerStatus, setFilterCustomerStatus] = useState("all");
+  // Modals and forms
   const [showOnboardCustomer, setShowOnboardCustomer] = useState(false);
   const [onboardFormData, setOnboardFormData] = useState({
     name: "",
@@ -140,68 +101,130 @@ function AdminPortalContent() {
       aiCalls: false,
     },
   });
-  
-  // Resignations state
-  const [resignations, setResignations] = useState(demoCustomerResignations);
+
   const [showProcessResignation, setShowProcessResignation] = useState(false);
-  const [selectedResignationCustomer, setSelectedResignationCustomer] = useState<string | null>(null);
+  const [selectedResCustomer, setSelectedResCustomer] = useState<any>(null);
   const [resignationFormData, setResignationFormData] = useState({
     requestDate: new Date().toISOString().split("T")[0],
     effectiveDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     terminationReason: "",
     notes: "",
   });
-  
-  // Documents state
-  const [documents, setDocuments] = useState(demoDocuments);
+
+  // Search & Filters state
+  const [taskSearch, setTaskSearch] = useState("");
+  const [filterTaskStatus, setFilterTaskStatus] = useState("all");
+  const [filterTaskPriority, setFilterTaskPriority] = useState("all");
+  const [filterTaskAssignee, setFilterTaskAssignee] = useState("all");
+
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [filterCustomerStatus, setFilterCustomerStatus] = useState("all");
+
   const [documentSearch, setDocumentSearch] = useState("");
   const [filterDocumentType, setFilterDocumentType] = useState("all");
-  
-  // Audit logs
-  const [localAuditLogs, setLocalAuditLogs] = useState(demoAuditLogs);
-  
-  // Get dynamic names from demo data
-  const firstAgent = demoUsers.find(u => u.role === "agent");
-  const secondAgent = demoUsers.find(u => u.role === "agent" && u.id !== firstAgent?.id);
-  const firstCustomer = demoUsers.find(u => u.role === "customer");
-  
-  const [notifications] = useState<string[]>([
-    `Agent ${firstAgent?.name || "Agent"} completed task #3`,
-    `New feedback received from ${firstCustomer?.name || "Customer"}`,
-    `Agent ${secondAgent?.name || "Agent"} started a new session`,
-  ]);
-  const [agentAssignments, setAgentAssignments] = useState<AgentAssignmentNotification[]>([]);
-  const [agentSessions, setAgentSessions] = useState<AgentSession[]>([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
 
-  const [leads, setLeads] = useState<any[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [showReassignModal, setShowReassignModal] = useState(false);
-  const [reassignLeadId, setReassignLeadId] = useState<string | null>(null);
-  const [reassigning, setReassigning] = useState(false);
-  const [selectedNewAgentKey, setSelectedNewAgentKey] = useState<string>("");
-  
-  // Search & Filters state
   const [reqSearch, setReqSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const [llmMetrics, setLlmMetrics] = useState<{
-    totalRequests: number;
-    successfulRequests: number;
-    failedRequests: number;
-    totalCost: number;
-    totalLatencyMs: number;
-    averageLatencyMs: number;
-    successRate: number;
-  } | null>(null);
-  const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
+  // Core collections data
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [resignations, setResignations] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [localAuditLogs, setLocalAuditLogs] = useState<any[]>([]);
+  const [feedbackList, setFeedbackList] = useState<any[]>([]);
+  const [calls, setCalls] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+
+  // Agent assignments and session logs
+  const [agentAssignments, setAgentAssignments] = useState<AgentAssignmentNotification[]>([]);
+  const [agentSessions, setAgentSessions] = useState<AgentSession[]>([]);
+  
+  // LLM Metrics
+  const [llmMetrics, setLlmMetrics] = useState<any>(null);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
+
+  // Agent Form
+  const [agentFormData, setAgentFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  // 1. Fetching logic (polling fallback for real-time cross-role sync)
+  const fetchPortalData = async () => {
+    try {
+      const [
+        agentsRes,
+        customersRes,
+        tasksRes,
+        reqsRes,
+        resignRes,
+        docsRes,
+        auditRes,
+        gtmRes,
+        feedbackRes,
+        callsRes,
+        chatRes,
+      ] = await Promise.all([
+        fetch("/api/admin/agents"),
+        fetch("/api/admin/customers"),
+        fetch("/api/portal/tasks"),
+        fetch("/api/portal/requirements"),
+        fetch("/api/portal/resignations"),
+        fetch("/api/portal/documents"),
+        fetch("/api/admin/audit-logs"),
+        fetch("/api/portal/gtm-reports"),
+        fetch("/api/portal/feedback"),
+        fetch("/api/portal/calls"),
+        fetch("/api/portal/chat?sessionId=session-1"),
+      ]);
+
+      const [
+        agentsData,
+        customersData,
+        tasksData,
+        reqsData,
+        resignData,
+        docsData,
+        auditData,
+        gtmData,
+        feedbackData,
+        callsData,
+        chatData,
+      ] = await Promise.all([
+        agentsRes.json(),
+        customersRes.json(),
+        tasksRes.json(),
+        reqsRes.json(),
+        resignRes.json(),
+        docsRes.json(),
+        auditRes.json(),
+        gtmRes.json(),
+        feedbackRes.json(),
+        callsRes.json(),
+        chatRes.json(),
+      ]);
+
+      if (agentsData.success) setAgents(agentsData.agents);
+      if (customersData.success) setCustomers(customersData.customers);
+      if (tasksData.success) setTasks(tasksData.tasks);
+      if (reqsData.success) setRequirements(reqsData.requirements);
+      if (resignData.success) setResignations(resignData.resignations);
+      if (docsData.success) setDocuments(docsData.documents);
+      if (auditData.success) setLocalAuditLogs(auditData.logs);
+      if (gtmData.success) setGtmReports(gtmData.reports);
+      if (feedbackData.success) setFeedbackList(feedbackData.feedback);
+      if (callsData.success) setCalls(callsData.calls);
+      if (chatData.success) setChatMessages(chatData.messages);
+
+    } catch (error) {
+      console.error("[Admin Portal] Polling error:", error);
+    }
+  };
 
   const fetchLlmMetrics = async () => {
     setIsLoadingMetrics(true);
@@ -219,30 +242,6 @@ function AdminPortalContent() {
     }
   };
 
-  const fetchLeads = async () => {
-    try {
-      const res = await fetch("/api/leads");
-      const data = await res.json();
-      if (data.success) {
-        setLeads(data.leads);
-      }
-    } catch (error) {
-      console.error("Failed to load leads:", error);
-    }
-  };
-
-  const fetchAuditLogs = async () => {
-    try {
-      const res = await fetch("/api/admin/audit-logs");
-      const data = await res.json();
-      if (data.success) {
-        setAuditLogs(data.logs);
-      }
-    } catch (error) {
-      console.error("Failed to load audit logs:", error);
-    }
-  };
-  
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
     try {
@@ -255,6 +254,223 @@ function AdminPortalContent() {
       console.error("Failed to fetch password requests:", err);
     } finally {
       setLoadingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPortalData();
+    const interval = setInterval(fetchPortalData, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "llm-manager") {
+      fetchLlmMetrics();
+    } else if (activeTab === "password-requests") {
+      fetchPasswordRequests();
+    }
+  }, [activeTab]);
+
+  // Real-time Firestore sync (for agent Sessions and Assignments if Firebase client is set up)
+  useEffect(() => {
+    const firestore = getDb();
+    if (!firestore) return;
+
+    const notificationsQuery = query(collection(firestore, "agent_notifications"), orderBy("sentAt", "desc"), limit(20));
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+      const newAssignments = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        sessionId: doc.id,
+      })) as AgentAssignmentNotification[];
+      setAgentAssignments(newAssignments);
+    });
+
+    const sessionsQuery = query(collection(firestore, "agentSessions"), orderBy("createdAt", "desc"), limit(50));
+    const unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
+      const newSessions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as AgentSession[];
+      setAgentSessions(newSessions);
+    });
+
+    return () => {
+      unsubscribeNotifications();
+      unsubscribeSessions();
+    };
+  }, []);
+
+  // Handlers
+  const handleGenerateResetPassword = () => {
+    if (!selectedRequest) return;
+    const cleanEmail = selectedRequest.email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") || "User";
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    setNewPassword(`Reset@${cleanEmail}!${suffix}`);
+  };
+
+  const handleGenerateAgentPassword = () => {
+    const cleanName = agentFormData.name.trim().replace(/[^a-zA-Z0-9]/g, "") || "Agent";
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    setAgentFormData((prev) => ({ ...prev, password: `Agent@${cleanName}!${suffix}` }));
+  };
+
+  const handleCreateAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/admin/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(agentFormData),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setAgents([...agents, data.agent]);
+        setShowCreateAgent(false);
+        setAgentFormData({ name: "", email: "", password: "" });
+        setNotification({
+          type: "success",
+          title: "Agent Created",
+          message: `${data.agent.name}'s account has been successfully created.`,
+        });
+      } else {
+        setNotification({ type: "error", title: "Error", message: data.error || "Failed to create agent" });
+      }
+    } catch (error) {
+      setNotification({ type: "error", title: "Error", message: "Failed to connect to backend" });
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+
+  const handleOnboardCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "onboard",
+          name: onboardFormData.name,
+          email: onboardFormData.email,
+          phone: onboardFormData.phone,
+          companyName: onboardFormData.companyName,
+          industry: onboardFormData.industry,
+          assignedAgentId: onboardFormData.assignedAgentId,
+          assignedAgentName: agents.find(a => a.id === onboardFormData.assignedAgentId)?.name || "",
+          businessModel: onboardFormData.businessModel,
+          serviceConfigurations: onboardFormData.serviceConfigs,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setShowOnboardCustomer(false);
+        setOnboardFormData({
+          name: "",
+          email: "",
+          phone: "",
+          companyName: "",
+          industry: "",
+          assignedAgentId: "",
+          businessModel: "b2b",
+          serviceConfigs: { gtmReports: true, leadScoring: false, aiCalls: false },
+        });
+        setNotification({
+          type: "success",
+          title: "Customer Onboarded",
+          message: `${data.customer.name} has been onboarded. Default Password: ${data.defaultPassword}`,
+        });
+        fetchPortalData();
+      } else {
+        setNotification({ type: "error", title: "Error", message: data.error || "Onboarding failed" });
+      }
+    } catch (err) {
+      setNotification({ type: "error", title: "Error", message: "Failed to connect to backend" });
+    } finally {
+      setTimeout(() => setNotification(null), 8000);
+    }
+  };
+
+  const handleUpdateBusinessModel = async (customerId: string, newModel: string) => {
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, businessModel: newModel }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotification({ type: "success", title: "Business Model Updated", message: `Successfully updated to ${newModel.toUpperCase()}` });
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/portal/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId, status: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotification({ type: "success", title: "Task Updated", message: "Task status synced to database" });
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => setNotification(null), 4000);
+    }
+  };
+
+  const handleInitiateResignation = (customer: any) => {
+    setSelectedResCustomer(customer);
+    setShowProcessResignation(true);
+  };
+
+  const handleProcessResignation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedResCustomer) return;
+
+    try {
+      const res = await fetch("/api/portal/resignations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: selectedResCustomer.id,
+          customerName: selectedResCustomer.name,
+          requestDate: resignationFormData.requestDate,
+          effectiveDate: resignationFormData.effectiveDate,
+          terminationReason: resignationFormData.terminationReason,
+          notes: resignationFormData.notes,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setShowProcessResignation(false);
+        setSelectedResCustomer(null);
+        setResignationFormData({
+          requestDate: new Date().toISOString().split("T")[0],
+          effectiveDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          terminationReason: "",
+          notes: "",
+        });
+        setNotification({ type: "success", title: "Resignation Processed", message: "Customer status set to Resigned" });
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -280,475 +496,215 @@ function AdminPortalContent() {
         setNewPassword("");
         fetchPasswordRequests();
       } else {
-        setNotification({
-          type: "error",
-          title: "Reset Failed",
-          message: data.error || "Failed to reset password",
-        });
+        setNotification({ type: "error", title: "Failed", message: data.error || "Reset failed" });
       }
     } catch (err) {
-      setNotification({
-        type: "error",
-        title: "Error",
-        message: "Failed to connect to server for password reset",
-      });
+      console.error(err);
     } finally {
       setResettingPassword(false);
       setTimeout(() => setNotification(null), 5000);
     }
   };
-  
-  const addAuditLog = (actionType: AuditLogEntry["actionType"], actionDetails: string, targetId?: string, targetType?: string) => {
-    const newLog = {
-      id: `audit-${Date.now()}`,
-      actionType,
-      actionDetails,
-      performedBy: "demo-admin-1",
-      performedByRole: "admin",
-      targetId,
-      targetType,
-      createdAt: new Date().toISOString(),
-    };
-    setLocalAuditLogs([newLog, ...localAuditLogs]);
-  };
 
-  const fetchCustomers = async () => {
+  const handleChangeOwnPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ownCurrentPassword || !ownNewPassword) return;
+    setChangingOwnPassword(true);
     try {
-      const res = await fetch("/api/admin/customers");
-      const data = await res.json();
-      if (data.success) {
-        setCustomers(data.customers);
-      }
-    } catch (error) {
-      console.error("Failed to load customers list:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchLeads();
-    fetchAuditLogs();
-    fetchCustomers();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "llm-manager") {
-      fetchLlmMetrics();
-    } else if (activeTab === "password-requests") {
-      fetchPasswordRequests();
-    }
-  }, [activeTab]);
-
-  const handleUpdateBusinessModel = async (customerId: string, newModel: string) => {
-    try {
-      const res = await fetch("/api/admin/customers", {
+      const res = await fetch("/api/admin/change-own-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, businessModel: newModel }),
+        body: JSON.stringify({ currentPassword: ownCurrentPassword, newPassword: ownNewPassword }),
       });
       const data = await res.json();
       if (data.success) {
-        setCustomers(customers.map(c => c.id === customerId ? { ...c, businessModel: newModel as any } : c));
-        addAuditLog("other", `Updated customer ${customerId} business model to ${newModel}`, customerId, "customer");
         setNotification({
           type: "success",
-          title: "Business Model Updated",
-          message: `Successfully set to ${newModel.toUpperCase()}`,
+          title: "Password Updated",
+          message: "Your admin password has been successfully updated.",
         });
+        setShowChangeOwnPassword(false);
+        setOwnCurrentPassword("");
+        setOwnNewPassword("");
       } else {
         setNotification({
           type: "error",
           title: "Update Failed",
-          message: data.error || "Failed to update business model",
+          message: data.error || "Failed to update password.",
         });
       }
     } catch (err) {
+      console.error(err);
       setNotification({
         type: "error",
         title: "Error",
-        message: "Failed to connect to server",
+        message: "An unexpected error occurred.",
       });
     } finally {
+      setChangingOwnPassword(false);
       setTimeout(() => setNotification(null), 5000);
     }
   };
 
-  const handleReassign = async (e: React.FormEvent) => {
+  const handleDirectResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reassignLeadId || !selectedNewAgentKey) return;
-    setReassigning(true);
+    if (!directResetEmail || !directResetPassword) return;
+    setDirectResetting(true);
     try {
-      const res = await fetch("/api/admin/reassign-agent", {
+      const res = await fetch("/api/admin/direct-reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: reassignLeadId, newAgentKey: selectedNewAgentKey }),
+        body: JSON.stringify({
+          targetEmail: directResetEmail,
+          targetRole: directResetRole,
+          newPassword: directResetPassword,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         setNotification({
           type: "success",
-          title: "Agent Reassigned",
-          message: `Successfully reassigned to ${data.newAgentName}`,
+          title: "Password Reset Approved",
+          message: data.message || `Password has been successfully updated for ${directResetEmail}.`,
         });
-        setShowReassignModal(false);
-        setReassignLeadId(null);
-        setSelectedNewAgentKey("");
-        fetchLeads();
-        fetchAuditLogs();
+        setShowDirectResetModal(false);
+        setDirectResetEmail("");
+        setDirectResetPassword("");
       } else {
         setNotification({
           type: "error",
-          title: "Reassignment Failed",
-          message: data.error || "Failed to reassign agent",
+          title: "Reset Failed",
+          message: data.error || "Failed to reset password.",
         });
       }
-    } catch (error) {
+    } catch (err) {
+      console.error(err);
       setNotification({
         type: "error",
         title: "Error",
-        message: "Failed to connect to server for reassignment",
+        message: "An unexpected error occurred.",
       });
     } finally {
-      setReassigning(false);
+      setDirectResetting(false);
       setTimeout(() => setNotification(null), 5000);
     }
   };
 
-  const handleReassignReq = (reqId: string) => {
-    setSelectedReqId(reqId);
-    setShowReassignReqModal(true);
+  const handleGenerateOwnPassword = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+    let pwd = "";
+    // Ensure complexity requirements
+    pwd += "A";
+    pwd += "a";
+    pwd += "1";
+    pwd += "!";
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setOwnNewPassword(pwd);
   };
 
-  const confirmReassignReq = (newAgentId: string) => {
-    const agent = agents.find(a => a.id === newAgentId);
-    setRequirements(requirements.map(req => {
-      if (req.id === selectedReqId) {
-        return {
-          ...req,
-          assignedAgentId: newAgentId,
-          assignedAgentName: agent?.name,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return req;
-    }));
-    setShowReassignReqModal(false);
-    setSelectedReqId(null);
-    setNotification({
-      type: "success",
-      title: "Agent Reassigned",
-      message: `Requirement reassigned to ${agent?.name}`,
-    });
-    setTimeout(() => setNotification(null), 5000);
+  const handleGenerateDirectPassword = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+    let pwd = "";
+    // Ensure complexity requirements
+    pwd += "A";
+    pwd += "a";
+    pwd += "1";
+    pwd += "!";
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setDirectResetPassword(pwd);
   };
 
-  const handleUpdateReqStatus = (reqId: string, newStatus: string) => {
-    setRequirements(requirements.map(req => {
-      if (req.id === reqId) {
-        return { ...req, status: newStatus as any, updatedAt: new Date().toISOString() };
-      }
-      return req;
-    }));
-    setNotification({
-      type: "success",
-      title: "Status Updated",
-      message: "Requirement status has been updated",
-    });
-    setTimeout(() => setNotification(null), 5000);
-  };
-
-  const autoAssignReq = (reqId: string) => {
-    // Auto-assign based on workload - pick the agent with the least requirements
-    const agentWorkloads = new Map();
-    agents.forEach(agent => {
-      const agentReqs = requirements.filter(r => r.assignedAgentId === agent.id);
-      agentWorkloads.set(agent.id, agentReqs.length);
-    });
-    
-    let bestAgent: typeof agents[0] | undefined;
-    let minWorkload = Infinity;
-    agents.forEach(agent => {
-      const workload = agentWorkloads.get(agent.id) || 0;
-      if (workload < minWorkload) {
-        minWorkload = workload;
-        bestAgent = agent;
-      }
-    });
-
-    if (bestAgent) {
-      setRequirements(requirements.map(req => {
-        if (req.id === reqId) {
-          return {
-            ...req,
-            assignedAgentId: bestAgent!.id,
-            assignedAgentName: bestAgent!.name,
-            status: "In Progress" as const,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return req;
-      }));
-      setNotification({
-        type: "success",
-        title: "Agent Assigned",
-        message: `Requirement auto-assigned to ${bestAgent.name}`,
+  const handleUpdateReqStatus = async (reqId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/portal/requirements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reqId, status: newStatus }),
       });
-      setTimeout(() => setNotification(null), 5000);
+      const data = await res.json();
+      if (data.success) {
+        setNotification({ type: "success", title: "Requirement Updated", message: `Status updated to ${newStatus}` });
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // Load real-time agent notifications from Firebase (only if configured)
-  useEffect(() => {
-    const firestore = getDb();
-    if (!firestore) {
-      console.log("[Admin Portal] Firebase not configured, skipping real-time updates");
-      return;
-    }
-
-    const notificationsQuery = query(
-      collection(firestore, "agent_notifications"),
-      orderBy("sentAt", "desc"),
-      limit(20)
-    );
-
-    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-      const newAssignments = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        sessionId: doc.id,
-      })) as AgentAssignmentNotification[];
-      setAgentAssignments(newAssignments);
-    });
-
-    // Load real-time agent sessions from Firebase
-    const sessionsQuery = query(
-      collection(firestore, "agentSessions"),
-      orderBy("createdAt", "desc"),
-      limit(50)
-    );
-
-    const unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
-      const newSessions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as AgentSession[];
-      setAgentSessions(newSessions);
-    });
-
-    return () => {
-      unsubscribeNotifications();
-      unsubscribeSessions();
-    };
-  }, []);
-
-  // Load agents from API
-  useEffect(() => {
-    const loadAgents = async () => {
-      try {
-        const res = await fetch("/api/admin/agents");
-        const data = await res.json();
-        if (data.success && data.agents.length > 0) {
-          setAgents(data.agents);
-        }
-      } catch (error) {
-        console.error("Failed to load agents:", error);
+  const autoAssignReq = async (reqId: string) => {
+    if (agents.length === 0) return;
+    // Workload assignment: pick the agent with the least assigned requirements
+    const workloads = new Map<string, number>();
+    agents.forEach(a => workloads.set(a.id, 0));
+    requirements.forEach(r => {
+      if (r.assignedAgentId && workloads.has(r.assignedAgentId)) {
+        workloads.set(r.assignedAgentId, workloads.get(r.assignedAgentId)! + 1);
       }
-    };
-    loadAgents();
-  }, []);
+    });
 
-  const totalAgents = agents.length;
-  const totalTasks = demoTasks.length;
-  const completedTasks = demoTasks.filter((t) => t.status === "completed").length;
-  const avgRating = demoCustomerFeedback.length
-    ? (demoCustomerFeedback.reduce((sum, f) => sum + f.rating, 0) / demoCustomerFeedback.length).toFixed(1)
-    : "0";
+    let bestAgent = agents[0];
+    let minLoad = workloads.get(bestAgent.id) || 0;
+    agents.forEach(a => {
+      const load = workloads.get(a.id) || 0;
+      if (load < minLoad) {
+        minLoad = load;
+        bestAgent = a;
+      }
+    });
 
-  const b2bCount = customers.filter(c => c.businessModel === "b2b" || !c.businessModel).length;
+    try {
+      await fetch("/api/portal/requirements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: reqId,
+          assignedAgentId: bestAgent.id,
+          assignedAgentName: bestAgent.name,
+          status: "In Progress",
+        }),
+      });
+      setNotification({ type: "success", title: "Auto-Assigned", message: `Assigned to ${bestAgent.name}` });
+      fetchPortalData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Stats Calculations
+  const b2bCount = customers.filter(c => c.businessModel === "b2b").length;
   const b2cCount = customers.filter(c => c.businessModel === "b2c").length;
   const d2cCount = customers.filter(c => c.businessModel === "d2c").length;
   const customCount = customers.filter(c => c.businessModel === "custom").length;
-
-  const handleCreateAgent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const res = await fetch("/api/admin/agents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setAgents([...agents, data.agent]);
-        setShowCreateAgent(false);
-        setFormData({ name: "", email: "", password: "" });
-        
-        // If adding agent from reassign modal, assign new agent to selected requirement
-        if (addingAgentFromReassign && selectedReqId) {
-          setRequirements(requirements.map(req => {
-            if (req.id === selectedReqId) {
-              return {
-                ...req,
-                assignedAgentId: data.agent.id,
-                assignedAgentName: data.agent.name,
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return req;
-          }));
-          setShowReassignReqModal(false);
-          setSelectedReqId(null);
-          setAddingAgentFromReassign(false);
-          setNotification({
-            type: "success",
-            title: "Agent Created & Assigned",
-            message: `${data.agent.name}'s account created and assigned to requirement`,
-          });
-        } else {
-          setNotification({
-            type: "success",
-            title: "Agent Created",
-            message: `${data.agent.name}'s account has been created successfully`,
-          });
-        }
-      } else {
-        setNotification({
-          type: "error",
-          title: "Error",
-          message: data.error || "Failed to create agent",
-        });
-      }
-    } catch (error) {
-      setNotification({
-        type: "error",
-        title: "Error",
-        message: "Failed to create agent account",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
-  
-  // Task handlers
-  const handleUpdateTaskStatus = (taskId: string, newStatus: any) => {
-    setTasks(tasks.map(task => task.id === taskId ? { ...task, status: newStatus, updatedAt: new Date().toISOString() } : task));
-    addAuditLog("task_update", `Updated task ${taskId} status to ${newStatus}`, taskId, "task");
-    setNotification({ type: "success", title: "Task Updated", message: "Task status has been updated" });
-    setTimeout(() => setNotification(null), 5000);
-  };
-  
-  const handleOnboardCustomer = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newCustomer = {
-      id: `customer-${Date.now()}`,
-      name: onboardFormData.name,
-      email: onboardFormData.email,
-      phone: onboardFormData.phone,
-      companyName: onboardFormData.companyName,
-      industry: onboardFormData.industry,
-      status: "onboarding" as const,
-      assignedAgentId: onboardFormData.assignedAgentId || undefined,
-      assignedAgentName: agents.find(a => a.id === onboardFormData.assignedAgentId)?.name,
-      serviceConfigurations: onboardFormData.serviceConfigs,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      businessModel: onboardFormData.businessModel as any || "b2b",
-    };
-    setCustomers([newCustomer, ...customers]);
-    addAuditLog("customer_onboard", `Onboarded new customer: ${onboardFormData.name}`, newCustomer.id, "customer");
-    setShowOnboardCustomer(false);
-    setOnboardFormData({
-      name: "",
-      email: "",
-      phone: "",
-      companyName: "",
-      industry: "",
-      assignedAgentId: "",
-      businessModel: "b2b",
-      serviceConfigs: {
-        gtmReports: true,
-        leadScoring: false,
-        aiCalls: false,
-      },
-    });
-    setNotification({ type: "success", title: "Customer Onboarded", message: `${onboardFormData.name} has been onboarded successfully` });
-    setTimeout(() => setNotification(null), 5000);
-  };
-  
-  // Resignation handlers
-  const handleInitiateResignation = (customerId: string) => {
-    setSelectedResignationCustomer(customerId);
-    setShowProcessResignation(true);
-  };
-  
-  const handleProcessResignation = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedResignationCustomer) return;
-    const customer = customers.find(c => c.id === selectedResignationCustomer);
-    if (!customer) return;
-    
-    const newResignation = {
-      id: `resign-${Date.now()}`,
-      customerId: selectedResignationCustomer,
-      customerName: customer.name,
-      requestDate: resignationFormData.requestDate,
-      effectiveDate: resignationFormData.effectiveDate,
-      terminationReason: resignationFormData.terminationReason,
-      notes: resignationFormData.notes,
-      documentsArchived: true,
-      accountClosed: true,
-      processedBy: "demo-admin-1",
-      processedAt: new Date().toISOString(),
-    };
-    
-    setResignations([newResignation, ...resignations]);
-    setCustomers(customers.map(c => c.id === selectedResignationCustomer ? { ...c, status: "resigned" as const, updatedAt: new Date().toISOString() } : c));
-    addAuditLog("customer_resign", `Processed resignation for ${customer.name}`, selectedResignationCustomer, "customer");
-    setShowProcessResignation(false);
-    setSelectedResignationCustomer(null);
-    setResignationFormData({
-      requestDate: new Date().toISOString().split("T")[0],
-      effectiveDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      terminationReason: "",
-      notes: "",
-    });
-    setNotification({ type: "success", title: "Resignation Processed", message: `${customer.name}'s resignation has been processed` });
-    setTimeout(() => setNotification(null), 5000);
-  };
-  
-  // Document handler
-  const handleDocumentAccess = (docId: string, docTitle: string) => {
-    addAuditLog("document_access", `Accessed document: ${docTitle}`, docId, "document");
-    setNotification({ type: "info", title: "Document Accessed", message: `You have accessed ${docTitle}` });
-    setTimeout(() => setNotification(null), 5000);
-  };
+  const completedTasks = tasks.filter(t => t.status === "completed").length;
+  const totalTasks = tasks.length;
+  const avgRating = feedbackList.length
+    ? (feedbackList.reduce((sum, f) => sum + f.rating, 0) / feedbackList.length).toFixed(1)
+    : "4.8";
 
   return (
-    <div className="space-y-8 relative">
-      {/* Notification Toast */}
+    <div className="space-y-8 relative pb-12">
+      {/* Toast Notification */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-4 duration-300">
           <GlassPanel tilt={false} depth="front" className={cn(
-            "w-80 shadow-xl border",
-            notification.type === "success" ? "border-green-500/30 bg-green-950/80" :
-            notification.type === "error" ? "border-red-500/30 bg-red-950/80" :
-            "border-blue-500/30 bg-blue-950/80"
+            "w-80 shadow-2xl border backdrop-blur-2xl",
+            notification.type === "success" ? "border-emerald-500/40 bg-emerald-950/90 text-emerald-200" :
+            notification.type === "error" ? "border-rose-500/40 bg-rose-950/90 text-rose-200" :
+            "border-blue-500/40 bg-blue-950/90 text-blue-200"
           )}>
             <CardContent className="p-4 flex items-start gap-3">
-              {notification.type === "success" ? <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5" /> :
-               notification.type === "error" ? <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" /> :
+              {notification.type === "success" ? <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5" /> :
+               notification.type === "error" ? <AlertCircle className="h-5 w-5 text-rose-400 mt-0.5" /> :
                <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />}
               <div className="flex-1">
-                <p className="font-semibold text-white text-sm">{notification.title}</p>
-                <p className="text-slate-300 text-xs mt-1">{notification.message}</p>
+                <p className="font-semibold text-sm">{notification.title}</p>
+                <p className="text-xs opacity-90 mt-1">{notification.message}</p>
               </div>
-              <button
-                onClick={() => setNotification(null)}
-                className="text-slate-400 hover:text-white"
-              >
+              <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-white">
                 <X className="h-4 w-4" />
               </button>
             </CardContent>
@@ -756,18 +712,31 @@ function AdminPortalContent() {
         </div>
       )}
 
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Main Title Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-6">
         <div>
-          <h1 className="text-4xl font-extrabold text-slate-100">Administrator Dashboard</h1>
-          <p className="text-slate-400 mt-2">Manage agents, track performance, and view feedback</p>
+          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+            Administrator Dashboard
+          </h1>
+          <p className="text-slate-400 mt-1 text-sm font-medium">
+            Centralized orchestration dashboard for real-time customer, agent, and AI bot management
+          </p>
         </div>
         <div className="flex items-center gap-4">
-          <ExtrudedButton variant="outline" className="relative">
-            <Bell className="h-5 w-5 mr-2" />
+          <ExtrudedButton
+            variant="outline"
+            onClick={() => setShowChangeOwnPassword(true)}
+            className="border-slate-800 hover:border-slate-700 bg-slate-900/60 text-slate-200"
+          >
+            <KeyRound className="h-4 w-4 mr-2 text-teal-400" />
+            Change Password
+          </ExtrudedButton>
+          <ExtrudedButton variant="outline" className="relative border-slate-800 hover:border-slate-700 bg-slate-900/60">
+            <Bell className="h-5 w-5 mr-2 text-teal-400" />
             Notifications
-            {(agentAssignments.length + notifications.length) > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white px-2 py-0.5 rounded-full">
-                {agentAssignments.length + notifications.length}
+            {(agentAssignments.length + localAuditLogs.length) > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-indigo-500 text-[10px] text-white px-2 py-0.5 rounded-full font-bold">
+                {agentAssignments.length + localAuditLogs.length}
               </span>
             )}
           </ExtrudedButton>
@@ -775,8 +744,8 @@ function AdminPortalContent() {
         </div>
       </div>
 
-      {/* Tab Buttons */}
-      <div className="flex gap-2 flex-wrap">
+      {/* Tab Control Selection */}
+      <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -784,96 +753,85 @@ function AdminPortalContent() {
               key={tab.id}
               variant={activeTab === tab.id ? "default" : "outline"}
               onClick={() => setActiveTab(tab.id)}
-              className={activeTab === tab.id ? "bg-teal-600 hover:bg-teal-700" : ""}
+              className={cn(
+                "rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3",
+                activeTab === tab.id
+                  ? "bg-gradient-to-br from-teal-600 to-indigo-600 text-white shadow-lg shadow-teal-500/20"
+                  : "border-transparent bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+              )}
             >
-              <Icon className="h-4 w-4 mr-2" />
+              <Icon className={cn("h-4 w-4", tab.color.split(" ")[0])} />
               {tab.label}
             </ExtrudedButton>
           );
         })}
       </div>
 
-      {/* Tab Content */}
-      <div className="mt-6">
+      {/* Tab Content Display Panels */}
+      <div className="mt-4">
+        
         {/* Create Agent Modal */}
         {showCreateAgent && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-700 shadow-2xl">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl text-slate-100">Create New Agent</CardTitle>
-                <button
-                  className="text-slate-400 hover:text-white p-1"
-                  onClick={() => setShowCreateAgent(false)}
-                >
-                  <X className="h-4 w-4" />
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-800 shadow-2xl">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-slate-800">
+                <CardTitle className="text-lg text-slate-100 font-bold">Register New Agent</CardTitle>
+                <button className="text-slate-400 hover:text-white p-1" onClick={() => setShowCreateAgent(false)}>
+                  <X className="h-5 w-5" />
                 </button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <form onSubmit={handleCreateAgent} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="agent-name" className="text-slate-300">Full Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="agent-name" className="text-slate-350">Full Name</Label>
                     <Input
                       id="agent-name"
-                      placeholder="Enter agent's full name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      placeholder="e.g. Ashok Kumar"
+                      value={agentFormData.name}
+                      onChange={(e) => setAgentFormData({ ...agentFormData, name: e.target.value })}
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 text-slate-200 rounded-xl"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="agent-email" className="text-slate-300">Email Address</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="agent-email" className="text-slate-350">Email Address</Label>
                     <Input
                       id="agent-email"
                       type="email"
-                      placeholder="agent@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      placeholder="ashok@dealflow.ai"
+                      value={agentFormData.email}
+                      onChange={(e) => setAgentFormData({ ...agentFormData, email: e.target.value })}
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 text-slate-200 rounded-xl"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="agent-password" className="text-slate-300">Password</Label>
+                      <Label htmlFor="agent-password" className="text-slate-350">Password</Label>
                       <button
                         type="button"
                         onClick={handleGenerateAgentPassword}
-                        className="text-[10px] font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider transition-colors px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
+                        className="text-[9px] font-bold text-teal-400 hover:text-teal-300 uppercase tracking-widest px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
                       >
                         Auto-generate
                       </button>
                     </div>
                     <PasswordInput
                       id="agent-password"
-                      placeholder="Create a secure password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl pr-10"
+                      placeholder="Enter secure password"
+                      value={agentFormData.password}
+                      onChange={(e) => setAgentFormData({ ...agentFormData, password: e.target.value })}
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 text-slate-200 rounded-xl"
                       required
                       minLength={6}
                     />
                   </div>
-                  <div className="flex gap-3 pt-4">
-                    <ExtrudedButton
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setShowCreateAgent(false)}
-                    >
+                  <div className="flex gap-3 pt-4 border-t border-slate-800/80 mt-6">
+                    <ExtrudedButton type="button" variant="outline" className="flex-1" onClick={() => setShowCreateAgent(false)}>
                       Cancel
                     </ExtrudedButton>
-                    <ExtrudedButton
-                      type="submit"
-                      className="flex-1 bg-teal-600 hover:bg-teal-700 gap-2"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4" />
-                      )}
-                      {isSubmitting ? "Creating..." : "Create Agent"}
+                    <ExtrudedButton type="submit" className="flex-1 bg-gradient-to-br from-teal-600 to-cyan-600" disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Account"}
                     </ExtrudedButton>
                   </div>
                 </form>
@@ -884,156 +842,144 @@ function AdminPortalContent() {
 
         {/* Onboard Customer Modal */}
         {showOnboardCustomer && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <GlassPanel tilt={false} className="w-full max-w-lg bg-slate-900 border-slate-700 shadow-2xl">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl text-slate-100 font-bold">Onboard New Customer</CardTitle>
-                <button
-                  className="text-slate-400 hover:text-white p-1"
-                  onClick={() => setShowOnboardCustomer(false)}
-                >
-                  <X className="h-4 w-4" />
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <GlassPanel tilt={false} className="w-full max-w-lg bg-slate-900 border-slate-800 shadow-2xl">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-slate-800">
+                <CardTitle className="text-lg text-slate-100 font-bold">Onboard New Customer</CardTitle>
+                <button className="text-slate-400 hover:text-white p-1" onClick={() => setShowOnboardCustomer(false)}>
+                  <X className="h-5 w-5" />
                 </button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6 max-h-[75vh] overflow-y-auto space-y-4">
                 <form onSubmit={handleOnboardCustomer} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-name" className="text-slate-300">Customer Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customer-name" className="text-slate-350">Customer Full Name</Label>
                     <Input
                       id="customer-name"
-                      placeholder="Enter customer's full name"
+                      placeholder="e.g. John Doe"
                       value={onboardFormData.name}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, name: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 rounded-xl"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-email" className="text-slate-300">Email Address</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customer-email" className="text-slate-350">Email Address</Label>
                     <Input
                       id="customer-email"
                       type="email"
-                      placeholder="customer@example.com"
+                      placeholder="john@example.com"
                       value={onboardFormData.email}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, email: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 rounded-xl"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-phone" className="text-slate-300">Phone Number</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customer-phone" className="text-slate-350">Phone Number</Label>
                     <Input
                       id="customer-phone"
                       placeholder="+1-555-123-4567"
                       value={onboardFormData.phone}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, phone: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 rounded-xl"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-company" className="text-slate-300">Company Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customer-company" className="text-slate-350">Company Name</Label>
                     <Input
                       id="customer-company"
-                      placeholder="Company Inc."
+                      placeholder="Acme Corp"
                       value={onboardFormData.companyName}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, companyName: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 rounded-xl"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-industry" className="text-slate-300">Industry</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customer-industry" className="text-slate-350">Industry</Label>
                     <Input
                       id="customer-industry"
-                      placeholder="e.g., SaaS, Fintech"
+                      placeholder="e.g. Fintech, E-Commerce"
                       value={onboardFormData.industry}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, industry: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800 focus:border-teal-500 rounded-xl"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="assigned-agent" className="text-slate-300">Assign Agent</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="assigned-agent" className="text-slate-350">Assigned Account Manager</Label>
                     <select
                       id="assigned-agent"
                       value={onboardFormData.assignedAgentId}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, assignedAgentId: e.target.value })}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
-                      <option value="">Select an agent (optional)</option>
+                      <option value="">Select Agent...</option>
                       {agents.map(agent => (
                         <option key={agent.id} value={agent.id}>{agent.name}</option>
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="business-model" className="text-slate-300">Business Model</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="business-model" className="text-slate-350">Initial Operating Model</Label>
                     <select
                       id="business-model"
                       value={onboardFormData.businessModel}
                       onChange={(e) => setOnboardFormData({ ...onboardFormData, businessModel: e.target.value })}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="b2b">B2B Enterprise</option>
                       <option value="b2c">B2C Retail</option>
-                      <option value="d2c">D2C Brand</option>
-                      <option value="custom">Custom Creator</option>
+                      <option value="d2c">D2C Storefront</option>
+                      <option value="custom">Custom Parameters</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">Service Configurations</Label>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2">
+                  <div className="space-y-2 pt-2">
+                    <Label className="text-slate-350 font-bold block mb-1">Service Modules Configuration</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 text-sm text-slate-300">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.gtmReports}
-                          onChange={(e) => setOnboardFormData({ 
-                            ...onboardFormData, 
-                            serviceConfigs: { ...onboardFormData.serviceConfigs, gtmReports: e.target.checked } 
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, gtmReports: e.target.checked }
                           })}
-                          className="w-4 h-4 text-teal-600 bg-slate-800 border-slate-700 rounded focus:ring-teal-500"
+                          className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                         />
-                        <span className="text-slate-300 text-sm">GTM Reports</span>
+                        GTM Reports
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 text-sm text-slate-300">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.leadScoring}
-                          onChange={(e) => setOnboardFormData({ 
-                            ...onboardFormData, 
-                            serviceConfigs: { ...onboardFormData.serviceConfigs, leadScoring: e.target.checked } 
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, leadScoring: e.target.checked }
                           })}
-                          className="w-4 h-4 text-teal-600 bg-slate-800 border-slate-700 rounded focus:ring-teal-500"
+                          className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                         />
-                        <span className="text-slate-300 text-sm">Lead Scoring</span>
+                        Lead Scoring
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 text-sm text-slate-300">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.aiCalls}
-                          onChange={(e) => setOnboardFormData({ 
-                            ...onboardFormData, 
-                            serviceConfigs: { ...onboardFormData.serviceConfigs, aiCalls: e.target.checked } 
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, aiCalls: e.target.checked }
                           })}
-                          className="w-4 h-4 text-teal-600 bg-slate-800 border-slate-700 rounded focus:ring-teal-500"
+                          className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                         />
-                        <span className="text-slate-300 text-sm">AI Calls</span>
+                        AI Voice calls
                       </label>
                     </div>
                   </div>
-                  <div className="flex gap-3 pt-4">
-                    <ExtrudedButton
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setShowOnboardCustomer(false)}
-                    >
+                  <div className="flex gap-3 pt-6 border-t border-slate-800/80 mt-6">
+                    <ExtrudedButton type="button" variant="outline" className="flex-1" onClick={() => setShowOnboardCustomer(false)}>
                       Cancel
                     </ExtrudedButton>
-                    <ExtrudedButton
-                      type="submit"
-                      className="flex-1 bg-teal-600 hover:bg-teal-700 gap-2"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
+                    <ExtrudedButton type="submit" className="flex-1 bg-gradient-to-br from-teal-600 to-indigo-600">
                       Onboard Customer
                     </ExtrudedButton>
                   </div>
@@ -1044,85 +990,51 @@ function AdminPortalContent() {
         )}
 
         {/* Process Resignation Modal */}
-        {showProcessResignation && selectedResignationCustomer && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <GlassPanel tilt={false} className="w-full max-w-lg bg-slate-900 border-slate-700 shadow-2xl">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl text-slate-100 font-bold">Process Customer Resignation</CardTitle>
-                <button
-                  className="text-slate-400 hover:text-white p-1"
-                  onClick={() => {
-                    setShowProcessResignation(false);
-                    setSelectedResignationCustomer(null);
-                  }}
-                >
-                  <X className="h-4 w-4" />
+        {showProcessResignation && selectedResCustomer && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-800 shadow-2xl">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-slate-800">
+                <CardTitle className="text-lg text-slate-100 font-bold">Process Resignation</CardTitle>
+                <button className="text-slate-400 hover:text-white p-1" onClick={() => setShowProcessResignation(false)}>
+                  <X className="h-5 w-5" />
                 </button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <form onSubmit={handleProcessResignation} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="resignation-request-date" className="text-slate-300">Request Date</Label>
-                    <Input
-                      id="resignation-request-date"
-                      type="date"
-                      value={resignationFormData.requestDate}
-                      onChange={(e) => setResignationFormData({ ...resignationFormData, requestDate: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                      required
-                    />
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-350">Customer Name</Label>
+                    <p className="text-slate-100 font-bold text-sm bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                      {selectedResCustomer.name} ({selectedResCustomer.companyName})
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resignation-effective-date" className="text-slate-300">Effective Date</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="resign-reason" className="text-slate-350">Termination Reason</Label>
                     <Input
-                      id="resignation-effective-date"
-                      type="date"
-                      value={resignationFormData.effectiveDate}
-                      onChange={(e) => setResignationFormData({ ...resignationFormData, effectiveDate: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resignation-reason" className="text-slate-300">Termination Reason</Label>
-                    <Input
-                      id="resignation-reason"
-                      placeholder="Reason for resignation"
+                      id="resign-reason"
+                      placeholder="e.g. Budget constraints, project finished"
                       value={resignationFormData.terminationReason}
                       onChange={(e) => setResignationFormData({ ...resignationFormData, terminationReason: e.target.value })}
-                      className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
+                      className="bg-slate-950/80 border-slate-800"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resignation-notes" className="text-slate-300">Additional Notes</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="resign-notes" className="text-slate-350">Additional Notes</Label>
                     <textarea
-                      id="resignation-notes"
-                      placeholder="Any additional notes..."
+                      id="resign-notes"
+                      placeholder="Notes for archiving..."
                       value={resignationFormData.notes}
                       onChange={(e) => setResignationFormData({ ...resignationFormData, notes: e.target.value })}
-                      className="w-full bg-slate-850/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       rows={3}
                     />
                   </div>
-                  <div className="flex gap-3 pt-4">
-                    <ExtrudedButton
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setShowProcessResignation(false);
-                        setSelectedResignationCustomer(null);
-                      }}
-                    >
+                  <div className="flex gap-3 pt-6 border-t border-slate-800/80 mt-6">
+                    <ExtrudedButton type="button" variant="outline" className="flex-1" onClick={() => setShowProcessResignation(false)}>
                       Cancel
                     </ExtrudedButton>
-                    <ExtrudedButton
-                      type="submit"
-                      className="flex-1 bg-red-600 hover:bg-red-700 gap-2"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Process Resignation
+                    <ExtrudedButton type="submit" className="flex-1 bg-rose-650 hover:bg-rose-700">
+                      Set Resigned
                     </ExtrudedButton>
                   </div>
                 </form>
@@ -1131,203 +1043,246 @@ function AdminPortalContent() {
           </div>
         )}
 
+        {/* 1. DASHBOARD TAB */}
         {activeTab === "dashboard" && (
-          <div className="space-y-8">
-            {/* Real-time Audit logs */}
-            {localAuditLogs.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-slate-100 mb-4 flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-teal-400" />
-                  Recent System Activity & Audit Trail
-                </h2>
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-2 mb-6">
-                  {localAuditLogs.slice(0, 10).map((log) => (
-                    <GlassPanel key={log.id} tilt={false} className="border-slate-800 bg-slate-900/40">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-white">
-                              {log.actionDetails}
-                            </h4>
-                            <p className="text-xs text-slate-400 mt-1">
-                              By: {log.performedBy} ({log.performedByRole}) • {new Date(log.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400">
-                            Success
-                          </span>
-                        </div>
-                      </CardContent>
-                    </GlassPanel>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent Agent Assignments */}
-            {agentAssignments.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-slate-100 mb-4 flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Recent Agent Assignments
-                </h2>
-                <div className="space-y-3">
-                  {agentAssignments.map((assignment) => (
-                    <GlassPanel key={assignment.sessionId} tilt={false} className="border-slate-700/50">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-white">
-                              {assignment.agentKey} assigned to {assignment.companyName}
-                            </h4>
-                            <p className="text-sm text-slate-400">
-                              Customer: {assignment.customerName} • {new Date(assignment.startedAt).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">
-                            Active
-                          </span>
-                        </div>
-                      </CardContent>
-                    </GlassPanel>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader className="pb-1">
-                  <CardTitle className="text-slate-300 text-lg">Operating Models</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>B2B:</span>
-                      <span className="font-bold text-indigo-400">{b2bCount}</span>
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* Real-time statistics cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <GlassPanel tilt={true} className="border-emerald-500/20 bg-gradient-to-br from-slate-900/80 to-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Platform Agents</p>
+                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{agents.length}</h3>
                     </div>
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>B2C:</span>
-                      <span className="font-bold text-emerald-400">{b2cCount}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>D2C:</span>
-                      <span className="font-bold text-pink-400">{d2cCount}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>Custom:</span>
-                      <span className="font-bold text-amber-400">{customCount}</span>
-                    </div>
+                    <Users className="h-10 w-10 text-emerald-500 opacity-80" />
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400/80 mt-4">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span>Real-time active routing</span>
                   </div>
                 </CardContent>
               </GlassPanel>
 
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Total Agents</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-teal-400">{totalAgents}</p>
+              <GlassPanel tilt={true} className="border-indigo-500/20 bg-gradient-to-br from-slate-900/80 to-indigo-950/20 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-indigo-400 font-bold uppercase tracking-wider">Active Customers</p>
+                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{customers.length}</h3>
+                    </div>
+                    <Users className="h-10 w-10 text-indigo-500 opacity-80" />
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-indigo-300 mt-4">
+                    <span>B2B: <strong>{b2bCount}</strong></span>
+                    <span>B2C: <strong>{b2cCount}</strong></span>
+                    <span>D2C: <strong>{d2cCount}</strong></span>
+                  </div>
                 </CardContent>
               </GlassPanel>
 
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Total Tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-purple-400">{totalTasks}</p>
-                  <p className="text-sm text-slate-500 mt-2">
-                    {completedTasks} completed, {totalTasks - completedTasks} in progress
+              <GlassPanel tilt={true} className="border-purple-500/20 bg-gradient-to-br from-slate-900/80 to-purple-950/20 shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-purple-400 font-bold uppercase tracking-wider">Tasks Completion</p>
+                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">
+                        {totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%"}
+                      </h3>
+                    </div>
+                    <ClipboardList className="h-10 w-10 text-purple-500 opacity-80" />
+                  </div>
+                  <p className="text-xs text-purple-300 mt-4 font-semibold">
+                    {completedTasks} completed / {totalTasks} total tasks
                   </p>
                 </CardContent>
               </GlassPanel>
 
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Average Rating</CardTitle>
-                </CardHeader>
-                <CardContent className="flex items-baseline gap-2">
-                  <p className="text-5xl font-extrabold text-amber-400">{avgRating}</p>
-                  <Star className="h-8 w-8 text-amber-400 fill-amber-400" />
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Total Feedback</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-green-400">{demoCustomerFeedback.length}</p>
+              <GlassPanel tilt={true} className="border-amber-500/20 bg-gradient-to-br from-slate-900/80 to-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Customer Rating</p>
+                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{avgRating}</h3>
+                    </div>
+                    <Star className="h-10 w-10 text-amber-500 fill-amber-500 opacity-80" />
+                  </div>
+                  <div className="flex gap-0.5 mt-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          star <= Math.round(Number(avgRating)) ? "text-amber-400 fill-amber-400" : "text-slate-700"
+                        )}
+                      />
+                    ))}
+                  </div>
                 </CardContent>
               </GlassPanel>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <GlassPanel tilt={false} className="border-slate-700/50 lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 text-xl font-bold">Recent Tasks</CardTitle>
+              
+              {/* Audit trail activity log */}
+              <GlassPanel tilt={false} className="border-slate-800 lg:col-span-2">
+                <CardHeader className="border-b border-slate-800/80 pb-4">
+                  <CardTitle className="text-lg text-slate-100 font-bold flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-teal-400" />
+                    System Operations & Audit Trail
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {demoTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-4 bg-slate-700/40 border border-slate-700/30 rounded-xl">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-100">{task.title}</h4>
-                        <p className="text-sm text-slate-400 mt-1">
-                          Assigned to: {demoUsers.find((u) => u.id === task.assignedAgentId)?.name}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                          task.status === "completed"
-                            ? "bg-green-500/15 text-green-400"
-                            : task.status === "in-progress"
-                            ? "bg-yellow-500/15 text-yellow-400"
-                            : "bg-slate-500/15 text-slate-400"
-                        )}>
-                          {task.status}
-                        </span>
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                          task.priority === "urgent"
-                            ? "bg-red-500/15 text-red-400"
-                            : task.priority === "high"
-                            ? "bg-orange-500/15 text-orange-400"
-                            : "bg-blue-500/15 text-blue-400"
-                        )}>
-                          {task.priority}
-                        </span>
-                      </div>
+                <CardContent className="pt-6">
+                  {localAuditLogs.length === 0 ? (
+                    <p className="text-slate-500 text-sm text-center py-12">No recent log actions recorded.</p>
+                  ) : (
+                    <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin">
+                      {localAuditLogs.map((log) => (
+                        <div key={log.id} className="flex items-start justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900/90 transition-colors">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-200">{log.actionDetails}</p>
+                            <p className="text-[10px] text-slate-500">
+                              By: {log.performedBy || log.email} ({log.performedByRole || log.role}) • {new Date(log.createdAt || log.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <span className={cn(
+                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                            log.success !== false ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          )}>
+                            {log.success !== false ? "Success" : "Failed"}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </CardContent>
               </GlassPanel>
 
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 text-xl font-bold">Recent Feedback</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {demoCustomerFeedback.map((feedback) => (
-                    <div key={feedback.id} className="p-4 bg-slate-700/40 border border-slate-700/30 rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={cn(
-                              "h-4 w-4",
-                              star <= feedback.rating
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-slate-500"
-                            )}
-                          />
-                        ))}
+              {/* Dynamic Quick Actions Panel */}
+              <div className="space-y-6">
+                <GlassPanel tilt={false} className="border-slate-800">
+                  <CardHeader className="border-b border-slate-800 pb-4">
+                    <CardTitle className="text-lg text-slate-100 font-bold">Quick Administrative Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-3">
+                    <Button onClick={() => setShowOnboardCustomer(true)} className="w-full justify-start bg-gradient-to-r from-teal-500/20 to-cyan-500/10 border border-teal-500/30 hover:border-teal-500/60 text-slate-200 rounded-xl">
+                      <UserPlus className="h-4 w-4 mr-2.5 text-teal-400" />
+                      Onboard New Customer
+                    </Button>
+                    <Button onClick={() => setShowCreateAgent(true)} className="w-full justify-start bg-gradient-to-r from-purple-500/20 to-indigo-500/10 border border-purple-500/30 hover:border-purple-500/60 text-slate-200 rounded-xl">
+                      <UserPlus className="h-4 w-4 mr-2.5 text-purple-400" />
+                      Add New Platform Agent
+                    </Button>
+                    <Button onClick={() => setActiveTab("llm-manager")} className="w-full justify-start bg-gradient-to-r from-blue-500/20 to-sky-500/10 border border-blue-500/30 hover:border-blue-500/60 text-slate-200 rounded-xl">
+                      <BarChart3 className="h-4 w-4 mr-2.5 text-blue-400" />
+                      Manage LLM Configuration
+                    </Button>
+                  </CardContent>
+                </GlassPanel>
+
+                {/* Agent assignments listing */}
+                <GlassPanel tilt={false} className="border-slate-800">
+                  <CardHeader className="border-b border-slate-800 pb-4">
+                    <CardTitle className="text-base text-slate-100 font-bold">Active Agent Assignments</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-2">
+                    {agentAssignments.length === 0 ? (
+                      <p className="text-slate-500 text-xs text-center py-6">No active notifications/assignments</p>
+                    ) : (
+                      agentAssignments.slice(0, 3).map((assignment) => (
+                        <div key={assignment.sessionId} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/40 text-xs space-y-1">
+                          <p className="text-slate-300 font-bold">{assignment.agentKey} assigned</p>
+                          <p className="text-slate-500">Customer: {assignment.customerName} ({assignment.companyName})</p>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </GlassPanel>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 2. LLM MANAGER TAB */}
+        {activeTab === "llm-manager" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">LLM Manager Dashboard</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-400 text-sm">Total Requests</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-teal-400">{llmMetrics?.totalRequests || 45}</p></CardContent>
+              </GlassPanel>
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-400 text-sm">Accumulated Cost</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-blue-400">${llmMetrics?.totalCost.toFixed(5) || "0.0825"}</p></CardContent>
+              </GlassPanel>
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-400 text-sm">Average Latency</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-amber-400">{llmMetrics ? `${(llmMetrics.averageLatencyMs / 1000).toFixed(2)}s` : "1.85s"}</p></CardContent>
+              </GlassPanel>
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-400 text-sm">Success Rate</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-emerald-400">{llmMetrics ? `${(llmMetrics.successRate * 100).toFixed(1)}%` : "99.1%"}</p></CardContent>
+              </GlassPanel>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-slate-100">Recent Model Completions</h3>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                {recentInteractions.map(interaction => (
+                  <GlassPanel key={interaction.id} tilt={false} className="border-slate-800/80 bg-slate-950/20">
+                    <CardContent className="p-4 space-y-2 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-bold uppercase">{interaction.provider}</span>
+                          <span className="font-semibold text-slate-300">{interaction.modelId}</span>
+                        </div>
+                        <span className="text-slate-400">{(interaction.latencyMs / 1000).toFixed(2)}s • ${interaction.cost.toFixed(6)}</span>
                       </div>
-                      <p className="text-sm text-slate-300">{feedback.comment}</p>
-                      <p className="text-xs text-slate-500 mt-2">
-                        {new Date(feedback.createdAt).toLocaleDateString()}
-                      </p>
+                      <p className="text-slate-400"><strong className="text-slate-300">Prompt:</strong> {interaction.request?.userPrompt}</p>
+                      <p className="text-emerald-300"><strong className="text-slate-300">Output:</strong> {interaction.response?.output}</p>
+                    </CardContent>
+                  </GlassPanel>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. BOT MONITOR TAB */}
+        {activeTab === "bot-monitor" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">AI Call Bot Status</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <GlassPanel tilt={false} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-200">Active Live Channels</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {agentSessions.length === 0 ? (
+                    <p className="text-slate-500 text-sm text-center py-6">No voice agent bots currently active.</p>
+                  ) : (
+                    agentSessions.map(session => (
+                      <div key={session.id} className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-slate-200">Agent ID: {session.agentKey}</p>
+                          <p className="text-xs text-slate-500 mt-1">Status: {session.status} • Created: {new Date(session.createdAt).toLocaleTimeString()}</p>
+                        </div>
+                        <span className="bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-xs font-bold animate-pulse">Live</span>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={false} className="border-slate-800">
+                <CardHeader><CardTitle className="text-slate-200">Session Logs</CardTitle></CardHeader>
+                <CardContent className="space-y-3 text-xs max-h-96 overflow-y-auto">
+                  {calls.slice(0, 5).map(call => (
+                    <div key={call.id} className="p-3 border border-slate-900 rounded bg-slate-900/40">
+                      <p className="text-slate-300"><strong>Call ID:</strong> {call.id}</p>
+                      <p className="text-slate-400">Caller: {call.callerName} ({call.callerRole}) → Receiver: {call.receiverName} ({call.receiverRole})</p>
+                      <p className="text-slate-400">Duration: {call.duration}s • Status: <span className="text-emerald-400 font-bold">{call.status}</span></p>
                     </div>
                   ))}
                 </CardContent>
@@ -1336,37 +1291,33 @@ function AdminPortalContent() {
           </div>
         )}
 
-        {/* Tasks Tab */}
+        {/* 4. TASKS TAB */}
         {activeTab === "tasks" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-slate-100">Task Management</h2>
+              <h2 className="text-2xl font-bold text-slate-100">Tasks Pipeline</h2>
               
-              {/* Search and Filters */}
               <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Input
-                    value={taskSearch}
-                    onChange={(e) => setTaskSearch(e.target.value)}
-                    placeholder="Search tasks..."
-                    className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                  />
-                </div>
+                <Input
+                  value={taskSearch}
+                  onChange={(e) => setTaskSearch(e.target.value)}
+                  placeholder="Search tasks..."
+                  className="bg-slate-950 border-slate-800 text-xs w-full md:w-48"
+                />
                 <select
                   value={filterTaskStatus}
                   onChange={(e) => setFilterTaskStatus(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300"
                 >
                   <option value="all">All Statuses</option>
                   <option value="todo">To Do</option>
                   <option value="in-progress">In Progress</option>
                   <option value="completed">Completed</option>
-                  <option value="blocked">Blocked</option>
                 </select>
                 <select
                   value={filterTaskPriority}
                   onChange={(e) => setFilterTaskPriority(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300"
                 >
                   <option value="all">All Priorities</option>
                   <option value="urgent">Urgent</option>
@@ -1374,666 +1325,190 @@ function AdminPortalContent() {
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
                 </select>
-                <select
-                  value={filterTaskAssignee}
-                  onChange={(e) => setFilterTaskAssignee(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="all">All Assignees</option>
-                  {agents.map(agent => (
-                    <option key={agent.id} value={agent.id}>{agent.name}</option>
-                  ))}
-                </select>
               </div>
             </div>
 
-            {/* Tasks Listing */}
             <div className="grid grid-cols-1 gap-4">
               {tasks
-                .filter(task => {
-                  const searchMatches = 
-                    task.title.toLowerCase().includes(taskSearch.toLowerCase()) ||
-                    task.description.toLowerCase().includes(taskSearch.toLowerCase());
-                  const statusMatches = filterTaskStatus === "all" || task.status === filterTaskStatus;
-                  const priorityMatches = filterTaskPriority === "all" || task.priority === filterTaskPriority;
-                  const assigneeMatches = filterTaskAssignee === "all" || task.assignedAgentId === filterTaskAssignee;
-                  return searchMatches && statusMatches && priorityMatches && assigneeMatches;
+                .filter(t => {
+                  const matchesSearch = t.title.toLowerCase().includes(taskSearch.toLowerCase()) || t.description.toLowerCase().includes(taskSearch.toLowerCase());
+                  const matchesStatus = filterTaskStatus === "all" || t.status === filterTaskStatus;
+                  const matchesPriority = filterTaskPriority === "all" || t.priority === filterTaskPriority;
+                  return matchesSearch && matchesStatus && matchesPriority;
                 })
-                .map((task) => (
-                  <GlassPanel key={task.id} tilt={false} className="border-slate-700/50">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-slate-100">{task.title}</h3>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                                task.status === "completed"
-                                  ? "bg-green-500/15 text-green-400"
-                                  : task.status === "in-progress"
-                                  ? "bg-yellow-500/15 text-yellow-400"
-                                  : task.status === "blocked"
-                                  ? "bg-red-500/15 text-red-400"
-                                  : "bg-slate-500/15 text-slate-400"
-                              )}
-                            >
-                              {task.status}
-                            </span>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                                task.priority === "urgent"
-                                  ? "bg-red-500/15 text-red-400"
-                                  : task.priority === "high"
-                                  ? "bg-orange-500/15 text-orange-400"
-                                  : "bg-blue-500/15 text-blue-400"
-                              )}
-                            >
-                              {task.priority}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-300 mt-2">{task.description}</p>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Assigned to: <strong>{demoUsers.find((u) => u.id === task.assignedAgentId)?.name}</strong><br/>
-                            Created: {new Date(task.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          {task.status !== "completed" && task.status !== "blocked" && (
-                            <ExtrudedButton
-                              className="bg-green-600 hover:bg-green-700 text-xs px-4 h-9 gap-1"
-                              onClick={() => handleUpdateTaskStatus(task.id, "completed")}
-                            >
-                              <Check className="h-4 w-4" />
-                              Complete
-                            </ExtrudedButton>
-                          )}
-                          {task.status === "todo" && (
-                            <ExtrudedButton
-                              className="bg-yellow-600 hover:bg-yellow-700 text-xs px-4 h-9 gap-1"
-                              onClick={() => handleUpdateTaskStatus(task.id, "in-progress")}
-                            >
-                              Start
-                            </ExtrudedButton>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* Customers Tab */}
-        {activeTab === "customers" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-slate-100">Customer Management</h2>
-              <ExtrudedButton
-                className="bg-teal-600 hover:bg-teal-700"
-                onClick={() => setShowOnboardCustomer(true)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Onboard New Customer
-              </ExtrudedButton>
-              
-              {/* Search and Filters */}
-              <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Input
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder="Search customers..."
-                    className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                  />
-                </div>
-                <select
-                  value={filterCustomerStatus}
-                  onChange={(e) => setFilterCustomerStatus(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="onboarding">Onboarding</option>
-                  <option value="resigned">Resigned</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Customers Listing */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {customers
-                .filter(customer => {
-                  const searchMatches = 
-                    customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                    customer.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                    customer.companyName.toLowerCase().includes(customerSearch.toLowerCase());
-                  const statusMatches = filterCustomerStatus === "all" || customer.status === filterCustomerStatus;
-                  return searchMatches && statusMatches;
-                })
-                .map((customer) => (
-                  <GlassPanel key={customer.id} tilt={false} className="border-slate-700/50">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-slate-100">{customer.name}</h3>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                                customer.status === "active"
-                                  ? "bg-green-500/15 text-green-400"
-                                  : customer.status === "onboarding"
-                                  ? "bg-yellow-500/15 text-yellow-400"
-                                  : "bg-red-500/15 text-red-400"
-                              )}
-                            >
-                              {customer.status}
-                            </span>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold uppercase border",
-                                customer.businessModel === "b2b" ? "bg-indigo-950/80 border-indigo-800 text-indigo-400" :
-                                customer.businessModel === "b2c" ? "bg-emerald-950/80 border-emerald-800 text-emerald-400" :
-                                customer.businessModel === "d2c" ? "bg-pink-950/80 border-pink-800 text-pink-400" :
-                                "bg-amber-950/80 border-amber-800 text-amber-400"
-                              )}
-                            >
-                              {customer.businessModel || "b2b"}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-300 mt-1">{customer.companyName}</p>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Email: {customer.email}<br/>
-                            Phone: {customer.phone || "N/A"}<br/>
-                            Industry: {customer.industry || "N/A"}<br/>
-                            Agent: {customer.assignedAgentName || "Unassigned"}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-slate-500 font-bold block">Business Model</label>
-                            <select
-                              value={customer.businessModel || "b2b"}
-                              onChange={(e) => handleUpdateBusinessModel(customer.id, e.target.value)}
-                              className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 w-32"
-                            >
-                              <option value="b2b">B2B Enterprise</option>
-                              <option value="b2c">B2C Retail</option>
-                              <option value="d2c">D2C Brand</option>
-                              <option value="custom">Custom Creator</option>
-                            </select>
-                          </div>
-                          {customer.status !== "resigned" && (
-                            <ExtrudedButton
-                              className="bg-red-600 hover:bg-red-700 text-xs px-4 h-9 gap-1"
-                              onClick={() => handleInitiateResignation(customer.id)}
-                            >
-                              <UserX className="h-4 w-4" />
-                              Process Resignation
-                            </ExtrudedButton>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* Resignations Tab */}
-        {activeTab === "resignations" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-100">Customer Resignations</h2>
-
-            {/* Resignations Listing */}
-            <div className="grid grid-cols-1 gap-4">
-              {resignations.map((resignation) => (
-                <GlassPanel key={resignation.id} tilt={false} className="border-slate-700/50">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex justify-between items-start flex-wrap gap-4">
+                .map(task => (
+                  <GlassPanel key={task.id} tilt={false} className="border-slate-800/80 bg-slate-900/20">
+                    <CardContent className="p-5 flex items-start justify-between flex-wrap gap-4">
                       <div>
-                        <h3 className="text-xl font-bold text-slate-100">{resignation.customerName}</h3>
-                        <p className="text-xs text-slate-400 mt-2">
-                          Request Date: {new Date(resignation.requestDate).toLocaleDateString()}<br/>
-                          Effective Date: {new Date(resignation.effectiveDate).toLocaleDateString()}<br/>
-                          Reason: {resignation.terminationReason}
-                        </p>
-                        {resignation.notes && (
-                          <p className="text-sm text-slate-300 mt-2">{resignation.notes}</p>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-bold text-slate-100">{task.title}</h4>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                            task.status === "completed" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                            task.status === "in-progress" ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse" :
+                            "bg-slate-500/10 text-slate-400 border border-slate-700"
+                          )}>{task.status}</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                            task.priority === "urgent" || task.priority === "high" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" : "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                          )}>{task.priority}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2">{task.description}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Assigned Agent: {task.assignedAgentId} • Customer ID: {task.customerId}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {task.status !== "completed" && (
+                          <ExtrudedButton size="sm" className="bg-emerald-600" onClick={() => handleUpdateTaskStatus(task.id, "completed")}>
+                            Mark Completed
+                          </ExtrudedButton>
+                        )}
+                        {task.status === "todo" && (
+                          <ExtrudedButton size="sm" className="bg-yellow-600" onClick={() => handleUpdateTaskStatus(task.id, "in-progress")}>
+                            Start Progress
+                          </ExtrudedButton>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <span className={cn(
-                            "px-3 py-1 rounded-full text-xs font-semibold",
-                            resignation.documentsArchived
-                              ? "bg-green-500/15 text-green-400"
-                              : "bg-yellow-500/15 text-yellow-400"
-                          )}>
-                            {resignation.documentsArchived ? "Documents Archived" : "Pending Archive"}
-                          </span>
-                          <span className={cn(
-                            "px-3 py-1 rounded-full text-xs font-semibold",
-                            resignation.accountClosed
-                              ? "bg-green-500/15 text-green-400"
-                              : "bg-yellow-500/15 text-yellow-400"
-                          )}>
-                            {resignation.accountClosed ? "Account Closed" : "Pending Closure"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </GlassPanel>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Documents Tab */}
-        {activeTab === "documents" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-slate-100">Document Repository</h2>
-              
-              {/* Search and Filters */}
-              <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Input
-                    value={documentSearch}
-                    onChange={(e) => setDocumentSearch(e.target.value)}
-                    placeholder="Search documents..."
-                    className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                  />
-                </div>
-                <select
-                  value={filterDocumentType}
-                  onChange={(e) => setFilterDocumentType(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="all">All Types</option>
-                  <option value="icp">ICP</option>
-                  <option value="requirement">Requirements</option>
-                  <option value="contract">Contracts</option>
-                  <option value="onboarding">Onboarding</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Documents Listing */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {documents
-                .filter(doc => {
-                  const searchMatches = 
-                    doc.title.toLowerCase().includes(documentSearch.toLowerCase()) ||
-                    doc.description.toLowerCase().includes(documentSearch.toLowerCase());
-                  const typeMatches = filterDocumentType === "all" || doc.documentType === filterDocumentType;
-                  return searchMatches && typeMatches;
-                })
-                .map((doc) => (
-                  <GlassPanel key={doc.id} tilt={false} className="border-slate-700/50">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-slate-100">{doc.title}</h3>
-                            <span className="px-3 py-1 rounded-full text-xs font-semibold capitalize bg-purple-500/15 text-purple-400">
-                              {doc.documentType}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-300 mt-1">{doc.description}</p>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Access: {doc.accessRoles.join(", ")}<br/>
-                            Created: {new Date(doc.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <ExtrudedButton
-                            className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
-                            onClick={() => handleDocumentAccess(doc.id, doc.title)}
-                          >
-                            <FolderOpen className="h-4 w-4" />
-                            View Document
-                          </ExtrudedButton>
-                        </div>
-                      </div>
                     </CardContent>
                   </GlassPanel>
-                ))}
+                ))
+              }
             </div>
           </div>
         )}
 
-        {/* LLM Manager Tab */}
-        {activeTab === "llm-manager" && (
-          <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-slate-100">LLM Manager Dashboard</h2>
-          
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <GlassPanel tilt={true} className="border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-slate-300 text-lg">Total Requests</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-5xl font-extrabold text-teal-400">
-                  {llmMetrics ? llmMetrics.totalRequests : (localAuditLogs.filter(log => log.actionType.startsWith("llm")).length + 10)}
-                </p>
-              </CardContent>
-            </GlassPanel>
-
-            <GlassPanel tilt={true} className="border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-slate-300 text-lg">Total Cost</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-5xl font-extrabold text-blue-400">
-                  {llmMetrics ? `$${llmMetrics.totalCost.toFixed(5)}` : "$0.42"}
-                </p>
-              </CardContent>
-            </GlassPanel>
-
-            <GlassPanel tilt={true} className="border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-slate-300 text-lg">Avg Latency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-5xl font-extrabold text-amber-400">
-                  {llmMetrics ? `${(llmMetrics.averageLatencyMs / 1000).toFixed(2)}s` : "1.4s"}
-                </p>
-              </CardContent>
-            </GlassPanel>
-
-            <GlassPanel tilt={true} className="border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-slate-300 text-lg">Success Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-5xl font-extrabold text-green-400">
-                  {llmMetrics ? `${(llmMetrics.successRate * 100).toFixed(1)}%` : "98.2%"}
-                </p>
-              </CardContent>
-            </GlassPanel>
-          </div>
-
-          {/* Model Catalog */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-100">Available Models</h3>
-              <ExtrudedButton className="bg-purple-600 hover:bg-purple-700" onClick={async () => {
-                try {
-                  const res = await fetch("/api/llm-manager/retrain", { method: "POST" });
-                  const data = await res.json();
-                  if (data.success) {
-                    alert("Retraining initiated!");
-                    fetchLlmMetrics();
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
-              }}>
-                Retrain Model
+        {/* 5. CUSTOMERS TAB */}
+        {activeTab === "customers" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-2xl font-bold text-slate-100">Customers Directory</h2>
+              <ExtrudedButton className="bg-gradient-to-r from-teal-500 to-indigo-500 text-xs font-bold py-2" onClick={() => setShowOnboardCustomer(true)}>
+                Onboard Customer
               </ExtrudedButton>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { id: "1", name: "Gemma 4 31B", provider: "HuggingFace", score: "92" },
-                { id: "2", name: "Llama 3.1 70B", provider: "HuggingFace", score: "95" },
-                { id: "3", name: "Llama 3.1 70B", provider: "NVIDIA", score: "94" },
-                { id: "4", name: "Mixtral 8x7B", provider: "NVIDIA", score: "88" },
-              ].map(model => (
-                <GlassPanel key={model.id} tilt={false} className="border-slate-700/50">
-                  <CardContent className="p-6 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-bold text-slate-100">{model.name}</h4>
-                        <p className="text-xs text-slate-400">{model.provider}</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {customers.map(c => (
+                <GlassPanel key={c.id} tilt={false} className="border-slate-800/80 bg-slate-900/20 p-5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-base font-bold text-slate-100">{c.name}</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">{c.companyName} • {c.industry}</p>
+                      <div className="flex gap-2 mt-2">
+                        <span className={cn(
+                          "px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border",
+                          c.status === "active" ? "bg-emerald-950/80 border-emerald-800 text-emerald-400" :
+                          c.status === "onboarding" ? "bg-yellow-950/80 border-yellow-800 text-yellow-400" :
+                          "bg-rose-950/80 border-rose-800 text-rose-400"
+                        )}>{c.status}</span>
+                        <span className="px-2.5 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 border border-slate-700 text-slate-300">{c.businessModel}</span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-400">Performance</p>
-                        <p className="font-bold text-amber-400">{model.score}/100</p>
-                      </div>
+                      <p className="text-[10px] text-slate-500 mt-3">Email: {c.email} • Phone: {c.phone || "N/A"}</p>
                     </div>
-                  </CardContent>
+
+                    <div className="flex flex-col gap-2 items-end">
+                      <div className="space-y-1">
+                        <Label className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">Change Model</Label>
+                        <select
+                          value={c.businessModel}
+                          onChange={(e) => handleUpdateBusinessModel(c.id, e.target.value)}
+                          className="bg-slate-950 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-slate-200"
+                        >
+                          <option value="b2b">B2B Enterprise</option>
+                          <option value="b2c">B2C Retail</option>
+                          <option value="d2c">D2C Brand</option>
+                          <option value="custom">Custom Creator</option>
+                        </select>
+                      </div>
+                      {c.status !== "resigned" && (
+                        <ExtrudedButton size="sm" className="bg-rose-600 hover:bg-rose-700 text-[10px]" onClick={() => handleInitiateResignation(c)}>
+                          Resign Customer
+                        </ExtrudedButton>
+                      )}
+                    </div>
+                  </div>
                 </GlassPanel>
               ))}
             </div>
           </div>
+        )}
 
-          {/* Recent Interactions */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-100">Recent Interactions</h3>
-              <ExtrudedButton size="sm" onClick={fetchLlmMetrics}>Refresh</ExtrudedButton>
-            </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {isLoadingMetrics && <div className="text-slate-400 py-4 text-center">Loading interactions...</div>}
-              {!isLoadingMetrics && recentInteractions.length === 0 && (
-                <div className="text-slate-400 py-4 text-center">No recent interactions logged. Run RAG or agent calls to generate activity!</div>
+        {/* 6. RESIGNATIONS TAB */}
+        {activeTab === "resignations" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">Customer Resignations Registry</h2>
+            <div className="space-y-4">
+              {resignations.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center py-12">No terminations processed in system archives.</p>
+              ) : (
+                resignations.map(r => (
+                  <GlassPanel key={r.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5">
+                    <div className="flex justify-between items-start flex-wrap gap-4">
+                      <div>
+                        <h4 className="text-base font-bold text-slate-100">{r.customerName}</h4>
+                        <p className="text-xs text-slate-400 mt-1">Request Date: {new Date(r.requestDate).toLocaleDateString()} • Effective Date: {new Date(r.effectiveDate).toLocaleDateString()}</p>
+                        <p className="text-sm text-slate-300 mt-3 italic">&quot;{r.terminationReason}&quot;</p>
+                        {r.notes && <p className="text-xs text-slate-500 mt-1.5">Note: {r.notes}</p>}
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/20">Docs Archived</span>
+                        <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/20">Account Closed</span>
+                      </div>
+                    </div>
+                  </GlassPanel>
+                ))
               )}
-              {!isLoadingMetrics && recentInteractions.map(interaction => (
-                <GlassPanel key={interaction.id} tilt={false} className="border-slate-800 bg-slate-900/40">
-                  <CardContent className="p-4 space-y-2 text-slate-200">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            interaction.provider === "nvidia" ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-400"
-                          }`}>
-                            {interaction.provider.toUpperCase()}
-                          </span>
-                          <span className="text-xs font-semibold text-slate-300">
-                            {interaction.modelId || "Unknown Model"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {new Date(interaction.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <div className="font-semibold text-slate-300">{(interaction.latencyMs / 1000).toFixed(2)}s</div>
-                        <div className="text-slate-500">${interaction.cost.toFixed(6)}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t border-slate-800/60 pt-2 mt-2 space-y-1.5 text-xs text-slate-300">
-                      <div>
-                        <strong className="text-slate-400">Prompt:</strong>
-                        <div className="bg-black/20 p-2 text-slate-300 rounded mt-1 overflow-x-auto whitespace-pre-wrap max-h-24">
-                          {interaction.request.userPrompt}
-                        </div>
-                      </div>
-                      {interaction.response && (
-                        <div>
-                          <strong className="text-slate-400">Response:</strong>
-                          <div className="bg-teal-950/10 border border-teal-500/10 p-2 rounded mt-1 overflow-x-auto whitespace-pre-wrap max-h-24 text-teal-200">
-                            {interaction.response.output}
-                          </div>
-                        </div>
-                      )}
-                      {interaction.error && (
-                        <div className="bg-red-950/15 border border-red-500/10 p-2 rounded mt-1 text-red-400 font-semibold">
-                          Error: {interaction.error}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </GlassPanel>
-              ))}
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* Bot Monitor Tab */}
-        {activeTab === "bot-monitor" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-100">Meeting Bot Monitor</h2>
-            
-            {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Total Meetings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-teal-400">
-                    {localAuditLogs.filter(log => log.actionType === "customer_onboard").length + 3}
-                  </p>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Successful Joins</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-green-400">
-                    {localAuditLogs.filter(log => log.actionType === "customer_onboard").length + 2}
-                  </p>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Deal Closures</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-purple-400">
-                    {localAuditLogs.filter(log => log.actionType === "customer_resign").length}
-                  </p>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-300 text-lg">Avg Join Time</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-5xl font-extrabold text-amber-400">1.2s</p>
-                </CardContent>
-              </GlassPanel>
-            </div>
-
-            {/* Active Sessions */}
-            <div>
-              <h3 className="text-xl font-bold text-slate-100 mb-4">Active Bot Sessions</h3>
-              <div className="grid grid-cols-1 gap-4">
-                {[
-                  {
-                    id: "session-123",
-                    callId: "call-456",
-                    status: "in_meeting",
-                    duration: "15m 30s",
-                    participants: 3,
-                    transcriptSegments: 42,
-                  },
-                  {
-                    id: "session-789",
-                    callId: "call-012",
-                    status: "in_meeting",
-                    duration: "8m 15s",
-                    participants: 2,
-                    transcriptSegments: 18,
-                  },
-                ].map((session) => (
-                  <GlassPanel key={session.id} tilt={false} className="border-slate-700/50">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-slate-100">
-                              Call {session.callId}
-                            </h3>
-                            <span className="px-3 py-1 rounded-full text-xs font-semibold capitalize bg-green-500/15 text-green-400">
-                              {session.status}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Duration: {session.duration}<br />
-                            Participants: {session.participants}<br />
-                            Transcript Segments: {session.transcriptSegments}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <ExtrudedButton
-                            className="bg-red-600 hover:bg-red-700 text-xs px-4 h-9 gap-1"
-                          >
-                            <X className="h-4 w-4" />
-                            End Session
-                          </ExtrudedButton>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-              </div>
-            </div>
-
-            {/* Audit Logs */}
-            <div>
-              <h3 className="text-xl font-bold text-slate-100 mb-4">Bot Activity Logs</h3>
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                {localAuditLogs.map((log) => (
-                  <GlassPanel key={log.id} tilt={false} className="border-slate-800 bg-slate-900/40">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-white">
-                            {log.actionDetails}
-                          </h4>
-                          <p className="text-xs text-slate-400 mt-1">
-                            By: {log.performedBy} ({log.performedByRole}) • {new Date(log.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400">
-                          {log.actionType}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-              </div>
             </div>
           </div>
         )}
 
+        {/* 7. DOCUMENTS TAB */}
+        {activeTab === "documents" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-2xl font-bold text-slate-100">Document Repositories</h2>
+              <Input
+                value={documentSearch}
+                onChange={(e) => setDocumentSearch(e.target.value)}
+                placeholder="Search documents..."
+                className="bg-slate-950 border-slate-800 text-xs w-full md:w-64"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {documents
+                .filter(d => d.title?.toLowerCase().includes(documentSearch.toLowerCase()) || d.description?.toLowerCase().includes(documentSearch.toLowerCase()))
+                .map(doc => (
+                  <GlassPanel key={doc.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-bold text-slate-200">{doc.title}</h4>
+                      <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{doc.documentType || doc.type}</span>
+                    </div>
+                    <p className="text-xs text-slate-400">{doc.description || doc.updateNotes}</p>
+                    <p className="text-[10px] text-slate-500">Owner ID: {doc.customerId} • Created by: {doc.createdBy}</p>
+                  </GlassPanel>
+                ))
+              }
+            </div>
+          </div>
+        )}
+
+        {/* 8. REQUIREMENTS TAB */}
         {activeTab === "requirements" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h2 className="text-2xl font-bold text-slate-100">Customer Requirements</h2>
               
-              {/* Search and Filters */}
               <div className="flex gap-3 flex-wrap items-center w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Input
-                    value={reqSearch}
-                    onChange={(e) => setReqSearch(e.target.value)}
-                    placeholder="Search by customer or description..."
-                    className="bg-slate-850/60 border-slate-700 focus:border-teal-500 text-white placeholder-slate-500 rounded-xl"
-                  />
-                </div>
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="Technical Support">Technical Support</option>
-                  <option value="Feature Request">Feature Request</option>
-                  <option value="Billing Issue">Billing Issue</option>
-                  <option value="General Inquiry">General Inquiry</option>
-                </select>
+                <Input
+                  value={reqSearch}
+                  onChange={(e) => setReqSearch(e.target.value)}
+                  placeholder="Search requirements..."
+                  className="bg-slate-950 border-slate-800 text-xs w-full md:w-48"
+                />
                 <select
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300"
                 >
                   <option value="all">All Priorities</option>
                   <option value="Low">Low</option>
@@ -2044,681 +1519,249 @@ function AdminPortalContent() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300"
                 >
                   <option value="all">All Statuses</option>
                   <option value="Open">Open</option>
                   <option value="In Progress">In Progress</option>
                   <option value="Resolved">Resolved</option>
-                  <option value="Closed">Closed</option>
                 </select>
               </div>
             </div>
 
-            {/* Requirements Listing */}
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
               {requirements
-                .filter(req => {
-                  const searchMatches = 
-                    req.customerName?.toLowerCase().includes(reqSearch.toLowerCase()) ||
-                    req.description?.toLowerCase().includes(reqSearch.toLowerCase());
-                  const categoryMatches = filterCategory === "all" || req.category === filterCategory;
-                  const priorityMatches = filterPriority === "all" || req.priority === filterPriority;
-                  const statusMatches = filterStatus === "all" || req.status === filterStatus;
-                  return searchMatches && categoryMatches && priorityMatches && statusMatches;
+                .filter(r => {
+                  const matchesSearch = (r.customerName?.toLowerCase() || "").includes(reqSearch.toLowerCase()) || (r.description?.toLowerCase() || "").includes(reqSearch.toLowerCase());
+                  const matchesPriority = filterPriority === "all" || r.priority === filterPriority;
+                  const matchesStatus = filterStatus === "all" || r.status === filterStatus;
+                  return matchesSearch && matchesPriority && matchesStatus;
                 })
-                .map((req) => (
-                  <GlassPanel key={req.id} tilt={false} className="border-slate-700/50">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-slate-100">{req.category}</h3>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold",
-                                req.priority === "Critical"
-                                  ? "bg-red-500/15 text-red-400"
-                                  : req.priority === "High"
-                                  ? "bg-orange-500/15 text-orange-400"
-                                  : req.priority === "Medium"
-                                  ? "bg-yellow-500/15 text-yellow-400"
-                                  : "bg-green-500/15 text-green-400"
-                              )}
-                            >
-                              {req.priority}
-                            </span>
-                            <span
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                                req.status === "Resolved"
-                                  ? "bg-green-500/15 text-green-400"
-                                  : req.status === "In Progress"
-                                  ? "bg-yellow-500/15 text-yellow-400"
-                                  : "bg-slate-500/15 text-slate-400"
-                              )}
-                            >
-                              {req.status}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Customer: <strong>{req.customerName}</strong> ({req.requesterEmail})<br/>
-                            Submitted: {new Date(req.createdAt).toLocaleString()}
-                          </p>
+                .map(req => (
+                  <GlassPanel key={req.id} tilt={false} className="border-slate-800/80 bg-slate-900/20 p-5 space-y-4">
+                    <div className="flex justify-between items-start flex-wrap gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-bold text-slate-100">{req.category}</h4>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold border",
+                            req.priority === "Critical" ? "bg-rose-500/10 text-rose-450 border-rose-550/20" : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                          )}>{req.priority}</span>
+                          <span className="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[10px] text-slate-300 font-bold">{req.status}</span>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="bg-slate-800 border border-slate-750 px-4 py-2 rounded-xl text-right">
-                            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Assigned Agent</p>
-                            <p className="text-sm font-semibold text-slate-200 mt-0.5">
-                              {req.assignedAgentName || "Unassigned"}
-                            </p>
-                          </div>
-                          {!req.assignedAgentId && (
-                            <ExtrudedButton
-                              className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
-                              onClick={() => autoAssignReq(req.id)}
-                            >
-                              Auto-Assign
-                            </ExtrudedButton>
-                          )}
-                          {req.assignedAgentId && (
-                            <ExtrudedButton
-                              className="bg-teal-600 hover:bg-teal-700 text-xs px-4 h-9 gap-1"
-                              onClick={() => handleReassignReq(req.id)}
-                            >
-                              Reassign Agent
-                            </ExtrudedButton>
-                          )}
-                        </div>
+                        <p className="text-xs text-slate-400 mt-2">{req.description}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Customer: {req.customerName} ({req.requesterEmail}) • Assigned Agent: {req.assignedAgentName || "Unassigned"}</p>
                       </div>
 
-                      <div className="border-t border-slate-800 pt-4">
-                        <p className="text-slate-300 mb-4">{req.description}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {req.status !== "Resolved" && req.status !== "Closed" && (
-                            <>
-                              <ExtrudedButton
-                                className="bg-green-600 hover:bg-green-700 text-xs px-3 h-8 gap-1"
-                                onClick={() => handleUpdateReqStatus(req.id, "Resolved")}
-                              >
-                                Mark Resolved
-                              </ExtrudedButton>
-                              {req.status === "Open" && (
-                                <ExtrudedButton
-                                  className="bg-yellow-600 hover:bg-yellow-700 text-xs px-3 h-8 gap-1"
-                                  onClick={() => handleUpdateReqStatus(req.id, "In Progress")}
-                                >
-                                  Start Progress
-                                </ExtrudedButton>
-                              )}
-                            </>
-                          )}
-                          {req.status === "Resolved" && (
-                            <ExtrudedButton
-                              className="bg-blue-600 hover:bg-blue-700 text-xs px-3 h-8 gap-1"
-                              onClick={() => handleUpdateReqStatus(req.id, "Closed")}
-                            >
-                              Close
-                            </ExtrudedButton>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-            </div>
-
-            {/* Reassign Requirement Modal */}
-            {showReassignReqModal && selectedReqId && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                <GlassPanel tilt={false} className="w-full max-w-md bg-slate-900 border-slate-700 shadow-2xl">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-xl text-slate-100 font-bold">Reassign Agent</CardTitle>
-                    <button
-                      className="text-slate-400 hover:text-white p-1"
-                      onClick={() => {
-                        setShowReassignReqModal(false);
-                        setSelectedReqId(null);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-300">Select New Agent</Label>
-                        <select
-                          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              confirmReassignReq(e.target.value);
-                            }
-                          }}
-                        >
-                          <option value="">Select Agent...</option>
-                          {agents.map(agent => (
-                            <option key={agent.id} value={agent.id}>{agent.name}</option>
-                          ))}
-                        </select>
-                      </div>
                       <div className="flex gap-2">
-                        <ExtrudedButton
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setAddingAgentFromReassign(true);
-                            setShowCreateAgent(true);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add New Agent
-                        </ExtrudedButton>
-                        <ExtrudedButton
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setShowReassignReqModal(false);
-                            setSelectedReqId(null);
-                          }}
-                        >
-                          Cancel
-                        </ExtrudedButton>
+                        {!req.assignedAgentId && (
+                          <ExtrudedButton size="sm" className="bg-teal-600" onClick={() => autoAssignReq(req.id)}>
+                            Auto-Assign Agent
+                          </ExtrudedButton>
+                        )}
+                        {req.status !== "Resolved" && (
+                          <ExtrudedButton size="sm" className="bg-green-600" onClick={() => handleUpdateReqStatus(req.id, "Resolved")}>
+                            Resolve
+                          </ExtrudedButton>
+                        )}
                       </div>
                     </div>
-                  </CardContent>
-                </GlassPanel>
-              </div>
-            )}
+                  </GlassPanel>
+                ))
+              }
+            </div>
           </div>
         )}
 
+        {/* 9. GTM REPORTS TAB */}
         {activeTab === "gtm-reports" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-100">GTM Analysis Reports</h2>
-            
-            {/* Customer-Submitted GTM Data */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-100 mb-4">Customer-Submitted GTM Data</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {customerGTMData.map((data) => (
-                  <GlassPanel key={data.id} tilt={true} className="border-slate-700">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-xl text-slate-100 font-bold">
-                          {demoUsers.find(u => u.id === data.customerId)?.name || "Customer"}&apos;s Submission
-                        </CardTitle>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        Submitted by {data.submittedBy} on {new Date(data.submittedAt).toLocaleString()}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {Object.entries(data.data).map(([key, value]) => (
-                          <div key={key}>
-                            <p className="text-sm text-slate-400 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                            <p className="text-slate-200">
-                              {Array.isArray(value) ? value.join(", ") : value}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-              </div>
-            </div>
-
-            {/* All GTM Reports */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-100 mb-4">All GTM Reports</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {gtmReports.map((report) => (
-                  <GlassPanel key={report.id} tilt={true} className="border-slate-700">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-xl text-slate-100 font-bold">
-                          {demoUsers.find(u => u.id === report.customerId)?.name || "Customer"} - {report.reportName}
-                        </CardTitle>
-                        <span
-                          className={cn(
-                            "px-3 py-1 rounded-full text-xs font-semibold",
-                            report.reportType === "internal"
-                              ? "bg-blue-500/15 text-blue-400"
-                              : "bg-green-500/15 text-green-400"
-                          )}
-                        >
-                          {report.reportType}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {new Date(report.dateRange.start).toLocaleDateString()} - {new Date(report.dateRange.end).toLocaleDateString()}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="text-center">
-                          <p className="text-slate-400 text-xs uppercase tracking-wider">Lead Conversion</p>
-                          <p className="text-2xl font-bold text-green-400">{report.leadConversionRate}%</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-slate-400 text-xs uppercase tracking-wider">Market Penetration</p>
-                          <p className="text-2xl font-bold text-blue-400">{report.marketPenetration}%</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-slate-400 text-xs uppercase tracking-wider">Pipeline Value</p>
-                          <p className="text-2xl font-bold text-purple-400">${report.pipelineValue.toLocaleString()}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-slate-400 text-xs uppercase tracking-wider">Campaign Effectiveness</p>
-                          <p className="text-2xl font-bold text-amber-400">{report.campaignEffectiveness}%</p>
-                        </div>
-                      </div>
-                      {report.region && <p className="text-sm text-slate-400 mb-1"><strong>Region:</strong> {report.region}</p>}
-                      {report.segment && <p className="text-sm text-slate-400"><strong>Segment:</strong> {report.segment}</p>}
-                      <div className="flex gap-2 mt-4">
-                        <ExtrudedButton
-                          className="bg-teal-600 hover:bg-teal-700"
-                          onClick={() => {
-                            const csv = [
-                              ["Metric", "Value"],
-                              ["Report Name", report.reportName],
-                              ["Report Type", report.reportType],
-                              ["Lead Conversion Rate", `${report.leadConversionRate}%`],
-                              ["Market Penetration", `${report.marketPenetration}%`],
-                              ["Pipeline Value", `$${report.pipelineValue.toLocaleString()}`],
-                              ["Campaign Effectiveness", `${report.campaignEffectiveness}%`],
-                              ["Region", report.region || "N/A"],
-                              ["Segment", report.segment || "N/A"],
-                            ].map(row => row.join(",")).join("\n");
-                            const blob = new Blob([csv], { type: "text/csv" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `${report.reportName.replace(/\s+/g, "_")}.csv`;
-                            a.click();
-                          }}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Export CSV
-                        </ExtrudedButton>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                ))}
-              </div>
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">GTM Analysis & Marketing Strategy Reports</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {gtmReports.map(report => (
+                <GlassPanel key={report.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-base font-bold text-slate-150">{report.reportName}</h4>
+                    <span className="bg-teal-500/15 text-teal-400 border border-teal-500/20 px-2.5 py-0.5 rounded text-[10px] font-bold">{report.category}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center py-2 bg-slate-950/40 rounded-xl border border-slate-850">
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold">Revenue</p>
+                      <p className="text-sm font-extrabold text-slate-200">${report.revenue?.toLocaleString() || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold">CAC</p>
+                      <p className="text-sm font-extrabold text-rose-400">${report.cac || "0"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold">Conversion</p>
+                      <p className="text-sm font-extrabold text-green-400">{report.conversionRate || "0"}%</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] text-slate-500">
+                    <span>Region: {report.region} • Segment: {report.segment}</span>
+                    <button className="text-teal-400 font-bold flex items-center gap-1.5 hover:text-teal-350 transition-colors" onClick={() => {
+                      const csv = `Report Name,Category,Revenue,CAC,Conversion Rate,Region,Segment\n"${report.reportName}","${report.category}",${report.revenue},${report.cac},${report.conversionRate},"${report.region}","${report.segment}"`;
+                      const blob = new Blob([csv], { type: "text/csv" });
+                      const a = document.createElement("a");
+                      a.href = URL.createObjectURL(blob);
+                      a.download = `${report.reportName.replace(/\s+/g, "_")}.csv`;
+                      a.click();
+                    }}>
+                      <Download className="h-3 w-3" /> Export CSV
+                    </button>
+                  </div>
+                </GlassPanel>
+              ))}
             </div>
           </div>
         )}
 
+        {/* 10. AGENTS TAB */}
         {activeTab === "agents" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-100">Agent Management</h2>
-              <ExtrudedButton
-                className="bg-teal-600 hover:bg-teal-700 gap-2"
-                onClick={() => setShowCreateAgent(true)}
-              >
-                <Plus className="h-4 w-4" />
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-2xl font-bold text-slate-100">Agents Pool</h2>
+              <ExtrudedButton className="bg-gradient-to-r from-teal-500 to-indigo-500 text-xs font-bold py-2" onClick={() => setShowCreateAgent(true)}>
                 Add New Agent
               </ExtrudedButton>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {agents.map((agent) => {
-                const metrics = demoAgentMetrics.find((m) => m.agentId === agent.id);
-                const agentTasks = demoTasks.filter((t) => t.assignedAgentId === agent.id);
-                return (
-                  <GlassPanel
-                    key={agent.id}
-                    tilt={true}
-                    className={cn(
-                      "cursor-pointer border-slate-700/50 hover:border-teal-500/50 transition-all",
-                      selectedAgentId === agent.id ? "border-teal-500 shadow-lg shadow-teal-500/20" : ""
-                    )}
-                    onClick={() => setSelectedAgentId(agent.id)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-xl text-slate-100 font-bold">{agent.name}</CardTitle>
-                        <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
-                      </div>
-                      <p className="text-sm text-slate-400 mt-1">{agent.email}</p>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-slate-500">Tasks Completed</p>
-                          <p className="text-xl font-bold text-teal-400">
-                            {metrics?.tasksCompleted || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Avg Rating</p>
-                          <p className="text-xl font-bold text-amber-400">
-                            {metrics?.averageRating.toFixed(1) || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Total Tasks</p>
-                          <p className="text-xl font-bold text-purple-400">
-                            {metrics?.totalTasks || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Interactions</p>
-                          <p className="text-xl font-bold text-blue-400">
-                            {metrics?.totalInteractions || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t border-slate-700/50">
-                        <h4 className="text-sm font-semibold text-slate-300 mb-2">Active Tasks</h4>
-                        <div className="space-y-1">
-                          {agentTasks.slice(0, 2).map((task) => (
-                            <div key={task.id} className="text-xs text-slate-400 flex items-center gap-2">
-                              <div className={cn(
-                                "h-2 w-2 rounded-full",
-                                task.status === "in-progress" ? "bg-yellow-400" : "bg-blue-400"
-                              )} />
-                              {task.title}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </GlassPanel>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {agents.map(agent => (
+                <GlassPanel key={agent.id} tilt={true} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                  <div>
+                    <h4 className="text-base font-bold text-slate-200">{agent.name}</h4>
+                    <p className="text-xs text-slate-400">{agent.email}</p>
+                    <p className="text-[10px] text-slate-500 mt-2 font-mono">Phone: {agent.phoneNumber || "N/A"} ({agent.countryCode || "US"})</p>
+                  </div>
+                  <div className="border-t border-slate-850 pt-3 space-y-1.5 text-xs text-slate-400">
+                    <p><strong>Framework:</strong> {agent.callConversationFramework?.substring(0, 45) || "Default Objective Framework"}...</p>
+                    <p><strong>WhatsApp:</strong> {agent.whatsAppMessageParameters?.substring(0, 45) || "Default Parameters"}...</p>
+                  </div>
+                </GlassPanel>
+              ))}
             </div>
-
-            {selectedAgentId && (
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-slate-100 font-bold">
-                    {agents.find((u) => u.id === selectedAgentId)?.name} - Detailed Performance
-                  </CardTitle>
-                  <ExtrudedButton variant="outline" size="sm" onClick={() => setSelectedAgentId(null)}>
-                    Close
-                  </ExtrudedButton>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-300">Detailed performance metrics would be shown here.</p>
-                </CardContent>
-              </GlassPanel>
-            )}
           </div>
         )}
 
+        {/* 11. INTERACTIONS TAB */}
         {activeTab === "interactions" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2 font-bold">
-                    <Phone className="h-5 w-5 text-teal-400" />
-                    Call History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {demoCallRecords.map((call) => (
-                    <div key={call.id} className="p-4 bg-slate-700/40 border border-slate-700/30 rounded-xl">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="font-semibold text-slate-100">
-                            {call.callerName} → {call.receiverName}
-                          </p>
-                          <p className="text-sm text-slate-400 mt-1">
-                            {new Date(call.startedAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className={cn(
-                            "px-3 py-1 rounded-full text-xs font-semibold capitalize",
-                            call.status === "completed"
-                              ? "bg-green-500/15 text-green-400"
-                              : "bg-red-500/15 text-red-400"
-                          )}>
-                            {call.status}
-                          </span>
-                          <p className="text-sm text-slate-400 mt-1.5">
-                            {call.duration ? `${Math.round(call.duration / 60)} min` : ""}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={false} className="border-slate-700/50">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2 font-bold">
-                    <MessageSquare className="h-5 w-5 text-purple-400" />
-                    Chat Transcripts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {demoChatMessages.map((msg) => (
-                    <div key={msg.id} className="p-4 bg-slate-700/40 border border-slate-700/30 rounded-xl">
-                      <p className="font-semibold text-slate-100">
-                        {msg.senderName} ({msg.senderRole})
-                      </p>
-                      <p className="text-sm text-slate-300 mt-1">{msg.content}</p>
-                      <p className="text-xs text-slate-500 mt-2">
-                        {new Date(msg.timestamp || "").toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </CardContent>
-              </GlassPanel>
-            </div>
-          </div>
-        )}
-
-
-        {activeTab === "ai-interactions" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-100">AI Interactions Monitor</h2>
-              <p className="text-slate-400 text-sm mt-1">Full visibility into AI voice calls and WhatsApp messages across all agents</p>
-            </div>
-
-            {/* Voice Call Logs */}
-            <GlassPanel tilt={false} className="border-slate-700/50">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-green-400" />
-                  AI Voice Call Logs
-                </CardTitle>
-                <span className="text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">Real-time</span>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-700/50">
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Session ID</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Agent</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">To Phone</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Started At</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Turns</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { sessionId: 'cvc-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00001', status: 'completed', startedAt: '2026-06-25T10:30:00Z', turns: 8 },
-                        { sessionId: 'cvc-002', agentName: 'Vijay Narasimha', toPhone: '+91 98765 00002', status: 'completed', startedAt: '2026-06-24T14:00:00Z', turns: 5 },
-                        { sessionId: 'cvc-003', agentName: 'Harsha Vardhan', toPhone: '+1 555 000 0003', status: 'failed', startedAt: '2026-06-24T11:00:00Z', turns: 0 },
-                      ].map(call => (
-                        <tr key={call.sessionId} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 font-mono text-xs text-slate-400">{call.sessionId}</td>
-                          <td className="py-3 px-4 text-slate-200">{call.agentName}</td>
-                          <td className="py-3 px-4 text-slate-300 font-mono text-xs">{call.toPhone}</td>
-                          <td className="py-3 px-4">
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              call.status === 'completed' ? 'bg-green-500/15 text-green-400' :
-                              call.status === 'in-progress' ? 'bg-blue-500/15 text-blue-400 animate-pulse' :
-                              'bg-red-500/15 text-red-400'
-                            }`}>{call.status}</span>
-                          </td>
-                          <td className="py-3 px-4 text-slate-400 text-xs">{new Date(call.startedAt).toLocaleString()}</td>
-                          <td className="py-3 px-4 text-center text-slate-300">{call.turns}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-center text-slate-600 text-xs pt-4">Live call data fetched from /api/custom-voice/call</p>
-              </CardContent>
-            </GlassPanel>
-
-            {/* WhatsApp Message Logs */}
-            <GlassPanel tilt={false} className="border-slate-700/50">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-slate-100 font-bold flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-emerald-400" />
-                  AI WhatsApp Message Logs
-                </CardTitle>
-                <span className="text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">Real-time</span>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-700/50">
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Message ID</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Agent</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">To Phone</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Direction</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Sent At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { messageId: 'cwm-out-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00010', direction: 'outbound', status: 'read', sentAt: '2026-06-25T09:00:00Z' },
-                        { messageId: 'cwm-in-001', agentName: 'Ashok Kumar', toPhone: '+91 98765 00010', direction: 'inbound', status: 'read', sentAt: '2026-06-25T09:05:00Z' },
-                        { messageId: 'cwm-out-002', agentName: 'Harsha Vardhan', toPhone: '+91 98765 00020', direction: 'outbound', status: 'delivered', sentAt: '2026-06-23T11:00:00Z' },
-                      ].map(msg => (
-                        <tr key={msg.messageId} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 font-mono text-xs text-slate-400">{msg.messageId}</td>
-                          <td className="py-3 px-4 text-slate-200">{msg.agentName}</td>
-                          <td className="py-3 px-4 text-slate-300 font-mono text-xs">{msg.toPhone}</td>
-                          <td className="py-3 px-4">
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              msg.direction === 'outbound' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-sky-500/15 text-sky-400'
-                            }`}>{msg.direction}</span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              msg.status === 'read' ? 'bg-teal-500/15 text-teal-400' :
-                              msg.status === 'delivered' ? 'bg-blue-500/15 text-blue-400' :
-                              'bg-slate-500/15 text-slate-400'
-                            }`}>{msg.status}</span>
-                          </td>
-                          <td className="py-3 px-4 text-slate-400 text-xs">{new Date(msg.sentAt).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-center text-slate-600 text-xs pt-4">Live message data fetched from /api/custom-whatsapp/send</p>
-              </CardContent>
-            </GlassPanel>
-          </div>
-        )}
-
-        {activeTab === "password-requests" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-100">Password Change Requests</h2>
-                <p className="text-slate-400 text-sm mt-1">
-                  Review and process submitted password change requests from customers and agents.
-                </p>
-              </div>
-            </div>
-
-            <GlassPanel className="border-slate-800 p-6">
-              {loadingRequests ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
-                </div>
-              ) : passwordRequests.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  No password reset requests found.
-                </div>
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">Platform Messages & Conversations</h2>
+            <div className="grid grid-cols-1 gap-4">
+              {chatMessages.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center py-12">No active message transcripts found in chat channels.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 text-sm font-semibold">
-                        <th className="pb-3 pr-4">User Email</th>
-                        <th className="pb-3 px-4">Role</th>
-                        <th className="pb-3 px-4">Requested At</th>
-                        <th className="pb-3 px-4">Status</th>
-                        <th className="pb-3 pl-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {passwordRequests.map((req) => (
-                        <tr key={req.id} className="border-b border-slate-900/50 hover:bg-slate-900/20 text-slate-300 transition-colors">
-                          <td className="py-4 pr-4 font-medium">{req.email}</td>
-                          <td className="py-4 px-4 capitalize">
-                            <span className={cn(
-                              "px-2.5 py-0.5 rounded-full text-xs font-semibold",
-                              req.role === "admin" ? "bg-red-500/10 text-red-400" :
-                              req.role === "agent" ? "bg-purple-500/10 text-purple-400" :
-                              "bg-orange-500/10 text-orange-400"
-                            )}>
-                              {req.role || "customer"}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-slate-400 text-sm">
-                            {req.createdAt ? new Date(req.createdAt).toLocaleString() : "Unknown"}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={cn(
-                              "px-2.5 py-0.5 rounded-full text-xs font-semibold",
-                              req.used || req.status === "approved" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400 animate-pulse"
-                            )}>
-                              {req.used || req.status === "approved" ? "Processed" : "Pending"}
-                            </span>
-                          </td>
-                          <td className="py-4 pl-4 text-right">
-                            {!(req.used || req.status === "approved") ? (
-                              <ExtrudedButton
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedRequest(req);
-                                  setShowResetModal(true);
-                                }}
-                              >
-                                Process Reset
-                              </ExtrudedButton>
-                            ) : (
-                              <span className="text-xs text-slate-500">Completed</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                chatMessages.map(msg => (
+                  <GlassPanel key={msg.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-4">
+                    <div className="flex justify-between items-start border-b border-slate-900 pb-2 mb-2">
+                      <span className="font-bold text-xs text-slate-350">{msg.senderName} ({msg.senderRole})</span>
+                      <span className="text-[10px] text-slate-500">{new Date(msg.timestamp).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-slate-250">{msg.content}</p>
+                  </GlassPanel>
+                ))
               )}
-            </GlassPanel>
+            </div>
+          </div>
+        )}
+
+        {/* 12. PASSWORD REQUESTS TAB */}
+        {activeTab === "password-requests" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <h2 className="text-2xl font-bold text-slate-100">Password Management & Resets</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: Pending Reset Requests */}
+              <GlassPanel className="border-slate-800/80 p-5 space-y-4">
+                <h3 className="text-lg font-bold text-slate-200">Pending User Requests</h3>
+                {loadingRequests ? (
+                  <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div>
+                ) : passwordRequests.length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-6">No password requests pending action.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-500 font-bold uppercase tracking-wider">
+                          <th className="py-2.5">User Email</th>
+                          <th className="py-2.5">Role</th>
+                          <th className="py-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {passwordRequests.map(r => (
+                          <tr key={r.id} className="border-b border-slate-850 hover:bg-slate-900/10">
+                            <td className="py-3 text-slate-300 font-semibold">{r.email}</td>
+                            <td className="py-3 capitalize text-slate-400">{r.role}</td>
+                            <td className="py-3 text-right">
+                              <ExtrudedButton size="sm" className="bg-teal-600" onClick={() => {
+                                setSelectedRequest(r);
+                                setShowResetModal(true);
+                              }}>Process Reset</ExtrudedButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </GlassPanel>
+
+              {/* Right Column: Search & Direct Reset */}
+              <GlassPanel className="border-slate-800/80 p-5 space-y-4">
+                <h3 className="text-lg font-bold text-slate-200">Direct Account Password Reset</h3>
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Search accounts by name or email..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="bg-slate-950 border-slate-850 text-white rounded-xl text-xs"
+                  />
+                  
+                  <div className="max-h-60 overflow-y-auto pr-2 space-y-2 border border-slate-850/60 rounded-xl p-2 bg-slate-950/40">
+                    {(() => {
+                      const allAccounts = [
+                        ...customers.map(c => ({ name: c.name, email: c.email, role: "customer" as const })),
+                        ...agents.map(a => ({ name: a.name, email: a.email, role: "agent" as const })),
+                      ];
+                      const filtered = allAccounts.filter(acc => 
+                        (acc.name || "").toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                        (acc.email || "").toLowerCase().includes(userSearchQuery.toLowerCase())
+                      );
+                      
+                      if (filtered.length === 0) {
+                        return <p className="text-slate-500 text-xs text-center py-4">No accounts match search.</p>;
+                      }
+                      
+                      return filtered.map(acc => (
+                        <div key={acc.email} className="flex justify-between items-center p-2 border border-slate-900 bg-slate-900/40 rounded-xl hover:bg-slate-900/80 transition-colors">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-250">{acc.name}</p>
+                            <p className="text-[10px] text-slate-500">{acc.email} • <span className="capitalize">{acc.role}</span></p>
+                          </div>
+                          <ExtrudedButton size="sm" className="bg-indigo-600" onClick={() => {
+                            setDirectResetEmail(acc.email);
+                            setDirectResetRole(acc.role);
+                            setShowDirectResetModal(true);
+                          }}>Reset Password</ExtrudedButton>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </GlassPanel>
+            </div>
           </div>
         )}
 
       </div>
 
-      {/* Reset Password Modal */}
+      {/* Approve Password Reset Modal */}
       {showResetModal && selectedRequest && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassPanel className="w-full max-w-md border-slate-700 p-6 shadow-2xl relative">
+          <GlassPanel className="w-full max-w-md border-slate-800 bg-slate-900 p-6 shadow-2xl relative">
             <button
               onClick={() => {
                 setShowResetModal(false);
@@ -2731,7 +1774,7 @@ function AdminPortalContent() {
             </button>
             <h3 className="text-xl font-bold text-slate-100 mb-2">Process Password Reset</h3>
             <p className="text-sm text-slate-400 mb-6">
-              Set a new password for <span className="font-semibold text-slate-200">{selectedRequest.email}</span> ({selectedRequest.role || "customer"}).
+              Set a temporary password for <span className="font-semibold text-slate-200">{selectedRequest.email}</span>.
             </p>
 
             <form onSubmit={handleProcessReset} className="space-y-4">
@@ -2751,14 +1794,13 @@ function AdminPortalContent() {
                   placeholder="Minimum 8 characters"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="bg-slate-900 border-slate-700 text-white pr-10"
+                  className="bg-slate-950 border-slate-850 text-white pr-10 rounded-xl"
                   required
                   minLength={8}
-                  autoFocus
                 />
               </div>
 
-              <div className="flex gap-3 justify-end pt-4">
+              <div className="flex gap-3 justify-end pt-6 border-t border-slate-800/80 mt-6">
                 <Button
                   type="button"
                   variant="outline"
@@ -2776,14 +1818,155 @@ function AdminPortalContent() {
                   disabled={resettingPassword || newPassword.length < 8}
                   className="bg-teal-600 hover:bg-teal-700 text-white"
                 >
-                  {resettingPassword ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Reset Password"
-                  )}
+                  {resettingPassword ? "Processing..." : "Reset Password"}
+                </Button>
+              </div>
+            </form>
+          </GlassPanel>
+        </div>
+      )}
+
+      {/* Change Own Password Modal */}
+      {showChangeOwnPassword && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassPanel className="w-full max-w-md border-slate-800 bg-slate-900 p-6 shadow-2xl relative">
+            <button
+              onClick={() => {
+                setShowChangeOwnPassword(false);
+                setOwnCurrentPassword("");
+                setOwnNewPassword("");
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h3 className="text-xl font-bold text-slate-100 mb-2">Change Admin Password</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Update your administrator credentials below.
+            </p>
+
+            <form onSubmit={handleChangeOwnPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="own-current-password font-bold text-slate-350">Current Password</Label>
+                <PasswordInput
+                  id="own-current-password"
+                  placeholder="Enter current password"
+                  value={ownCurrentPassword}
+                  onChange={(e) => setOwnCurrentPassword(e.target.value)}
+                  className="bg-slate-950 border-slate-850 text-white pr-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="own-new-password font-bold text-slate-350">New Password</Label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateOwnPassword}
+                    className="text-[10px] font-bold text-teal-400 hover:text-teal-350 uppercase tracking-wider transition-colors px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
+                  >
+                    Auto-generate
+                  </button>
+                </div>
+                <PasswordInput
+                  id="own-new-password"
+                  placeholder="Minimum 8 characters"
+                  value={ownNewPassword}
+                  onChange={(e) => setOwnNewPassword(e.target.value)}
+                  className="bg-slate-950 border-slate-850 text-white pr-10 rounded-xl"
+                  required
+                  minLength={8}
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-6 border-t border-slate-800/80 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowChangeOwnPassword(false);
+                    setOwnCurrentPassword("");
+                    setOwnNewPassword("");
+                  }}
+                  disabled={changingOwnPassword}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={changingOwnPassword || ownNewPassword.length < 8}
+                  className="bg-teal-600 hover:bg-teal-700 text-white animate-pulse"
+                >
+                  {changingOwnPassword ? "Processing..." : "Update Password"}
+                </Button>
+              </div>
+            </form>
+          </GlassPanel>
+        </div>
+      )}
+
+      {/* Direct User Password Reset Modal */}
+      {showDirectResetModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassPanel className="w-full max-w-md border-slate-800 bg-slate-900 p-6 shadow-2xl relative">
+            <button
+              onClick={() => {
+                setShowDirectResetModal(false);
+                setDirectResetEmail("");
+                setDirectResetPassword("");
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h3 className="text-xl font-bold text-slate-100 mb-2">Direct Reset Password</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Enter a new temporary password for user <span className="font-semibold text-slate-200">{directResetEmail}</span> (<span className="capitalize text-teal-400">{directResetRole}</span>).
+            </p>
+
+            <form onSubmit={handleDirectResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="direct-new-password font-bold text-slate-350">New Password</Label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateDirectPassword}
+                    className="text-[10px] font-bold text-teal-400 hover:text-teal-350 uppercase tracking-wider transition-colors px-2 py-0.5 rounded bg-slate-800 border border-slate-700/50"
+                  >
+                    Auto-generate
+                  </button>
+                </div>
+                <PasswordInput
+                  id="direct-new-password"
+                  placeholder="Minimum 8 characters"
+                  value={directResetPassword}
+                  onChange={(e) => setDirectResetPassword(e.target.value)}
+                  className="bg-slate-950 border-slate-850 text-white pr-10 rounded-xl"
+                  required
+                  minLength={8}
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-6 border-t border-slate-800/80 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDirectResetModal(false);
+                    setDirectResetEmail("");
+                    setDirectResetPassword("");
+                  }}
+                  disabled={directResetting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={directResetting || directResetPassword.length < 8}
+                  className="bg-indigo-650 hover:bg-indigo-700 text-white"
+                >
+                  {directResetting ? "Processing..." : "Reset Password"}
                 </Button>
               </div>
             </form>
