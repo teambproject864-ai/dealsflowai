@@ -6,7 +6,6 @@ import { Footer } from "@/components/Footer";
 import { AIChatAssistant } from "@/components/AIChatAssistant";
 import { VoiceCallWidget } from "@/components/VoiceCallWidget";
 import { LiveChatWidget } from "@/components/LiveChatWidget";
-import { ImmersiveLayout } from "@/components/immersive/ImmersiveLayout";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import "./globals.css";
 
@@ -95,16 +94,13 @@ export default function RootLayout({
         className={`${sans.variable} min-h-screen bg-background font-sans text-foreground antialiased flex flex-col`}
         suppressHydrationWarning
       >
-
-        <ImmersiveLayout
-          header={<Header />}
-          footer={<Footer />}
-        >
+        <Header />
+        <main className="flex-1">
           <div id="main-content">
             {children}
           </div>
-        </ImmersiveLayout>
-        
+        </main>
+        <Footer />
         <AIChatAssistant />
         <VoiceCallWidget />
         <LiveChatWidget />
