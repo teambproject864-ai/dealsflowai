@@ -24,10 +24,13 @@ export async function GET(request: NextRequest) {
         queryRef = queryRef.where("assignedAgentId", "==", user.id);
       }
 
-      const snap = await queryRef.orderBy("createdAt", "desc").get();
+      const snap = await queryRef.get();
       snap.forEach((doc: any) => {
         tasks.push({ id: doc.id, ...doc.data() });
       });
+
+      // Sort by createdAt descending
+      tasks.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }
 
     return NextResponse.json({ success: true, tasks }, { status: 200 });
@@ -45,7 +48,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, title, description, status, assignedAgentId, customerId, priority, progressNotes, milestones } = body;
+    const {
+      id,
+      title,
+      description,
+      status,
+      assignedAgentId,
+      assignedAgentName,
+      customerId,
+      customerName,
+      priority,
+      progressNotes,
+      milestones,
+      dueDate,
+      collaborationNotes,
+      sharedFiles,
+      sharedLinks
+    } = body;
 
     if (user.role === "customer") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
@@ -61,10 +80,16 @@ export async function POST(request: NextRequest) {
       description,
       status: status || "todo",
       assignedAgentId: assignedAgentId || user.id,
+      assignedAgentName: assignedAgentName || "",
       customerId,
+      customerName: customerName || "",
       priority: priority || "medium",
       progressNotes: progressNotes || [],
       milestones: milestones || [],
+      dueDate: dueDate || "",
+      collaborationNotes: collaborationNotes || [],
+      sharedFiles: sharedFiles || [],
+      sharedLinks: sharedLinks || [],
       updatedAt: new Date().toISOString(),
     };
 
@@ -91,5 +116,44 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[api-portal-tasks-post] Error:", error);
     return NextResponse.json({ success: false, error: "Failed to save task" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser(request);
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ success: false, error: "Forbidden: Admins only" }, { status: 403 });
+    }
+
+    const url = new URL(request.url);
+    const taskId = url.searchParams.get("taskId");
+
+    if (!taskId) {
+      return NextResponse.json({ success: false, error: "Task ID is required" }, { status: 400 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 });
+    }
+
+    await db.collection("tasks").doc(taskId).delete();
+
+    // Write audit log
+    await db.collection("audit_logs").add({
+      id: `audit-${Date.now()}`,
+      actionType: "other",
+      actionDetails: `${user.name} (${user.role}) deleted task ID: ${taskId}`,
+      performedBy: user.id,
+      performedByRole: user.role,
+      targetId: taskId,
+      targetType: "task",
+      createdAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ success: true, message: "Task deleted successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("[api-portal-tasks-delete] Error:", error);
+    return NextResponse.json({ success: false, error: "Failed to delete task" }, { status: 500 });
   }
 }

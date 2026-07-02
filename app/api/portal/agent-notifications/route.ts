@@ -45,8 +45,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, read } = body;
+    const { id, read, action, agentId, title, description, type } = body;
 
+    // Admin action to create a notification (e.g. reminder)
+    if (action === "create") {
+      if (user.role !== "admin") {
+        return NextResponse.json({ success: false, error: "Forbidden: Admins only" }, { status: 403 });
+      }
+      if (!agentId || !title || !description) {
+        return NextResponse.json({ success: false, error: "agentId, title, and description are required" }, { status: 400 });
+      }
+
+      const notifId = id || `notif-${Date.now()}`;
+      const newNotif = {
+        id: notifId,
+        agentId,
+        title,
+        description,
+        type: type || "info",
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      await db.collection("agent_notifications").doc(notifId).set(newNotif);
+      return NextResponse.json({ success: true, notification: newNotif });
+    }
+
+    // Default update/mark-read behavior for agents
     if (!id) {
       return NextResponse.json({ success: false, error: "Notification ID is required" }, { status: 400 });
     }
@@ -59,6 +84,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("[api-portal-agent-notifications-post] Error:", error);
-    return NextResponse.json({ success: false, error: "Failed to update notification" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to update/create notification" }, { status: 500 });
   }
 }

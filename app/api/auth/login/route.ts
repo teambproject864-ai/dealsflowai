@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
                 failedLoginAttempts: 0,
               });
             }
-          } catch (e) {}
+          } catch (e) { }
           dbUser.isLocked = false;
           dbUser.lockedUntil = null;
           dbUser.failedLoginAttempts = 0;
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
                 passwordUpdatedAt: new Date().toISOString(),
               });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         // Reset failed login attempts on success
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
                 failedLoginAttempts: 0,
               });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         user = {
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
         // Password invalid: increment failedLoginAttempts
         const newAttempts = (dbUser.failedLoginAttempts || 0) + 1;
         const updates: any = { failedLoginAttempts: newAttempts };
-        
+
         let isLockedNow = false;
         let lockedUntilStr = null;
 
@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
           if (fDb) {
             await fDb.collection("users").doc(dbUser.id).update(updates);
           }
-        } catch (e) {}
+        } catch (e) { }
 
         if (isLockedNow) {
           return NextResponse.json(
@@ -294,7 +294,7 @@ export async function POST(req: NextRequest) {
       }
 
       addAuditLog(email, role, false, "Failed login attempt (Invalid credentials)", ip, userAgent);
-      
+
       // Generic message to avoid email verification leaks
       return NextResponse.json(
         { success: false, error: "Invalid email or password", requiresCaptcha },
@@ -306,7 +306,7 @@ export async function POST(req: NextRequest) {
     try {
       await loginLockoutLimiter.delete(limiterKey);
       await captchaTriggerLimiter.delete(limiterKey);
-    } catch (e) {}
+    } catch (e) { }
 
     const token = createToken(user);
     await setAuthCookie(token);
