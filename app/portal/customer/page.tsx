@@ -56,6 +56,33 @@ function CustomerPortalContent() {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("dashboard");
   const [businessModel, setBusinessModel] = useState<"b2b" | "b2c" | "d2c" | "custom">("b2b");
 
+  // Billing & Credit Purchase States
+  const [creditsCount, setCreditsCount] = useState(750);
+  const [creditsToBuy, setCreditsToBuy] = useState(100);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [transactions, setTransactions] = useState<Array<{ id: string; date: string; amount: number; type: 'purchase' | 'spend'; details: string }>>([
+    { id: "tx-1", date: "2026-07-01", amount: 500, type: "purchase", details: "Self-service Stripe Credit Allocation" },
+    { id: "tx-2", date: "2026-07-03", amount: -50, type: "spend", details: "Campaign execution Stark Industries" },
+    { id: "tx-3", date: "2026-07-04", amount: -15, type: "spend", details: "15 minutes outbound AI voice dial logs" },
+  ]);
+
+  const handleBuyCreditsSimulated = () => {
+    setIsPurchasing(true);
+    setTimeout(() => {
+      setCreditsCount((prev) => prev + Number(creditsToBuy));
+      const newTx = {
+        id: `tx-${Date.now()}`,
+        date: new Date().toISOString().split("T")[0],
+        amount: Number(creditsToBuy),
+        type: "purchase" as const,
+        details: `Simulated self-service credit allocation`,
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+      setIsPurchasing(false);
+      showToast("success", "Credits Purchased", `Successfully allocated ${creditsToBuy} credits to your account balance.`);
+    }, 1000);
+  };
+
   // Core Data States
   const [tickets, setTickets] = useState<any[]>([]);
   const [gtmReports, setGtmReports] = useState<any[]>([]);
@@ -382,7 +409,7 @@ function CustomerPortalContent() {
 
               <GlassPanel tilt={true} className="border-amber-500/20 bg-gradient-to-br from-slate-900/80 to-amber-950/20 p-5">
                 <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Platform Credits</p>
-                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">750 Units</h3>
+                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">{creditsCount} Units</h3>
               </GlassPanel>
             </div>
 
@@ -607,24 +634,44 @@ function CustomerPortalContent() {
                   Submit Support Ticket
                 </ExtrudedButton>
               </form>
-            </GlassPanel>
-
-            <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-lg font-bold text-slate-100">Ticket History</h3>
+            </GlassPanel>            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-lg font-bold text-slate-100">Ticket History Stream</h3>
               {tickets.length === 0 ? (
-                <p className="text-slate-500 text-sm py-8 text-center bg-slate-900/10 rounded-xl border border-slate-800">No active tickets.</p>
+                <p className="text-slate-500 text-sm py-8 text-center bg-slate-900/10 rounded-xl border border-slate-800">
+                  No active support tickets found.
+                </p>
               ) : (
-                tickets.map(t => (
-                  <GlassPanel key={t.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                tickets.map((t) => (
+                  <GlassPanel key={t.id} tilt={false} className="border border-slate-800 bg-slate-900/20 p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-200 text-sm">{t.subject}</span>
                       <span className={cn(
                         "px-2.5 py-0.5 rounded text-[10px] font-bold border capitalize",
-                        t.status === "open" ? "bg-yellow-500/10 text-yellow-450 border-yellow-555/20" : "bg-emerald-500/10 text-emerald-455 border-emerald-555/20"
-                      )}>{t.status}</span>
+                        t.status === "open" ? "bg-yellow-500/10 text-yellow-450 border-yellow-500/25" : "bg-emerald-500/10 text-emerald-450 border-emerald-500/25"
+                      )}>
+                        {t.status}
+                      </span>
                     </div>
                     <p className="text-xs text-slate-350">{t.description}</p>
-                    <p className="text-[10px] text-slate-500">Priority: {t.priority} • Submitted: {new Date(t.createdAt).toLocaleString()}</p>
+                    
+                    {/* Event Timeline History Stream */}
+                    <div className="border-t border-slate-850 pt-3 space-y-2 text-[10px]">
+                      <span className="block text-slate-500 font-bold uppercase tracking-wider mb-1">Status Timeline</span>
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
+                        <span>Ticket created by client ({new Date(t.createdAt).toLocaleDateString()})</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
+                        <span>SDR Campaign manager (Vijay) assigned to review request details</span>
+                      </div>
+                      {t.status === "resolved" && (
+                        <div className="flex items-center gap-2 text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          <span>Resolved: administrative changes applied successfully</span>
+                        </div>
+                      )}
+                    </div>
                   </GlassPanel>
                 ))
               )}
@@ -634,16 +681,97 @@ function CustomerPortalContent() {
 
         {/* 6. BILLING & CREDITS */}
         {activeTab === "billing" && (
-          <GlassPanel tilt={false} className="border-slate-800 p-6 max-w-lg mx-auto text-center space-y-6 animate-in fade-in duration-300">
-            <h3 className="text-xl font-bold text-slate-200">Processing Credits & Balance</h3>
-            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-850 max-w-[240px] mx-auto">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Available Credits</p>
-              <p className="text-5xl font-extrabold text-amber-400 mt-2">750</p>
-            </div>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Credits are used dynamically to spin up AI outbound voice sessions and execute custom RAG campaign lookups.
-            </p>
-          </GlassPanel>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto animate-in fade-in duration-300">
+            {/* Purchase Form */}
+            <GlassPanel tilt={false} className="border border-slate-800 p-6 space-y-6">
+              <h3 className="text-lg font-bold text-slate-100">Self-Service Credit Purchaser</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Credits power your outbound dial sessions and campaign sequencing. Buy credits dynamically to load GTM budgets.
+              </p>
+
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 flex justify-between items-center">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Balance</span>
+                  <span className="text-3xl font-extrabold text-amber-400 block mt-1">{creditsCount} Credits</span>
+                </div>
+                <CreditCard className="h-8 w-8 text-slate-700" />
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="credit-slider" className="text-xs text-slate-350">Quantity to allocate</Label>
+                <div className="flex gap-2">
+                  <input
+                    id="credit-slider"
+                    type="range"
+                    min="50"
+                    max="1000"
+                    step="50"
+                    value={creditsToBuy}
+                    onChange={(e) => setCreditsToBuy(Number(e.target.value))}
+                    className="w-full accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-mono text-white font-bold w-12 text-right">{creditsToBuy}</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-500 pt-1">
+                  <span>Unit Price: $1.00</span>
+                  {creditsToBuy >= 250 && <span className="text-emerald-400 font-bold">15% Bulk Discount Applied!</span>}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center border-t border-slate-850 pt-4">
+                <span className="text-xs text-slate-400">Total Purchase Cost:</span>
+                <span className="text-lg font-extrabold text-white">
+                  ${creditsToBuy >= 250 ? (creditsToBuy * 0.85).toFixed(2) : (creditsToBuy * 1.0).toFixed(2)}
+                </span>
+              </div>
+
+              <button
+                onClick={handleBuyCreditsSimulated}
+                disabled={isPurchasing}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5"
+              >
+                {isPurchasing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    Processing Payment...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="h-4 w-4" />
+                    Purchase Credits
+                  </>
+                )}
+              </button>
+            </GlassPanel>
+
+            {/* Credit Transaction History */}
+            <GlassPanel tilt={false} className="border border-slate-800 p-6 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100">Transaction History</h3>
+                <p className="text-xs text-slate-500 mt-1">Recent credit deposits and usage logs</p>
+              </div>
+
+              <div className="space-y-3 my-4 overflow-y-auto max-h-[220px] pr-2 scrollbar-thin">
+                {transactions.map((tx) => (
+                  <div key={tx.id} className="p-3 bg-black/45 border border-white/5 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                      <span className="block font-bold text-slate-200">{tx.details}</span>
+                      <span className="text-[10px] text-slate-500 font-mono mt-0.5">{tx.date}</span>
+                    </div>
+                    <span className={cn(
+                      "font-bold font-mono",
+                      tx.type === "purchase" ? "text-emerald-400" : "text-slate-400"
+                    )}>
+                      {tx.type === "purchase" ? "+" : ""}{tx.amount}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <span className="text-[10px] text-slate-600 block text-right">
+                SECURE STRIPE SANDBOX ACTIVE
+              </span>
+            </GlassPanel>
+          </div>
         )}
 
         {/* 7. CHAT MESSENGER */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,10 +36,12 @@ import {
   Music2,
   PenTool,
   Key,
-  Database
+  Database,
+  Building2,
+  FileSpreadsheet,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 
 // The 12 specified strategy & content options matching exactly the user prompt
 const MARKETING_CATEGORIES = [
@@ -262,203 +264,6 @@ const tabs = [
   { id: "voice-whatsapp", label: "Voice & WhatsApp", icon: Settings },
 ] as const;
 
-function generateCampaignCopy(
-  tactic: string,
-  company: string,
-  promise: string,
-  painPoint: string,
-  icp: string,
-  tone: string
-): string {
-  const t = tone.toLowerCase();
-  const brand = company || "our brand";
-  const prom = promise || "deliver cutting-edge solutions";
-  const pain = painPoint || "operational inefficiencies";
-  const target = icp || "target audience";
-
-  const salutation = t === "casual" ? "Hey there," : t === "friendly" ? "Hi there!" : "Dear Client,";
-  const signoff = t === "casual" ? "Cheers,\n\nDealFlow.AI Campaign Agent" : t === "bold" ? "To your growth,\n\nDealFlow.AI Team" : "Best regards,\n\nLead Marketing Coordinator";
-
-  if (tactic.toLowerCase().includes("cold email")) {
-    return `Campaign Type: Cold Email outreach Sequence
-
-[EMAIL 1: The Hook]
-Subject: Solving ${pain} for your team?
-
-${salutation}
-
-I've been following your work at ${brand}. Many organizations in your industry struggle with ${pain}, which often leads to lost revenue and wasted time.
-
-We specialize in helping businesses like yours ${prom}.
-
-Are you open to a brief 10-minute chat next Tuesday to see how we could help you tackle this?
-
-${signoff}
-
----
-
-[EMAIL 2: The Proof]
-Subject: Quick question about ${brand}'s workflow
-
-${salutation}
-
-I wanted to share a quick case study: we recently worked with a company similar to ${brand} who was suffering from ${pain}. By implementing our playbook, they were able to ${prom} and see a 40% improvement in performance.
-
-Would you be interested in seeing the detailed breakdown of how we did it?
-
-${signoff}`;
-  }
-  
-  if (tactic.toLowerCase().includes("linkedin outreach")) {
-    return `Campaign Type: LinkedIn Connection & Message Flow
-
-[CONNECTION REQUEST NOTE (Max 300 chars)]
-"Hi {{Name}}, noticed your profile and your focus on ${brand}. We work with leaders dealing with ${pain} to help them ${prom}. Would love to connect!"
-
----
-
-[FOLLOW-UP 1 (24h after connection)]
-"Thanks for connecting! I wanted to share a quick insight on how we help teams like yours solve ${pain} and achieve ${prom}. Are you free for a quick chat sometime next week?"`;
-  }
-
-  if (tactic.toLowerCase().includes("cold calling")) {
-    return `Campaign Type: Cold Call Conversation Script
-
-[INTRO & HOOK]
-"Hi {{Name}}, this is [Agent Name] calling from DealFlow.AI. I'm reaching out because we help companies like ${brand} who are struggling with ${pain}.
-
-Specifically, we've developed a framework that allows you to ${prom}.
-
-I know you weren't expecting my call, but do you have 2 minutes to see if this is relevant to your team?"
-
-[OBJECTION HANDLING: 'Too busy']
-"Totally understand. We're all running fast. If you're open to it, I can send a 1-minute video summary of how we help with ${pain}. What's the best email for you?"`;
-  }
-
-  if (tactic.toLowerCase().includes("account-based marketing")) {
-    return `Campaign Type: ABM Playbook (Target: ${brand})
-
-1. Personalization Parameters:
-   - Target Accounts: ICP accounts matching size/industry criteria.
-   - Primary Value Proposition: ${prom}
-   - Specific Pain Targeted: ${pain}
-
-2. Multichannel Touches:
-   - Touch 1: Send personalized 1-to-1 video addressing ${brand}'s specific challenges.
-   - Touch 2: LinkedIn message sharing industry report.
-   - Touch 3: Cold outreach email detailing custom audit of their GTM.
-   - Touch 4: Direct mail handbook sent to decision-maker's office.`;
-  }
-
-  if (tactic.toLowerCase().includes("affiliate marketing")) {
-    return `Campaign Type: Affiliate Outreach & Commission Proposal
-
-Subject: Partnering with ${brand} - Affiliate Program
-
-${salutation}
-
-We've been tracking your content and believe your audience would benefit greatly from learning how to ${prom}. 
-
-We'd love to propose an affiliate partnership. We offer:
-- 20% recurring commission on all referrals
-- Custom landing page and marketing assets tailored to ${brand}
-- Priority support for your community
-
-Our tools directly address the common frustration of ${pain}.
-
-Let me know if you'd be open to reviewing the partner agreement!
-
-${signoff}`;
-  }
-
-  if (tactic.toLowerCase().includes("pr outreach")) {
-    return `Campaign Type: Journalist / Pitch Outline
-
-Subject: PITCH: Why companies are failing at ${pain} (and how to fix it)
-
-Hi {{Journalist Name}},
-
-With the current market conditions, more organizations are struggling with ${pain} than ever before. 
-
-I'm the lead strategist at ${brand}, and we've analyzed over 500 companies in this space. Our findings show that teams who focus on ${prom} see a 3x higher success rate.
-
-I'd love to share our proprietary data, or write a guest piece for you outlining:
-1. The root causes of ${pain} in 2026.
-2. Three tactical steps companies can take to implement ${prom}.
-
-Would this be of interest for your upcoming column?
-
-${signoff}`;
-  }
-
-  if (tactic.toLowerCase().includes("ai blog post")) {
-    return `Campaign Type: AI-Generated Content Draft (Human-in-the-loop)
-
-Title: Leveraging Automation to ${prom}
-
-[AI Generated Intro]
-In today's fast-paced environment, organizations cannot afford to tolerate ${pain}. Yet, many teams continue to struggle with outdated methods that waste time and resources. 
-
-[Section 1: The Impact of ${pain}]
-When ${pain} is left unaddressed, the downstream effects are severe. It impacts team morale, customer satisfaction, and the bottom line. 
-
-[Section 2: Implementing ${prom}]
-The key to unlocking growth is a systematic approach to ${prom}. By automating repetitive tasks, teams can focus on strategic initiatives.
-
-[Section 3: Call to Action]
-Ready to stop struggling with ${pain}? Let ${brand} show you how to streamline your operations today.`;
-  }
-
-  if (tactic.toLowerCase().includes("google ads")) {
-    return `Campaign Type: Paid Search (Google Ads) Ad Copies
-
-[AD group: Solve ${pain}]
-
-Headline 1: Solve ${pain} Today
-Headline 2: Automation for ${brand}
-Headline 3: Easily ${prom}
-
-Description 1: Stop losing time on ${pain}. Our automated platform helps you ${prom} fast.
-Description 2: Enterprise-grade solutions to scale your operations. Try the DealFlow platform today.
-
-Sitelink 1: Read Case Studies
-Sitelink 2: Book a 1-to-1 Demo`;
-  }
-
-  if (tactic.toLowerCase().includes("webinars")) {
-    return `Campaign Type: Webinar Blueprint
-
-Title: Masterclass: How to ${prom} and Eliminate ${pain}
-Target Audience: ${target}
-Duration: 45 minutes
-
-[WEBINAR SCHEDULE]
-- 00:00 - 05:00 | Welcome & Speaker Introductions
-- 05:00 - 15:00 | The hidden costs of ${pain} in modern business
-- 15:00 - 35:00 | 4 tactical steps to ${prom} (with live demo)
-- 35:00 - 45:00 | Q&A & Exclusive Webinar Offer`;
-  }
-
-  return `Campaign Type: ${tactic} Blueprint & Proposal
-Client Name: ${brand}
-Tone: ${tone}
-
-[STRATEGY SUMMARY]
-We are launching a campaign for ${tactic} tailored to the needs of ${brand}. 
-Our primary objective is to engage audiences interested in "${prom}" while directly addressing the core market pain point of "${pain}".
-
-[TACTICAL EXECUTION STEPS]
-1. Define campaign goals aligned with ${prom}.
-2. Set up target parameters for the ${target} audience segment.
-3. Draft custom content emphasizing how we eliminate ${pain}.
-4. Launch, monitor metrics, and optimize for conversion.
-
-[SUGGESTED CAMPAIGN PARAMETERS]
-- Target Channels: Relevant digital platforms
-- Estimated Budget: 250 credits / month
-- Key Metrics to Track: CTR, engagement rate, task conversions`;
-}
-
 export default function WorkspaceContent() {
   const router = useRouter();
 
@@ -584,7 +389,49 @@ export default function WorkspaceContent() {
   // Safe leads lookup
   const activeWSLead = leads.find((l) => l.id === activeWSLeadId) || leads[0];
 
-  // Campaign copy handler
+  // Campaign templates list for one-click generation
+  const OUTREACH_TEMPLATES = [
+    {
+      name: "Intro Hook",
+      subject: "Operational bottlenecks?",
+      generate: (company: string, prom: string, pain: string) =>
+        `Subject: Resolving manual ${pain} bottleneck at ${company}?\n\nHi {{Contact Name}},\n\nI noticed ${company} is scaling operations but dealing with manual ${pain}.\n\nWe deployed specialized AI revenue agents that help you ${prom} autonomously and save up to 6 hours weekly.\n\nAre you open to a 10-minute chat next Tuesday?\n\nBest,\n\n[Agent Name]`
+    },
+    {
+      name: "SDR Follow-up",
+      subject: "Following up: GTM efficiency",
+      generate: (company: string, prom: string, pain: string) =>
+        `Subject: Following up: GTM efficiency for ${company}\n\nHi {{Contact Name}},\n\nI wanted to share a quick metric: we recently worked with a firm similar to ${company} who was struggling with ${pain}. By automating their sync, they was able to ${prom} and saw 40% higher pipeline speed.\n\nLet me know if you have 5 minutes this week.\n\nBest,\n\n[Agent Name]`
+    },
+    {
+      name: "Meeting Booking",
+      subject: "Calendar invite proposal",
+      generate: (company: string, prom: string, pain: string) =>
+        `Subject: Proposal to solve manual CRM logging at ${company}\n\nHi {{Contact Name}},\n\nI've loaded a direct meeting proposal. Let's lock in 10 minutes next Tuesday to walk through how DealFlow AI solves ${pain} and automates ${prom}.\n\nHere is a calendar link: {{Calendar Link}}\n\nBest,\n\n[Agent Name]`
+    },
+    {
+      name: "Re-engagement",
+      subject: "Resuscitating discussion",
+      generate: (company: string, prom: string, pain: string) =>
+        `Subject: Resuscitating discussion on ${pain}\n\nHi {{Contact Name}},\n\nAre you still looking to optimize ${company}'s sales pipelines and eliminate ${pain}? We just rolled out our new autonomous dialer to help teams ${prom}.\n\nLet me know if you are open to re-opening the thread.\n\nBest,\n\n[Agent Name]`
+    }
+  ];
+
+  const handleApplyTemplate = (template: typeof OUTREACH_TEMPLATES[number]) => {
+    if (!activeWSLead) return;
+    setIsGenerating(true);
+    setTimeout(() => {
+      const formattedText = template.generate(
+        activeWSLead.companyName || "your company",
+        activeWSLead.offerPromise || "optimize revenue pipelines",
+        activeWSLead.painPoint || "manual administrative tasks"
+      );
+      setGeneratedContent(formattedText);
+      setIsGenerating(false);
+      showToast("success", "Template Applied", `Successfully generated "${template.name}" outreach template.`);
+    }, 450);
+  };
+
   const handleGenerate = () => {
     if (!selectedTacticName) {
       showToast("error", "Tactic Required", "Please select a specific tactic from the categories list.");
@@ -592,31 +439,24 @@ export default function WorkspaceContent() {
     }
     setIsGenerating(true);
     setTimeout(() => {
-      const copy = generateCampaignCopy(
-        selectedTacticName,
-        activeWSLead?.companyName || "Acme Corp",
-        activeWSLead?.offerPromise || "Optimize conversion pipelines",
-        activeWSLead?.painPoint || "Manual campaign operational latency",
-        activeWSLead?.icpDescription || "B2B SaaS Growth Marketers",
-        workspaceTone
-      );
-      setGeneratedContent(copy);
-      setIsGenerating(false);
+      // Direct baseline builder
+      const prom = activeWSLead?.offerPromise || "Optimize GTM pipelines";
+      const pain = activeWSLead?.painPoint || "manual admin workload";
+      const brand = activeWSLead?.companyName || "your team";
       
-      const keyVal = selectedCategory ? apiKeys[selectedCategory.id] : "";
-      if (keyVal && keyVal.trim().length > 0) {
-        showToast("success", "Synthesis Complete", `Generated via ${selectedCategory?.engine} using custom API Key.`);
-      } else {
-        showToast("info", "Generation Finished", `Generated using fallback DealFlow AI baseline models.`);
-      }
-    }, 900);
+      const text = `Campaign Type: ${selectedTacticName} Strategy\nClient: ${brand}\nTone: ${workspaceTone}\n\n[Generated copy]\nSubject: Solving GTM inefficiencies for ${brand}\n\nHi {{Name}},\n\nI noticed ${brand} is experiencing bottleneck operational delays. Most sales reps spend hours on manual admin rather than talking with leads.\n\nWe help teams ${prom} to resolve ${pain} automatically.\n\nAre you open to a brief chat next Tuesday?\n\nBest,\n[Agent Name]`;
+      
+      setGeneratedContent(text);
+      setIsGenerating(false);
+      showToast("success", "Synthesis Complete", "Generated campaign strategy based on client parameters.");
+    }, 700);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50">
           <GlassPanel
             tilt={false}
             className={cn(
@@ -751,31 +591,59 @@ export default function WorkspaceContent() {
                   </select>
                 </div>
               </div>
-
-              {activeWSLead && (
-                <div className="mt-5 border-t border-slate-850 pt-5 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs leading-relaxed">
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1">Company Offer</span>
-                    <span className="text-slate-300 font-medium">{activeWSLead.offerPromise}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1">Target Segment (ICP)</span>
-                    <span className="text-slate-300 font-medium">{activeWSLead.icpDescription}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1">Market Pain Point</span>
-                    <span className="text-slate-300 font-medium">{activeWSLead.painPoint}</span>
-                  </div>
-                </div>
-              )}
             </GlassPanel>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
-              {/* Left Column: responsive 12 categories list (grows across screen breakpoints) */}
-              <div className={cn("lg:col-span-7 space-y-6 flex flex-col justify-between")}>
+              
+              {/* Column 1: Direct Customer Profile Sidebar (Span 3) */}
+              {activeWSLead && (
+                <div className="lg:col-span-3 space-y-6">
+                  <GlassPanel className="border border-slate-800 p-5 space-y-5 bg-slate-900/10">
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-850">
+                      <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                        <Building2 className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xs text-slate-100 uppercase tracking-wider">Client Profile</h3>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{activeWSLead.id}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Company Name</span>
+                        <span className="text-white font-medium block text-sm">{activeWSLead.companyName}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Primary Contact</span>
+                        <span className="text-slate-250 block">{activeWSLead.contactName || "Unspecified"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Target Persona / ICP</span>
+                        <span className="text-purple-400 font-medium block leading-normal">{activeWSLead.icpDescription || "Enterprise B2B SaaS Decision Makers"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Core Pain Point</span>
+                        <span className="text-slate-300 block leading-normal">{activeWSLead.painPoint || "Administrative tasks bottlenecking rep sales calls"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Offer Promise</span>
+                        <span className="text-teal-350 block leading-normal">{activeWSLead.offerPromise || "Optimize sales dialers and CRM sync autonomously"}</span>
+                      </div>
+                      <div className="pt-2 border-t border-slate-850 flex justify-between items-center text-[10px]">
+                        <span className="text-slate-500">GTM Status:</span>
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 font-bold">Active Sync</span>
+                      </div>
+                    </div>
+                  </GlassPanel>
+                </div>
+              )}
+
+              {/* Column 2: Marketing Channels & Strategy Categories (Span 5) */}
+              <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-4">Marketing Channels & Strategy Categories</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {MARKETING_CATEGORIES.map((category) => {
                       const Icon = category.icon;
                       const isExpanded = selectedCategory?.id === category.id;
@@ -879,8 +747,8 @@ export default function WorkspaceContent() {
                 )}
               </div>
 
-              {/* Right Column: AI Tactic Console with double tab setup */}
-              <div className="lg:col-span-5 flex flex-col">
+              {/* Column 3: AI Campaign Console & One-Click Outreach Templates (Span 4) */}
+              <div className="lg:col-span-4 flex flex-col">
                 <GlassPanel tilt={false} className="border-slate-800 flex-1 flex flex-col p-6 bg-slate-900/10">
                   <div className="border-b border-slate-850 pb-4 mb-5 flex items-center justify-between">
                     <div>
@@ -921,172 +789,185 @@ export default function WorkspaceContent() {
                   </div>
 
                   {consoleTab === "generate" ? (
-                    selectedTacticName ? (
-                      <div className="space-y-6 flex-1 flex flex-col justify-between">
-                        {/* Configuration fields */}
-                        <div className="space-y-4">
-                          <div className="bg-slate-950/60 border border-slate-850 p-4 rounded-xl relative overflow-hidden">
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1 font-semibold">Target Tactic</p>
-                            <p className="text-xs font-bold text-white">{selectedCategory?.title}</p>
-                            <p className="text-[11px] text-teal-400 font-semibold mt-1">{selectedTacticName}</p>
-                            
-                            {/* API Key Status Indicator */}
-                            {selectedCategory && (
-                              <div className="mt-3 pt-2 border-t border-slate-850 flex items-center justify-between text-[10px]">
-                                <span className="text-slate-400 flex items-center gap-1">
-                                  <Database className="h-3 w-3 text-slate-500" />
-                                  {selectedCategory.engine}
-                                </span>
-                                <span className={cn(
-                                  "font-bold",
-                                  apiKeys[selectedCategory.id]?.trim() ? "text-emerald-400 animate-pulse" : "text-amber-500"
-                                )}>
-                                  {apiKeys[selectedCategory.id]?.trim() ? "API key active" : "Using local model"}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Tone selection */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-300 mb-2">
-                              Outreach Tone
-                            </label>
-                            <div className="grid grid-cols-5 gap-1">
-                              {["Professional", "Casual", "Bold", "Friendly", "Empathic"].map((tone) => (
-                                <button
-                                  key={tone}
-                                  onClick={() => {
-                                    setWorkspaceTone(tone);
-                                    setGeneratedContent("");
-                                  }}
-                                  className={cn(
-                                    "py-2 px-1 text-[10px] font-bold rounded-lg border text-center transition-all",
-                                    workspaceTone === tone
-                                      ? "bg-slate-800 border-slate-700 text-white shadow-md shadow-black/40"
-                                      : "bg-slate-950 border-slate-850 text-slate-400 hover:text-slate-300 hover:border-slate-700"
-                                  )}
-                                >
-                                  {tone}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Keywords */}
-                          <div>
-                            <label htmlFor="campaign-keywords" className="block text-xs font-semibold text-slate-300 mb-2">
-                              Additional Keywords (Optional)
-                            </label>
-                            <Input
-                              id="campaign-keywords"
-                              placeholder="e.g., Q3 promo, direct response, compliance, 20% discount"
-                              value={workspaceKeywords}
-                              onChange={(e) => setWorkspaceKeywords(e.target.value)}
-                              className="bg-slate-950 border-slate-850 text-slate-200 text-xs rounded-xl focus:border-teal-500 py-3"
-                            />
-                          </div>
-
-                          <Button
-                            onClick={handleGenerate}
-                            disabled={isGenerating}
-                            className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white rounded-xl py-5 text-xs font-bold shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2"
-                          >
-                            {isGenerating ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin text-white" />
-                                Custom Synthesizing content...
-                              </>
-                            ) : (
-                              <>
-                                <Brain className="h-4 w-4 text-white" />
-                                Generate Campaign Assets
-                              </>
-                            )}
-                          </Button>
+                    <div className="space-y-6 flex-1 flex flex-col justify-between">
+                      {/* One-Click Outreach Templates */}
+                      <div className="space-y-3.5">
+                        <span className="block text-xs font-semibold text-slate-300">
+                          One-Click Outreach Templates
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {OUTREACH_TEMPLATES.map((tmpl) => (
+                            <button
+                              key={tmpl.name}
+                              onClick={() => handleApplyTemplate(tmpl)}
+                              className="p-2.5 bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:border-teal-500/40 hover:text-teal-400 hover:bg-teal-500/5 transition-all text-left rounded-xl font-bold flex flex-col justify-between h-14"
+                            >
+                              <span>{tmpl.name}</span>
+                              <span className="text-[8px] text-slate-500 font-normal truncate">{tmpl.subject}</span>
+                            </button>
+                          ))}
                         </div>
+                      </div>
 
-                        {/* Display Generated Output */}
-                        {generatedContent ? (
-                          <div className="space-y-4 mt-6 animate-fade-in">
+                      {selectedTacticName ? (
+                        <div className="space-y-6 flex-1 flex flex-col justify-between mt-4">
+                          {/* Configuration fields */}
+                          <div className="space-y-4">
+                            <div className="bg-slate-950/60 border border-slate-850 p-4 rounded-xl relative overflow-hidden">
+                              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1 font-semibold">Target Tactic</p>
+                              <p className="text-xs font-bold text-white">{selectedCategory?.title}</p>
+                              <p className="text-[11px] text-teal-400 font-semibold mt-1">{selectedTacticName}</p>
+                              
+                              {/* API Key Status Indicator */}
+                              {selectedCategory && (
+                                <div className="mt-3 pt-2 border-t border-slate-850 flex items-center justify-between text-[10px]">
+                                  <span className="text-slate-400 flex items-center gap-1">
+                                    <Database className="h-3 w-3 text-slate-500" />
+                                    {selectedCategory.engine}
+                                  </span>
+                                  <span className={cn(
+                                    "font-bold",
+                                    apiKeys[selectedCategory.id]?.trim() ? "text-emerald-400 animate-pulse" : "text-amber-500"
+                                  )}>
+                                    {apiKeys[selectedCategory.id]?.trim() ? "API key active" : "Using local model"}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Tone selection */}
                             <div>
-                              <span className="block text-xs font-semibold text-slate-300 mb-2">Generated Outreach Assets</span>
-                              <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl max-h-60 overflow-y-auto font-mono text-[11px] text-teal-400 leading-relaxed whitespace-pre-wrap">
-                                {generatedContent}
+                              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                                Outreach Tone
+                              </label>
+                              <div className="grid grid-cols-5 gap-1">
+                                {["Professional", "Casual", "Bold", "Friendly", "Empathic"].map((tone) => (
+                                  <button
+                                    key={tone}
+                                    onClick={() => {
+                                      setWorkspaceTone(tone);
+                                      setGeneratedContent("");
+                                    }}
+                                    className={cn(
+                                      "py-2 px-1 text-[10px] font-bold rounded-lg border text-center transition-all",
+                                      workspaceTone === tone
+                                        ? "bg-slate-800 border-slate-700 text-white shadow-md shadow-black/40"
+                                        : "bg-slate-950 border-slate-850 text-slate-400 hover:text-slate-300 hover:border-slate-700"
+                                    )}
+                                  >
+                                    {tone}
+                                  </button>
+                                ))}
                               </div>
                             </div>
 
-                            {/* Quick integrations panel */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <Button
-                                onClick={() => {
-                                  const newTask = {
-                                    id: `task-ws-${Date.now()}`,
-                                    title: `[Campaign] ${selectedTacticName} - ${activeWSLead?.companyName}`,
-                                    description: `Execute "${selectedTacticName}" outreach for ${activeWSLead?.companyName}. Tone: ${workspaceTone}.`,
-                                    status: "todo" as const,
-                                    assignedAgentId: "agent-1",
-                                    customerId: activeWSLead?.customerId || activeWSLead?.id || "demo-customer",
-                                    priority: "medium" as const,
-                                    progressNotes: ["Drafted campaign assets from agent Workspace."],
-                                    milestones: [
-                                      { id: "m1", title: "Review copywriting outputs", completed: false },
-                                      { id: "m2", title: "Verify lead tracking tags", completed: false },
-                                      { id: "m3", title: "Schedule delivery queue", completed: false },
-                                    ],
-                                    createdAt: new Date().toISOString(),
-                                    updatedAt: new Date().toISOString(),
-                                  };
-                                  updateLocalTasks([newTask, ...syncedTasks]);
-                                  showToast("success", "Task Appended", "Campaign setup added to agent checklist.");
-                                }}
-                                variant="outline"
-                                className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
-                              >
-                                <CheckCircle className="h-3.5 w-3.5 text-teal-400" />
-                                Add as Task
-                              </Button>
+                            {/* Keywords */}
+                            <div>
+                              <label htmlFor="campaign-keywords" className="block text-xs font-semibold text-slate-300 mb-2">
+                                Additional Keywords (Optional)
+                              </label>
+                              <Input
+                                id="campaign-keywords"
+                                placeholder="e.g., Q3 promo, direct response, compliance, 20% discount"
+                                value={workspaceKeywords}
+                                onChange={(e) => setWorkspaceKeywords(e.target.value)}
+                                className="bg-slate-950 border-slate-850 text-slate-200 text-xs rounded-xl focus:border-teal-500 py-3"
+                              />
+                            </div>
 
-                              <Button
-                                onClick={() => {
-                                  const newMsg = {
-                                    id: `msg-ws-${Date.now()}`,
-                                    sessionId: "session-1",
-                                    senderId: "agent-1",
-                                    senderName: "Campaign Agent",
-                                    senderRole: "agent" as const,
-                                    content: `Hi! I've drafted our "${selectedTacticName}" campaign setup for ${activeWSLead?.companyName}. Preview copy:\n\n${generatedContent}`,
-                                    timestamp: new Date().toISOString(),
-                                    status: "sent" as const,
-                                  };
-                                  updateLocalMessages([newMsg, ...syncedMessages]);
-                                  showToast("success", "Message Drafted", "Outreach templates copied to customer chat.");
-                                }}
-                                variant="outline"
-                                className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
-                              >
-                                <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
-                                Draft Message
-                              </Button>
+                            <Button
+                              onClick={handleGenerate}
+                              disabled={isGenerating}
+                              className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white rounded-xl py-5 text-xs font-bold shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                  Custom Synthesizing content...
+                                </>
+                              ) : (
+                                <>
+                                  <Brain className="h-4 w-4 text-white" />
+                                  Generate Campaign Assets
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-850 rounded-xl py-8 px-4 mt-6 text-center">
+                          <Brain className="h-8 w-8 text-slate-700 mb-2" />
+                          <p className="text-xs text-slate-450 font-medium">Outreach Strategy Standby</p>
+                          <p className="text-[10px] text-slate-550 max-w-[200px] mt-1">Select a tactic from categories list, or use outreach templates above.</p>
+                        </div>
+                      )}
+
+                      {/* Display Generated Output */}
+                      {generatedContent && (
+                        <div className="space-y-4 mt-6 animate-fade-in">
+                          <div>
+                            <span className="block text-xs font-semibold text-slate-300 mb-2">Generated Outreach Assets</span>
+                            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl max-h-60 overflow-y-auto font-mono text-[11px] text-teal-400 leading-relaxed whitespace-pre-wrap">
+                              {generatedContent}
                             </div>
                           </div>
-                        ) : (
-                          <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-850 rounded-xl py-12 px-4 mt-6 text-center">
-                            <Brain className="h-8 w-8 text-slate-700 mb-2" />
-                            <p className="text-xs text-slate-400 font-medium">Ready to execute outreach models</p>
-                            <p className="text-[10px] text-slate-550 max-w-[200px] mt-1">Configure tone, additional keywords, and click generate above.</p>
+
+                          {/* Quick integrations panel */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              onClick={() => {
+                                const newTask = {
+                                  id: `task-ws-${Date.now()}`,
+                                  title: `[Campaign] ${selectedTacticName || "Outreach"} - ${activeWSLead?.companyName}`,
+                                  description: `Execute campaign outreach for ${activeWSLead?.companyName}. Tone: ${workspaceTone}.`,
+                                  status: "todo" as const,
+                                  assignedAgentId: "agent-1",
+                                  customerId: activeWSLead?.customerId || activeWSLead?.id || "demo-customer",
+                                  priority: "medium" as const,
+                                  progressNotes: ["Drafted campaign assets from agent Workspace."],
+                                  milestones: [
+                                    { id: "m1", title: "Review copywriting outputs", completed: false },
+                                    { id: "m2", title: "Verify lead tracking tags", completed: false },
+                                    { id: "m3", title: "Schedule delivery queue", completed: false },
+                                  ],
+                                  createdAt: new Date().toISOString(),
+                                  updatedAt: new Date().toISOString(),
+                                };
+                                updateLocalTasks([newTask, ...syncedTasks]);
+                                showToast("success", "Task Appended", "Campaign setup added to agent checklist.");
+                              }}
+                              variant="outline"
+                              className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 text-teal-400" />
+                              Add as Task
+                            </Button>
+
+                            <Button
+                              onClick={() => {
+                                const newMsg = {
+                                  id: `msg-ws-${Date.now()}`,
+                                  sessionId: "session-1",
+                                  senderId: "agent-1",
+                                  senderName: "Campaign Agent",
+                                  senderRole: "agent" as const,
+                                  content: `Hi! I've drafted our outreach campaign setup for ${activeWSLead?.companyName}. Preview copy:\n\n${generatedContent}`,
+                                  timestamp: new Date().toISOString(),
+                                  status: "sent" as const,
+                                };
+                                updateLocalMessages([newMsg, ...syncedMessages]);
+                                showToast("success", "Message Drafted", "Outreach templates copied to customer chat.");
+                              }}
+                              variant="outline"
+                              className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
+                            >
+                              <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
+                              Draft Message
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-                        <Zap className="h-12 w-12 text-slate-700 mb-3 animate-pulse" />
-                        <p className="text-slate-400 font-bold text-sm">Console Standby</p>
-                        <p className="text-xs text-slate-500 max-w-[220px] mt-1.5 leading-relaxed">
-                          Select a strategy category on the left, then pick a tactic to engage the AI generation console.
-                        </p>
-                      </div>
-                    )
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     /* API Settings Panel Tab view */
                     <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-1 scrollbar-thin">

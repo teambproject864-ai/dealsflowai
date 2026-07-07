@@ -30,6 +30,7 @@ import { encryptLead, decryptLead } from "@/lib/security";
 import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
 import { runIntegratedSystemTests } from "@/tests/integrated-system.test";
 import { runSecurityEvals } from "@/tests/security-evals";
+import { testOkfPerformanceBenchmark } from "@/tests/okf-rag-performance.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -304,6 +305,7 @@ async function main() {
     runAuditLoggerTests,
     runIntegratedSystemTests,
     runSecurityEvals,
+    testOkfPerformanceBenchmark
   ];
 
   for (const t of tests) {

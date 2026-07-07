@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   Zap,
@@ -23,284 +23,50 @@ import {
   Rocket,
   BarChart2,
   RefreshCw,
+  Users,
+  Layers,
+  MessageSquare,
+  Phone,
+  CreditCard,
+  Lock,
+  Mail,
+  ArrowUpRight,
+  Activity,
+  Check,
+  CheckSquare,
+  Star,
+  Volume2,
+  Compass,
+  LayoutDashboard,
+  Bell,
+  Clock,
+  Terminal,
+  Send,
+  UserCheck,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
-// ─── Floating Orb ────────────────────────────────────────────────────────────
-const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: number }) {
+// ─── Floating Orb (Vibrant Cosmic Accents) ───────────────────────────────────
+const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0, color }: { className?: string; delay?: number; color: string }) {
   return (
     <motion.div
-      className={`absolute rounded-full blur-3xl opacity-20 pointer-events-none ${className}`}
+      className={`absolute rounded-full blur-3xl opacity-35 pointer-events-none ${className}`}
+      style={{ background: color }}
       animate={{
-        y: [0, -30, 0],
-        scale: [1, 1.1, 1],
-        opacity: [0.15, 0.25, 0.15],
+        y: [0, -40, 0],
+        x: [0, 20, 0],
+        scale: [1, 1.15, 1],
+        opacity: [0.25, 0.45, 0.25],
       }}
       transition={{
-        duration: 8,
+        duration: 10,
         repeat: Infinity,
         delay,
         ease: "easeInOut",
       }}
     />
-  );
-});
-
-// ─── Holographic GTM Interactive Component ───────────────────────────────────
-const HolographicGTM = React.memo(function HolographicGTM() {
-  const [activeSection, setActiveSection] = useState<number>(0);
-  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
-  
-  const sections = [
-    {
-      title: "Pipeline Analysis",
-      description: "Funnel drop-off triage",
-      icon: TrendingUp,
-      color: "text-cyan-400",
-      glowColor: "rgba(6, 182, 212, 0.4)",
-    },
-    {
-      title: "Agent Assignment",
-      description: "Specialized AI roles",
-      icon: Cpu,
-      color: "text-violet-400",
-      glowColor: "rgba(124, 58, 237, 0.4)",
-    },
-    {
-      title: "Execution Engine",
-      description: "Autonomous workflows",
-      icon: Zap,
-      color: "text-amber-400",
-      glowColor: "rgba(245, 158, 11, 0.4)",
-    },
-  ];
-
-  // Console simulation for Execution Engine tab
-  useEffect(() => {
-    if (activeSection !== 2) return;
-    const phrases = [
-      "→ Initializing outbound workflow...",
-      "✔ Matched lead: Acme Corp (98% ICP Fit)",
-      "→ Dispatching Agent Persona: Praneeth Assist",
-      "→ Drafted hyper-personalized email payload",
-      "✔ Sequence updated: Email 1 sent successfully",
-      "→ Syncing lead context with Salesforce CRM...",
-      "✔ Salesforce opportunity created (ID: 0068V000)",
-      "→ Analyzing response sentiment... Positive",
-      "→ Initiating voice confirmation call scheduler",
-    ];
-    let idx = 0;
-    setConsoleLogs([phrases[0]]);
-    const interval = setInterval(() => {
-      idx = (idx + 1) % phrases.length;
-      setConsoleLogs((prev) => [...prev.slice(-4), phrases[idx]]);
-    }, 1800);
-    return () => clearInterval(interval);
-  }, [activeSection]);
-
-  const activeColor = sections[activeSection].color;
-  const activeGlow = sections[activeSection].glowColor;
-
-  return (
-    <div className="relative group rounded-3xl overflow-hidden df-glass border-white/10 shadow-2xl transition-all duration-500">
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-teal-500/5 pointer-events-none" />
-      <div className="df-specular" />
-
-      {/* Animated Scanline overlay */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          className="w-full h-0.5 bg-gradient-to-r from-transparent via-violet-500/10 to-transparent"
-          animate={{ y: [0, 480] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        />
-      </div>
-
-      <div className="relative z-10 p-6 sm:p-8 space-y-6">
-        {/* Top Header Row */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
-            </span>
-            <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
-              Control Panel v3.5
-            </span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/30 border border-red-500/50" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/30 border border-yellow-500/50" />
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/30 border border-green-500/50" />
-          </div>
-        </div>
-
-        {/* Dynamic Display Area */}
-        <div className="min-h-[220px] rounded-2xl bg-black/40 border border-white/5 p-5 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-violet-950/5 pointer-events-none" />
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="h-full flex flex-col justify-between flex-1 gap-4"
-            >
-              {/* Tab Content Header */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    {React.createElement(sections[activeSection].icon, { className: `w-4 h-4 ${activeColor}` })}
-                    {sections[activeSection].title} Readout
-                  </h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{sections[activeSection].description}</p>
-                </div>
-                <div className={`px-2 py-0.5 rounded-md border text-[9px] font-mono bg-white/5 border-white/10 ${activeColor}`}>
-                  SYSTEM ACTIVE
-                </div>
-              </div>
-
-              {/* Graphical Visualizations based on Selected Tab */}
-              <div className="flex-grow flex items-center justify-center min-h-[110px]">
-                {/* 1. Pipeline Analysis Visual (Line Chart) */}
-                {activeSection === 0 && (
-                  <div className="w-full h-24 relative flex items-end">
-                    <svg className="w-full h-full" viewBox="0 0 200 80">
-                      {/* Grid Lines */}
-                      <line x1="0" y1="20" x2="200" y2="20" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
-                      <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
-                      
-                      {/* Gradient for fill */}
-                      <defs>
-                        <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 60 Q 30 50 60 35 T 120 45 T 180 15 L 200 10 L 200 80 L 0 80 Z" fill="url(#chart-glow)" />
-                      <path d="M 0 60 Q 30 50 60 35 T 120 45 T 180 15 L 200 10" fill="none" stroke="#00D4FF" strokeWidth="2.5" />
-                      
-                      {/* Glowing Points */}
-                      <circle cx="60" cy="35" r="3" fill="#ffffff" stroke="#00D4FF" strokeWidth="1.5" />
-                      <circle cx="120" cy="45" r="3" fill="#ffffff" stroke="#00D4FF" strokeWidth="1.5" />
-                      <circle cx="200" cy="10" r="3.5" fill="#ffffff" stroke="#00D4FF" strokeWidth="2" />
-                    </svg>
-                    <div className="absolute top-1 right-2 text-right">
-                      <span className="text-[9px] text-slate-400 block">Conversion Velocity</span>
-                      <span className="text-sm font-mono font-bold text-cyan-400">+34.8%</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Agent Assignment Visual */}
-                {activeSection === 1 && (
-                  <div className="w-full space-y-2">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <Cpu className="w-3.5 h-3.5 text-violet-400" />
-                        <span className="text-[11px] font-medium text-white">Outbound Prep Agent</span>
-                      </div>
-                      <span className="text-[9px] font-mono text-emerald-400 flex items-center gap-1 animate-pulse">
-                        ● ACTIVE
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <Bot className="w-3.5 h-3.5 text-violet-400" />
-                        <span className="text-[11px] font-medium text-white">Triage Copilot</span>
-                      </div>
-                      <span className="text-[9px] font-mono text-cyan-400 flex items-center gap-1">
-                        ● STANDBY
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Execution Engine Visual (Console logs) */}
-                {activeSection === 2 && (
-                  <div className="w-full font-mono text-[9px] text-amber-400 bg-[#0a0500]/60 p-2.5 rounded-lg border border-amber-500/10 space-y-1 overflow-hidden h-24">
-                    {consoleLogs.map((log, i) => (
-                      <div key={i} className="truncate select-none">
-                        {log}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Action Controls/Tabs Grid */}
-        <div className="grid grid-cols-3 gap-3">
-          {sections.map((section, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveSection(i)}
-              className={`group/btn relative flex items-start gap-3 p-3.5 rounded-2xl border transition-all duration-300 text-left ${
-                activeSection === i
-                  ? "border-violet-500/40 bg-slate-50 dark:bg-slate-900"
-                  : "border-slate-200/80 dark:border-white/15 bg-slate-50 dark:bg-slate-900 hover:border-violet-500/15 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-              style={{
-                boxShadow: activeSection === i ? `0 0 15px ${activeGlow}` : undefined,
-              }}
-            >
-              <section.icon
-                className={`w-5 h-5 mt-0.5 ${section.color} ${
-                  activeSection === i ? "drop-shadow-[0_0_8px_currentColor]" : ""
-                }`}
-              />
-              <div className="truncate">
-                <div className="font-semibold text-slate-800 dark:text-white text-xs mb-0.5">{section.title}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{section.description}</div>
-              </div>
-              {activeSection === i && (
-                <motion.div
-                  layoutId="active-holo-indicator"
-                  className="absolute -right-1.5 -top-1.5 w-2.5 h-2.5 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa]"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// ─── Feature Card ─────────────────────────────────────────────────────────────
-const FeatureCard = React.memo(function FeatureCard({ icon: Icon, title, description, gradient, delay = 0 }: {
-  icon: any;
-  title: string;
-  description: string;
-  gradient: string;
-  delay?: number;
-}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay, ease: "easeOut" }}
-      className="group relative p-6 rounded-2xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 hover:border-violet-500/30 transition-all duration-500 overflow-hidden cursor-default shadow-sm hover:shadow-violet-500/5 hover:-translate-y-1"
-    >
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl ${gradient} blur-2xl scale-75`} />
-      
-      <div className="relative z-10">
-        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 ${gradient} bg-opacity-20`}>
-          <Icon className="w-6 h-6 text-slate-800 dark:text-white" />
-        </div>
-        <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-2">{title}</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{description}</p>
-      </div>
-    </motion.div>
   );
 });
 
@@ -357,25 +123,80 @@ const SVG_LOGOS = [
   },
 ];
 
-// ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function HomePage() {
   const router = useRouter();
-  const heroRef = useRef<HTMLDivElement>(null);
-  const intakeSectionRef = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const [abVariant] = useState<"A" | "B">("A");
-  const [formCompleted, setFormCompleted] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  // Annual pricing toggle
+  // Portal Simulator active tab
+  const [simPortal, setSimPortal] = useState<"customer" | "agent" | "admin">("customer");
+
+  // Portal Simulator Customer Tab States
+  const [custBusinessModel, setCustBusinessModel] = useState<"b2b" | "b2c" | "d2c">("b2b");
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: string; text: string }>>([
+    { sender: "Agent (Vijay)", text: "Hi! I noticed your conversion rate dropped last week. I prepared a new campaign segment." },
+    { sender: "You", text: "Thanks, let's deploy it. How many credits will it require?" },
+    { sender: "Agent (Vijay)", text: "Around 50 credits to execute the outreach. I've loaded it into your workspace." },
+  ]);
+
+  // Portal Simulator Agent Tab States
+  const [agentTactic, setAgentTactic] = useState("Cold Email");
+  const [agentDialerNum, setAgentDialerNum] = useState("");
+  const [callState, setCallState] = useState<"idle" | "ringing" | "connected">("idle");
+  const [callTimer, setCallTimer] = useState(0);
+
+  // Portal Simulator Admin Tab States
+  const [adminComplianceLogs, setAdminComplianceLogs] = useState<string[]>([
+    "GDPR Access Audit: Admin ashok accessed Client Stark Industries metadata",
+    "Task Allocation: System auto-assigned requirement Req-942 to Agent Praneeth",
+    "Security Check: Key verification approved for new outreach channel integration",
+  ]);
+
+  // FAPO Simulator States
+  const [originalPrompt, setOriginalPrompt] = useState("Write a cold email to sell my marketing tool.");
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationStep, setOptimizationStep] = useState("");
+  const [optimizedResult, setOptimizedResult] = useState<string | null>(null);
+
+  // Pricing States
   const [isAnnual, setIsAnnual] = useState(true);
-  // Currency selector
   const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD" | "INR">("USD");
-  
-  // Format currency with proper locale and symbol
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Softphone dialer timer effect
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (callState === "connected") {
+      t = setInterval(() => setCallTimer((prev) => prev + 1), 1000);
+    } else {
+      setCallTimer(0);
+    }
+    return () => clearInterval(t);
+  }, [callState]);
+
+  // Simulation: Add admin logs periodically
+  useEffect(() => {
+    if (simPortal !== "admin") return;
+    const actions = [
+      "GDPR Access Audit: Document 'Stark-Q4-ICP.pdf' downloaded by Agent Ashok",
+      "API Credentials Alert: Smartlead API Key rotated successfully",
+      "Security Check: Strict GDPR compliance firewall active - 0 threats found",
+      "Client Management: Business Model updated to 'B2C' for customer-demo",
+      "Task Audit: Overdue task 'Follow up Stark CEO' flagged for Agent Ashok",
+    ];
+    let i = 0;
+    const t = setInterval(() => {
+      setAdminComplianceLogs((prev) => [actions[i], ...prev.slice(0, 3)]);
+      i = (i + 1) % actions.length;
+    }, 4500);
+    return () => clearInterval(t);
+  }, [simPortal]);
+
+  // Currency Formatter helper
   const formatCurrency = (amount: number, currencyCode: string) => {
     const localeMap: Record<string, string> = {
       USD: "en-US",
@@ -384,9 +205,7 @@ export default function HomePage() {
       CAD: "en-CA",
       INR: "en-IN",
     };
-    
     const convertedAmount = amount * CONVERSION_RATES[currencyCode];
-    
     return new Intl.NumberFormat(localeMap[currencyCode] || "en-US", {
       style: "currency",
       currency: currencyCode,
@@ -394,793 +213,702 @@ export default function HomePage() {
     }).format(convertedAmount);
   };
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // Run mock FAPO Optimization
+  const handleFapoOptimize = () => {
+    if (isOptimizing) return;
+    setIsOptimizing(true);
+    setOptimizedResult(null);
+    setOptimizationStep("Analyzing prompt structure & tone...");
+    
+    setTimeout(() => {
+      setOptimizationStep("Injecting target company ICP attributes...");
+      setTimeout(() => {
+        setOptimizationStep("Synthesizing multi-model prompt variants...");
+        setTimeout(() => {
+          setOptimizationStep("Evaluating against 12 historical success criteria...");
+          setTimeout(() => {
+            setOptimizedResult(
+              `Subject: Solving conversion bottlenecks for Stark Industries?\n\nHi Tony,\n\nI noticed Stark Industries is experiencing operational latency in manual outbound pipelines. Many aerospace leaders waste up to 60% of their sales reps' time on CRM admin.\n\nWe deployed specialized AI revenue agents that handle lead qualification and book meetings autonomously. \n\nAre you open to a 10-minute preview next Tuesday to see how we could help Stark Industries save 6+ hours weekly?`
+            );
+            setIsOptimizing(false);
+          }, 800);
+        }, 800);
+      }, 800);
+    }, 800);
+  };
 
-  useEffect(() => {
-    if (isClient) {
-      const params = new URLSearchParams(window.location.search);
-      const leadId = params.get("leadId");
-      if (leadId) router.replace(`/analysis?leadId=${leadId}`);
-    }
-  }, [router, isClient]);
-
-  useEffect(() => {
-    if (!isClient || !formCompleted) return;
-    let maxScrollY = 0;
-    const calculateMaxScroll = () => {
-      if (intakeSectionRef.current) {
-        const rect = intakeSectionRef.current.getBoundingClientRect();
-        maxScrollY = window.scrollY + rect.bottom - window.innerHeight;
-        maxScrollY = Math.max(maxScrollY, 0);
-      }
-    };
-    calculateMaxScroll();
-
-    const preventScrollBeyond = (e: WheelEvent | TouchEvent) => {
-      const currentScrollY = window.scrollY;
-      let scrollingDown = false;
-
-      if (e.type === "wheel") scrollingDown = (e as WheelEvent).deltaY > 0;
-      else if (e.type === "touchmove") {
-        const touch = (e as TouchEvent).touches[0];
-        const prevTouch = (e as TouchEvent).changedTouches[0];
-        scrollingDown = touch.clientY < prevTouch.clientY;
-      }
-      if (scrollingDown && currentScrollY >= maxScrollY) {
-        e.preventDefault();
-        e.stopPropagation();
-        window.scrollTo(0, maxScrollY);
-      }
-    };
-
-    const preventKeyDownBeyond = (e: KeyboardEvent) => {
-      const currentScrollY = window.scrollY;
-      const isDownKey = ["ArrowDown", "PageDown", "Space"].includes(e.key);
-      if (isDownKey && currentScrollY >= maxScrollY) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    window.addEventListener("wheel", preventScrollBeyond, { passive: false });
-    window.addEventListener("touchmove", preventScrollBeyond, { passive: false });
-    window.addEventListener("keydown", preventKeyDownBeyond, { passive: false });
-    window.addEventListener("resize", calculateMaxScroll);
-
-    return () => {
-      window.removeEventListener("wheel", preventScrollBeyond);
-      window.removeEventListener("touchmove", preventScrollBeyond);
-      window.removeEventListener("keydown", preventKeyDownBeyond);
-      window.removeEventListener("resize", calculateMaxScroll);
-    };
-  }, [isClient, formCompleted]);
-
-  // Features list with codenames removed and led by buyer outcomes
-  const otherFeatures = React.useMemo(() => [
-    { icon: Database, title: "Gets smarter with every deal you close", description: "Adaptive learning system that enables continuous agent improvement based on closed-won outcomes and notes.", gradient: "bg-gradient-to-br from-teal-600/20 to-cyan-800/20" },
-    { icon: Cpu, title: "A fleet of specialized agents, each with a defined role", description: "Orchestrate collaborative agents for outreach, pipeline triage, calendar booking, and meeting prep.", gradient: "bg-gradient-to-br from-blue-600/20 to-indigo-800/20" },
-    { icon: Shield, title: "Autonomous agent collaboration and compliance", description: "Built-in security firewall that monitors, audits, and controls every action to ensure compliance.", gradient: "bg-gradient-to-br from-rose-600/20 to-red-800/20" },
-    { icon: TrendingUp, title: "Real-time pipeline analysis that identifies stall points", description: "Diagnose drop-offs immediately and surface the highest-impact recommendations to rescue deals.", gradient: "bg-gradient-to-br from-amber-600/20 to-orange-800/20" },
-    { icon: GitBranch, title: "Advanced multi-agent orchestration framework", description: "Orchestrate multiple agents with defined roles, permissions, and memory scopes that collaborate autonomously.", gradient: "bg-gradient-to-br from-emerald-600/20 to-green-800/20" },
-  ], []);
+  // Simulated Chat submit
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput;
+    setChatMessages((prev) => [...prev, { sender: "You", text: userMsg }]);
+    setChatInput("");
+    
+    setTimeout(() => {
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: "Agent (Vijay)", text: "Understood! I am spinning up the lead scoring engine now. View progress on your GTM tab." },
+      ]);
+    }, 1200);
+  };
 
   return (
-    <main className="min-h-screen text-slate-800 dark:text-white bg-background">
+    <main className="min-h-screen text-white bg-[#060612] relative overflow-hidden font-sans">
       
-      {/* ── HERO SECTION WITH HOLOGRAPHIC GTM ────────────────────────────────────── */}
-      <section id="hero" ref={heroRef} className=" relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      {/* ─── DYNAMIC COLORFUL BACKGROUND ORBS ──────────────────────────────────── */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(108,59,255,0.18),transparent_60%)]" />
         
-        {/* Ambient background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(108,59,255,0.08),transparent)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_80%_50%,rgba(108,59,255,0.05),transparent)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_70%,rgba(0,212,255,0.04),transparent)]" />
-          
-          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
-          
-          <FloatingOrb className="w-96 h-96 bg-violet-500 top-1/4 -left-20" delay={0} />
-          <FloatingOrb className="w-80 h-80 bg-violet-600 top-1/3 right-0" delay={2} />
-          <FloatingOrb className="w-64 h-64 bg-cyan-500 bottom-1/4 left-1/3" delay={4} />
-        </div>
+        <FloatingOrb className="w-[500px] h-[500px] top-[10%] -left-[10%] opacity-20" color="radial-gradient(circle, #7c3aed 0%, transparent 70%)" delay={0} />
+        <FloatingOrb className="w-[450px] h-[450px] top-[30%] -right-[10%] opacity-25" color="radial-gradient(circle, #06b6d4 0%, transparent 70%)" delay={2} />
+        <FloatingOrb className="w-[400px] h-[400px] bottom-[20%] left-[25%] opacity-20" color="radial-gradient(circle, #ec4899 0%, transparent 70%)" delay={4} />
+      </div>
+
+      {/* ─── HERO SECTION ──────────────────────────────────────────────────────── */}
+      <section id="hero" className="relative z-10 pt-28 pb-16 flex flex-col items-center justify-center text-center px-6 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 text-violet-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(124,58,237,0.15)]"
+        >
+          <Sparkles className="h-4.5 w-4.5 text-violet-400 animate-spin" />
+          The Next-Generation Revenue Intelligence OS
+          <ChevronRight className="h-3 w-3 text-slate-500" />
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-[1.05] mb-8 bg-gradient-to-r from-white via-[#C8B8FF] to-cyan-300 bg-clip-text text-transparent"
+        >
+          Close more deals.
+          <br />
+          <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(20,184,166,0.2)]">
+            Let the agents do it.
+          </span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="max-w-3xl text-slate-350 text-base sm:text-lg leading-relaxed mb-10"
+        >
+          DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep’s calendar by automating updates, call dialers, and outreach sequences.
+        </motion.p>
 
         <motion.div
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="relative z-10 mx-auto max-w-7xl px-6 py-20"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex flex-wrap justify-center gap-4 mb-6"
         >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Hero text */}
-            <div className="text-center lg:text-left">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-sm font-semibold backdrop-blur-sm"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
-                </span>
-                DealFlow AI GTM Engine
-                <ChevronRight className="w-4 h-4" />
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.1 }}
-                className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-8 text-slate-900 dark:text-white"
-              >
-                Close more deals.
-                <br />
-                <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-400 bg-clip-text text-transparent" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Let the agents do it.
-                </span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                className="max-w-xl mx-auto lg:mx-0 text-lg sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10"
-              >
-                {"CRM hygiene, stalled deals, and manual follow-ups eat up to 60% of your sales reps' time. DealFlow AI deploys autonomous revenue agents with persistent memory to handle the busywork so your team can focus on closing."}
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.3 }}
-                className="flex flex-col items-center lg:items-start gap-4"
-              >
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                  <Link
-                    href="/analysis/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => trackEvent("cta_start_analysis", { surface: "hero_v3", abVariant })}
-                    className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base transition-all duration-300 shadow-lg shadow-violet-500/25 hover:-translate-y-0.5"
-                  >
-                    Start Pipeline Analysis
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link
-                    href="/fapo"
-                    onClick={() => trackEvent("cta_fapo_hero", { surface: "hero_v3", abVariant })}
-                    className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-semibold text-base transition-all duration-300 shadow-xl shadow-teal-600/35 hover:-translate-y-0.5"
-                  >
-                    Try FAPO
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link
-                    href="/book-demo"
-                    onClick={() => trackEvent("cta_book_demo", { surface: "hero_v3", abVariant })}
-                    className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    Book a Demo
-                  </Link>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  No credit card required · 14-day free trial · Results in 2 minutes
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Right: Holographic GTM Component */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, x: 30 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="relative"
-            >
-              <div className="absolute -inset-8 bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-cyan-500/10 rounded-[2.5rem] blur-3xl" />
-              <HolographicGTM />
-            </motion.div>
-          </div>
+          <Link
+            href="/portal"
+            onClick={() => trackEvent("cta_landing_portal", { surface: "hero" })}
+            className="group relative inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:to-cyan-400 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
+          >
+            Launch Portals
+            <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <a
+            href="#fapo"
+            className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-[#0d0d21] border border-violet-500/30 hover:border-violet-500/60 text-slate-100 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-violet-500/5"
+          >
+            FAPO Prompt Simulator
+            <Rocket className="h-4.5 w-4.5 text-violet-400 group-hover:animate-bounce" />
+          </a>
+          <a
+            href="#pricing"
+            className="inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5"
+          >
+            View Pricing plans
+          </a>
         </motion.div>
+        <span className="text-xs text-slate-500 tracking-wide">
+          Fully compliant with SOC-2 & GDPR · 14-day trial period · Instant results
+        </span>
       </section>
 
-      {/* ── WHY TEAMS CHOOSE DEALFLOW AI (OUTCOMES SECTION) ──────────────────────────────── */}
-      <section className=" relative border-y border-slate-200 dark:border-white/5 bg-[#060612] flex flex-col justify-center py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.03),transparent)] pointer-events-none" />
+      {/* ─── INTERACTIVE PORTAL SIMULATOR ──────────────────────────────────────── */}
+      <section id="demo" className="relative z-10 py-16 px-6 max-w-6xl mx-auto">
+        <div className="text-center mb-10">
+          <span className="eyebrow-teal mb-3">Live Simulation</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
+            Explore the multi-portal experience
+          </h2>
+          <p className="text-slate-400 text-sm mt-2 max-w-2xl mx-auto">
+            Interact with our mock portals to see how customers, agents, and admins stay synchronized in real-time.
+          </p>
+        </div>
+
+        {/* Tab Selection */}
+        <div className="grid grid-cols-3 gap-3 p-1.5 bg-[#0a0a1f]/80 border border-white/5 rounded-2xl mb-8 max-w-2xl mx-auto backdrop-blur-lg">
+          {(["customer", "agent", "admin"] as const).map((portal) => (
+            <button
+              key={portal}
+              onClick={() => setSimPortal(portal)}
+              className={`py-3.5 rounded-xl text-xs font-bold capitalize transition-all duration-300 ${
+                simPortal === portal
+                  ? "bg-gradient-to-r from-teal-500/25 to-violet-500/25 border border-teal-500/40 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              {portal} Hub
+            </button>
+          ))}
+        </div>
+
+        {/* Mock Portal Viewport */}
+        <div className="relative rounded-3xl border border-white/10 overflow-hidden df-glass shadow-2xl p-6 min-h-[500px]">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-teal-500/5 pointer-events-none" />
+          
+          {/* Header element bar inside portal */}
+          <div className="flex justify-between items-center pb-4 border-b border-white/10 mb-6">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+              </span>
+              <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+                {simPortal === "customer" ? "Customer Dashboard v2.4" : simPortal === "agent" ? "Agent Workspace v3.5" : "Admin Security Console"}
+              </span>
+            </div>
+            <div className="flex gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {/* 1. CUSTOMER PORTAL */}
+            {simPortal === "customer" && (
+              <motion.div
+                key="customer-sim"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35 }}
+                className="space-y-6"
+              >
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
+                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">Available Credits</p>
+                    <h4 className="text-2xl font-extrabold text-white mt-1">750 Units</h4>
+                  </div>
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
+                    <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Active Campaigns</p>
+                    <h4 className="text-2xl font-extrabold text-white mt-1">12 Profiles</h4>
+                  </div>
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Operating Model</p>
+                      <h4 className="text-lg font-extrabold text-white mt-1 capitalize">{custBusinessModel} Flow</h4>
+                    </div>
+                    <select
+                      value={custBusinessModel}
+                      onChange={(e) => setCustBusinessModel(e.target.value as any)}
+                      className="bg-slate-950 border border-white/10 rounded-xl px-2 py-1 text-[10px] text-slate-350"
+                    >
+                      <option value="b2b">B2B SaaS</option>
+                      <option value="b2c">B2C Retail</option>
+                      <option value="d2c">D2C Brand</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Chat widget mockup */}
+                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col justify-between h-[220px]">
+                    <div className="space-y-3 overflow-y-auto max-h-[140px] pr-2 text-xs">
+                      {chatMessages.map((msg, idx) => (
+                        <div key={idx} className={`flex flex-col ${msg.sender === "You" ? "items-end" : "items-start"}`}>
+                          <span className="text-[9px] text-slate-500 mb-0.5">{msg.sender}</span>
+                          <div className={`p-2.5 rounded-xl max-w-[80%] ${msg.sender === "You" ? "bg-teal-600/20 text-teal-200 border border-teal-500/30" : "bg-slate-800 text-slate-200"}`}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <form onSubmit={handleChatSubmit} className="flex gap-2 border-t border-white/5 pt-3 mt-2">
+                      <input
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Type message to your agent..."
+                        className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs flex-1 focus:outline-none"
+                      />
+                      <button type="submit" className="p-2 bg-teal-600 rounded-xl hover:bg-teal-500 transition-colors">
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Campaign configuration details */}
+                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-4">
+                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                      <Target className="h-4 w-4 text-violet-400" /> Tailored campaign attributes
+                    </h4>
+                    <div className="space-y-2 text-xs leading-normal">
+                      <p className="text-slate-400">
+                        {custBusinessModel === "b2b"
+                          ? "Generating cold outreach sequences focused on VP Revenue and Sales leaders. Optimized for enterprise volume conversions."
+                          : custBusinessModel === "b2c"
+                          ? "Executing promotional loyalty reminders. Integrated with Shopify cart databases for automated abandoned checkout retrieval."
+                          : "Custom direct-to-consumer email flows focused on founder brand storytelling and priority product discounts."}
+                      </p>
+                      <div className="flex gap-2 mt-4">
+                        <span className="px-2.5 py-0.5 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-bold">
+                          ✓ Salesforce Synced
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold">
+                          ✓ Model Active
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 2. AGENT PORTAL */}
+            {simPortal === "agent" && (
+              <motion.div
+                key="agent-sim"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35 }}
+                className="space-y-6"
+              >
+                {/* Active Campaign Selection & Dialer */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left list of clients */}
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl space-y-2">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Campaign Queue</p>
+                    <div className="p-2.5 bg-violet-600/10 border border-violet-500/30 rounded-xl text-xs flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-white">Stark Industries</p>
+                        <p className="text-[9px] text-slate-400 mt-0.5">ICP: Aero/Defense leaders</p>
+                      </div>
+                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[9px] font-bold">Active</span>
+                    </div>
+                    <div className="p-2.5 hover:bg-white/5 rounded-xl text-xs flex justify-between items-center border border-transparent cursor-pointer">
+                      <div>
+                        <p className="font-bold text-slate-300">Cyberdyne Systems</p>
+                        <p className="text-[9px] text-slate-500 mt-0.5">ICP: Robotics/AI buyers</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dialer widget */}
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl space-y-3 flex flex-col justify-between">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">AI Softphone Dialer</p>
+                      <div className="bg-slate-950 p-2.5 rounded-xl border border-white/5 text-right font-mono text-xs text-slate-200 h-9 flex items-center justify-end">
+                        {agentDialerNum || "Dial Number"}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-center">
+                      {callState === "idle" ? (
+                        <>
+                          <button
+                            onClick={() => setAgentDialerNum((prev) => prev + "9")}
+                            className="h-8 w-8 rounded-full border border-white/10 hover:bg-white/10 text-xs flex items-center justify-center font-bold"
+                          >
+                            9
+                          </button>
+                          <button
+                            onClick={() => {
+                              setAgentDialerNum("+1 (555) 304-Stark");
+                              setCallState("ringing");
+                              setTimeout(() => setCallState("connected"), 2000);
+                            }}
+                            className="px-4 py-2 bg-emerald-600 rounded-xl hover:bg-emerald-500 text-xs font-bold flex items-center gap-1.5"
+                          >
+                            <Phone className="h-3 w-3" /> Call Stark
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <p className="text-[10px] text-yellow-400 font-bold animate-pulse">
+                            {callState === "ringing" ? "Ringing Stark..." : `Connected: ${Math.floor(callTimer / 60)}:${(callTimer % 60).toString().padStart(2, "0")}`}
+                          </p>
+                          <button
+                            onClick={() => setCallState("idle")}
+                            className="px-4 py-1.5 bg-rose-600 rounded-xl text-xs font-bold"
+                          >
+                            End Call
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Workload Metric */}
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">My Performance</p>
+                      <h4 className="text-2xl font-extrabold text-white">92.6%</h4>
+                      <p className="text-[10px] text-slate-400 mt-1">Average workflow conversion rate</p>
+                    </div>
+                    <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden mt-3">
+                      <div className="bg-gradient-to-r from-teal-400 to-violet-500 h-full w-[92.6%]" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Draft generator mockup */}
+                <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-bold text-slate-200">Outreach Email Drafting Module</h4>
+                    <select
+                      value={agentTactic}
+                      onChange={(e) => setAgentTactic(e.target.value)}
+                      className="bg-slate-950 border border-white/10 rounded-xl px-2.5 py-1 text-[10px] text-slate-350"
+                    >
+                      <option value="Cold Email">Cold Email Hook</option>
+                      <option value="LinkedIn Message">LinkedIn Pitch</option>
+                    </select>
+                  </div>
+                  <pre className="font-mono text-[10px] text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-white/5 overflow-x-auto whitespace-pre-wrap leading-relaxed h-[120px]">
+                    {agentTactic === "Cold Email"
+                      ? `Subject: CRM Hygiene Automation for Stark Industries?\n\nHi Tony,\n\nI noticed Stark Industries is scaling target aerospace acquisitions but experiencing bottleneck delays in CRM logging.\n\nOur specialized AI revenue agents update Salesforce automatically based on your real calling activity, saving 6+ hours weekly...`
+                      : `Hi Tony, noticed Stark Industries is scaling target aerospace acquisitions. We help defense leaders automate CRM sync & follow-up sequences. Let's connect!`}
+                  </pre>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 3. ADMIN PORTAL */}
+            {simPortal === "admin" && (
+              <motion.div
+                key="admin-sim"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35 }}
+                className="space-y-6"
+              >
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
+                    <div className="p-2.5 bg-orange-500/10 rounded-xl text-orange-400">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">MFA Status</p>
+                      <h4 className="text-base font-bold text-white mt-0.5">Strict Enforced</h4>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
+                    <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400">
+                      <Activity className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">API Request Health</p>
+                      <h4 className="text-base font-bold text-white mt-0.5">100% Operational</h4>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
+                    <div className="p-2.5 bg-violet-500/10 rounded-xl text-violet-400">
+                      <Users className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">Online Agent Count</p>
+                      <h4 className="text-base font-bold text-white mt-0.5">14 SDR Agents</h4>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Task Completion visual SVG */}
+                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-4">
+                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <BarChart2 className="h-4 w-4 text-teal-400" /> Global Task Analytics
+                    </h4>
+                    <div className="flex items-end justify-between h-[120px] px-4 pt-2">
+                      <div className="flex flex-col items-center gap-1.5 w-8">
+                        <div className="bg-teal-500/40 border border-teal-400/40 w-full h-[60px] rounded-t-md hover:bg-teal-500 transition-colors" />
+                        <span className="text-[9px] text-slate-500">Todo</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 w-8">
+                        <div className="bg-yellow-500/40 border border-yellow-400/40 w-full h-[90px] rounded-t-md hover:bg-yellow-500 transition-colors animate-pulse" />
+                        <span className="text-[9px] text-slate-500">Progress</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 w-8">
+                        <div className="bg-violet-500/50 border border-violet-400/40 w-full h-[120px] rounded-t-md hover:bg-violet-500 transition-colors" />
+                        <span className="text-[9px] text-slate-500">Done</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Audit Trail stream list */}
+                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col justify-between h-[178px]">
+                    <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                      <h4 className="text-xs font-bold text-slate-200">Compliance & Access Trail</h4>
+                      <span className="text-[9px] border border-white/10 text-orange-400 px-2 py-0.5 rounded font-bold">GDPR Enabled</span>
+                    </div>
+                    <div className="space-y-2 overflow-y-auto max-h-[110px] text-[10px] mt-2 pr-2">
+                      {adminComplianceLogs.map((log, idx) => (
+                        <div key={idx} className="p-2 bg-black/40 rounded-lg border border-white/5 text-slate-300 leading-relaxed font-mono truncate">
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* ─── WHY REVENUE LEADERS CHOOSE US (BENTO GRID) ────────────────────────── */}
+      <section className="relative z-10 py-24 border-y border-white/5 bg-[#08081a]/50">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.02),transparent)] pointer-events-none" />
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-300 text-xs font-mono uppercase tracking-wider mb-4">
-              Value Delivery
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Why revenue leaders choose DealFlow AI
+            <span className="eyebrow-violet mb-3">Enterprise Value</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
+              Why revenue teams choose DealFlow AI
             </h2>
+            <p className="text-slate-400 text-sm mt-2 max-w-lg mx-auto">
+              We isolate and automate the administrative load so your sellers can concentrate on building client relations.
+            </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1: CRM Drudgery (2 cols) */}
-            <div className="md:col-span-2 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent pointer-events-none" />
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Box 1: CRM Updates (2/3 width) */}
+            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-teal-950/20 via-black/40 to-transparent hover:border-teal-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/15 text-teal-400 mb-4">
-                  <Database className="w-5 h-5" />
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-teal-500/10 text-teal-400 mb-4 border border-teal-500/20">
+                  <Database className="h-5.5 w-5.5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Eliminate CRM Drudgery</h3>
-                <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
-                  Agents update Salesforce and HubSpot automatically based on real meeting context and email threads, reclaiming 6+ hours per rep weekly.
+                <h3 className="text-xl font-bold text-white mb-2">Eliminate CRM Drudgery</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Our Memory OS automatically transcribes sales calls, pulls key deal parameters, and updates Salesforce or HubSpot logs. Save up to 6 hours per week per representative.
                 </p>
               </div>
-              <div className="mt-6 flex gap-3 items-center">
-                <span className="text-xs font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="text-[10px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
                   ✓ Salesforce Synced
                 </span>
-                <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
                   ✓ HubSpot Synced
                 </span>
               </div>
             </div>
 
-            {/* Card 2: Pipeline Alerts (1 col) */}
-            <div className="md:col-span-1 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent pointer-events-none" />
+            {/* Box 2: Deal Alerts (1/3 width) */}
+            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-amber-950/20 via-black/40 to-transparent hover:border-amber-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 mb-4">
-                  <TrendingUp className="w-5 h-5" />
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
+                  <TrendingUp className="h-5.5 w-5.5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Resuscitate Stalled Deals</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Rescue Stalled Deals</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  Get proactive alerts and autonomous re-engagement outreach sequences the moment a key decision maker goes quiet.
+                  Proactive triggers alert agents the moment a pipeline opportunity stalls or decision-maker response latency spikes.
                 </p>
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
-                <span className="text-xs font-mono text-slate-400">Response Trigger:</span>
-                <span className="text-xs font-mono font-bold text-amber-400 animate-pulse">
-                  ● OUTREACH READY
+              <div className="mt-6 flex justify-between items-center text-[10px] font-mono text-slate-500">
+                <span>Active Triggers:</span>
+                <span className="text-amber-400 font-bold animate-pulse">● OUTREACH QUEUED</span>
+              </div>
+            </div>
+
+            {/* Box 3: Agent Orchestration (1/3 width) */}
+            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-violet-950/20 via-black/40 to-transparent hover:border-violet-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
+              <div className="df-specular" />
+              <div>
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-violet-500/10 text-violet-400 mb-4 border border-violet-500/20">
+                  <Cpu className="h-5.5 w-5.5" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Fleet of Specialized Agents</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Orchestrate collaborative agents for outreach campaigns, calendar booking management, and pre-meeting dossiers.
+                </p>
+              </div>
+              <div className="mt-6">
+                <span className="text-[10px] font-mono text-violet-300 bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full">
+                  Average Win Rate: +22%
                 </span>
               </div>
             </div>
 
-            {/* Card 3: Playbooks (1 col) */}
-            <div className="md:col-span-1 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent pointer-events-none" />
+            {/* Box 4: Security Compliance (2/3 width) */}
+            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-rose-950/20 via-black/40 to-transparent hover:border-rose-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-violet-500/15 text-violet-400 mb-4">
-                  <Sparkles className="w-5 h-5" />
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-rose-500/10 text-rose-400 mb-4 border border-rose-500/20">
+                  <Shield className="h-5.5 w-5.5" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Standardize Top Playbooks</h3>
+                <h3 className="text-xl font-bold text-white mb-2">GDPR & Compliance Firewall</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  Instantly propagate your top rep&apos;s strategies to your entire fleet of agents for consistent, high-yield follow-up.
+                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and SOC-2 compliant. Strict role-based layouts prevent unauthorized interactions.
                 </p>
               </div>
-              <div className="mt-6 border-t border-white/5 pt-4">
-                <span className="text-xs font-mono text-violet-400 bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full">
-                  Outbound Boost: +22%
-                </span>
-              </div>
-            </div>
-
-            {/* Card 4: Security (2 cols) */}
-            <div className="md:col-span-2 group relative p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] bento-glow transition-all duration-500 overflow-hidden flex flex-col justify-between min-h-[260px]">
-              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
-              <div className="df-specular" />
-              <div>
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 mb-4">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">Enterprise-Grade Security</h3>
-                <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
-                  Built on a secure firewall with persistent memory that keeps your proprietary deal data isolated, private, and SOC-2 compliant.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center justify-between">
+              <div className="mt-6 flex justify-between items-center flex-wrap gap-4 text-[10px] font-mono">
                 <div className="flex gap-2">
-                  <span className="text-[10px] font-mono text-slate-400 border border-white/10 bg-white/5 px-2.5 py-1 rounded">SOC 2 Type II</span>
-                  <span className="text-[10px] font-mono text-slate-400 border border-white/10 bg-white/5 px-2.5 py-1 rounded">GDPR Compliant</span>
+                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II</span>
+                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">GDPR Compliant</span>
                 </div>
-                <span className="text-[10px] font-mono text-rose-400 flex items-center gap-1">
-                  🔒 End-to-End Encrypted
-                </span>
+                <span className="text-rose-400 flex items-center gap-1">🔒 Full Session Isolation</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FAPO: FULLY AUTONOMOUS PROMPT OPTIMIZATION SECTION ───────────────────── */}
-      <section className=" relative border-b border-slate-200 dark:border-white/5 bg-background py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-xs font-mono uppercase tracking-wider mb-4">
-              <Rocket className="w-3.5 h-3.5" />
-              FAPO Engine
+      {/* ─── FAPO SIMULATOR SECTION ────────────────────────────────────────────── */}
+      <section id="fapo" className="relative z-10 py-24 px-6 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <span className="eyebrow-amber">
+              <Rocket className="h-3.5 w-3.5" />
+              FAPO Engine Simulator
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-4">
+            <h2 className="text-4xl font-extrabold text-white">
               Fully Autonomous Prompt Optimization
             </h2>
-            <p className="max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-400">
-              Continuously refine and optimize your prompts automatically using advanced AI-driven iteration and evaluation.
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Don&apos;t spend hours trying to fine-tune sales templates manually. Our FAPO algorithms run recursive generation, evaluation, and comparison cycles to output outreach copy that converts 15-30% higher.
             </p>
-          </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Features Grid */}
-            <div className="space-y-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-violet-500/20 transition-all">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600/20 to-purple-600/20 mb-4">
-                    <RefreshCw className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Auto-Optimization</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Iterative refinement loops that generate prompt variations, test performance, and select optimal versions.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-violet-500/20 transition-all">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-teal-600/20 to-cyan-600/20 mb-4">
-                    <BarChart2 className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Comprehensive Metrics</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Track accuracy, latency, relevance, and task-specific success rates for every prompt variant.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-violet-500/20 transition-all">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600/20 to-orange-600/20 mb-4">
-                    <Brain className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Adaptive Learning</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Adjusts optimization strategies based on historical performance data and changing task requirements.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-violet-500/20 transition-all">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600/20 to-green-600/20 mb-4">
-                    <Network className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Multi-LLM Support</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Optimize prompts across Hugging Face, NVIDIA, and other major LLM providers with our AI Provider Router.
-                  </p>
-                </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-bold" htmlFor="original-prompt-input">
+                  Your Core Outreach Concept
+                </label>
+                <input
+                  id="original-prompt-input"
+                  value={originalPrompt}
+                  onChange={(e) => setOriginalPrompt(e.target.value)}
+                  placeholder="e.g. Write an email selling software..."
+                  className="w-full bg-slate-950 border border-white/15 focus:border-violet-500 rounded-xl px-4 py-3 text-xs text-white focus:outline-none"
+                />
               </div>
 
-              <Link
-                href="/fapo"
-                onClick={() => trackEvent("cta_fapo", { surface: "homepage" })}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white font-semibold text-base transition-all duration-300 shadow-lg shadow-violet-500/25 hover:-translate-y-0.5"
+              <button
+                onClick={handleFapoOptimize}
+                disabled={isOptimizing}
+                className="w-full bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-500 hover:from-violet-500 text-white font-bold text-xs py-3.5 px-6 rounded-xl shadow-lg shadow-violet-500/25 transition-all flex items-center justify-center gap-2"
               >
-                Try FAPO Now
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-
-            {/* Right: Interactive Visualization */}
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-cyan-500/10 rounded-[2rem] blur-2xl" />
-              <div className="relative rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-xl">
-                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-100 dark:border-white/10">
-                  <div className="flex gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                  </div>
-                  <span className="text-xs font-mono text-slate-400 ml-2">fapo-engine.log</span>
-                </div>
-                <div className="font-mono text-xs space-y-2 bg-slate-50 dark:bg-black/30 rounded-xl p-4 max-h-80 overflow-y-auto">
-                  <div className="text-slate-400">[2025-01-15 09:15:32] 🔧 Initializing FAPO optimization cycle...</div>
-                  <div className="text-violet-400">[2025-01-15 09:15:33] 🧬 Generating initial prompt population (5 variants)</div>
-                  <div className="text-teal-400">[2025-01-15 09:15:35] 📊 Evaluating against 3 test cases...</div>
-                  <div className="text-emerald-400">[2025-01-15 09:15:40] ✅ Prompt Variant #3: Score 0.92 (92% accuracy)</div>
-                  <div className="text-slate-300">[2025-01-15 09:15:42] 🔄 Evolving population based on fitness...</div>
-                  <div className="text-amber-400">[2025-01-15 09:15:45] 📈 Best prompt so far: Variant #7 (Score: 0.95)</div>
-                  <div className="text-cyan-400">[2025-01-15 09:15:50] 🔍 Running multi-LLM validation...</div>
-                  <div className="text-emerald-400 font-bold">[2025-01-15 09:15:55] 🎉 Optimization complete! Improved by 15%</div>
-                </div>
-              </div>
+                {isOptimizing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin text-teal-400" />
+                    Optimizing Prompts...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 text-yellow-400" />
+                    Simulate FAPO Optimization
+                  </>
+                )}
+              </button>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ── GTM ASSESSMENT INTAKE FORM SECTION ───────────────────────────────────────── */}
-      <section id="how-it-works" ref={intakeSectionRef} className=" relative py-20 border-b border-slate-200 dark:border-white/5 scroll-mt-16 flex flex-col justify-center">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid lg:grid-cols-12 gap-8 items-center">
-            
-            {/* Left Column: Form Details & Blurred Report Sample */}
-            <div className="lg:col-span-5 space-y-6">
-              <span className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                GTM Assessment
-              </span>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Get Your GTM Readout
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Answer 6 questions — get a full GTM readout with specific recommendations for your pipeline in under 2 minutes.
-              </p>
-              
-              {/* Blurred Sample Report Card */}
-              <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 p-5 bg-white dark:bg-slate-900/40 overflow-hidden shadow-md">
-                {/* Blur backdrop overlay */}
-                <div className="absolute inset-0 bg-white/20 dark:bg-slate-950/40 backdrop-blur-[3px] z-10 flex flex-col items-center justify-center p-4">
-                  <div className="bg-slate-900/90 text-white text-xs px-3.5 py-1.5 rounded-xl border border-white/10 font-bold shadow-lg z-20 flex items-center gap-1">
-                    <svg className="h-3.5 w-3.5 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>Sample Report Preview</span>
-                  </div>
+          {/* Console / Output Window */}
+          <div className="relative rounded-3xl border border-white/10 overflow-hidden bg-slate-950/80 p-5 shadow-2xl min-h-[300px] flex flex-col justify-between">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
+              <Terminal className="h-4.5 w-4.5 text-violet-400" />
+              <span className="text-[10px] font-mono text-slate-500">fapo-execution-stream.log</span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center">
+              {isOptimizing && (
+                <div className="space-y-3 font-mono text-[10px] text-teal-400 bg-black/40 p-4 rounded-xl border border-teal-500/10">
+                  <p className="animate-pulse">→ Running FAPO iteration cycle...</p>
+                  <p className="text-slate-300">{optimizationStep}</p>
                 </div>
-                {/* Mock report elements */}
-                <div className="space-y-3 opacity-60">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-white/5">
-                    <span className="text-[10px] font-bold text-slate-400">PIPELINE READOUT</span>
-                    <span className="h-1.5 w-8 rounded bg-violet-400" />
+              )}
+
+              {!isOptimizing && !optimizedResult && (
+                <div className="text-center py-12 text-slate-500 space-y-2">
+                  <Brain className="h-10 w-10 text-slate-700 mx-auto" />
+                  <p className="text-xs">Enter a concept and launch optimization above to start the simulator.</p>
+                </div>
+              )}
+
+              {!isOptimizing && optimizedResult && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="bg-slate-900 border border-white/5 p-4 rounded-xl space-y-2 max-h-[220px] overflow-y-auto">
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Optimized Sequence</p>
+                    <pre className="font-mono text-[10px] text-slate-200 whitespace-pre-wrap leading-relaxed">
+                      {optimizedResult}
+                    </pre>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                      <span className="text-[8px] text-slate-400 block">Win Rate</span>
-                      <span className="text-xs font-bold text-emerald-500 font-mono">+18.4%</span>
+                    <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-center rounded-xl">
+                      <span className="text-[8px] text-slate-500 block uppercase">Win Rate Prob</span>
+                      <strong className="text-emerald-400 text-xs font-mono">+28.4%</strong>
                     </div>
-                    <div className="p-2 rounded bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                      <span className="text-[8px] text-slate-400 block">Stalled Opportunities</span>
-                      <span className="text-xs font-bold text-red-500 font-mono">14</span>
+                    <div className="p-2.5 bg-cyan-500/10 border border-cyan-500/20 text-center rounded-xl">
+                      <span className="text-[8px] text-slate-500 block uppercase">Tokens Saved</span>
+                      <strong className="text-cyan-400 text-xs font-mono">-14%</strong>
                     </div>
-                    <div className="p-2 rounded bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                      <span className="text-[8px] text-slate-400 block">ICP Alignment</span>
-                      <span className="text-xs font-bold text-violet-500 font-mono">92.6%</span>
+                    <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 text-center rounded-xl">
+                      <span className="text-[8px] text-slate-500 block uppercase">ICP Fit Rating</span>
+                      <strong className="text-violet-400 text-xs font-mono">98%</strong>
                     </div>
-                  </div>
-                  <div className="h-8 rounded bg-slate-100 dark:bg-white/5 flex items-center justify-between px-3 text-[9px] text-slate-500">
-                    <span>Recommendations: Standardize win playbook ...</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-            
-            {/* Right Column: Launch GTM Assessment */}
-            <div className="lg:col-span-7">
-              <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 bg-white dark:bg-slate-900/40 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[350px]">
-                {/* Decorative background glow */}
-                <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-violet-600/10 blur-[80px] pointer-events-none" />
-                <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-teal-600/10 blur-[80px] pointer-events-none" />
-
-                <div className="space-y-6 relative z-10">
-                  <div className="inline-flex p-3 rounded-2xl bg-violet-500/10 text-violet-500 border border-violet-500/20">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      RevOps Assessment Questionnaire
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                      Calibrate our autonomous revenue models for your pipeline. Complete the intake form in a secure, isolated browser tab.
-                    </p>
-                  </div>
-
-                  {/* Benefit highlights */}
-                  <ul className="space-y-3.5 text-sm text-slate-600 dark:text-slate-400">
-                    <li className="flex items-center gap-3">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span>6 RevOps qualification questions</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span>Get a detailed PDF readout report instantly</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="pt-6 relative z-10 space-y-4">
-                  <Link
-                    href="/analysis/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => trackEvent("cta_start_analysis", { surface: "gtm_section_card_v3", abVariant })}
-                    className="w-full justify-center group inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 shadow-lg shadow-violet-500/20 hover:-translate-y-0.5"
-                  >
-                    <span>Launch GTM Assessment</span>
-                    <svg className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </Link>
-
-                  <div className="text-center text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5 select-none">
-                    <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <span>Your data is never sold or shared</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
 
-      {/* ── PLATFORM SECTION ───────────────────────────────────────────────────── */}
-      <section id="features" className=" relative py-28 overflow-hidden flex flex-col justify-center">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
-        
+      {/* ─── PRICING SECTION ───────────────────────────────────────────────────── */}
+      <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Bot className="w-3.5 h-3.5" />
-              Platform Architecture
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-5"
-            >
-              Everything your revenue team needs,
-              <br />
-              <span className="text-slate-500 dark:text-slate-400">unified in one intelligent OS</span>
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-slate-600 dark:text-slate-400 text-lg"
-            >
-              From memory architecture to autonomous agent orchestration — DealFlow AI is a full-stack intelligence platform built for modern GTM teams.
-            </motion.p>
-          </div>
+          <div className="text-center mb-12">
+            <span className="eyebrow-amber mb-3">Pricing Options</span>
+            <h2 className="text-4xl font-extrabold text-white">Simple, transparent pricing</h2>
+            <p className="text-slate-400 text-sm mt-2">Start free for 14 days. No credit card required.</p>
 
-          <div className="space-y-4 max-w-6xl mx-auto">
-            {/* Memory OS Wide Flagship Hero Card */}
-            <div className="p-8 rounded-3xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-violet-50/30 via-white/50 to-teal-50/30 dark:from-violet-950/20 dark:via-[#08081b]/50 dark:to-teal-950/10 hover:border-violet-500/20 dark:hover:border-violet-500/40 transition-all duration-500 shadow-xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
-              <div className="df-specular" />
-              
-              <div className="grid md:grid-cols-12 gap-8 items-center relative z-10">
-                {/* Visual SVG Hub Column (4 cols) */}
-                <div className="md:col-span-4 flex items-center justify-center relative">
-                  <div className="w-40 h-40 relative flex items-center justify-center">
-                    {/* Spinning outer rings */}
-                    <motion.div
-                      className="absolute inset-0 rounded-full border border-dashed border-violet-500/30"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 24, ease: "linear", repeat: Infinity }}
-                    />
-                    <motion.div
-                      className="absolute inset-4 rounded-full border border-teal-500/25"
-                      animate={{ rotate: -360 }}
-                      transition={{ duration: 16, ease: "linear", repeat: Infinity }}
-                    />
-                    {/* Glowing center hub */}
-                    <div className="absolute w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 to-cyan-500 opacity-20 blur-md" />
-                    <div className="absolute w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/30 to-cyan-500/20 border border-violet-400/30 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform duration-500">
-                      <Brain className="w-7 h-7 text-violet-300 drop-shadow-[0_0_8px_#a78bfa]" />
-                    </div>
-                    {/* Dynamic connected nodes */}
-                    <span className="absolute top-2 left-6 w-2 h-2 rounded-full bg-violet-400 animate-ping" />
-                    <span className="absolute bottom-4 right-6 w-2 h-2 rounded-full bg-teal-400 animate-ping" style={{ animationDelay: "1s" }} />
-                  </div>
-                </div>
-
-                {/* Content Column (8 cols) */}
-                <div className="md:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-600 dark:text-violet-300 text-[10px] font-bold uppercase tracking-wider select-none">
-                    Flagship Core
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    Agents that remember every deal, forever
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-                    Unified memory management system that retains deal context, buyer signals, and pipeline state across every interaction. Every meeting note, email thread, and deal constraint is cataloged and instantly retrievable.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Persistent Context Windows</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Cross-Agent Synchronization</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Rest of the Features */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {otherFeatures.map((feature, i) => (
-                <FeatureCard key={i} {...feature} delay={i * 0.08} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── INTEGRATIONS & TESTIMONIALS SECTION GROUP ─────────────────────────── */}
-      <div className=" flex flex-col justify-center py-20 border-t border-slate-200 dark:border-white/5 bg-[#070715]/10">
-        
-        {/* ── INTEGRATIONS MARQUEE STRIP ───────────────────────────────────────── */}
-        <section className="relative overflow-hidden mb-12">
-          <div className="mx-auto max-w-7xl px-6 text-center">
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-6"
-            >
-              Integrates with your existing revenue stack
-            </motion.p>
-            
-            <div className="relative w-full overflow-hidden py-4">
-              <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-background to-transparent z-10" />
-              <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-background to-transparent z-10" />
-              <motion.div
-                className="flex gap-8 items-center whitespace-nowrap min-w-full"
-                animate={{ x: [0, -400] }}
-                transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-              >
-                {[...SVG_LOGOS, ...SVG_LOGOS, ...SVG_LOGOS].map((logo, idx) => (
-                  <div
-                    key={idx}
-                    className="inline-flex items-center px-6 py-3 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/3 text-slate-800 dark:text-slate-400 text-sm font-semibold hover:border-violet-500/50 hover:scale-105 transition-all cursor-pointer shadow-sm"
-                  >
-                    {logo.svg}
-                    <span>{logo.name}</span>
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── TESTIMONIALS SECTION ────────────────────────────────────────────────── */}
-        <section className="relative bg-transparent">
-          <div className="mx-auto max-w-7xl px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">What Revenue Leaders Say</h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">Hear from the VP Sales and RevOps leaders using DealFlow AI.</p>
-            </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[
-              {
-                quote: "DealFlow AI cut our manual follow-up time to zero. Our reps are now solely focused on high-value conversations.",
-                author: "Sarah Jenkins",
-                role: "VP Sales",
-                company: "TechScale Inc.",
-                initials: "SJ",
-              },
-              {
-                quote: "We finally solved our CRM hygiene issue. The memory OS automatically populates deal logs with high fidelity.",
-                author: "Marcus Chen",
-                role: "Head of RevOps",
-                company: "cloudFlow",
-                initials: "MC",
-              },
-              {
-                quote: "Our win rates increased by 22% within the first month. The agents flag stalled deals before they drop off.",
-                author: "Elena Rostova",
-                role: "Chief Revenue Officer",
-                company: "EnterpriseOS",
-                initials: "ER",
-              },
-            ].map((t, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 hover:border-violet-500/30 transition-all flex flex-col justify-between shadow-sm"
-              >
-                <p className="text-slate-700 dark:text-slate-200 italic text-sm leading-relaxed">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 mt-6">
-                  <div className="h-9 w-9 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300 font-bold text-xs flex items-center justify-center">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-white">{t.author}</h4>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {t.role}, {t.company}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-
-      {/* ── PRICING ─────────────────────────────────────────────────────────────── */}
-      <section className=" relative py-28 border-t border-slate-200 dark:border-white/5 flex flex-col justify-center" id="pricing">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_80%,rgba(108,59,255,0.03),transparent)] pointer-events-none" />
-
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center mb-10">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Pricing
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Simple, transparent pricing
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-slate-500 dark:text-slate-400 text-lg"
-            >
-              Start free for 14 days. No credit card required.
-            </motion.p>
-
-            {/* Annual billing toggle and currency selector */}
+            {/* billing toggler and currency */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-8">
-              {/* Annual billing toggle */}
               <div className="flex items-center justify-center gap-3">
-                <span className={`text-sm font-semibold transition-colors ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-400"}`}>Monthly</span>
+                <span className={`text-xs font-semibold ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-500"}`}>Monthly</span>
                 <button
                   onClick={() => setIsAnnual(!isAnnual)}
-                  className="relative w-14 h-7 bg-white/5 border border-white/10 rounded-full transition-colors flex items-center p-1 cursor-pointer"
-                  aria-label="Toggle annual billing"
+                  className="relative w-12 h-6 bg-slate-900 border border-white/10 rounded-full transition-colors flex items-center p-0.5 cursor-pointer"
+                  aria-label="Toggle annual pricing"
                 >
                   <motion.div
-                    className="w-5 h-5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full shadow-md shadow-teal-500/20"
-                    animate={{ x: isAnnual ? 26 : 0 }}
+                    className="w-4.5 h-4.5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full"
+                    animate={{ x: isAnnual ? 24 : 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   />
                 </button>
-                <span className={`text-sm font-semibold transition-colors ${isAnnual ? "text-teal-400 font-bold" : "text-slate-400"} flex items-center gap-1.5`}>
+                <span className={`text-xs font-semibold ${isAnnual ? "text-teal-400 font-bold" : "text-slate-500"} flex items-center gap-1`}>
                   Annually
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
                     Save 20%
                   </span>
                 </span>
               </div>
 
-              {/* Currency selector */}
               <div className="flex items-center justify-center gap-2">
-                <span className="text-sm font-semibold text-slate-400">Currency:</span>
-                <div className="flex bg-white/5 border border-white/10 rounded-full p-0.5">
-                  {["USD", "EUR", "GBP", "CAD", "INR"].map((curr) => (
+                <span className="text-xs text-slate-500 font-semibold">Currency:</span>
+                <div className="flex bg-slate-900 border border-white/10 rounded-full p-0.5">
+                  {(["USD", "EUR", "GBP", "CAD", "INR"] as const).map((curr) => (
                     <button
                       key={curr}
-                      onClick={() => setCurrency(curr as any)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ${
+                      onClick={() => setCurrency(curr)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all duration-200 ${
                         currency === curr
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-400 text-white shadow-md"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-400 text-white"
                           : "text-slate-400 hover:text-slate-200"
                       }`}
                     >
@@ -1196,66 +924,70 @@ export default function HomePage() {
             {PLANS.map((plan) => {
               const isPopular = plan.popular;
               const isEnterprise = plan.price === null;
-              
-              const formattedPrice = isEnterprise 
-                ? "Custom" 
+              const priceVal = isEnterprise
+                ? "Custom"
                 : formatCurrency(isAnnual ? plan.price!.annual : plan.price!.monthly, currency);
-                
+
               return (
-                <div 
+                <div
                   key={plan.name}
                   className={`relative p-8 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    isPopular 
-                      ? "border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] shadow-xl shadow-violet-500/5 hover:-translate-y-1 hover:border-violet-500/60" 
-                      : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    isPopular
+                      ? "border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] shadow-xl shadow-violet-500/10 hover:-translate-y-1 hover:border-violet-500/60"
+                      : "border-white/5 bg-slate-900/40 hover:border-white/10 hover:bg-slate-900/60"
                   }`}
                 >
                   {isPopular && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-violet-500/25">
+                      <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
                         Most Popular
                       </span>
                     </div>
                   )}
+
                   <div className="space-y-6">
                     <div>
-                      <div className={`${isPopular ? "text-violet-400" : "text-slate-550 dark:text-slate-400"} text-[10px] font-bold uppercase tracking-widest mb-1`}>
+                      <div className={`${isPopular ? "text-violet-400" : "text-slate-400"} text-[10px] font-bold uppercase tracking-widest mb-1`}>
                         {plan.name}
                       </div>
-                      <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">
-                        {formattedPrice}{!isEnterprise && "/mo"}
+                      <div className="text-3xl font-bold text-white font-mono">
+                        {priceVal}{!isEnterprise && "/mo"}
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-1">
-                        {isEnterprise ? "Billed bespoke" : isAnnual ? "Billed annually" : "Billed monthly"}
+                      <div className="text-[9px] text-slate-500 mt-1">
+                        {isEnterprise ? "Custom parameters" : isAnnual ? "Billed annually" : "Billed monthly"}
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed min-h-[32px]">
+
+                    <p className="text-slate-400 text-xs leading-relaxed min-h-[36px]">
                       {plan.description}
                     </p>
+
                     <div className={`border-t ${isPopular ? "border-violet-500/10" : "border-white/5"} my-4`} />
+
                     <ul className="space-y-3">
                       {plan.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-2.5">
                           <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-violet-400" : "text-teal-500"}`} />
-                          <span className={`${isPopular ? "text-slate-300" : "text-slate-700 dark:text-slate-300"} text-xs ${!f.included ? "text-slate-550 dark:text-slate-550 line-through" : ""}`}>
+                          <span className={`text-xs ${f.included ? "text-slate-300" : "text-slate-600 line-through"}`}>
                             {f.text}
                           </span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="mt-8">
+
+                  <div className="mt-8 space-y-3">
                     <Link
-                      href={isEnterprise ? "/book-demo" : "/book-demo?trial=true"}
+                      href={isEnterprise ? "/book-demo" : "/portal/customer/login?signup=true"}
                       className={`w-full h-11 flex items-center justify-center rounded-xl font-bold text-xs transition-all ${
                         isPopular
                           ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
-                          : "border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white"
+                          : "border border-white/10 bg-white/5 hover:bg-white/10 text-white"
                       }`}
                     >
                       {plan.cta}
                     </Link>
-                    <span className="text-[9px] text-slate-500 text-center block mt-3 select-none">
+                    <span className="text-[9px] text-slate-500 text-center block">
                       No credit card required · Cancel anytime
                     </span>
                   </div>
@@ -1263,65 +995,46 @@ export default function HomePage() {
               );
             })}
           </div>
+        </div>
+      </section>
 
-          {/* Bottom Trust Row */}
-          <div className="text-center mt-12 text-xs text-slate-400 select-none">
-            14-day free trial · No credit card · Cancel anytime · SOC 2 certified
+      {/* ─── FINAL CALL-TO-ACTION ─────────────────────────────────────────────── */}
+      <section className="relative z-10 py-24 border-t border-white/5 bg-[#05050e]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
+          <span className="eyebrow-teal">
+            <Target className="h-3.5 w-3.5 text-teal-400" /> Start Automating
+          </span>
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight">
+            Ready to accelerate GTM operations
+            <br />
+            <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+              at autonomous speeds?
+            </span>
+          </h2>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
+            Onboard in under 2 minutes. Sync your SDR campaigns, dialers, and CRM pipelines with a dedicated fleet of revenue agents today.
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <Link
+              href="/portal/customer/login?signup=true"
+              className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:to-cyan-400 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
+            >
+              Get Started Free
+              <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/book-demo"
+              className="inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-all duration-300 hover:-translate-y-0.5"
+            >
+              Talk with Sales
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── CTA SECTION ─────────────────────────────────────────────────────────── */}
-      <section className=" relative py-28 border-t border-slate-200 dark:border-white/5 overflow-hidden flex flex-col justify-center bg-[#05050e]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.08),transparent)] pointer-events-none" />
-        
-        <div className="relative mx-auto max-w-4xl px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="space-y-8"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-300 text-xs font-mono uppercase tracking-wider">
-              <Target className="w-3.5 h-3.5 text-teal-400" />
-              Start Today
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
-              Ready to close deals
-              <br />
-              <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent" style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                at AI speed?
-              </span>
-            </h2>
-            <p className="text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              Deploy autonomous revenue agents with persistent memory to handle lead qualification, outbound, and meeting logistics.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-              <Link
-                href="/analysis/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent("cta_start_analysis", { surface: "bottom_cta_v3", abVariant })}
-                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-bold text-base transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/book-demo"
-                onClick={() => trackEvent("cta_talk_sales", { surface: "bottom_cta_v3", abVariant })}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-base transition-all duration-300 hover:-translate-y-0.5"
-              >
-                Talk to Sales
-              </Link>
-            </div>
-            <p className="text-slate-500 text-xs">
-              14-day free trial · No credit card required · Cancel anytime
-            </p>
-          </motion.div>
-        </div>
-      </section>
     </main>
   );
 }

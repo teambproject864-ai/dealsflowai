@@ -248,6 +248,8 @@ function AgentPortalContent() {
   const currentAgentId = user?.id || "";
   const myTasks = tasks.filter(t => t.assignedAgentId === currentAgentId || !t.assignedAgentId);
   const pendingTasks = myTasks.filter(t => t.status !== "completed").length;
+  const completedTasks = myTasks.filter(t => t.status === "completed").length;
+  const totalTasks = myTasks.length;
   const rating = feedback.length 
     ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) 
     : "4.8";
@@ -324,6 +326,35 @@ function AgentPortalContent() {
           </CardContent>
         </GlassPanel>
       </div>
+
+      {/* Progress & Dialer Stats */}
+      <GlassPanel className="border border-slate-800 p-5 bg-slate-900/10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-slate-200">Outbound Dial Tracking & Workload Completeness</h3>
+            <p className="text-xs text-slate-500">Your live activity tracking metrics for this GTM segment</p>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap text-xs font-mono">
+            <div>
+              <span className="text-slate-400">Completed Workload:</span>
+              <span className="text-teal-400 font-bold ml-1">
+                {completedTasks} / {totalTasks} Tasks ({totalTasks > 0 ? Math.round((completedTasks/totalTasks)*100) : 100}%)
+              </span>
+            </div>
+            <div className="h-4 w-px bg-slate-800" />
+            <div>
+              <span className="text-slate-400">Recent Calls Made:</span>
+              <span className="text-cyan-400 font-bold ml-1">{callsList.length} Sessions</span>
+            </div>
+          </div>
+        </div>
+        <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden mt-4 border border-white/5">
+          <div
+            className="bg-gradient-to-r from-teal-400 to-indigo-500 h-full transition-all duration-500"
+            style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 100}%` }}
+          />
+        </div>
+      </GlassPanel>
 
       {/* Tab Control List */}
       <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl">

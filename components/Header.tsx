@@ -303,12 +303,6 @@ export function Header() {
     ? "sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-b from-[#060612]/95 to-[#050510]/92 df-glass backdrop-blur-3xl !overflow-visible shadow-xl shadow-black/20"
     : "sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl !overflow-visible";
 
-  if (!mounted) {
-    return (
-      <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl h-20" />
-    );
-  }
-
   return (
     <header className={headerClasses} suppressHydrationWarning>
     

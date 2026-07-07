@@ -6,6 +6,7 @@ import { chunkText } from "./chunking";
 import { parseDocument } from "./parsers";
 import { ragUpsertChunks, ragDeleteChunks } from "./vector";
 import type { RagChunk, RagChunkMetadata, RagDocument } from "./types";
+import { OKFSystem } from "../okf";
 
 const DOCS_COLLECTION = "rag_documents";
 const CHUNKS_COLLECTION = "rag_chunks";
@@ -171,6 +172,14 @@ export async function ingestDocument(args: {
     });
 
     await docRef.update({ status: "ready", chunkCount: chunkDocs.length });
+
+    // Sync knowledge into OKF framework concurrently
+    try {
+      await OKFSystem.ingestIntoOKF({ docId, docName: doc.name, text: parsed.text });
+    } catch (okfErr) {
+      console.error(`[ingest.ts] OKF ingestion failed for document ${docId}:`, okfErr);
+    }
+
     await audit("rag_ingest_success", { docId, chunkCount: chunkDocs.length, detectedType: parsed.detectedType });
 
     return { docId, chunkCount: chunkDocs.length };
