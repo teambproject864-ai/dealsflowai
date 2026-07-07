@@ -47,7 +47,6 @@ import {
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { IntakeForm } from "@/components/IntakeForm";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
 // ─── Floating Orb (Vibrant Cosmic Accents) ───────────────────────────────────
@@ -362,69 +361,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── GO TO MARKET (GTM ASSESSMENT) SECTION ────────────────────────────── */}
-      <section id="gtm-assessment" className="relative z-10 py-24 px-6 max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <span className="eyebrow-teal">
-              <Target className="h-3.5 w-3.5" />
-              Go to Market (GTM Assessment)
-            </span>
-            <h2 className="text-4xl font-extrabold text-white">
-              GTM Strategy Alignment Engine
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Conduct a comprehensive assessment of your current go-to-market strategy, identify performance gaps, and receive AI-generated recommendations to optimize your outreach, content, and channel mix for maximum conversion.
-            </p>
 
-            <div className="space-y-4">
-              <a
-                href="#gtm-assessment"
-                className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 text-white font-bold text-xs py-3.5 px-6 rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2"
-              >
-                <Zap className="h-4 w-4 text-yellow-400" />
-                Start GTM Assessment
-              </a>
-            </div>
-          </div>
-
-          {/* GTM Metrics Preview Panel */}
-          <div className="relative rounded-3xl border border-white/10 overflow-hidden bg-slate-950/80 p-5 shadow-2xl min-h-[300px] flex flex-col justify-between">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
-              <BarChart2 className="h-4.5 w-4.5 text-teal-400" />
-              <span className="text-[10px] font-mono text-slate-500">gtm-performance-dashboard.log</span>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="space-y-4 animate-in fade-in duration-300">
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="p-3 bg-teal-500/10 border border-teal-500/20 text-center rounded-xl">
-                    <span className="text-[8px] text-slate-500 block uppercase">Pipeline Velocity</span>
-                    <strong className="text-teal-400 text-xs font-mono">+42%</strong>
-                  </div>
-                  <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-center rounded-xl">
-                    <span className="text-[8px] text-slate-500 block uppercase">Lead Quality</span>
-                    <strong className="text-cyan-400 text-xs font-mono">+35%</strong>
-                  </div>
-                  <div className="p-3 bg-violet-500/10 border border-violet-500/20 text-center rounded-xl">
-                    <span className="text-[8px] text-slate-500 block uppercase">CAC Reduction</span>
-                    <strong className="text-violet-400 text-xs font-mono">-22%</strong>
-                  </div>
-                </div>
-                <div className="bg-slate-900 border border-white/5 p-4 rounded-xl space-y-2 max-h-[220px] overflow-y-auto">
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">GTM Optimization Insights</p>
-                  <ul className="text-[10px] text-slate-300 space-y-2 list-disc pl-4">
-                    <li>LinkedIn outreach sequence performance improved by 38% after A/B testing value prop positioning</li>
-                    <li>Cold email personalization using company-specific ICP attributes increased open rates by 27%</li>
-                    <li>Content marketing focus shifted to mid-funnel technical guides, boosting MQL to SQL conversions</li>
-                    <li>Re-engagement campaigns targeting dormant leads with personalized demos showed 19% lift</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─── PRICING SECTION ───────────────────────────────────────────────────── */}
       <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">
