@@ -17,6 +17,10 @@ function envNum(name: string, fallback: number) {
 }
 
 async function audit(type: string, payload: Record<string, any>) {
+  if (!db) {
+    console.warn("Firestore db is not initialized. Skipping audit logging.");
+    return;
+  }
   try {
     await db.collection("audit_logs").add({
       type,

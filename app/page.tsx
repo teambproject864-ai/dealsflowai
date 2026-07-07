@@ -258,7 +258,6 @@ export default function HomePage() {
       
       {/* ─── DYNAMIC COLORFUL BACKGROUND ORBS ──────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(108,59,255,0.18),transparent_60%)]" />
         
         <FloatingOrb className="w-[500px] h-[500px] top-[10%] -left-[10%] opacity-20" color="radial-gradient(circle, #7c3aed 0%, transparent 70%)" delay={0} />
