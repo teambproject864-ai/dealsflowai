@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import { IntakeForm } from "@/components/IntakeForm";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -244,12 +245,14 @@ export default function HomePage() {
         </span>
       </section>
 
-      {/* ─── GTM ANALYSIS CONFIGURATION INTAKE FORM ────────────────────────────── */}
-      <section id="demo" className="relative z-10 py-20 px-6 max-w-5xl mx-auto">
+      {/* --- GTM ASSESSMENT INTAKE FORM --- */}
+      <section id="gtm-assessment" className="relative z-10 py-20 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <span className="eyebrow-teal mb-3">Intake Questionnaire</span>
+          <span className="eyebrow-teal mb-3 flex items-center justify-center gap-2">
+            <Target className="h-4 w-4" /> GTM Assessment
+          </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-            Configure Your GTM Analysis
+            Start Your Go-to-Market Assessment
           </h2>
           <p className="text-slate-400 text-sm mt-2 max-w-2xl mx-auto">
             Complete the questionnaire to configure the AI model and generate tailored, real-time go-to-market pipelines.
@@ -375,13 +378,13 @@ export default function HomePage() {
             </p>
 
             <div className="space-y-4">
-              <Link
-                href="/solutions/gtm"
+              <a
+                href="#gtm-assessment"
                 className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 text-white font-bold text-xs py-3.5 px-6 rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2"
               >
                 <Zap className="h-4 w-4 text-yellow-400" />
                 Start GTM Assessment
-              </Link>
+              </a>
             </div>
           </div>
 
