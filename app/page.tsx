@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { IntakeForm } from "@/components/IntakeForm";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
 // ─── Floating Orb (Vibrant Cosmic Accents) ───────────────────────────────────
@@ -128,36 +129,9 @@ export default function HomePage() {
   const [abVariant] = useState<"A" | "B">("A");
   const [isClient, setIsClient] = useState(false);
 
-  // Portal Simulator active tab
-  const [simPortal, setSimPortal] = useState<"customer" | "agent" | "admin">("customer");
 
-  // Portal Simulator Customer Tab States
-  const [custBusinessModel, setCustBusinessModel] = useState<"b2b" | "b2c" | "d2c">("b2b");
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: string; text: string }>>([
-    { sender: "Agent (Vijay)", text: "Hi! I noticed your conversion rate dropped last week. I prepared a new campaign segment." },
-    { sender: "You", text: "Thanks, let's deploy it. How many credits will it require?" },
-    { sender: "Agent (Vijay)", text: "Around 50 credits to execute the outreach. I've loaded it into your workspace." },
-  ]);
 
-  // Portal Simulator Agent Tab States
-  const [agentTactic, setAgentTactic] = useState("Cold Email");
-  const [agentDialerNum, setAgentDialerNum] = useState("");
-  const [callState, setCallState] = useState<"idle" | "ringing" | "connected">("idle");
-  const [callTimer, setCallTimer] = useState(0);
 
-  // Portal Simulator Admin Tab States
-  const [adminComplianceLogs, setAdminComplianceLogs] = useState<string[]>([
-    "GDPR Access Audit: Admin ashok accessed Client Stark Industries metadata",
-    "Task Allocation: System auto-assigned requirement Req-942 to Agent Praneeth",
-    "Security Check: Key verification approved for new outreach channel integration",
-  ]);
-
-  // FAPO Simulator States
-  const [originalPrompt, setOriginalPrompt] = useState("Write a cold email to sell my marketing tool.");
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [optimizationStep, setOptimizationStep] = useState("");
-  const [optimizedResult, setOptimizedResult] = useState<string | null>(null);
 
   // Pricing States
   const [isAnnual, setIsAnnual] = useState(true);
@@ -167,34 +141,7 @@ export default function HomePage() {
     setIsClient(true);
   }, []);
 
-  // Softphone dialer timer effect
-  useEffect(() => {
-    let t: NodeJS.Timeout;
-    if (callState === "connected") {
-      t = setInterval(() => setCallTimer((prev) => prev + 1), 1000);
-    } else {
-      setCallTimer(0);
-    }
-    return () => clearInterval(t);
-  }, [callState]);
 
-  // Simulation: Add admin logs periodically
-  useEffect(() => {
-    if (simPortal !== "admin") return;
-    const actions = [
-      "GDPR Access Audit: Document 'Stark-Q4-ICP.pdf' downloaded by Agent Ashok",
-      "API Credentials Alert: Smartlead API Key rotated successfully",
-      "Security Check: Strict GDPR compliance firewall active - 0 threats found",
-      "Client Management: Business Model updated to 'B2C' for customer-demo",
-      "Task Audit: Overdue task 'Follow up Stark CEO' flagged for Agent Ashok",
-    ];
-    let i = 0;
-    const t = setInterval(() => {
-      setAdminComplianceLogs((prev) => [actions[i], ...prev.slice(0, 3)]);
-      i = (i + 1) % actions.length;
-    }, 4500);
-    return () => clearInterval(t);
-  }, [simPortal]);
 
   // Currency Formatter helper
   const formatCurrency = (amount: number, currencyCode: string) => {
@@ -213,45 +160,9 @@ export default function HomePage() {
     }).format(convertedAmount);
   };
 
-  // Run mock FAPO Optimization
-  const handleFapoOptimize = () => {
-    if (isOptimizing) return;
-    setIsOptimizing(true);
-    setOptimizedResult(null);
-    setOptimizationStep("Analyzing prompt structure & tone...");
-    
-    setTimeout(() => {
-      setOptimizationStep("Injecting target company ICP attributes...");
-      setTimeout(() => {
-        setOptimizationStep("Synthesizing multi-model prompt variants...");
-        setTimeout(() => {
-          setOptimizationStep("Evaluating against 12 historical success criteria...");
-          setTimeout(() => {
-            setOptimizedResult(
-              `Subject: Solving conversion bottlenecks for Stark Industries?\n\nHi Tony,\n\nI noticed Stark Industries is experiencing operational latency in manual outbound pipelines. Many aerospace leaders waste up to 60% of their sales reps' time on CRM admin.\n\nWe deployed specialized AI revenue agents that handle lead qualification and book meetings autonomously. \n\nAre you open to a 10-minute preview next Tuesday to see how we could help Stark Industries save 6+ hours weekly?`
-            );
-            setIsOptimizing(false);
-          }, 800);
-        }, 800);
-      }, 800);
-    }, 800);
-  };
 
-  // Simulated Chat submit
-  const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    const userMsg = chatInput;
-    setChatMessages((prev) => [...prev, { sender: "You", text: userMsg }]);
-    setChatInput("");
-    
-    setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        { sender: "Agent (Vijay)", text: "Understood! I am spinning up the lead scoring engine now. View progress on your GTM tab." },
-      ]);
-    }, 1200);
-  };
+
+
 
   return (
     <main className="min-h-screen text-white bg-[#060612] relative overflow-hidden font-sans">
@@ -315,12 +226,12 @@ export default function HomePage() {
             <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
-            href="#fapo"
-            className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-[#0d0d21] border border-violet-500/30 hover:border-violet-500/60 text-slate-100 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-violet-500/5"
-          >
-            FAPO Prompt Simulator
-            <Rocket className="h-4.5 w-4.5 text-violet-400 group-hover:animate-bounce" />
-          </a>
+              href="#gtm-assessment"
+              className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-[#0d0d21] border border-teal-500/30 hover:border-teal-500/60 text-slate-100 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-teal-500/5"
+            >
+              Go to Market Assessment
+              <Target className="h-4.5 w-4.5 text-teal-400 group-hover:animate-bounce" />
+            </a>
           <a
             href="#pricing"
             className="inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5"
@@ -333,339 +244,20 @@ export default function HomePage() {
         </span>
       </section>
 
-      {/* ─── INTERACTIVE PORTAL SIMULATOR ──────────────────────────────────────── */}
-      <section id="demo" className="relative z-10 py-16 px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-10">
-          <span className="eyebrow-teal mb-3">Live Simulation</span>
+      {/* ─── GTM ANALYSIS CONFIGURATION INTAKE FORM ────────────────────────────── */}
+      <section id="demo" className="relative z-10 py-20 px-6 max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <span className="eyebrow-teal mb-3">Intake Questionnaire</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-            Explore the multi-portal experience
+            Configure Your GTM Analysis
           </h2>
           <p className="text-slate-400 text-sm mt-2 max-w-2xl mx-auto">
-            Interact with our mock portals to see how customers, agents, and admins stay synchronized in real-time.
+            Complete the questionnaire to configure the AI model and generate tailored, real-time go-to-market pipelines.
           </p>
         </div>
 
-        {/* Tab Selection */}
-        <div className="grid grid-cols-3 gap-3 p-1.5 bg-[#0a0a1f]/80 border border-white/5 rounded-2xl mb-8 max-w-2xl mx-auto backdrop-blur-lg">
-          {(["customer", "agent", "admin"] as const).map((portal) => (
-            <button
-              key={portal}
-              onClick={() => setSimPortal(portal)}
-              className={`py-3.5 rounded-xl text-xs font-bold capitalize transition-all duration-300 ${
-                simPortal === portal
-                  ? "bg-gradient-to-r from-teal-500/25 to-violet-500/25 border border-teal-500/40 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-              }`}
-            >
-              {portal} Hub
-            </button>
-          ))}
-        </div>
-
-        {/* Mock Portal Viewport */}
-        <div className="relative rounded-3xl border border-white/10 overflow-hidden df-glass shadow-2xl p-6 min-h-[500px]">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-teal-500/5 pointer-events-none" />
-          
-          {/* Header element bar inside portal */}
-          <div className="flex justify-between items-center pb-4 border-b border-white/10 mb-6">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
-              </span>
-              <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
-                {simPortal === "customer" ? "Customer Dashboard v2.4" : simPortal === "agent" ? "Agent Workspace v3.5" : "Admin Security Console"}
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {/* 1. CUSTOMER PORTAL */}
-            {simPortal === "customer" && (
-              <motion.div
-                key="customer-sim"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.35 }}
-                className="space-y-6"
-              >
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
-                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">Available Credits</p>
-                    <h4 className="text-2xl font-extrabold text-white mt-1">750 Units</h4>
-                  </div>
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
-                    <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Active Campaigns</p>
-                    <h4 className="text-2xl font-extrabold text-white mt-1">12 Profiles</h4>
-                  </div>
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex justify-between items-center">
-                    <div>
-                      <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Operating Model</p>
-                      <h4 className="text-lg font-extrabold text-white mt-1 capitalize">{custBusinessModel} Flow</h4>
-                    </div>
-                    <select
-                      value={custBusinessModel}
-                      onChange={(e) => setCustBusinessModel(e.target.value as any)}
-                      className="bg-slate-950 border border-white/10 rounded-xl px-2 py-1 text-[10px] text-slate-350"
-                    >
-                      <option value="b2b">B2B SaaS</option>
-                      <option value="b2c">B2C Retail</option>
-                      <option value="d2c">D2C Brand</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Chat widget mockup */}
-                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col justify-between h-[220px]">
-                    <div className="space-y-3 overflow-y-auto max-h-[140px] pr-2 text-xs">
-                      {chatMessages.map((msg, idx) => (
-                        <div key={idx} className={`flex flex-col ${msg.sender === "You" ? "items-end" : "items-start"}`}>
-                          <span className="text-[9px] text-slate-500 mb-0.5">{msg.sender}</span>
-                          <div className={`p-2.5 rounded-xl max-w-[80%] ${msg.sender === "You" ? "bg-teal-600/20 text-teal-200 border border-teal-500/30" : "bg-slate-800 text-slate-200"}`}>
-                            {msg.text}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <form onSubmit={handleChatSubmit} className="flex gap-2 border-t border-white/5 pt-3 mt-2">
-                      <input
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        placeholder="Type message to your agent..."
-                        className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs flex-1 focus:outline-none"
-                      />
-                      <button type="submit" className="p-2 bg-teal-600 rounded-xl hover:bg-teal-500 transition-colors">
-                        <Send className="h-3.5 w-3.5" />
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Campaign configuration details */}
-                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-4">
-                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                      <Target className="h-4 w-4 text-violet-400" /> Tailored campaign attributes
-                    </h4>
-                    <div className="space-y-2 text-xs leading-normal">
-                      <p className="text-slate-400">
-                        {custBusinessModel === "b2b"
-                          ? "Generating cold outreach sequences focused on VP Revenue and Sales leaders. Optimized for enterprise volume conversions."
-                          : custBusinessModel === "b2c"
-                          ? "Executing promotional loyalty reminders. Integrated with Shopify cart databases for automated abandoned checkout retrieval."
-                          : "Custom direct-to-consumer email flows focused on founder brand storytelling and priority product discounts."}
-                      </p>
-                      <div className="flex gap-2 mt-4">
-                        <span className="px-2.5 py-0.5 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-bold">
-                          ✓ Salesforce Synced
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold">
-                          ✓ Model Active
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 2. AGENT PORTAL */}
-            {simPortal === "agent" && (
-              <motion.div
-                key="agent-sim"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.35 }}
-                className="space-y-6"
-              >
-                {/* Active Campaign Selection & Dialer */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Left list of clients */}
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl space-y-2">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Campaign Queue</p>
-                    <div className="p-2.5 bg-violet-600/10 border border-violet-500/30 rounded-xl text-xs flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-white">Stark Industries</p>
-                        <p className="text-[9px] text-slate-400 mt-0.5">ICP: Aero/Defense leaders</p>
-                      </div>
-                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[9px] font-bold">Active</span>
-                    </div>
-                    <div className="p-2.5 hover:bg-white/5 rounded-xl text-xs flex justify-between items-center border border-transparent cursor-pointer">
-                      <div>
-                        <p className="font-bold text-slate-300">Cyberdyne Systems</p>
-                        <p className="text-[9px] text-slate-500 mt-0.5">ICP: Robotics/AI buyers</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Dialer widget */}
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl space-y-3 flex flex-col justify-between">
-                    <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">AI Softphone Dialer</p>
-                      <div className="bg-slate-950 p-2.5 rounded-xl border border-white/5 text-right font-mono text-xs text-slate-200 h-9 flex items-center justify-end">
-                        {agentDialerNum || "Dial Number"}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-center">
-                      {callState === "idle" ? (
-                        <>
-                          <button
-                            onClick={() => setAgentDialerNum((prev) => prev + "9")}
-                            className="h-8 w-8 rounded-full border border-white/10 hover:bg-white/10 text-xs flex items-center justify-center font-bold"
-                          >
-                            9
-                          </button>
-                          <button
-                            onClick={() => {
-                              setAgentDialerNum("+1 (555) 304-Stark");
-                              setCallState("ringing");
-                              setTimeout(() => setCallState("connected"), 2000);
-                            }}
-                            className="px-4 py-2 bg-emerald-600 rounded-xl hover:bg-emerald-500 text-xs font-bold flex items-center gap-1.5"
-                          >
-                            <Phone className="h-3 w-3" /> Call Stark
-                          </button>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2 w-full">
-                          <p className="text-[10px] text-yellow-400 font-bold animate-pulse">
-                            {callState === "ringing" ? "Ringing Stark..." : `Connected: ${Math.floor(callTimer / 60)}:${(callTimer % 60).toString().padStart(2, "0")}`}
-                          </p>
-                          <button
-                            onClick={() => setCallState("idle")}
-                            className="px-4 py-1.5 bg-rose-600 rounded-xl text-xs font-bold"
-                          >
-                            End Call
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Workload Metric */}
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex flex-col justify-between">
-                    <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">My Performance</p>
-                      <h4 className="text-2xl font-extrabold text-white">92.6%</h4>
-                      <p className="text-[10px] text-slate-400 mt-1">Average workflow conversion rate</p>
-                    </div>
-                    <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden mt-3">
-                      <div className="bg-gradient-to-r from-teal-400 to-violet-500 h-full w-[92.6%]" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Draft generator mockup */}
-                <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-slate-200">Outreach Email Drafting Module</h4>
-                    <select
-                      value={agentTactic}
-                      onChange={(e) => setAgentTactic(e.target.value)}
-                      className="bg-slate-950 border border-white/10 rounded-xl px-2.5 py-1 text-[10px] text-slate-350"
-                    >
-                      <option value="Cold Email">Cold Email Hook</option>
-                      <option value="LinkedIn Message">LinkedIn Pitch</option>
-                    </select>
-                  </div>
-                  <pre className="font-mono text-[10px] text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-white/5 overflow-x-auto whitespace-pre-wrap leading-relaxed h-[120px]">
-                    {agentTactic === "Cold Email"
-                      ? `Subject: CRM Hygiene Automation for Stark Industries?\n\nHi Tony,\n\nI noticed Stark Industries is scaling target aerospace acquisitions but experiencing bottleneck delays in CRM logging.\n\nOur specialized AI revenue agents update Salesforce automatically based on your real calling activity, saving 6+ hours weekly...`
-                      : `Hi Tony, noticed Stark Industries is scaling target aerospace acquisitions. We help defense leaders automate CRM sync & follow-up sequences. Let's connect!`}
-                  </pre>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 3. ADMIN PORTAL */}
-            {simPortal === "admin" && (
-              <motion.div
-                key="admin-sim"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.35 }}
-                className="space-y-6"
-              >
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
-                    <div className="p-2.5 bg-orange-500/10 rounded-xl text-orange-400">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">MFA Status</p>
-                      <h4 className="text-base font-bold text-white mt-0.5">Strict Enforced</h4>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
-                    <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400">
-                      <Activity className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">API Request Health</p>
-                      <h4 className="text-base font-bold text-white mt-0.5">100% Operational</h4>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
-                    <div className="p-2.5 bg-violet-500/10 rounded-xl text-violet-400">
-                      <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Online Agent Count</p>
-                      <h4 className="text-base font-bold text-white mt-0.5">14 SDR Agents</h4>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Task Completion visual SVG */}
-                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl space-y-4">
-                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                      <BarChart2 className="h-4 w-4 text-teal-400" /> Global Task Analytics
-                    </h4>
-                    <div className="flex items-end justify-between h-[120px] px-4 pt-2">
-                      <div className="flex flex-col items-center gap-1.5 w-8">
-                        <div className="bg-teal-500/40 border border-teal-400/40 w-full h-[60px] rounded-t-md hover:bg-teal-500 transition-colors" />
-                        <span className="text-[9px] text-slate-500">Todo</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 w-8">
-                        <div className="bg-yellow-500/40 border border-yellow-400/40 w-full h-[90px] rounded-t-md hover:bg-yellow-500 transition-colors animate-pulse" />
-                        <span className="text-[9px] text-slate-500">Progress</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 w-8">
-                        <div className="bg-violet-500/50 border border-violet-400/40 w-full h-[120px] rounded-t-md hover:bg-violet-500 transition-colors" />
-                        <span className="text-[9px] text-slate-500">Done</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Audit Trail stream list */}
-                  <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col justify-between h-[178px]">
-                    <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                      <h4 className="text-xs font-bold text-slate-200">Compliance & Access Trail</h4>
-                      <span className="text-[9px] border border-white/10 text-orange-400 px-2 py-0.5 rounded font-bold">GDPR Enabled</span>
-                    </div>
-                    <div className="space-y-2 overflow-y-auto max-h-[110px] text-[10px] mt-2 pr-2">
-                      {adminComplianceLogs.map((log, idx) => (
-                        <div key={idx} className="p-2 bg-black/40 rounded-lg border border-white/5 text-slate-300 leading-relaxed font-mono truncate">
-                          {log}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="w-full flex justify-center bg-slate-950/20 backdrop-blur-sm rounded-3xl border border-white/5 p-4 sm:p-6 shadow-2xl">
+          <IntakeForm />
         </div>
       </section>
 
@@ -767,101 +359,65 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── FAPO SIMULATOR SECTION ────────────────────────────────────────────── */}
-      <section id="fapo" className="relative z-10 py-24 px-6 max-w-6xl mx-auto">
+      {/* ─── GO TO MARKET (GTM ASSESSMENT) SECTION ────────────────────────────── */}
+      <section id="gtm-assessment" className="relative z-10 py-24 px-6 max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <span className="eyebrow-amber">
-              <Rocket className="h-3.5 w-3.5" />
-              FAPO Engine Simulator
+            <span className="eyebrow-teal">
+              <Target className="h-3.5 w-3.5" />
+              Go to Market (GTM Assessment)
             </span>
             <h2 className="text-4xl font-extrabold text-white">
-              Fully Autonomous Prompt Optimization
+              GTM Strategy Alignment Engine
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Don&apos;t spend hours trying to fine-tune sales templates manually. Our FAPO algorithms run recursive generation, evaluation, and comparison cycles to output outreach copy that converts 15-30% higher.
+              Conduct a comprehensive assessment of your current go-to-market strategy, identify performance gaps, and receive AI-generated recommendations to optimize your outreach, content, and channel mix for maximum conversion.
             </p>
 
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-bold" htmlFor="original-prompt-input">
-                  Your Core Outreach Concept
-                </label>
-                <input
-                  id="original-prompt-input"
-                  value={originalPrompt}
-                  onChange={(e) => setOriginalPrompt(e.target.value)}
-                  placeholder="e.g. Write an email selling software..."
-                  className="w-full bg-slate-950 border border-white/15 focus:border-violet-500 rounded-xl px-4 py-3 text-xs text-white focus:outline-none"
-                />
-              </div>
-
-              <button
-                onClick={handleFapoOptimize}
-                disabled={isOptimizing}
-                className="w-full bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-500 hover:from-violet-500 text-white font-bold text-xs py-3.5 px-6 rounded-xl shadow-lg shadow-violet-500/25 transition-all flex items-center justify-center gap-2"
+              <Link
+                href="/solutions/gtm"
+                className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 text-white font-bold text-xs py-3.5 px-6 rounded-xl shadow-lg shadow-teal-500/25 transition-all flex items-center justify-center gap-2"
               >
-                {isOptimizing ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin text-teal-400" />
-                    Optimizing Prompts...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 text-yellow-400" />
-                    Simulate FAPO Optimization
-                  </>
-                )}
-              </button>
+                <Zap className="h-4 w-4 text-yellow-400" />
+                Start GTM Assessment
+              </Link>
             </div>
           </div>
 
-          {/* Console / Output Window */}
+          {/* GTM Metrics Preview Panel */}
           <div className="relative rounded-3xl border border-white/10 overflow-hidden bg-slate-950/80 p-5 shadow-2xl min-h-[300px] flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
-              <Terminal className="h-4.5 w-4.5 text-violet-400" />
-              <span className="text-[10px] font-mono text-slate-500">fapo-execution-stream.log</span>
+              <BarChart2 className="h-4.5 w-4.5 text-teal-400" />
+              <span className="text-[10px] font-mono text-slate-500">gtm-performance-dashboard.log</span>
             </div>
 
             <div className="flex-1 flex flex-col justify-center">
-              {isOptimizing && (
-                <div className="space-y-3 font-mono text-[10px] text-teal-400 bg-black/40 p-4 rounded-xl border border-teal-500/10">
-                  <p className="animate-pulse">→ Running FAPO iteration cycle...</p>
-                  <p className="text-slate-300">{optimizationStep}</p>
-                </div>
-              )}
-
-              {!isOptimizing && !optimizedResult && (
-                <div className="text-center py-12 text-slate-500 space-y-2">
-                  <Brain className="h-10 w-10 text-slate-700 mx-auto" />
-                  <p className="text-xs">Enter a concept and launch optimization above to start the simulator.</p>
-                </div>
-              )}
-
-              {!isOptimizing && optimizedResult && (
-                <div className="space-y-4 animate-in fade-in duration-300">
-                  <div className="bg-slate-900 border border-white/5 p-4 rounded-xl space-y-2 max-h-[220px] overflow-y-auto">
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Optimized Sequence</p>
-                    <pre className="font-mono text-[10px] text-slate-200 whitespace-pre-wrap leading-relaxed">
-                      {optimizedResult}
-                    </pre>
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="p-3 bg-teal-500/10 border border-teal-500/20 text-center rounded-xl">
+                    <span className="text-[8px] text-slate-500 block uppercase">Pipeline Velocity</span>
+                    <strong className="text-teal-400 text-xs font-mono">+42%</strong>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-center rounded-xl">
-                      <span className="text-[8px] text-slate-500 block uppercase">Win Rate Prob</span>
-                      <strong className="text-emerald-400 text-xs font-mono">+28.4%</strong>
-                    </div>
-                    <div className="p-2.5 bg-cyan-500/10 border border-cyan-500/20 text-center rounded-xl">
-                      <span className="text-[8px] text-slate-500 block uppercase">Tokens Saved</span>
-                      <strong className="text-cyan-400 text-xs font-mono">-14%</strong>
-                    </div>
-                    <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 text-center rounded-xl">
-                      <span className="text-[8px] text-slate-500 block uppercase">ICP Fit Rating</span>
-                      <strong className="text-violet-400 text-xs font-mono">98%</strong>
-                    </div>
+                  <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-center rounded-xl">
+                    <span className="text-[8px] text-slate-500 block uppercase">Lead Quality</span>
+                    <strong className="text-cyan-400 text-xs font-mono">+35%</strong>
+                  </div>
+                  <div className="p-3 bg-violet-500/10 border border-violet-500/20 text-center rounded-xl">
+                    <span className="text-[8px] text-slate-500 block uppercase">CAC Reduction</span>
+                    <strong className="text-violet-400 text-xs font-mono">-22%</strong>
                   </div>
                 </div>
-              )}
+                <div className="bg-slate-900 border border-white/5 p-4 rounded-xl space-y-2 max-h-[220px] overflow-y-auto">
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">GTM Optimization Insights</p>
+                  <ul className="text-[10px] text-slate-300 space-y-2 list-disc pl-4">
+                    <li>LinkedIn outreach sequence performance improved by 38% after A/B testing value prop positioning</li>
+                    <li>Cold email personalization using company-specific ICP attributes increased open rates by 27%</li>
+                    <li>Content marketing focus shifted to mid-funnel technical guides, boosting MQL to SQL conversions</li>
+                    <li>Re-engagement campaigns targeting dormant leads with personalized demos showed 19% lift</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
