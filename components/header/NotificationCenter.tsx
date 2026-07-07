@@ -51,7 +51,12 @@ const MOCK_NOTIFICATIONS: NotificationItem[] = [
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Initialize notifications from localStorage or fallback to mock
   useEffect(() => {
@@ -133,7 +138,7 @@ export function NotificationCenter() {
         aria-label="View notifications"
       >
         <Bell className="h-4.5 w-4.5" />
-        {unreadCount > 0 && (
+        {mounted && unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}

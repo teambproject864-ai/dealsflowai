@@ -47,6 +47,7 @@ if (process.env.NODE_ENV === "production") {
   }
 }
 
+// Trigger Next.js cache invalidate & reload
 const nextConfig = {
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', 'three-stdlib'],
   // Enable React Strict Mode
