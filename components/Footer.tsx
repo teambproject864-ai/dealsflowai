@@ -31,7 +31,9 @@ export function Footer() {
   ];
 
   return (
-    <footer className="w-full border-t border-white/10 bg-[#060612]">
+    <footer className="w-full bg-[#060612]">
+      {/* Gradient top divider */}
+      <div className="divider-gradient" />
       <div className="mx-auto max-w-7xl px-6 py-12">
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
@@ -42,15 +44,15 @@ export function Footer() {
               className="flex items-center gap-2 mb-6 group"
               aria-label="DealFlow AI homepage"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 border border-white/10 shadow-[0_0_15px_rgba(20,184,166,0.2)] transition-transform group-hover:scale-110">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500/20 to-violet-500/15 border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-transform group-hover:scale-110 group-hover:shadow-[0_0_35px_rgba(20,184,166,0.4)] animate-glow-pulse">
                 <IconDealflowLogo className="h-6 w-6" aria-hidden />
               </div>
               <span className="font-display text-lg font-semibold tracking-tight text-white">
-                DEALFLOW<span className="text-teal-400">.AI</span>
+                DEALFLOW<span className="gradient-text-teal">.AI</span>
               </span>
             </Link>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-xs">
-              The AI Operating System for Revenue Teams. Pipeline intelligence, autonomous agents, and GTM clarity — unified.
+            <p className="text-sm text-slate-300 leading-relaxed mb-6 max-w-xs">
+              The AI Operating System for Revenue Teams. Pipeline intelligence, autonomous agents, and GTM clarity &mdash; unified.
             </p>
             {/* Social links */}
             <div className="flex gap-3">
@@ -58,7 +60,7 @@ export function Footer() {
                 <a
                   key={social.name}
                   href={social.href}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-teal-500/20 bg-teal-500/10 text-teal-400 hover:text-white hover:bg-teal-500/20 hover:border-teal-500/40 hover:shadow-[0_0_15px_rgba(20,184,166,0.3)] transition-all"
                   aria-label={social.name}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -72,7 +74,7 @@ export function Footer() {
           {/* Navigation columns */}
           <div className="grid grid-cols-2 gap-8 lg:col-span-3">
             <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
                 Product
               </h3>
               <ul className="space-y-3">
@@ -80,7 +82,7 @@ export function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-sm text-slate-400 hover:text-teal-400 transition-colors"
+                      className="text-sm text-slate-400 hover:text-teal-300 transition-colors duration-200"
                     >
                       {item.name}
                     </Link>
@@ -89,7 +91,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
                 Company
               </h3>
               <ul className="space-y-3">
@@ -97,7 +99,7 @@ export function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-sm text-slate-400 hover:text-teal-400 transition-colors"
+                      className="text-sm text-slate-400 hover:text-violet-300 transition-colors duration-200"
                     >
                       {item.name}
                     </Link>
@@ -106,7 +108,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
                 Legal
               </h3>
               <ul className="space-y-3">
@@ -114,7 +116,7 @@ export function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-sm text-slate-400 hover:text-teal-400 transition-colors"
+                      className="text-sm text-slate-400 hover:text-rose-300 transition-colors duration-200"
                     >
                       {item.name}
                     </Link>
@@ -127,11 +129,12 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} DealFlow AI, Inc. All rights reserved.
+          <p className="text-xs text-slate-400">
+            &copy; {new Date().getFullYear()} DealFlow AI, Inc. All rights reserved.
           </p>
-          <p className="text-xs text-slate-600">
-            SOC 2 Type II Certified · Built with ❤️ for revenue teams
+          <p className="text-xs text-slate-400 flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[9px] font-bold border border-emerald-500/20">SOC 2 Type II</span>
+            Built with ❤️ for revenue teams
           </p>
         </div>
       </div>

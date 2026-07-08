@@ -109,6 +109,15 @@
   .eyebrow-amber {
     @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-semibold uppercase tracking-wider;
   }
+  .eyebrow-rose {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-semibold uppercase tracking-wider;
+  }
+  .eyebrow-emerald {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-semibold uppercase tracking-wider;
+  }
+  .eyebrow-indigo {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-semibold uppercase tracking-wider;
+  }
 
   /* ─── Gradient text ───────────────────────────── */
   .gradient-text-teal {
@@ -124,10 +133,84 @@
     -webkit-text-fill-color: transparent;
   }
   .gradient-text-hero {
-    background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #7c3aed 100%);
+    background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 30%, #7c3aed 65%, #ec4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  .gradient-text-rose {
+    background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-multi {
+    background: linear-gradient(120deg, #14b8a6 0%, #6366f1 25%, #ec4899 50%, #f59e0b 75%, #10b981 100%);
+    background-size: 200% auto;
+    animation: textShimmer 5s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Primary CTA button ──────────────────────── */
+  .btn-primary {
+    @apply relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm text-white overflow-hidden transition-all duration-300;
+    background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0d9488 100%);
+    background-size: 200% auto;
+    box-shadow: 0 0 20px rgba(20,184,166,0.3), 0 4px 15px rgba(20,184,166,0.2);
+  }
+  .btn-primary:hover {
+    background-position: right center;
+    box-shadow: 0 0 35px rgba(20,184,166,0.5), 0 8px 25px rgba(20,184,166,0.3);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* ─── Ghost CTA button ────────────────────────── */
+  .btn-ghost {
+    @apply relative inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm text-slate-200 border border-white/15 backdrop-blur-sm transition-all duration-300;
+    background: rgba(255,255,255,0.04);
+  }
+  .btn-ghost:hover {
+    @apply border-white/30 text-white;
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+
+  /* ─── Card accent top-cap strips ─────────────── */
+  .card-accent-teal {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #14b8a6, #06b6d4) 1;
+    border-image-slice: 1;
+  }
+  .card-accent-violet {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #7c3aed, #a78bfa) 1;
+    border-image-slice: 1;
+  }
+  .card-accent-rose {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #f43f5e, #fb7185) 1;
+    border-image-slice: 1;
+  }
+  .card-accent-amber {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #f59e0b, #fbbf24) 1;
+    border-image-slice: 1;
+  }
+  .card-accent-emerald {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #10b981, #34d399) 1;
+    border-image-slice: 1;
+  }
+  .card-accent-indigo {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, #6366f1, #818cf8) 1;
+    border-image-slice: 1;
   }
 }
 
@@ -212,10 +295,12 @@ html {
 
 .aurora-mesh {
   background: 
-    radial-gradient(circle at 30% 20%, rgba(108, 59, 255, 0.18) 0%, transparent 50%),
-    radial-gradient(circle at 70% 60%, rgba(0, 255, 178, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(0, 212, 255, 0.14) 0%, transparent 50%);
-  filter: blur(80px);
+    radial-gradient(circle at 20% 15%, rgba(124, 58, 237, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 75% 25%, rgba(20, 184, 166, 0.20) 0%, transparent 45%),
+    radial-gradient(circle at 55% 75%, rgba(6, 182, 212, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 15% 70%, rgba(244, 63, 94, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.14) 0%, transparent 40%);
+  filter: blur(70px);
 }
 
 /* ─── Glass effects ─────────────────────────────── */
@@ -505,11 +590,11 @@ html {
   background: rgba(6, 6, 18, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(20, 184, 166, 0.5); /* Increased opacity for better contrast */
+  background: linear-gradient(180deg, rgba(20,184,166,0.7) 0%, rgba(124,58,237,0.7) 100%);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 184, 166, 0.7); /* Even more visible on hover */
+  background: linear-gradient(180deg, #14b8a6 0%, #7c3aed 100%);
 }
 
 /* ─── Table utilities ───────────────────────────── */
@@ -611,4 +696,85 @@ html[data-banner-dismissed="true"] .announcement-banner {
   100% { background-position: 200% center; }
 }
 
+/* ─── New Vibrant Keyframes ─────────────────────── */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
 
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(20,184,166,0.3), 0 0 30px rgba(20,184,166,0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(20,184,166,0.6), 0 0 60px rgba(20,184,166,0.3), 0 0 90px rgba(124,58,237,0.15);
+  }
+}
+
+@keyframes glowPulseViolet {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(124,58,237,0.3), 0 0 30px rgba(124,58,237,0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(124,58,237,0.6), 0 0 60px rgba(124,58,237,0.3), 0 0 90px rgba(20,184,166,0.15);
+  }
+}
+
+@keyframes borderFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmerRotateFast {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(180deg) brightness(1.2); }
+  100% { filter: hue-rotate(360deg) brightness(1); }
+}
+
+.animate-float-y {
+  animation: floatY 6s ease-in-out infinite;
+}
+.animate-glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+.animate-glow-pulse-violet {
+  animation: glowPulseViolet 3s ease-in-out infinite;
+}
+
+/* ─── Vibrant gradient borders (flow animation) ── */
+.border-flow {
+  position: relative;
+  z-index: 0;
+}
+.border-flow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(270deg, #14b8a6, #7c3aed, #ec4899, #f59e0b, #14b8a6);
+  background-size: 300% 300%;
+  animation: borderFlow 6s ease infinite;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+/* ─── Stat number glow on hover ─────────────────── */
+.stat-glow:hover {
+  text-shadow: 0 0 20px rgba(20,184,166,0.6), 0 0 40px rgba(20,184,166,0.3);
+  transition: text-shadow 0.3s ease;
+}
+
+/* ─── Vibrant section dividers ──────────────────── */
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #14b8a6 20%, #7c3aed 50%, #ec4899 80%, transparent);
+  opacity: 0.5;
+}
+
+/* ─── Input focus ring upgrade ──────────────────── */
+.df-input-focus:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(20,184,166,0.5), 0 0 15px rgba(20,184,166,0.2);
+  border-color: rgba(20,184,166,0.6);
+}

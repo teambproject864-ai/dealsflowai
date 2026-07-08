@@ -160,20 +160,18 @@ export default function HomePage() {
     }).format(convertedAmount);
   };
 
-
-
-
-
   return (
     <main className="min-h-screen text-white bg-[#060612] relative overflow-hidden font-sans">
       
       {/* ─── DYNAMIC COLORFUL BACKGROUND ORBS ──────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(108,59,255,0.18),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(108,59,255,0.22),transparent_60%)]" />
         
-        <FloatingOrb className="w-[500px] h-[500px] top-[10%] -left-[10%] opacity-20" color="radial-gradient(circle, #7c3aed 0%, transparent 70%)" delay={0} />
-        <FloatingOrb className="w-[450px] h-[450px] top-[30%] -right-[10%] opacity-25" color="radial-gradient(circle, #06b6d4 0%, transparent 70%)" delay={2} />
-        <FloatingOrb className="w-[400px] h-[400px] bottom-[20%] left-[25%] opacity-20" color="radial-gradient(circle, #ec4899 0%, transparent 70%)" delay={4} />
+        <FloatingOrb className="w-[550px] h-[550px] top-[8%] -left-[12%] opacity-25" color="radial-gradient(circle, #7c3aed 0%, transparent 70%)" delay={0} />
+        <FloatingOrb className="w-[480px] h-[480px] top-[28%] -right-[12%] opacity-30" color="radial-gradient(circle, #06b6d4 0%, transparent 70%)" delay={2} />
+        <FloatingOrb className="w-[420px] h-[420px] bottom-[22%] left-[22%] opacity-22" color="radial-gradient(circle, #ec4899 0%, transparent 70%)" delay={4} />
+        <FloatingOrb className="w-[350px] h-[350px] top-[55%] right-[8%] opacity-18" color="radial-gradient(circle, #10b981 0%, transparent 70%)" delay={1} />
+        <FloatingOrb className="w-[300px] h-[300px] bottom-[8%] left-[5%] opacity-15" color="radial-gradient(circle, #f59e0b 0%, transparent 70%)" delay={3} />
       </div>
 
       {/* ─── HERO SECTION ──────────────────────────────────────────────────────── */}
@@ -182,22 +180,22 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 text-violet-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(124,58,237,0.15)]"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600/15 to-indigo-600/15 text-violet-200 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_20px_rgba(124,58,237,0.2)]"
         >
           <Sparkles className="h-4.5 w-4.5 text-violet-400 animate-spin" />
           The Next-Generation Revenue Intelligence OS
-          <ChevronRight className="h-3 w-3 text-slate-500" />
+          <ChevronRight className="h-3 w-3 text-slate-400" />
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-[1.05] mb-8 bg-gradient-to-r from-white via-[#C8B8FF] to-cyan-300 bg-clip-text text-transparent"
+          className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-[1.05] mb-8 bg-gradient-to-r from-white via-violet-200 to-cyan-200 via-emerald-200 bg-clip-text text-transparent"
         >
           Close more deals.
           <br />
-          <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(20,184,166,0.2)]">
+          <span className="gradient-text-hero drop-shadow-[0_0_40px_rgba(20,184,166,0.25)]">
             Let the agents do it.
           </span>
         </motion.h1>
@@ -206,9 +204,9 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-3xl text-slate-350 text-base sm:text-lg leading-relaxed mb-10"
+          className="max-w-3xl text-slate-300 text-base sm:text-lg leading-relaxed mb-10"
         >
-          DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep’s calendar by automating updates, call dialers, and outreach sequences.
+          DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep&apos;s calendar by automating updates, call dialers, and outreach sequences.
         </motion.p>
 
         <motion.div
@@ -220,29 +218,26 @@ export default function HomePage() {
           <Link
             href="/portal"
             onClick={() => trackEvent("cta_landing_portal", { surface: "hero" })}
-            className="group relative inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:to-cyan-400 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
+            className="btn-primary group text-sm"
           >
             Launch Portals
             <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
               href="#gtm-assessment"
-              className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-[#0d0d21] border border-teal-500/30 hover:border-teal-500/60 text-slate-100 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-teal-500/5"
+              className="btn-primary group text-sm bg-white/5 hover:bg-white/10"
             >
               Go to Market Assessment
               <Target className="h-4.5 w-4.5 text-teal-400 group-hover:animate-bounce" />
             </a>
-          <a
-            href="#pricing"
-            className="inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-bold text-sm transition-all duration-300 hover:-translate-y-0.5"
-          >
-            View Pricing plans
-          </a>
         </motion.div>
-        <span className="text-xs text-slate-500 tracking-wide">
-          Fully compliant with SOC-2 & GDPR · 14-day trial period · Instant results
+        <span className="text-xs text-slate-400 tracking-wide">
+          Fully compliant with SOC-2 &amp; GDPR · 14-day trial period · Instant results
         </span>
       </section>
+
+      {/* divider */}
+      <div className="divider-gradient mx-auto max-w-5xl" />
 
       {/* --- GTM ASSESSMENT INTAKE FORM --- */}
       <section id="gtm-assessment" className="relative z-10 py-20 px-6 max-w-5xl mx-auto">
@@ -263,6 +258,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* divider */}
+      <div className="divider-gradient mx-auto max-w-5xl" />
+
       {/* ─── WHY REVENUE LEADERS CHOOSE US (BENTO GRID) ────────────────────────── */}
       <section className="relative z-10 py-24 border-y border-white/5 bg-[#08081a]/50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.02),transparent)] pointer-events-none" />
@@ -278,90 +276,87 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Box 1: CRM Updates (2/3 width) */}
-            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-teal-950/20 via-black/40 to-transparent hover:border-teal-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
+            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-teal-950/30 via-black/40 to-transparent hover:border-teal-500/40 bento-glow card-accent-teal transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-teal-500/10 text-teal-400 mb-4 border border-teal-500/20">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-teal-500/15 text-teal-400 mb-4 border border-teal-500/25 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
                   <Database className="h-5.5 w-5.5" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Eliminate CRM Drudgery</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Our Memory OS automatically transcribes sales calls, pulls key deal parameters, and updates Salesforce or HubSpot logs. Save up to 6 hours per week per representative.
                 </p>
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
-                <span className="text-[10px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-mono text-teal-300 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
                   ✓ Salesforce Synced
                 </span>
-                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
                   ✓ HubSpot Synced
                 </span>
               </div>
             </div>
 
-            {/* Box 2: Deal Alerts (1/3 width) */}
-            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-amber-950/20 via-black/40 to-transparent hover:border-amber-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
+            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-amber-950/30 via-black/40 to-transparent hover:border-amber-500/40 bento-glow card-accent-amber transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/10 text-amber-400 mb-4 border border-amber-500/20">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/15 text-amber-400 mb-4 border border-amber-500/25 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
                   <TrendingUp className="h-5.5 w-5.5" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Rescue Stalled Deals</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Proactive triggers alert agents the moment a pipeline opportunity stalls or decision-maker response latency spikes.
                 </p>
               </div>
-              <div className="mt-6 flex justify-between items-center text-[10px] font-mono text-slate-500">
+              <div className="mt-6 flex justify-between items-center text-[10px] font-mono text-slate-400">
                 <span>Active Triggers:</span>
-                <span className="text-amber-400 font-bold animate-pulse">● OUTREACH QUEUED</span>
+                <span className="text-amber-400 font-bold stat-glow animate-pulse">● OUTREACH QUEUED</span>
               </div>
             </div>
 
-            {/* Box 3: Agent Orchestration (1/3 width) */}
-            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-violet-950/20 via-black/40 to-transparent hover:border-violet-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
+            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-violet-950/30 via-black/40 to-transparent hover:border-violet-500/40 bento-glow card-accent-violet transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-violet-500/10 text-violet-400 mb-4 border border-violet-500/20">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-violet-500/15 text-violet-400 mb-4 border border-violet-500/25 shadow-[0_0_15px_rgba(124,58,237,0.1)]">
                   <Cpu className="h-5.5 w-5.5" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Fleet of Specialized Agents</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Orchestrate collaborative agents for outreach campaigns, calendar booking management, and pre-meeting dossiers.
                 </p>
               </div>
               <div className="mt-6">
-                <span className="text-[10px] font-mono text-violet-300 bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-mono text-violet-200 bg-violet-500/15 border border-violet-500/25 px-3 py-1 rounded-full stat-glow">
                   Average Win Rate: +22%
                 </span>
               </div>
             </div>
 
-            {/* Box 4: Security Compliance (2/3 width) */}
-            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-rose-950/20 via-black/40 to-transparent hover:border-rose-500/30 bento-glow transition-all duration-500 flex flex-col justify-between min-h-[250px]">
+            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-rose-950/30 via-black/40 to-transparent hover:border-rose-500/40 bento-glow card-accent-rose transition-all duration-500 flex flex-col justify-between min-h-[250px]">
               <div className="df-specular" />
               <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-rose-500/10 text-rose-400 mb-4 border border-rose-500/20">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-rose-500/15 text-rose-400 mb-4 border border-rose-500/25 shadow-[0_0_15px_rgba(244,63,94,0.1)]">
                   <Shield className="h-5.5 w-5.5" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">GDPR & Compliance Firewall</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <h3 className="text-xl font-bold text-white mb-2">GDPR &amp; Compliance Firewall</h3>
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and SOC-2 compliant. Strict role-based layouts prevent unauthorized interactions.
                 </p>
               </div>
               <div className="mt-6 flex justify-between items-center flex-wrap gap-4 text-[10px] font-mono">
                 <div className="flex gap-2">
-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II</span>
-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">GDPR Compliant</span>
+                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-300">SOC 2 Type II</span>
+                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-300">GDPR Compliant</span>
                 </div>
-                <span className="text-rose-400 flex items-center gap-1">🔒 Full Session Isolation</span>
+                <span className="text-rose-400 flex items-center gap-1 stat-glow">🔒 Full Session Isolation</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-
+      {/* divider */}
+      <div className="divider-gradient mx-auto max-w-5xl" />
 
       {/* ─── PRICING SECTION ───────────────────────────────────────────────────── */}
       <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">
@@ -494,28 +489,29 @@ export default function HomePage() {
       </section>
 
       {/* ─── FINAL CALL-TO-ACTION ─────────────────────────────────────────────── */}
-      <section className="relative z-10 py-24 border-t border-white/5 bg-[#05050e]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(108,59,255,0.06),transparent)] pointer-events-none" />
+      <section className="relative z-10 py-28 border-t border-white/5 bg-[#05050e]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.10),transparent_65%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,rgba(20,184,166,0.06),transparent_55%)] pointer-events-none" />
         
         <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
-          <span className="eyebrow-teal">
-            <Target className="h-3.5 w-3.5 text-teal-400" /> Start Automating
+          <span className="eyebrow-violet">
+            <Target className="h-3.5 w-3.5 text-violet-400" /> Start Automating
           </span>
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight">
             Ready to accelerate GTM operations
             <br />
-            <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+            <span className="gradient-text-hero">
               at autonomous speeds?
             </span>
           </h2>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
+          <p className="text-slate-300 text-sm max-w-xl mx-auto leading-relaxed">
             Onboard in under 2 minutes. Sync your SDR campaigns, dialers, and CRM pipelines with a dedicated fleet of revenue agents today.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
               href="/portal/customer/login?signup=true"
-              className="group inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:to-cyan-400 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
+              className="btn-primary group text-sm"
             >
               Get Started Free
               <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />

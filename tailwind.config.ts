@@ -53,7 +53,11 @@ const config: Config = {
           teal: "#0f766e",
           "teal-bright": "#14b8a6",
           gold: "#d4a017",
+          "gold-bright": "#f59e0b",
           ink: "#0b1220",
+          rose: "#f43f5e",
+          emerald: "#10b981",
+          indigo: "#6366f1",
         },
       },
       borderRadius: {
@@ -77,12 +81,32 @@ const config: Config = {
           "0%, 100%": { opacity: "0.4" },
           "50%": { opacity: "1" },
         },
+        floatY: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        glowPulse: {
+          "0%, 100%": {
+            boxShadow: "0 0 15px rgba(20,184,166,0.3), 0 0 30px rgba(20,184,166,0.15)",
+          },
+          "50%": {
+            boxShadow: "0 0 30px rgba(20,184,166,0.6), 0 0 60px rgba(20,184,166,0.3)",
+          },
+        },
+        borderFlow: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
         pulseGlow: "pulseGlow 2s ease-in-out infinite",
+        floatY: "floatY 6s ease-in-out infinite",
+        glowPulse: "glowPulse 3s ease-in-out infinite",
+        borderFlow: "borderFlow 6s ease infinite",
       },
     },
   },
@@ -90,3 +114,4 @@ const config: Config = {
 };
 
 export default config;
+

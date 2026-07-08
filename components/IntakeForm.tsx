@@ -348,26 +348,36 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   }
 
   return (
-    <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-950 p-6 md:p-8 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)] relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,rgba(139,92,246,0.16),transparent)]" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
+    <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-teal-500/20 bg-white dark:bg-slate-950 p-6 md:p-8 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45),0_0_40px_rgba(20,184,166,0.08)] relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,rgba(124,58,237,0.18),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_35%_at_85%_90%,rgba(20,184,166,0.12),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_40%_30%_at_80%_10%,rgba(244,63,94,0.07),transparent)]" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
 
       <div className="mb-8 flex items-center justify-between gap-4 relative z-10">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-300/90">
+          <p className="text-xs font-semibold uppercase tracking-wider gradient-text-teal">
             Step {step + 1} of {stepTitles.length}
           </p>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stepTitles[step]}</h2>
         </div>
         <div className="flex gap-1">
-          {stepTitles.map((_, i) => (
-            <span
-              key={i}
-              className={`h-1.5 w-3.5 rounded-full transition-colors ${
-                i <= step ? "bg-teal-500 shadow-[0_0_8px_#14b8a6]" : "bg-white/10"
-              }`}
-            />
-          ))}
+          {stepTitles.map((_, i) => {
+            const colors = ["bg-teal-400", "bg-cyan-400", "bg-violet-400", "bg-fuchsia-400", "bg-rose-400", "bg-amber-400"];
+            const glowColors = ["shadow-[0_0_10px_#14b8a6]", "shadow-[0_0_10px_#22d3ee]", "shadow-[0_0_10px_#a78bfa]", "shadow-[0_0_10px_#e879f9]", "shadow-[0_0_10px_#fb7185]", "shadow-[0_0_10px_#fbbf24]"];
+            return (
+              <span
+                key={i}
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  i < step
+                    ? `w-4 ${colors[i] || "bg-teal-500"} ${glowColors[i] || ""}`
+                    : i === step
+                    ? `w-5 ${colors[i] || "bg-teal-500"} ${glowColors[i] || ""} animate-pulse`
+                    : "w-3.5 bg-white/10"
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -375,10 +385,10 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
         <div
           role="alert"
           aria-live="polite"
-          className="bg-red-900/30 border border-red-500/50 p-3 mb-4 rounded-xl text-xs text-red-200 relative z-10"
+          className="bg-rose-900/30 border border-rose-500/50 p-3 mb-4 rounded-xl text-xs text-rose-200 relative z-10"
         >
-          <p className="font-semibold mb-1">Validation issues:</p>
-          <ul className="list-disc pl-4">
+          <p className="font-semibold mb-1 text-rose-300">Validation issues:</p>
+          <ul className="list-disc pl-4 text-rose-200">
             {schemaErrors.map((e, i) => (
               <li key={i}>{e}</li>
             ))}

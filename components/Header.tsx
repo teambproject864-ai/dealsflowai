@@ -129,7 +129,7 @@ function NavDropdown({
         {isActive && (
           <motion.div
             layoutId="nav-underline"
-            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-gradient-to-r from-teal-500 via-cyan-400 to-amber-400"
+            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 via-violet-400 to-fuchsia-400"
           />
         )}
       </button>
@@ -165,7 +165,7 @@ function NavDropdown({
                   key={option.href}
                   href={option.href}
                   onClick={onClose}
-                  className="block px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10"
+                  className="block px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 border border-transparent hover:border-teal-500/20 dark:hover:border-teal-500/20 border-l-2 border-l-transparent hover:border-l-teal-400"
                   role="menuitem"
                 >
                   <div className="flex flex-col">
@@ -322,11 +322,11 @@ export function Header() {
             className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl"
             aria-label="Go to DealFlow.AI homepage"
           >
-            <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-cyan-500/15 to-teal-400/10 backdrop-blur-md border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.2)] transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_35px_rgba(20,184,166,0.35)] group-active:scale-95">
+            <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/25 via-cyan-500/20 to-violet-500/15 backdrop-blur-md border border-teal-500/25 shadow-[0_0_25px_rgba(20,184,166,0.25)] transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_40px_rgba(20,184,166,0.45)] group-active:scale-95 animate-glow-pulse">
               <IconDealflowLogo className="h-5.5 sm:h-6.5 w-5.5 sm:w-6.5" aria-hidden />
             </div>
             <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white hidden sm:inline-block">
-              DealFlow<span className="text-teal-300">.AI</span>
+              DealFlow<span className="gradient-text-teal">.AI</span>
             </span>
           </Link>
 
@@ -366,7 +366,7 @@ export function Header() {
                   {isActive && (
                     <motion.div
                       layoutId="nav-underline"
-                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-gradient-to-r from-teal-500 via-cyan-400 to-amber-400"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 via-violet-400 to-fuchsia-400"
                     />
                   )}
                 </Link>
@@ -380,11 +380,11 @@ export function Header() {
           {/* Browser Agent (All Sizes) */}
           <Link
             href="/browser-agent"
-            className="relative inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-teal-500/20 bg-gradient-to-r from-teal-500/15 via-cyan-500/10 to-teal-400/10 hover:from-teal-500/25 hover:via-cyan-500/20 hover:to-teal-400/20 text-teal-300 hover:text-teal-100 transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.15)] hover:shadow-[0_0_35px_rgba(20,184,166,0.3)] group"
+            className="relative inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-teal-500/25 bg-gradient-to-r from-teal-500/20 via-cyan-500/15 to-teal-400/15 hover:from-teal-500/30 hover:via-cyan-500/25 hover:to-teal-400/25 text-teal-300 hover:text-teal-100 transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] group animate-glow-pulse"
             aria-label="Open Browser Agent"
           >
             <Bot className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300 group-hover:scale-110" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)] animate-pulse" aria-hidden="true" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,1)] animate-pulse" aria-hidden="true" />
           </Link>
           
           {/* More Options Icon */}
