@@ -35,17 +35,33 @@ export function useFirestoreCollection<T extends DocumentData>(
     setLoading(true);
     let unsubscribe: (() => void) | null = null;
 
+    const timer = setTimeout(() => {
+      setLoading(false);
+      console.warn(`[Firestore] ${collectionName} listener timed out after 8s, fallback triggered`);
+    }, 8000);
+
     try {
-      const q = query(collection(getDb(), collectionName), ...constraints);
+      const firestore = getDb();
+      if (!firestore) {
+        clearTimeout(timer);
+        console.log(`[Firestore] Not configured, using fallback for ${collectionName}`);
+        setData(fallback);
+        setLoading(false);
+        return;
+      }
+
+      const q = query(collection(firestore, collectionName), ...constraints);
       unsubscribe = onSnapshot(
         q,
         (snapshot) => {
+          clearTimeout(timer);
           const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as unknown as T));
           setData(docs.length > 0 ? docs : fallback);
           setLoading(false);
           setError(null);
         },
         (err) => {
+          clearTimeout(timer);
           // Don't log permission errors to avoid console spam, just use fallback
           if (!err.message.includes("Missing or insufficient permissions")) {
             console.error(`[Firestore] ${collectionName} listener error:`, err);
@@ -57,6 +73,7 @@ export function useFirestoreCollection<T extends DocumentData>(
         }
       );
     } catch (err) {
+      clearTimeout(timer);
       // If Firestore init fails, use fallback data
       setData(fallback);
       setLoading(false);
@@ -64,6 +81,7 @@ export function useFirestoreCollection<T extends DocumentData>(
     }
 
     return () => {
+      clearTimeout(timer);
       if (unsubscribe) {
         unsubscribe();
       }
@@ -92,7 +110,15 @@ export function useFirestoreDoc<T extends DocumentData>(
     let unsubscribe: (() => void) | null = null;
     
     try {
-      const ref = doc(getDb(), path);
+      const firestore = getDb();
+      if (!firestore) {
+        console.log(`[Firestore] Not configured, using fallback for doc(${path})`);
+        setData(null);
+        setLoading(false);
+        return;
+      }
+
+      const ref = doc(firestore, path);
       unsubscribe = onSnapshot(
         ref,
         (snap) => {

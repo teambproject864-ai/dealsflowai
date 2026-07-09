@@ -112,8 +112,14 @@ function LiveContent() {
       setIsDemoMode(true);
     };
 
+    const database = getDb();
+    if (!database) {
+      startSimulation();
+      return;
+    }
+
     const unsubCall = onSnapshot(
-      doc(getDb(), "calls", callId), 
+      doc(database, "calls", callId), 
       (d) => {
         if (d.exists()) {
           setCall(d.data());
@@ -128,7 +134,7 @@ function LiveContent() {
     );
 
     const unsubTranscript = onSnapshot(
-      doc(getDb(), "transcripts", callId), 
+      doc(database, "transcripts", callId), 
       (d) => {
         if (!useMock && d.exists()) setTranscript(d.data());
       },
@@ -138,7 +144,7 @@ function LiveContent() {
     );
 
     const unsubNotes = onSnapshot(
-      doc(getDb(), "notes", callId), 
+      doc(database, "notes", callId), 
       (d) => {
         if (!useMock && d.exists()) setNotes(d.data());
       },

@@ -5,6 +5,7 @@ import { sendEmailWithRetry } from "@/lib/notifications";
 import { ensureBotForCall } from "@/lib/call-bot";
 import { createCallSchema, CallRecord, LeadRecord } from "@/lib/types";
 import { loadServiceAccount } from "@/lib/service-account";
+import { decryptLead } from "@/lib/security";
 
 export async function POST(req: Request) {
   try {
@@ -48,12 +49,15 @@ export async function POST(req: Request) {
     };
 
     const db = getDb();
+    if (!db) {
+      return NextResponse.json({ success: false, error: "Database not configured." }, { status: 500 });
+    }
     const callRef = await db.collection("calls").add(callData);
     const callId = callRef.id;
 
     // Use environment variable for notification recipient
-    const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || "praneeth@growstack.ai";
-    
+    const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || "praneethburada@gmail.com";
+
     if (meetingUrl) {
       void ensureBotForCall({
         callId,
@@ -68,7 +72,7 @@ export async function POST(req: Request) {
     void (async () => {
       try {
         const leadDoc = await db.collection("leads").doc(leadId).get();
-        const lead = leadDoc.data() as LeadRecord | undefined;
+        const lead = decryptLead(leadDoc.data()) as LeadRecord | undefined;
         const companyName = lead?.companyName || "a prospect";
         const leadEmail = String(lead?.contactEmail || "").trim();
         const canNotifyLead = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail);

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Calendar, User, Shield, Users, Menu, X, ChevronDown, ChevronRight, Sparkles, Bot, MoreHorizontal } from "lucide-react";
 
 import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import {
@@ -16,6 +16,7 @@ import {
 import { NotificationCenter } from "./header/NotificationCenter";
 import { AccountMenu } from "./header/AccountMenu";
 import { MobileCommandDrawer } from "./header/MobileCommandDrawer";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavLink {
   name: string;
@@ -84,10 +85,10 @@ function NavDropdown({
   const contentAnimationProps = shouldReduceMotion
     ? { initial: false as any, animate: false as any, exit: false as any }
     : {
-        initial: { opacity: 0, y: 12, scale: 0.96 },
+        initial: { opacity: 0, y: 16, scale: 0.94 },
         animate: { opacity: 1, y: 0, scale: 1 },
-        exit: { opacity: 0, y: 8, scale: 0.96 },
-        transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+        exit: { opacity: 0, y: 10, scale: 0.94 },
+        transition: { duration: 0.22, ease: [0.2, 1, 0.3, 1] as [number, number, number, number] },
       };
 
   return (
@@ -100,37 +101,43 @@ function NavDropdown({
       onFocus={handleFocus}
       onBlur={handleBlur}
     >
+      {/* Nav button */}
       <button
         ref={buttonRef}
         onClick={onToggle}
-        className={`group relative inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+        className={`group relative inline-flex items-center gap-2 px-4.5 py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
           isActive
-            ? "text-teal-400 bg-teal-400/5"
-            : "text-slate-400 hover:text-teal-300 hover:bg-white/5"
-        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
+            ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20"
+            : "text-slate-400 hover:text-teal-300 hover:bg-white/10 border border-transparent hover:border-white/15"
+        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060612]`}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         {link.name}
+        {link.name === "Portal" && (
+          <span className="relative flex h-1.5 w-1.5 select-none" aria-hidden="true">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+          </span>
+        )}
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-teal-400" : "text-slate-500 group-hover:text-slate-400"
+          className={`h-4 w-4 transition-all duration-300 ${
+            isOpen ? "rotate-180 text-teal-300" : "text-slate-500 group-hover:text-slate-400"
           }`}
           aria-hidden="true"
         />
         {isActive && (
           <motion.div
             layoutId="nav-underline"
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-teal-500 via-teal-400 to-amber-400"
+            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 via-violet-400 to-fuchsia-400"
           />
         )}
       </button>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div
             {...contentAnimationProps}
-            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[340px] rounded-2xl border border-white/10 bg-[#060612]/95 backdrop-blur-3xl shadow-2xl shadow-black/50 overflow-hidden z-[100] p-2"
+            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[360px] rounded-3xl dropdown-glass shadow-2xl shadow-black/60 overflow-hidden z-[100] p-3"
             role="menu"
             aria-label={`${link.name} Submenu`}
           >
@@ -138,34 +145,35 @@ function NavDropdown({
             <Link
               href={link.href}
               onClick={onClose}
-              className="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-xs font-bold group"
+              className="flex items-center justify-between px-4 py-4 rounded-xl text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 text-xs font-bold group border border-slate-200 dark:border-white/5 hover:border-slate-350 dark:hover:border-white/10"
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2.5">
+                <Sparkles className="h-3.5 w-3.5 text-teal-500 dark:text-teal-400" />
                 <span>View All {link.name}</span>
-                <span className="text-[9px] font-semibold text-teal-400 border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="text-[9px] font-bold border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/15 px-2.5 py-1 rounded-full text-teal-700 dark:text-teal-300 uppercase tracking-wider">
                   Overview
                 </span>
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-teal-400 transition-colors group-hover:translate-x-0.5" />
+              <ChevronRight className="h-4.5 w-4.5 text-slate-500 group-hover:text-teal-300 transition-all duration-300 group-hover:translate-x-1" />
             </Link>
 
-            <div className="border-t border-white/10 my-1 mx-2" />
+            <div className="border-t border-slate-200 dark:border-white/10 my-2 mx-1" />
 
-            <div className="space-y-0.5">
+            <div className="space-y-1.5 scrim-bg rounded-2xl p-1.5 border border-slate-200/50 dark:border-white/5">
               {link.subOptions?.map((option) => (
                 <Link
                   key={option.href}
                   href={option.href}
                   onClick={onClose}
-                  className="block px-3.5 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+                  className="block px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 border border-transparent hover:border-teal-500/20 dark:hover:border-teal-500/20 border-l-2 border-l-transparent hover:border-l-teal-400"
                   role="menuitem"
                 >
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-teal-300 transition-colors">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-250 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors duration-300">
                       {option.name}
                     </span>
                     {option.description && (
-                      <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-1 leading-relaxed">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-400 mt-1.5 leading-relaxed">
                         {option.description}
                       </span>
                     )}
@@ -182,10 +190,16 @@ function NavDropdown({
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navLinks: NavLink[] = [
     {
@@ -199,13 +213,25 @@ export function Header() {
       ],
     },
     {
+      name: "GTM Analysis",
+      href: "/solutions/gtm",
+    },
+    {
       name: "Features",
       href: "/features",
-      icon: IconShieldCompliance,
+    },
+    {
+      name: "Support",
+      href: "/support",
+    },
+    {
+      name: "Portal",
+      href: "/portal",
+      icon: Users,
       subOptions: [
-        { name: "AI Revenue Agents", href: "/ai-revenue-agents", description: "Autonomous sales agents" },
-        { name: "RAG Analysis", href: "/rag", description: "Intelligent document analysis" },
-        { name: "Meeting Intelligence", href: "/meeting-agent/live", description: "Real-time meeting insights" },
+        { name: "Customer Portal", href: "/portal/customer/login", description: "Access client dashboard and metrics" },
+        { name: "Agent Portal", href: "/portal/agent/login", description: "Workspace for AI Revenue Agents" },
+        { name: "Admin Portal", href: "/portal/admin/login", description: "System administrators control center" },
       ],
     },
   ];
@@ -240,15 +266,15 @@ export function Header() {
     },
   ];
 
-  const handleGetStarted = (e: React.MouseEvent) => {
+  const handleGetStarted = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Get Started button clicked!");
-  };
+    router.push("/portal/customer/login?signup=true");
+  }, [router]);
 
-  const handleBookMeeting = (e: React.MouseEvent) => {
+  const handleBookMeeting = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent("open-voice-call"));
-  };
+    router.push("/book-demo");
+  }, [router]);
 
   // Scroll handler for header transformation
   useEffect(() => {
@@ -270,35 +296,41 @@ export function Header() {
   // Close dropdowns on path change
   useEffect(() => {
     setOpenDropdown(null);
+    setIsMenuOpen(false);
   }, [pathname]);
 
   const headerClasses = isScrolled
-    ? "sticky top-0 z-50 w-full border-b border-white/10 bg-[#060612]/90 df-glass backdrop-blur-xl !overflow-visible"
-    : "sticky top-0 z-50 w-full border-b border-white/5 bg-[#060612]/70 df-glass backdrop-blur-lg !overflow-visible";
+    ? "sticky top-0 z-50 w-full border-b border-white/10 bg-gradient-to-b from-[#060612]/95 to-[#050510]/92 df-glass backdrop-blur-3xl !overflow-visible shadow-xl shadow-black/20"
+    : "sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl !overflow-visible";
+
+  if (!mounted) {
+    return <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-[#060612]/75 df-glass backdrop-blur-2xl !overflow-visible" />;
+  }
 
   return (
     <header className={headerClasses}>
+    
       <div
-        className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 transition-all duration-300 ${
-          isScrolled ? "h-14" : "h-16"
+        className={`container mx-auto flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 sm:gap-5 transition-all duration-500 ${
+          isScrolled ? "h-16" : "h-20"
         }`}
       >
         {/* Left Side: Logo & Main Navigation Links */}
-        <div className="flex items-center gap-6 xl:gap-8 flex-shrink-0">
+        <div className="flex items-center gap-5 md:gap-7 xl:gap-9 flex-shrink-0">
           <Link
             href="/"
-            className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-xl"
+            className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl"
             aria-label="Go to DealFlow.AI homepage"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_25px_rgba(20,184,166,0.25)]">
-              <IconDealflowLogo className="h-6 w-6" aria-hidden />
+            <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/25 via-cyan-500/20 to-violet-500/15 backdrop-blur-md border border-teal-500/25 shadow-[0_0_25px_rgba(20,184,166,0.25)] transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_40px_rgba(20,184,166,0.45)] group-active:scale-95 animate-glow-pulse">
+              <IconDealflowLogo className="h-5.5 sm:h-6.5 w-5.5 sm:w-6.5" aria-hidden />
             </div>
-            <span className="font-display text-lg font-semibold tracking-tight text-white hidden sm:inline-block">
-              DealFlow<span className="text-teal-400">.AI</span>
+            <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white hidden sm:inline-block">
+              DealFlow<span className="gradient-text-teal">.AI</span>
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
+          <nav className="hidden md:flex lg:flex items-center gap-1.5 md:gap-2" aria-label="Main navigation">
             {navLinks.map((link) => {
               if (link.subOptions) {
                 return (
@@ -315,22 +347,26 @@ export function Header() {
               }
 
               const isActive = pathname === link.href;
+              const isAnchor = link.href.includes("#");
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  className={`relative px-3 sm:px-4.5 py-2.5 sm:py-3 rounded-2xl text-xs font-semibold transition-all duration-300 ${
                     isActive
-                      ? "text-teal-400 bg-teal-400/5"
-                      : "text-slate-400 hover:text-teal-300 hover:bg-white/5"
+                      ? "text-teal-300 bg-gradient-to-r from-teal-500/15 to-teal-400/10 border border-teal-500/20 shadow-md shadow-teal-500/10"
+                      : isAnchor
+                        ? "text-slate-400/80 hover:text-teal-300 hover:bg-white/5 border border-transparent hover:border-white/10"
+                        : "text-slate-400 hover:text-teal-300 hover:bg-white/10 border border-transparent hover:border-white/15"
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50`}
                   aria-current={isActive ? "page" : undefined}
                 >
+                  {isAnchor && <span className="text-teal-500/60 mr-1 font-bold">#</span>}
                   {link.name}
                   {isActive && (
                     <motion.div
                       layoutId="nav-underline"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-teal-500 via-teal-400 to-amber-400"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 via-violet-400 to-fuchsia-400"
                     />
                   )}
                 </Link>
@@ -340,30 +376,52 @@ export function Header() {
         </div>
 
         {/* Right Side: Quick Access Icons, Actions, Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+          {/* Browser Agent (All Sizes) */}
+          <Link
+            href="/browser-agent"
+            className="relative inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-teal-500/25 bg-gradient-to-r from-teal-500/20 via-cyan-500/15 to-teal-400/15 hover:from-teal-500/30 hover:via-cyan-500/25 hover:to-teal-400/25 text-teal-300 hover:text-teal-100 transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] group animate-glow-pulse"
+            aria-label="Open Browser Agent"
+          >
+            <Bot className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300 group-hover:scale-110" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,1)] animate-pulse" aria-hidden="true" />
+          </Link>
+          
+          {/* More Options Icon */}
+          <Link
+            href="/all-options"
+            className="inline-flex items-center justify-center p-2.5 sm:p-3 rounded-2xl border border-white/15 bg-white/6 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+            aria-label="View all application options"
+          >
+            <MoreHorizontal className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300 group-hover:scale-110" />
+          </Link>
+
           {/* Notifications Center (Tablet & Desktop) */}
           <div className="hidden sm:block">
             <NotificationCenter />
           </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Streamlined Account management menu (Tablet & Desktop) */}
           <div className="hidden sm:block">
             <AccountMenu />
           </div>
 
-          {/* Action CTAs (Desktop Only) */}
-          <div className="hidden xl:flex items-center gap-2.5 pl-2 border-l border-white/10">
+          {/* Action CTAs (Tablet & Desktop) */}
+          <div className="hidden md:flex items-center gap-2 md:gap-3 pl-0 md:pl-3 md:border-l md:border-white/10">
             <ExtrudedButton
               variant="outline"
-              className="border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 font-semibold px-4 py-2 h-9 flex items-center gap-2 shadow-[0_0_15px_rgba(20,184,166,0.1)] text-xs rounded-xl"
+              className="border-teal-500/30 bg-gradient-to-r from-teal-500/15 to-cyan-500/10 hover:from-teal-500/25 hover:to-cyan-500/20 text-teal-300 font-semibold px-3 md:px-5 py-2 h-9 md:h-10 flex items-center gap-2 md:gap-2.5 shadow-[0_0_20px_rgba(20,184,166,0.15)] text-xs rounded-2xl"
               onClick={handleBookMeeting}
             >
-              <Calendar className="h-4 w-4" />
-              Book Meeting
+              <Calendar className="h-4 w-4 md:h-4.5 md:w-4.5" />
+              <span>Book a Demo</span>
             </ExtrudedButton>
 
             <ExtrudedButton
-              className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-semibold px-5 py-2 h-9 shadow-lg shadow-teal-600/25 transition-all hover:shadow-teal-500/35 text-xs rounded-xl"
+              className="bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 h-9 md:h-10 shadow-xl shadow-teal-600/35 transition-all duration-300 hover:shadow-teal-500/50 text-xs rounded-2xl"
               onClick={handleGetStarted}
             >
               Get Started
@@ -373,7 +431,7 @@ export function Header() {
           {/* Mobile hamburger triggers full command drawer */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="lg:hidden p-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+            className="md:hidden p-2.5 rounded-2xl border border-white/15 bg-white/6 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
             aria-label="Open main menu"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-drawer"

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Phone, X } from "lucide-react";
+import { Phone, X, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookingWidget } from "@/components/BookingWidget";
 
 export function VoiceCallWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showButton, setShowButton] = useState(false);
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -14,24 +15,39 @@ export function VoiceCallWidget() {
     return () => window.removeEventListener("open-voice-call", handleOpen);
   }, []);
 
+  useEffect(() => {
+    const heroElement = document.getElementById("hero");
+    if (heroElement) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // Show button when hero is NOT intersecting (scrolled past)
+          setShowButton(!entry.isIntersecting);
+        },
+        { threshold: 0 }
+      );
+      observer.observe(heroElement);
+      return () => observer.disconnect();
+    } else {
+      setShowButton(true);
+    }
+  }, []);
+
   return (
     <>
       {/* Floating Action Button (FAB) */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && showButton && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             whileHover={{ scale: 1.05, y: -2 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-24 right-8 bg-teal-500 hover:bg-teal-400 text-black p-4 rounded-full shadow-lg z-50 flex items-center justify-center border border-teal-300/30 group"
-            aria-label="Schedule a Voice Call"
+            className="fixed bottom-24 right-8 bg-violet-600 hover:bg-violet-500 text-white px-5 py-3.5 rounded-full shadow-lg z-50 flex items-center gap-2.5 border border-violet-400/20 group focus-visible:outline-none font-bold text-xs uppercase tracking-wider shadow-violet-500/25"
+            aria-label="Book a call"
           >
-            <span className="absolute -left-36 top-1/2 -translate-y-1/2 bg-slate-900 border border-white/10 text-slate-200 text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
-              📞 Book Strategy Voice Call
-            </span>
-            <Phone className="h-6 w-6 animate-pulse" />
+            <Calendar className="h-4.5 w-4.5 text-violet-200" />
+            <span>Book a call</span>
           </motion.button>
         )}
       </AnimatePresence>

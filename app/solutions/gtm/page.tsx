@@ -101,6 +101,8 @@ export default function GtmPage() {
       jobTitle: "GTM Consultant",
       companyName: companyName,
       websiteUrl: websiteUrl || "https://example.com",
+      headquartersCountry: "United States",
+      headquartersCity: "San Francisco",
       companyDescription: `A high-growth business specialized in ${industry} targeting regional operations.`,
       productsServices: "Core operational tools and integrations.",
       primaryOutcome: "Pipeline velocity acceleration and RevOps alignment.",
@@ -205,9 +207,9 @@ export default function GtmPage() {
   };
 
   return (
-    <main className="fixed inset-0 overflow-y-auto bg-slate-950 text-slate-100 pt-16 font-sans">
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 font-sans">
       {/* Sub-nav */}
-      <nav className="absolute left-0 right-0 top-0 z-10 flex items-center gap-1 border-b border-slate-800 bg-slate-900 px-6 py-3">
+      <nav className="sticky top-14 sm:top-16 z-20 flex items-center gap-1 border-b border-slate-800 bg-slate-900/90 px-6 py-3 backdrop-blur-md">
         {NAV_LINKS.map(({ href, label }) => (
           <Link
             key={href}
@@ -227,7 +229,7 @@ export default function GtmPage() {
       </nav>
 
       {/* Main Workspace Grid */}
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-8 relative z-10">
         {/* Header Tabs */}
         <div className="mb-8 flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
@@ -758,7 +760,7 @@ export default function GtmPage() {
             </div>
           </div>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

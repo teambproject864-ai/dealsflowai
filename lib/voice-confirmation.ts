@@ -1,7 +1,16 @@
 // lib/voice-confirmation.ts
-import { db } from "./firebase-admin";
+import { getDb } from "./firebase-admin";
 import { LeadRecord, CallRecord } from "./types";
+
+function getDbOrThrow() {
+  const db = getDb();
+  if (!db) {
+    throw new Error("Firebase database not initialized");
+  }
+  return db;
+}
 import { sendSMS, sendEmailWithRetry } from "./notifications";
+import { decryptLead } from "./security";
 
 export interface VoiceConfirmationRecord {
   callId: string;
@@ -83,7 +92,7 @@ export async function verifyCompliance(leadId: string, phone: string, scheduledA
   }
 
   // TCPA/GDPR explicit consent check
-  const consentDoc = await db.collection("user_consent").doc(leadId).get();
+  const consentDoc = await getDbOrThrow().collection("user_consent").doc(leadId).get();
   if (consentDoc.exists) {
     const data = consentDoc.data();
     const purposes: string[] = data?.purposes || [];
@@ -115,22 +124,22 @@ export async function initiateVoiceCall(callId: string, attempt: number = 1): Pr
   console.log(`[VoiceConfirmation] Initiating call for callId: ${callId}, attempt: ${attempt}`);
 
   try {
-    const callDoc = await db.collection("calls").doc(callId).get();
+    const callDoc = await getDbOrThrow().collection("calls").doc(callId).get();
     if (!callDoc.exists) {
       throw new Error(`Call record ${callId} not found`);
     }
     const call = callDoc.data() as CallRecord;
 
-    const leadDoc = await db.collection("leads").doc(call.leadId).get();
+    const leadDoc = await getDbOrThrow().collection("leads").doc(call.leadId).get();
     if (!leadDoc.exists) {
       throw new Error(`Lead record ${call.leadId} not found`);
     }
-    const lead = leadDoc.data() as LeadRecord;
+    const lead = decryptLead(leadDoc.data()) as LeadRecord;
 
     const rawPhone = lead.contactPhone || "";
     const phone = formatE164(rawPhone);
 
-    const configDocRef = db.collection("voice_confirmations").doc(callId);
+    const configDocRef = getDbOrThrow().collection("voice_confirmations").doc(callId);
     const existingConfig = (await configDocRef.get()).data() as VoiceConfirmationRecord | undefined;
 
     // Check compliance
@@ -275,7 +284,7 @@ export async function initiateVoiceCall(callId: string, attempt: number = 1): Pr
  * Handles failed call outcomes (busy, no-answer, failed, rate limit, etc.)
  */
 export async function handleCallFailure(callId: string, errorMsg: string): Promise<void> {
-  const configDocRef = db.collection("voice_confirmations").doc(callId);
+  const configDocRef = getDbOrThrow().collection("voice_confirmations").doc(callId);
   const snap = await configDocRef.get();
   if (!snap.exists) return;
 
@@ -322,7 +331,7 @@ export async function handleCallFailure(callId: string, errorMsg: string): Promi
  * Triggers fallback notification via Email & SMS when the confirmation call cannot be completed.
  */
 export async function triggerVoiceFallback(callId: string, reason: string): Promise<void> {
-  const configDocRef = db.collection("voice_confirmations").doc(callId);
+  const configDocRef = getDbOrThrow().collection("voice_confirmations").doc(callId);
   const snap = await configDocRef.get();
   if (!snap.exists) return;
 
@@ -335,12 +344,12 @@ export async function triggerVoiceFallback(callId: string, reason: string): Prom
   console.log(`[VoiceConfirmation] Triggering fallback for callId: ${callId}. Reason: ${reason}`);
 
   try {
-    const callDoc = await db.collection("calls").doc(callId).get();
+    const callDoc = await getDbOrThrow().collection("calls").doc(callId).get();
     const call = callDoc.data();
     if (!call) throw new Error("Call doc not found for fallback");
 
-    const leadDoc = await db.collection("leads").doc(config.leadId).get();
-    const lead = leadDoc.data();
+    const leadDoc = await getDbOrThrow().collection("leads").doc(config.leadId).get();
+    const lead = decryptLead(leadDoc.data());
     if (!lead) throw new Error("Lead doc not found for fallback");
 
     const formattedDate = call.scheduledAt
@@ -410,7 +419,7 @@ export async function triggerVoiceFallback(callId: string, reason: string): Prom
  */
 async function logAudit(callId: string, leadId: string, type: string, metadata: Record<string, any>) {
   try {
-    await db.collection("audit_logs").add({
+    await getDbOrThrow().collection("audit_logs").add({
       callId,
       leadId,
       type,

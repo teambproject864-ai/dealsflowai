@@ -1,3 +1,6 @@
+import { loadEnvConfig } from "@next/env";
+loadEnvConfig(process.cwd());
+
 import assert from "assert";
 import { parseIcsEvents, parseIcsDate } from "@/lib/ics";
 import { extractConferenceUrl, selectJoinCandidates } from "@/lib/calendar-events";
@@ -20,6 +23,14 @@ import { runICPTests } from "@/tests/icp.test";
 import { runVoiceConfirmationTests } from "@/tests/voice-confirmation.test";
 import { runTwilioServiceTests } from "@/tests/twilio-service.test";
 import { runMeetingUtilsTests } from "@/tests/meeting-utils.test";
+import { runPrivacyTests } from "@/tests/privacy.test";
+import { runHeaderTests } from "@/tests/headers.test";
+import { runAuditLoggerTests } from "@/tests/audit-logger.test";
+import { encryptLead, decryptLead } from "@/lib/security";
+import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
+import { runIntegratedSystemTests } from "@/tests/integrated-system.test";
+import { runSecurityEvals } from "@/tests/security-evals";
+import { testOkfPerformanceBenchmark } from "@/tests/okf-rag-performance.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -214,6 +225,52 @@ async function testExtractAttendeeStatuses() {
   assert.deepEqual(out, [{ email: "user@example.com", responseStatus: "accepted", optional: undefined }]);
 }
 
+async function testLeadEncryptionRoundTrip() {
+  const originalLead = {
+    id: "lead_123",
+    companyName: "Acme Corp",
+    contactName: "John Doe",
+    contactEmail: "john@acme.com",
+    contactPhone: "+15550199999",
+    createdAt: new Date().toISOString(),
+  };
+
+  const encrypted = encryptLead(originalLead);
+
+  assert.notEqual(encrypted.contactEmail, originalLead.contactEmail);
+  assert.notEqual(encrypted.contactPhone, originalLead.contactPhone);
+  assert.ok(encrypted.contactEmail.includes(":"));
+  assert.ok(encrypted.contactPhone.includes(":"));
+
+  assert.strictEqual(encrypted.id, originalLead.id);
+  assert.strictEqual(encrypted.companyName, originalLead.companyName);
+  assert.strictEqual(encrypted.contactName, originalLead.contactName);
+  assert.strictEqual(encrypted.createdAt, originalLead.createdAt);
+
+  const decrypted = decryptLead(encrypted);
+
+  assert.strictEqual(decrypted.contactEmail, originalLead.contactEmail);
+  assert.strictEqual(decrypted.contactPhone, originalLead.contactPhone);
+  assert.strictEqual(decrypted.id, originalLead.id);
+}
+
+async function testRateLimiterSensitive() {
+  const req = new Request("http://localhost:3000/api/leads/save", {
+    headers: {
+      "x-forwarded-for": "192.168.1.51",
+    },
+  });
+
+  for (let i = 0; i < 20; i++) {
+    const res = await checkRateLimitSensitive(req);
+    assert.strictEqual(res, null);
+  }
+
+  const resBlock = await checkRateLimitSensitive(req);
+  assert.ok(resBlock !== null);
+  assert.strictEqual(resBlock.status, 429);
+}
+
 async function main() {
   const tests = [
     testIcsParsing,
@@ -241,6 +298,14 @@ async function main() {
     runVoiceConfirmationTests,
     runTwilioServiceTests,
     runMeetingUtilsTests,
+    testLeadEncryptionRoundTrip,
+    testRateLimiterSensitive,
+    runPrivacyTests,
+    runHeaderTests,
+    runAuditLoggerTests,
+    runIntegratedSystemTests,
+    runSecurityEvals,
+    testOkfPerformanceBenchmark
   ];
 
   for (const t of tests) {

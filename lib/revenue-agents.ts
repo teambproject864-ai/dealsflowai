@@ -1,23 +1,18 @@
-import { db } from "@/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 import { PERSONAS } from "@/prompts/personas";
-import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE } from "@/lib/types";
-import { getRandomAvailableAgent } from "./agent-assignment";
+import type { CallRecord, AGENT_FULL_NAMES as TYPE_AGENT_FULL_NAMES, AGENT_EXPERTISE as TYPE_AGENT_EXPERTISE, RevenueAgentProfile } from "@/lib/types";
+import { assignFairRandomAgent } from "./agent-assignment";
 
-export type RevenueAgentProfile = {
-  key: string;
-  fullName: string;
-  role: string;
-  expertise: string[];
-  activeSessions: number;
-  available: boolean;
-};
+// Re-export so callers can `import type { RevenueAgentProfile } from "@/lib/revenue-agents"`
+export type { RevenueAgentProfile };
 
 // Use the new agent names from lib/types.ts
 import { AGENT_FULL_NAMES, AGENT_EXPERTISE } from "./types";
 
 export function getRevenueAgentCatalog(): Omit<RevenueAgentProfile, "activeSessions" | "available">[] {
   return Object.entries(AGENT_FULL_NAMES).map(([key, name]) => ({
-    key,
+    key: key as keyof typeof AGENT_FULL_NAMES,
+    name,
     fullName: name,
     role: "AI Revenue Agent",
     expertise: AGENT_EXPERTISE[key as keyof typeof AGENT_EXPERTISE] || ["gtm"],
@@ -31,7 +26,7 @@ async function countActiveSessionsByPersona(): Promise<Record<string, number>> {
   }
 
   try {
-    const snapshot = await db
+    const snapshot = await getDb()
       .collection("calls")
       .where("status", "==", "in-progress")
       .limit(50)
@@ -69,18 +64,11 @@ export async function listRevenueAgentsWithAvailability(): Promise<RevenueAgentP
 }
 
 /**
- * Picks a random available agent (or random if all are busy).
+ * Picks a fair random available agent (or random if all are busy) with variance control (<=15%)
  */
 export async function assignRandomAgent(): Promise<{ agentKey: string; reason: string }> {
   const agents = await listRevenueAgentsWithAvailability();
-  const availableAgents = agents.filter(agent => agent.available);
-  const agentPool = availableAgents.length > 0 ? availableAgents : agents;
-  const randomIndex = Math.floor(Math.random() * agentPool.length);
-  const selectedAgent = agentPool[randomIndex];
-  return {
-    agentKey: selectedAgent.key,
-    reason: availableAgents.length > 0 ? "random_available_agent" : "fallback_random_agent",
-  };
+  return await assignFairRandomAgent(agents);
 }
 
 /**
@@ -90,7 +78,7 @@ export async function assignOptimalAgent(
   preferredKeys: string[] = [],
   challengeTags: string[] = []
 ): Promise<{ agentKey: string; reason: string }> {
-  // If automatic assignment is requested, use random assignment
+  // If automatic assignment is requested, use fair assignment
   if (preferredKeys.length === 0 || preferredKeys.includes("automatic")) {
     return await assignRandomAgent();
   }

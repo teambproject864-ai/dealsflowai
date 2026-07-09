@@ -163,18 +163,174 @@ export type GtmInsightSection = {
   content: string;
 };
 
+// New types for complete GTM analysis
+export type Table1FirmographicEntry = {
+  priorityTier: string;
+  industryVertical: string;
+  companySize: string;
+  arrRange: string;
+  location: string;
+  keyDecisionMakerDemographics: string;
+  notes: string;
+  // New columns per requirements
+  primaryCostDriver: string;
+  currentSolutionStatus: string;
+  numberOfSitesTeamsLocations: string;
+  sustainabilityEsgComplianceCommitment: string;
+};
+
+export type Table2PainPointEntry = {
+  painPoint: string;
+  severity: string;
+  businessImpact: string;
+  rootCause: string;
+  dealFlowAISolution: string;
+  // New columns per requirements
+  frequencyOfPain: string;
+  howPainIsCurrentlyDiscovered: string;
+  competitorCurrentSolutionInUse: string;
+};
+
+export type Table3DecisionMakerEntry = {
+  role: string;
+  influenceScore: string;
+  coreDecisionRole: string;
+  top3Priorities: string;
+  dealFlowAIMessagingFocus: string;
+  // New columns per requirements
+  preferredContactChannel: string;
+  primaryObjectionType: string;
+  contentFormatPreference: string;
+};
+
+export type Table4LeadScoringEntry = {
+  category: string;
+  criterion: string;
+  points: string;
+};
+
+export type Table5ChannelEntry = {
+  channel: string;
+  icpSegmentsBestFor: string;
+  monthlyLeadVolume: string;
+  conversionRate: string;
+  costPerAcquisition: string;
+  ltvToCacRatio: string;
+  budgetAllocation: string;
+  optimizationRecommendations: string;
+};
+
+export type PurchasingJourneyStage = {
+  stage: string;
+  duration: string;
+  customerActions: string;
+  customerNeedsQuestions: string;
+  channelPreferences: string;
+  dealFlowAIAssetsEngagement: string;
+};
+
+export type CrossTeamAlignmentGuidelines = {
+  raciFramework: any[];
+  communicationCadenceSlas: any[];
+  sharedSLAs: Array<{ sla: string; owner: string; escalationPath: string }>;
+  weeklyReviewMeeting: { cadence: string; owner: string };
+  hotLeadCriteria: string;
+};
+
+export type ICPValidationChecklist = {
+  preQualificationChecklist: string[];
+  quarterlyValidationReview: string[];
+  dataSourcesForValidation: string[];
+  icpUpdateTriggers: string[];
+  quarterlyReviewOwner: string;
+  scoringThresholdForRevision: string;
+  reviewChecklist: string[];
+};
+
 export type AnalysisResult = {
+  // Legacy fields (for compatibility)
   analysisId?: string;
   leadId?: string;
   companyName?: string;
-  healthScore: number;
-  gtmPlan: string;
-  idealCustomerProfiles: GtmInsightSection[];
-  comprehensiveBrandOverview: string;
-  strategicOutreachApproach: string;
-  marketDifferentiationTriggers: string[];
-  goToMarketCoreFramework: string;
-  customerJourneyPipeline: GtmInsightSection[];
+  healthScore?: number;
+  gtmPlan?: string;
+  idealCustomerProfiles?: GtmInsightSection[];
+  comprehensiveBrandOverview?: string;
+  strategicOutreachApproach?: string;
+  marketDifferentiationTriggers?: string[];
+  goToMarketCoreFramework?: string;
+  customerJourneyPipeline?: GtmInsightSection[];
+
+  // New complete GTM analysis fields
+  executiveSummary?: string;
+  icpDefinition?: {
+    inclusionCriteria: string[];
+    exclusionCriteria: string[];
+  };
+  table1FirmographicDemographic?: Table1FirmographicEntry[];
+  behavioralPsychographicTraits?: {
+    observableBehavioralPatterns: string[];
+    corePsychographicAttributes: string[];
+  };
+  table2PainPointAnalysis?: Table2PainPointEntry[];
+  table3DecisionMakerInfluence?: Table3DecisionMakerEntry[];
+  purchasingJourneyMapping?: PurchasingJourneyStage[];
+  table4LeadScoringFramework?: {
+    criteria: Table4LeadScoringEntry[];
+    qualificationThresholds: {
+      mql: string;
+      sql: string;
+      sal: string;
+    };
+  };
+  table5ChannelEffectiveness?: Table5ChannelEntry[];
+  crossTeamAlignmentGuidelines?: CrossTeamAlignmentGuidelines;
+  icpValidationChecklist?: ICPValidationChecklist;
+
+  // New sections per requirements
+  sectionACompetitiveLandscape?: Array<{
+    competitorName: string;
+    coreOffering: string;
+    keyWeakness: string;
+    companyDifferentiator: string;
+    positioningStatement: string;
+  }>;
+  sectionBMessagingAndPositioning?: Array<{
+    painPoint: string;
+    valuePillar: string;
+    hookLine: string;
+    supportingProofPoint: string;
+    cta: string;
+    personaMessaging: Array<{ persona: string; messaging: string }>;
+  }>;
+  sectionCObjectionHandlingMatrix?: Array<{
+    objection: string;
+    personaMostLikelyToRaiseIt: string;
+    responseFramework: string;
+    supportingAsset: string;
+  }>;
+  sectionDTamSamSom?: {
+    tam: string;
+    sam: string;
+    som: string;
+  };
+  sectionEPartnerAndChannelStrategy?: {
+    referralPartners: string[];
+    partnerIncentiveModel: string;
+    coMarketingOpportunities: string[];
+  };
+  sectionFRiskRegister?: Array<{
+    risk: string;
+    likelihood: "High" | "Medium" | "Low";
+    impact: "High" | "Medium" | "Low";
+    mitigation: string;
+  }>;
+  campaignSuccessMetrics?: {
+    pipelineGeneratedTargetByTier: Array<{ tier: string; target: string }>;
+    mqlToSqlConversionRateTarget: string;
+    cacTargetByChannel: Array<{ channel: string; target: string }>;
+    dealVelocityBenchmarkByTier: Array<{ tier: string; days: string }>;
+  };
 };
 
 export const STORAGE_KEY = "dealflow_lead_context_v1";
@@ -182,6 +338,7 @@ export const STORAGE_KEY = "dealflow_lead_context_v1";
 export type StoredLeadContext = {
   form: IntakeFormData;
   analysis: AnalysisResult | null;
+  feedback?: string; // New: User feedback for regeneration
   updatedAt: string;
 };
 
@@ -313,6 +470,8 @@ export const AGENT_EXPERTISE = {
 export type RevenueAgentProfile = {
   key: keyof typeof AGENT_FULL_NAMES;
   name: string;
+  fullName: string;
+  role: string;
   expertise: string[];
   activeSessions: number;
   available: boolean;
@@ -322,10 +481,16 @@ export function getRevenueAgentCatalog(): RevenueAgentProfile[] {
   return Object.entries(AGENT_FULL_NAMES).map(([key, name]) => ({
     key: key as keyof typeof AGENT_FULL_NAMES,
     name,
+    fullName: name,
+    role: "AI Revenue Agent",
     expertise: AGENT_EXPERTISE[key as keyof typeof AGENT_EXPERTISE],
     activeSessions: 0,
     available: true,
   }));
+}
+
+export function getAgentByKey(key: keyof typeof AGENT_FULL_NAMES): RevenueAgentProfile | undefined {
+  return getRevenueAgentCatalog().find(agent => agent.key === key);
 }
 
 export interface AgentSession {
@@ -362,27 +527,31 @@ export interface User {
   name: string;
   email: string;
   agentKey?: keyof typeof AGENT_FULL_NAMES; // For agents only
+  phoneNumber?: string;
+  countryCode?: string;
+  callConversationFramework?: string;
+  whatsAppMessageParameters?: string;
 }
 
-export type TaskStatus = "pending" | "in-progress" | "completed" | "cancelled";
+export type TaskStatus = "todo" | "pending" | "in-progress" | "completed" | "blocked" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Task {
   id: string;
   title: string;
   description: string;
-  status: TaskStatus | "todo" | "in-progress" | "completed" | "blocked"; // Backward compatibility
+  status: TaskStatus;
   priority: TaskPriority;
   assignedAgentId?: string;
   assignedAgentKey?: keyof typeof AGENT_FULL_NAMES;
   customerId: string;
-  customerName: string;
+  customerName?: string;
   leadId?: string;
   createdAt: string;
   updatedAt: string;
   dueDate?: string;
-  progressNotes?: string[];
-  milestones?: Array<{
+  progressNotes: string[];
+  milestones: Array<{
     id: string;
     title: string;
     completed: boolean;
@@ -392,12 +561,16 @@ export interface Task {
 
 export interface ChatMessage {
   id: string;
-  taskId: string;
+  taskId?: string;
+  sessionId?: string;
   senderId: string;
   senderName: string;
   senderRole: UserRole;
   content: string;
   createdAt: string;
+  timestamp?: string;
+  read?: boolean;
+  attachments?: FileAttachment[];
 }
 
 export interface SharedFile {
@@ -435,19 +608,6 @@ export interface FileAttachment {
   url: string;
   uploadedAt: string;
   uploadedBy: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  sessionId?: string;
-  taskId?: string;
-  senderId: string;
-  senderName: string;
-  senderRole: UserRole;
-  content: string;
-  timestamp: string;
-  read?: boolean;
-  attachments?: FileAttachment[];
 }
 
 export interface PortalCallRecord {
@@ -499,4 +659,155 @@ export interface AgentCredits {
     description: string;
     createdAt: string;
   }>;
+}
+
+// --- HeyGen Types ---
+export interface HeyGenAvatar {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  gender?: string;
+  language?: string;
+}
+
+export interface HeyGenTemplate {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+}
+
+export type HeyGenVideoStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface HeyGenVideo {
+  id: string;
+  status: HeyGenVideoStatus;
+  title?: string;
+  prompt?: string;
+  avatarId?: string;
+  templateId?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
+}
+
+export interface HeyGenSettings {
+  apiKey?: string;
+}
+
+export interface HeyGenError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
+// --- New Features: Page Locking ---
+export interface PageLockState {
+  id?: string;
+  leadId: string;
+  pageIndex: number;
+  locked: boolean;
+  lockedAt: string;
+  lockedBy: string;
+}
+
+// --- New Features: Agent Assignment ---
+export interface AgentAssignment {
+  id: string;
+  leadId: string;
+  agentKey: keyof typeof AGENT_FULL_NAMES;
+  agentName: string;
+  customerId?: string;
+  assignedAt: string;
+  status: "pending" | "active" | "completed";
+}
+
+// --- New Features: Customer Credentials ---
+export interface CustomerCredentials {
+  id: string;
+  leadId: string;
+  email: string;
+  passwordHash?: string;
+  createdAt: string;
+  isVerified: boolean;
+}
+
+// --- Extend existing interfaces ---
+export interface ExtendedLeadRecord extends LeadRecord {
+  assignedAgentKey?: keyof typeof AGENT_FULL_NAMES;
+  pageLocks?: number[];
+  customerCredentialsId?: string;
+  agentAssignmentId?: string;
+}
+
+// --- Multi-Agent RAG System Types ---
+export type AgentRole = "Retrieval" | "ContextSynthesis" | "ResponseGeneration" | "Verification" | "Audit" | "Graph" | "Equip" | "Network" | "Track" | "Influence" | "Convert";
+
+export interface AgentTask {
+  id: string;
+  role: AgentRole;
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "in-progress" | "completed" | "failed" | "reassigned";
+  input: Record<string, any>;
+  output?: Record<string, any>;
+  assignedTo?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  retries: number;
+  maxRetries: number;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  content: string;
+  vector?: number[];
+  metadata: {
+    source: string;
+    pageNumber?: number;
+    chunkIndex: number;
+    documentType: "text" | "manual" | "research" | "other";
+    [key: string]: any;
+  };
+}
+
+export interface VectorSearchResult {
+  chunk: DocumentChunk;
+  score: number;
+}
+
+export interface AgentMessage {
+  id: string;
+  from: AgentRole;
+  to?: AgentRole | "all";
+  type: "task" | "data" | "status" | "error" | "completion";
+  content: any;
+  timestamp: string;
+}
+
+// --- A.G.E.N.T.I.C. Framework Types ---
+export interface AgenticContext {
+  conversationId: string;
+  tasks: AgentTask[];
+  messages: AgentMessage[];
+  contextualMemory: Record<string, any>;
+  timestamp: string;
+}
+
+export interface FrameworkMetrics {
+  totalTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  averageLatency: number;
+  uptime: number;
+  agentLoad: Record<AgentRole, number>;
+}
+
+export interface FrameworkConfig {
+  maxConcurrentTasks: number;
+  defaultTimeoutMs: number;
+  selfHealingEnabled: boolean;
+  retryBackoffMs: number;
 }

@@ -1,7 +1,13 @@
 import { HfInference } from '@huggingface/inference';
 
-const PRIMARY_MODEL = 'meta-llama/Meta-Llama-3-8B-Instruct'; 
-const FALLBACK_MODEL = 'mistralai/Mistral-7B-Instruct-v0.3';
+const PRIMARY_MODEL = 'mistralai/Mistral-7B-Instruct-v0.3';
+const FALLBACK_MODELS = [
+  'mistralai/Mistral-7B-Instruct-v0.2',
+  'HuggingFaceH4/zephyr-7b-beta',
+  'meta-llama/Llama-3-8B-Instruct',
+  'Qwen/Qwen2.5-7B-Instruct',
+  'google/diffusiongemma-26B-A4B-it'
+];
 const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 
 export async function hfInfer( 
@@ -9,7 +15,7 @@ export async function hfInfer(
   systemPrompt: string, 
   options = {} 
 ): Promise<string> { 
-  const hfToken = (process.env.HUGGINGFACE_API_KEY || "").trim();
+  const hfToken = (process.env.HUGGINGFACE_API_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim();
   if (!hfToken) {
     console.warn("HUGGINGFACE_API_KEY is missing or empty.");
     return "AI Analysis is currently unavailable due to missing API configuration.";
@@ -17,6 +23,7 @@ export async function hfInfer(
   const hf = new HfInference(hfToken);
 
   const tryModel = async (model: string) => { 
+    console.log(`[huggingface.ts] Trying model: ${model}`);
     const res = await hf.chatCompletion({
       model: model,
       messages: [
@@ -28,29 +35,38 @@ export async function hfInfer(
       top_p: 0.9,
       ...options
     });
-    return res.choices[0]?.message?.content || '';
+    const content = res.choices[0]?.message?.content || '';
+    if (!content) {
+      throw new Error(`Model ${model} returned empty content`);
+    }
+    console.log(`[huggingface.ts] Success with model: ${model}`);
+    return content;
   };
 
-  try {
-    return await tryModel(PRIMARY_MODEL);
-  } catch (err) {
-    console.warn(`Hugging Face Primary Model failed. Trying fallback...`, err);
+  // Try primary model first, then all fallbacks
+  const modelsToTry = [PRIMARY_MODEL, ...FALLBACK_MODELS];
+  let lastError: any;
+  
+  for (const model of modelsToTry) {
     try {
-      return await tryModel(FALLBACK_MODEL);
-    } catch (fallbackErr) {
-      console.error(`Hugging Face API Fallback Error:`, fallbackErr);
-      throw new Error(`AI Analysis Service Error: Both models failed`);
+      return await tryModel(model);
+    } catch (err) {
+      lastError = err;
+      console.warn(`Hugging Face model ${model} failed, trying next...`, err);
     }
   }
+  
+  console.error(`Hugging Face API Error: All models failed`, lastError);
+  throw new Error(`AI Analysis Service Error: All models failed`);
 }
 
 export async function hfInferJSON( 
   prompt: string, 
   systemPrompt: string,
-  infer: typeof hfInfer = hfInfer
+  options: any = {}
 ): Promise<any> { 
   const jsonSystem = `${systemPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No explanation, no markdown, no backticks. Raw JSON only. Ensure no trailing commas.`; 
-  const jsonOpts: any = { temperature: 0.2, max_tokens: 1600 };
+  const jsonOpts: any = { ...options, temperature: 0.2, max_tokens: 1600 };
   const jsonFixerSystem = `You fix invalid JSON. Return ONLY valid JSON. No markdown, no backticks, no explanation. Do not add commentary.`;
 
   const stripFences = (t: string) => t.replace(/```json\s*|```/gi, "").trim();
@@ -150,29 +166,35 @@ export async function hfInferJSON(
 
   let raw1 = "";
   try {
-    raw1 = await infer(prompt, jsonSystem, jsonOpts);
+    if (typeof options === "function") {
+      raw1 = await options();
+    } else {
+      raw1 = await hfInfer(prompt, jsonSystem, jsonOpts);
+    }
     return parseLenient(raw1);
   } catch (e1) {
+    if (typeof options === "function") {
+      throw e1; // If it's a test mock, we don't want to attempt fallbacks using real API calls
+    }
     const candidate = repairJson(extractJsonCandidate(stripFences(String(raw1 || ""))));
     const clipped = candidate.length > 6000 ? candidate.slice(0, 6000) : candidate;
     try {
       const repairPrompt = clipped
         ? `Fix this invalid JSON and return corrected JSON only:\n${clipped}`
         : `Return the JSON again, ensuring it is strictly valid JSON (no trailing commas).`;
-      const raw2 = await infer(repairPrompt, jsonFixerSystem, { temperature: 0, max_tokens: 1600 });
+      const raw2 = await hfInfer(repairPrompt, jsonFixerSystem, { ...jsonOpts, temperature: 0, max_tokens: 1600 });
       return parseLenient(raw2);
     } catch (e2) {
-      const raw3 = await infer(prompt, jsonSystem, { temperature: 0, max_tokens: 1800 });
+      const raw3 = await hfInfer(prompt, jsonSystem, { ...jsonOpts, temperature: 0, max_tokens: 1800 });
       return parseLenient(raw3);
     }
   }
 } 
 
 export async function hfEmbed(text: string): Promise<number[]> {
-  const hfToken = (process.env.HUGGINGFACE_API_KEY || "").trim();
+  const hfToken = (process.env.HUGGINGFACE_API_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim();
   if (!hfToken) {
-    console.warn("HUGGINGFACE_API_KEY is missing, returning empty embedding.");
-    return new Array(384).fill(0);
+    throw new Error("HUGGINGFACE_API_KEY is missing or empty.");
   }
   const hf = new HfInference(hfToken);
   
@@ -183,14 +205,20 @@ export async function hfEmbed(text: string): Promise<number[]> {
     });
     // Ensure it's a flat array of numbers. HuggingFace might return number[] or number[][]
     if (Array.isArray(res)) {
+      let flatArray: number[];
       if (Array.isArray(res[0])) {
-        return res[0] as number[];
+        flatArray = res[0] as number[];
+      } else {
+        flatArray = res as number[];
       }
-      return res as number[];
+      if (flatArray.length === 0) {
+        throw new Error("HuggingFace returned an empty embedding array");
+      }
+      return flatArray;
     }
-    return [];
-  } catch (err) {
+    throw new Error("HuggingFace did not return an array for feature extraction");
+  } catch (err: any) {
     console.error('Embedding generation failed:', err);
-    return new Array(384).fill(0);
+    throw new Error(`Embedding generation failed: ${err.message}`);
   }
 }

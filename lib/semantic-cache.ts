@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { hfEmbed } from './huggingface';
 import { MemoryEntry } from './hermes/types';
 import { getHermes } from './hermes/hermes';
@@ -158,7 +162,7 @@ export class SemanticCache {
       agentId: metadata.agentId,
       keywords: queryText.toLowerCase().split(/\s+/),
       importance: 8,
-      metadata,
+      metadata: metadata || {},
     });
 
     return entry;

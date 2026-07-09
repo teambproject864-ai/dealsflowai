@@ -19,6 +19,7 @@ import {
   pipelineStages,
 } from "@/lib/seed-data";
 import { useFirestoreCollection } from "@/lib/firestore-realtime";
+import { OnboardingTour } from "./OnboardingTour";
 
 // ─── Stage colours ────────────────────────────────────────────────────────────
 const STAGE_CONFIG: Record<
@@ -135,7 +136,7 @@ function StageOrb({
         {/* Detail panel */}
         {isSelected && (
           <Html distanceFactor={10} position={[0, radius + 1.2, 0]}>
-            <div className="pointer-events-none w-[260px] rounded-xl border border-white/10 bg-slate-900/95 p-4 backdrop-blur-md shadow-2xl">
+            <div className="pointer-events-none w-[clamp(180px,40vw,280px)] rounded-xl border border-white/10 bg-slate-900/95 p-4 backdrop-blur-md shadow-2xl hidden md:block animate-in fade-in zoom-in-95 duration-200">
               <div
                 className="mb-2 text-xs font-bold uppercase tracking-widest"
                 style={{ color: cfg.color }}
@@ -251,7 +252,7 @@ export function SalesPipeline3D() {
         </div>
 
         {/* 5-Column Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto overflow-y-hidden pb-4 items-stretch h-[calc(100vh-270px)]">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto overflow-y-auto pb-4 items-stretch min-h-[400px]">
           {pipelineStages.map((stage) => {
             const stageLeads = byStage[stage] ?? [];
             const cfg = STAGE_CONFIG[stage] ?? { color: "#6366f1", label: stage };
@@ -346,8 +347,58 @@ export function SalesPipeline3D() {
     );
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const currentIndex = (pipelineStages as readonly string[]).indexOf(selectedStage || "");
+    if (e.key === "Tab" || e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % pipelineStages.length;
+      setSelectedStage(pipelineStages[nextIndex]);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + pipelineStages.length) % pipelineStages.length;
+      setSelectedStage(pipelineStages[prevIndex]);
+    } else if (e.key === "Escape") {
+      setSelectedStage(null);
+    }
+  };
+
+  const selectedStageLeads = selectedStage ? byStage[selectedStage] ?? [] : [];
+
   return (
-    <div className="relative h-full w-full" onClick={() => setSelectedStage(null)}>
+    <div
+      className="relative h-[600px] w-full focus-within:ring-2 focus-within:ring-teal-500/50 focus-within:outline-none rounded-3xl overflow-hidden"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="region"
+      aria-label="3D Sales Pipeline. Use Arrow keys or Tab key to cycle through pipeline stages, and Escape to clear selection."
+      onClick={() => setSelectedStage(null)}
+    >
+      <OnboardingTour sceneKey="sales" />
+      {/* Screen-reader accessible sales pipeline data table */}
+      <table className="sr-only">
+        <caption>Sales Pipeline Stage Summary</caption>
+        <thead>
+          <tr>
+            <th scope="col">Pipeline Stage</th>
+            <th scope="col">Deals Count</th>
+            <th scope="col">Total Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pipelineStages.map((stage) => {
+            const stageLeads = byStage[stage] ?? [];
+            const val = stageLeads.reduce((a, l) => a + l.dealValue, 0);
+            return (
+              <tr key={stage}>
+                <td>{STAGE_CONFIG[stage]?.label ?? stage}</td>
+                <td>{stageLeads.length}</td>
+                <td>${val.toLocaleString()}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
       <Canvas shadows dpr={dpr}>
         <PerformanceMonitor
           onIncline={() => { setDpr(2); setPerf("high"); }}
@@ -423,6 +474,39 @@ export function SalesPipeline3D() {
       <div className="pointer-events-none absolute left-6 top-6 text-[10px] uppercase tracking-widest text-slate-500">
         Real-time sync · click a stage to drill down
       </div>
+
+      {/* Mobile / Responsive Bottom Sheet for Stage details */}
+      {selectedStage && (
+        <div className="absolute bottom-20 left-4 right-4 bg-slate-950/90 border border-white/10 p-4 rounded-2xl backdrop-blur-md z-20 pointer-events-auto md:hidden animate-in slide-in-from-bottom duration-300 max-h-[220px] overflow-y-auto">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              {STAGE_CONFIG[selectedStage]?.label ?? selectedStage} Deals
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedStage(null);
+              }}
+              className="text-xs text-slate-400 hover:text-white"
+              style={{ minHeight: "44px", minWidth: "44px" }}
+            >
+              Close
+            </button>
+          </div>
+          <div className="space-y-2">
+            {selectedStageLeads.length === 0 ? (
+              <div className="text-xs text-slate-400">No deals in this stage.</div>
+            ) : (
+              selectedStageLeads.map((lead) => (
+                <div key={lead.id} className="flex justify-between items-center text-xs">
+                  <span className="text-white font-semibold">{lead.companyName}</span>
+                  <span className="text-slate-400">${lead.dealValue.toLocaleString()} ({lead.probability}%)</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

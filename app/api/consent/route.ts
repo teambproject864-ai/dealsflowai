@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
 import { hashIp } from "@/lib/security";
-
-async function verifyToken(req: Request) {
-  const authHeader = req.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) throw new Error("Missing auth token");
-  return admin.auth().verifyIdToken(token);
-}
+import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
+import { logAuditEvent } from "@/lib/audit-logger";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 /**
  * POST /api/consent
@@ -20,19 +16,20 @@ async function verifyToken(req: Request) {
  */
 
 export async function POST(req: Request) {
+  const rateLimitResponse = await checkRateLimitSensitive(req);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
-    let uid: string;
-    try {
-      const decoded = await verifyToken(req);
-      uid = decoded.uid;
-    } catch {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
       return NextResponse.json(
         { success: false, error: "Authentication required." },
         { status: 401 }
       );
     }
+    const uid = user.id;
 
-    const { consentVersion, purposes } = await req.json();
+    const { consentVersion, purposes, doNotSell } = await req.json();
     if (!consentVersion || !Array.isArray(purposes)) {
       return NextResponse.json(
         { success: false, error: "consentVersion and purposes[] are required." },
@@ -40,11 +37,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json({ success: true, message: "Consent recorded (Firestore not configured)" });
+    }
+
     const ipRaw = req.headers.get("x-forwarded-for") ?? "unknown";
     const consentRecord = {
       userId:          uid,
       consentVersion,
       purposes,
+      doNotSell:       !!doNotSell,
       consentedAt:     admin.firestore.FieldValue.serverTimestamp(),
       ipHash:          hashIp(ipRaw),
       userAgent:       req.headers.get("user-agent") ?? "unknown",
@@ -53,13 +56,7 @@ export async function POST(req: Request) {
     await db.collection("user_consent").doc(uid).set(consentRecord, { merge: true });
 
     // Audit
-    await db.collection("audit_log").add({
-      action:    "CONSENT_RECORDED",
-      userId:    uid,
-      consentVersion,
-      purposes,
-      timestamp: new Date().toISOString(),
-    });
+    await logAuditEvent(req, uid, "CONSENT_RECORDED", { consentVersion, purposes, doNotSell: !!doNotSell });
 
     return NextResponse.json({ success: true, message: "Consent recorded." });
   } catch (error: any) {
@@ -73,15 +70,18 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    let uid: string;
-    try {
-      const decoded = await verifyToken(req);
-      uid = decoded.uid;
-    } catch {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
       return NextResponse.json(
         { success: false, error: "Authentication required." },
         { status: 401 }
       );
+    }
+    const uid = user.id;
+
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json({ success: true, consent: null });
     }
 
     const snap = await db.collection("user_consent").doc(uid).get();
@@ -95,6 +95,7 @@ export async function GET(req: Request) {
       consent: {
         consentVersion: data?.consentVersion,
         purposes:       data?.purposes,
+        doNotSell:      data?.doNotSell ?? false,
         consentedAt:    data?.consentedAt,
       },
     });

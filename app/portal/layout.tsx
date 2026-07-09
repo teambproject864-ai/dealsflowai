@@ -16,10 +16,36 @@ export default function PortalLayout({
   const pathname = usePathname();
   const { user: currentUser, isLoading } = useCurrentUser();
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Auth guard: redirect unauthenticated users to the correct login page
   useEffect(() => {
-    setCheckingAccess(false);
-  }, []);
+    if (isLoading) return; // Wait until user state is resolved
+
+    const currentPath = pathname || "";
+
+    // Determine if the current path is a login/public page
+    const isLoginPage =
+      currentPath === "/portal" ||
+      currentPath === "/portal/admin/login" ||
+      currentPath === "/portal/customer/login" ||
+      currentPath === "/portal/agent/login";
+
+    if (!currentUser && !isLoginPage) {
+      // Redirect to the appropriate login based on path
+      if (currentPath.startsWith("/portal/admin")) {
+        router.push("/portal/admin/login");
+      } else if (currentPath.startsWith("/portal/customer")) {
+        router.push("/portal/customer/login");
+      } else if (currentPath.startsWith("/portal/agent")) {
+        router.push("/portal/agent/login");
+      } else {
+        router.push("/portal");
+      }
+    } else {
+      setCheckingAccess(false);
+    }
+  }, [currentUser, isLoading, pathname, router]);
 
   if (checkingAccess || isLoading) {
     return (
@@ -52,7 +78,7 @@ export default function PortalLayout({
                 prefetch={false}
                 className={cn(
                   "immersive-nav-icon-extrude rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  pathname.startsWith(link.match)
+                  pathname?.startsWith(link.match)
                     ? "text-teal-300 bg-teal-500/15"
                     : "text-slate-400 hover:text-teal-200"
                 )}
@@ -71,12 +97,23 @@ export default function PortalLayout({
             <ExtrudedButton
               variant="outline"
               size="sm"
+              disabled={isLoggingOut}
               onClick={async () => {
-                await fetch("/api/auth/logout", { method: "POST" });
-                router.push("/");
+                setIsLoggingOut(true);
+                try {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  await fetch("/api/auth/logout", { method: "POST" });
+                  window.location.replace("/");
+                } catch (e) {
+                  console.error("Logout failed:", e);
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.replace("/");
+                }
               }}
             >
-              Logout
+              {isLoggingOut ? "Logging out..." : "Logout"}
             </ExtrudedButton>
           </div>
         </div>

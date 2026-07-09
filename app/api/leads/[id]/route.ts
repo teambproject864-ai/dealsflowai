@@ -1,17 +1,37 @@
 import { NextResponse } from "next/server";
 import { getInMemoryLeads } from "@/lib/memory-storage";
-
-const inMemoryLeads = getInMemoryLeads();
+import { db } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+import { ExtendedLeadRecord } from "@/lib/types";
+import { decryptLead } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
+const inMemoryLeads = getInMemoryLeads();
+
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ── Authentication ─────────────────────────────────────────
+  const { errorResponse } = await requireAuth(req);
+  if (errorResponse) return errorResponse;
+
   try {
     const { id: leadId } = await params;
-    const lead = inMemoryLeads.get(leadId);
+    
+    // Check in-memory cache first
+    let lead = inMemoryLeads.get(leadId);
+
+    // If not found in cache, fetch from Firestore
+    if (!lead && db) {
+      const doc = await db.collection("leads").doc(leadId).get();
+      if (doc.exists) {
+        lead = doc.data() as ExtendedLeadRecord;
+        // Cache it locally
+        inMemoryLeads.set(leadId, lead!);
+      }
+    }
 
     if (!lead) {
       return NextResponse.json(
@@ -20,10 +40,12 @@ export async function GET(
       );
     }
 
+    const decryptedLead = decryptLead(lead);
+
     return NextResponse.json({
       success: true,
       leadId,
-      ...lead,
+      ...decryptedLead,
     });
   } catch (error) {
     console.error("Error fetching lead:", error);

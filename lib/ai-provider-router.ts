@@ -1,6 +1,7 @@
 import { hfInfer, hfInferJSON } from './huggingface';
 import { nvInfer, nvInferJSON } from './nvidia';
 import { kimiInfer, kimiInferJSON } from './kimi';
+import { startLLMJob, completeLLMJob } from './llm-job-tracker';
 
 // Define supported AI providers
 export const SUPPORTED_PROVIDERS = ['huggingface', 'nvidia', 'kimi'] as const;
@@ -98,6 +99,9 @@ function logProviderSelection(
     isFallback: !!fallbackFrom,
   };
   providerSwitchLogs.push(logEntry);
+  if (providerSwitchLogs.length > 100) {
+    providerSwitchLogs.shift();
+  }
   
   // Also log to console for debugging
   console.log(
@@ -114,6 +118,13 @@ export function selectAIProvider(
   attributes: ProviderRequestAttributes = {},
   requestId?: string
 ): SupportedAIProvider {
+  // First check if AI_PROVIDER is set in environment variables
+  const envProvider = process.env.AI_PROVIDER;
+  if (envProvider && isSupportedProvider(envProvider)) {
+    logProviderSelection(attributes, envProvider);
+    return envProvider;
+  }
+
   // Find matching rules sorted by priority (highest first)
   const matchingRules = PROVIDER_MAPPING_RULES.filter((rule) =>
     rule.condition(attributes)
@@ -156,20 +167,75 @@ export async function performDynamicInference(
   attributes: ProviderRequestAttributes = {},
   options: any = {}
 ): Promise<string> {
-  const provider = selectAIProvider(attributes);
-  const { infer } = getProviderInferenceFunctions(provider);
+  const initialProvider = selectAIProvider(attributes);
   
-  try {
-    return await infer(prompt, systemPrompt, options);
-  } catch (error) {
-    console.error(
-      `[AI Provider Router] Inference with ${provider} failed, falling back to ${DEFAULT_PROVIDER}`,
-      error
-    );
-    logProviderSelection(attributes, DEFAULT_PROVIDER, provider);
-    const { infer: fallbackInfer } = getProviderInferenceFunctions(DEFAULT_PROVIDER);
-    return await fallbackInfer(prompt, systemPrompt, options);
+  // Create a list of providers to try, starting with initial provider, then all others
+  const providersToTry: SupportedAIProvider[] = [initialProvider];
+  for (const provider of SUPPORTED_PROVIDERS) {
+    if (!providersToTry.includes(provider)) {
+      providersToTry.push(provider);
+    }
   }
+  
+  let lastError: any;
+  let lastProvider: SupportedAIProvider | null = null;
+  let activeJobId: string | null = null;
+  let activeProviderModel: string | null = null;
+  
+  // Get the model name for each provider (for tracking)
+  const getProviderModel = (provider: SupportedAIProvider): string => {
+    switch (provider) {
+      case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
+      case 'nvidia': return 'nvidia/nemotron';
+      case 'kimi': return 'kimi-v1';
+      default: return 'unknown-model';
+    }
+  };
+  
+  for (const provider of providersToTry) {
+    try {
+      console.log(`[AI Provider Router] Trying provider: ${provider}`);
+      const { infer } = getProviderInferenceFunctions(provider);
+      if (lastProvider) {
+        logProviderSelection(attributes, provider, lastProvider);
+      }
+      
+      // Extract analysisId from requestType (format: "gtm-analysis-<analysisId>")
+      let extractedAnalysisId: string | undefined;
+      if (attributes.requestType?.startsWith("gtm-analysis-")) {
+        extractedAnalysisId = attributes.requestType.replace("gtm-analysis-", "");
+      }
+      
+      // Start LLM job tracking
+      const model = getProviderModel(provider);
+      activeJobId = startLLMJob(provider, model, extractedAnalysisId);
+      activeProviderModel = model;
+      
+      const result = await infer(prompt, systemPrompt, options);
+      
+      // Complete job on success
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "completed");
+      }
+      
+      console.log(`[AI Provider Router] Success with provider: ${provider}`);
+      return result;
+    } catch (error) {
+      // Complete job as failed
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "failed", error instanceof Error ? error.message : "Unknown error");
+      }
+      lastError = error;
+      lastProvider = provider;
+      console.error(
+        `[AI Provider Router] Inference with ${provider} failed, trying next...`,
+        error
+      );
+    }
+  }
+  
+  // If all providers failed, throw the last error
+  throw new Error(`All AI providers failed. Last error: ${lastError?.message || "Unknown error"}`);
 }
 
 /**
@@ -181,20 +247,73 @@ export async function performDynamicInferenceJSON(
   attributes: ProviderRequestAttributes = {},
   options: any = {}
 ): Promise<any> {
-  const provider = selectAIProvider(attributes);
-  const { inferJSON } = getProviderInferenceFunctions(provider);
+  const initialProvider = selectAIProvider(attributes);
   
-  try {
-    return await inferJSON(prompt, systemPrompt, options);
-  } catch (error) {
-    console.error(
-      `[AI Provider Router] JSON inference with ${provider} failed, falling back to ${DEFAULT_PROVIDER}`,
-      error
-    );
-    logProviderSelection(attributes, DEFAULT_PROVIDER, provider);
-    const { inferJSON: fallbackInferJSON } = getProviderInferenceFunctions(DEFAULT_PROVIDER);
-    return await fallbackInferJSON(prompt, systemPrompt, options);
+  // Create a list of providers to try, starting with initial provider, then all others
+  const providersToTry: SupportedAIProvider[] = [initialProvider];
+  for (const provider of SUPPORTED_PROVIDERS) {
+    if (!providersToTry.includes(provider)) {
+      providersToTry.push(provider);
+    }
   }
+  
+  let lastError: any;
+  let lastProvider: SupportedAIProvider | null = null;
+  let activeJobId: string | null = null;
+  
+  // Get the model name for each provider (for tracking)
+  const getProviderModel = (provider: SupportedAIProvider): string => {
+    switch (provider) {
+      case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
+      case 'nvidia': return 'nvidia/nemotron';
+      case 'kimi': return 'kimi-v1';
+      default: return 'unknown-model';
+    }
+  };
+  
+  for (const provider of providersToTry) {
+    try {
+      console.log(`[AI Provider Router] Trying provider: ${provider} (JSON)`);
+      const { inferJSON } = getProviderInferenceFunctions(provider);
+      if (lastProvider) {
+        logProviderSelection(attributes, provider, lastProvider);
+      }
+      
+      // Extract analysisId from requestType (format: "gtm-analysis-<analysisId>")
+      let extractedAnalysisId: string | undefined;
+      if (attributes.requestType?.startsWith("gtm-analysis-")) {
+        extractedAnalysisId = attributes.requestType.replace("gtm-analysis-", "");
+      }
+      
+      // Start LLM job tracking
+      const model = getProviderModel(provider);
+      activeJobId = startLLMJob(provider, model, extractedAnalysisId);
+      
+      const result = await inferJSON(prompt, systemPrompt, options);
+      
+      // Complete job on success
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "completed");
+      }
+      
+      console.log(`[AI Provider Router] Success with provider: ${provider} (JSON)`);
+      return result;
+    } catch (error) {
+      // Complete job as failed
+      if (activeJobId) {
+        completeLLMJob(activeJobId, "failed", error instanceof Error ? error.message : "Unknown error");
+      }
+      lastError = error;
+      lastProvider = provider;
+      console.error(
+        `[AI Provider Router] JSON inference with ${provider} failed, trying next...`,
+        error
+      );
+    }
+  }
+  
+  // If all providers failed, throw the last error
+  throw new Error(`All AI providers failed for JSON inference. Last error: ${lastError?.message || "Unknown error"}`);
 }
 
 /**

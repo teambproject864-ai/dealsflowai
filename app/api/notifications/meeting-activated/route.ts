@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendMeetingActivationNotification } from "@/lib/notifications";
 import { isValidMeetingUrl } from "@/lib/meeting-utils";
 import { db } from "@/lib/firebase-admin";
+import { decryptLead } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,10 @@ export async function POST(req: NextRequest) {
 
     if (!isValidMeetingUrl(meetingUrl)) {
       return NextResponse.json({ error: "Invalid meeting URL" }, { status: 400 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
     // Fetch call and lead details for the email
@@ -27,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    const leadData = leadDoc.data()!;
+    const leadData = decryptLead(leadDoc.data()!);
 
     await sendMeetingActivationNotification({
       meetingUrl,

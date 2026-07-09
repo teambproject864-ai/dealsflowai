@@ -686,6 +686,132 @@ export function IconPersistLearn(props: IconProps) {
   );
 }
 
+/** Network / A2A communication */
+export function IconNetworkNodes(props: IconProps) {
+  return wrap(
+    <>
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="5" cy="5" r="2" />
+      <circle cx="19" cy="5" r="2" />
+      <circle cx="5" cy="19" r="2" />
+      <circle cx="19" cy="19" r="2" />
+      <path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3M14 12l3 0M10 12l-3 0" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Graph / Knowledge Graph */
+export function IconKnowledgeGraph(props: IconProps) {
+  return wrap(
+    <>
+      <circle cx="6" cy="6" r="2" />
+      <circle cx="18" cy="6" r="2" />
+      <circle cx="12" cy="18" r="2" />
+      <path d="M7 7l4 9M17 7l-4 9M8 6h8" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Memory / Context */
+export function IconContextMemory(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M3 5v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
+      <path d="M3 10v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6" />
+      <path d="M7 19h10" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Orchestration / Task management */
+export function IconOrchestrator(props: IconProps) {
+  return wrap(
+    <>
+      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+      <line x1="12" y1="22" x2="12" y2="15.5" />
+      <polyline points="22 8.5 12 15.5 2 8.5" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Observability / Monitoring */
+export function IconObservability(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M7 14l3-4 3 2 4-6 3 4" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Sparkles / FAPO */
+export function IconSparkles(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+      <path d="M5 12l0.5 2L8 14.5l-2 0.5L5 17l-0.5-2L2 14.5l2-0.5L5 12z" />
+      <path d="M19 12l0.5 2L22 14.5l-2 0.5L19 17l-0.5-2L16 14.5l2-0.5L19 12z" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Globe / International */
+export function IconGlobe(props: IconProps) {
+  return IconGlobeMarkets(props);
+}
+
+/** Star / Favorites */
+export function IconStar(props: IconProps) {
+  return wrap(
+    <>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** User / Account */
+export function IconUser(props: IconProps) {
+  return IconUserStakeholder(props);
+}
+
+/** Bar Chart 2 for GTM strategy visualization */
+export function IconBarChart2(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M18 17V7M13 17V9M8 17v-6" />
+    </>,
+    props.className,
+    props
+  );
+}
+
+/** Key for API key management */
+export function IconKey(props: IconProps) {
+  return wrap(
+    <>
+      <path d="M21 2l-2 2m-7.618 7.618a5.5 5.5 0 0 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z" />
+      <path d="M15.5 4h-2a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2" />
+    </>,
+    props.className,
+    props
+  );
+}
+
 /** Map legacy Lucide icon names from feature definitions to GTM icons */
 export function getGtmFeatureIcon(iconName: string): ComponentType<IconProps> {
   const map: Record<string, ComponentType<IconProps>> = {
@@ -699,12 +825,23 @@ export function getGtmFeatureIcon(iconName: string): ComponentType<IconProps> {
     Mail: IconEmailSequence,
     Phone: IconPhoneDialer,
     BarChart: IconKpiStackedBars,
+    BarChart2: IconBarChart2,
+    Key: IconKey,
     Settings: IconPlaybookSettings,
     Lock: IconLockVault,
     Workflow: IconPipelineCrm,
     Search: IconProspectSearch,
     Bell: IconSignalBell,
     Calendar: IconCalendarQuarter,
+    Network: IconNetworkNodes,
+    Graph: IconKnowledgeGraph,
+    Memory: IconContextMemory,
+    Orchestrator: IconOrchestrator,
+    Monitor: IconObservability,
+    Sparkles: IconSparkles,
+    Globe: IconGlobeMarkets,
+    Star: IconStar,
+    User: IconUserStakeholder,
   };
   return map[iconName] ?? IconPlaybookSettings;
 }

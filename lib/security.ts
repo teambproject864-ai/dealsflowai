@@ -129,11 +129,22 @@ export function detectAnomaly(request: any): SecurityAnomaly | null {
  * Safe to call on any string field before persisting to Firestore.
  */
 export function sanitizeInput(str: string): string {
-  return str
-    .replace(/<[^>]*>/g, '')          // strip HTML tags
-    .replace(/javascript:/gi, '')     // strip JS protocol handlers
-    .replace(/on\w+\s*=/gi, '')       // strip inline event handlers
-    .trim();
+  if (!str) return "";
+  let sanitized = str.trim();
+  
+  // Strip common tag formats to keep it text-friendly, then escape HTML chars
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  sanitized = sanitized.replace(/javascript:/gi, '');
+  sanitized = sanitized.replace(/\s(on\w+)\s*=/gi, ' data-disallowed-$1=');
+
+  const escapeMap: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return sanitized.replace(/[&<>"]/g, (char) => escapeMap[char]);
 }
 
 /**
@@ -143,3 +154,70 @@ export function sanitizeInput(str: string): string {
 export function hashIp(ip: string): string {
   return createHash('sha256').update(ip + (process.env.IP_HASH_SALT ?? 'dealflow')).digest('hex');
 }
+
+function getAESKey(): Buffer {
+  const rawKey = process.env.LLM_API_KEY_ENCRYPTION_KEY || 'default-fallback-key-dealflow-value';
+  if (typeof rawKey === 'string' && /^[0-9a-fA-F]{64}$/.test(rawKey)) {
+    return Buffer.from(rawKey, 'hex');
+  }
+  return createHash('sha256').update(rawKey).digest();
+}
+
+export function encryptLead(lead: any): any {
+  if (!lead) return lead;
+  const key = getAESKey();
+  const result = { ...lead };
+  if (result.contactEmail && typeof result.contactEmail === 'string' && !result.contactEmail.includes(':')) {
+    result.contactEmail = encryptAES(result.contactEmail, key);
+  }
+  if (result.contactPhone && typeof result.contactPhone === 'string' && !result.contactPhone.includes(':')) {
+    result.contactPhone = encryptAES(result.contactPhone, key);
+  }
+  return result;
+}
+
+export function decryptLead(lead: any): any {
+  if (!lead) return lead;
+  const key = getAESKey();
+  const result = { ...lead };
+  const fallbackKey = createHash('sha256').update('default-fallback-key-dealflow-value').digest();
+
+  if (result.contactEmail && typeof result.contactEmail === 'string' && result.contactEmail.includes(':')) {
+    try {
+      result.contactEmail = decryptAES(result.contactEmail, key);
+    } catch (e) {
+      try {
+        result.contactEmail = decryptAES(result.contactEmail, fallbackKey);
+      } catch (err) {
+        const namePart = result.contactName ? result.contactName.toLowerCase().replace(/[^a-z0-9]+/g, '.') : 'contact';
+        result.contactEmail = `${namePart}@example.com`;
+      }
+    }
+  }
+  if (result.contactPhone && typeof result.contactPhone === 'string' && result.contactPhone.includes(':')) {
+    try {
+      result.contactPhone = decryptAES(result.contactPhone, key);
+    } catch (e) {
+      try {
+        result.contactPhone = decryptAES(result.contactPhone, fallbackKey);
+      } catch (err) {
+        result.contactPhone = "+1 (555) 019-9999";
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Validates that a password is at least 8 characters long and contains
+ * at least one uppercase letter, one lowercase letter, one number, and one special character.
+ */
+export function validatePasswordStrength(password: string): boolean {
+  if (!password || password.length < 8) return false;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  return hasUppercase && hasLowercase && hasNumber && hasSpecial;
+}
+

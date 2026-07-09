@@ -18,6 +18,7 @@ import {
   seedMarketingCampaigns,
 } from "@/lib/seed-data";
 import { useFirestoreCollection } from "@/lib/firestore-realtime";
+import { OnboardingTour } from "./OnboardingTour";
 
 // ─── Convert lat/lng to 3D sphere position ────────────────────────────────────
 
@@ -108,7 +109,7 @@ function EarthGlobe({ onHotspotClick, selectedId }: {
               </mesh>
               {isSelected && (
                 <Html distanceFactor={12} position={[0.3, 0.3, 0]}>
-                  <div className="pointer-events-none w-[210px] rounded-xl border border-white/10 bg-slate-900/95 p-3 backdrop-blur-md shadow-2xl">
+                  <div className="pointer-events-none w-[clamp(180px,40vw,240px)] rounded-xl border border-white/10 bg-slate-900/95 p-3 backdrop-blur-md shadow-2xl hidden md:block">
                     <div className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
                       {campaign.channel}
                     </div>
@@ -262,7 +263,7 @@ export function MarketingCampaignViewer3D() {
         </div>
 
         {/* 2-Column Dashboard Grid */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto lg:overflow-hidden pb-4 items-stretch h-[calc(100vh-270px)]">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto pb-4 items-stretch min-h-[400px]">
           
           {/* Main Campaign List (2/3 width) */}
           <div className="lg:col-span-2 bg-slate-900/20 border border-white/5 rounded-2xl p-4 flex flex-col h-full overflow-hidden">
@@ -405,8 +406,59 @@ export function MarketingCampaignViewer3D() {
     );
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (campaigns.length === 0) return;
+    const currentIndex = campaigns.findIndex((c) => c.id === selectedCampaign?.id);
+    if (e.key === "Tab" || e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % campaigns.length;
+      setSelectedCampaign(campaigns[nextIndex]);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + campaigns.length) % campaigns.length;
+      setSelectedCampaign(campaigns[prevIndex]);
+    } else if (e.key === "Escape") {
+      setSelectedCampaign(null);
+    }
+  };
+
   return (
-    <div className="relative h-full w-full" onClick={() => setSelectedCampaign(null)}>
+    <div
+      className="relative h-[600px] w-full focus-within:ring-2 focus-within:ring-teal-500/50 focus-within:outline-none rounded-3xl overflow-hidden"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="region"
+      aria-label="3D Campaign Conversion Hub. Use Arrow keys or Tab key to cycle through campaigns, and Escape to clear selection."
+      onClick={() => setSelectedCampaign(null)}
+    >
+      <OnboardingTour sceneKey="marketing" />
+      {/* Screen-reader accessible marketing campaigns data table */}
+      <table className="sr-only">
+        <caption>Campaign Conversion Hub Metrics</caption>
+        <thead>
+          <tr>
+            <th scope="col">Campaign Name</th>
+            <th scope="col">Channel</th>
+            <th scope="col">Status</th>
+            <th scope="col">Reach</th>
+            <th scope="col">Conversions</th>
+            <th scope="col">Spend</th>
+          </tr>
+        </thead>
+        <tbody>
+          {campaigns.map((c) => (
+            <tr key={c.id}>
+              <td>{c.name}</td>
+              <td>{c.channel}</td>
+              <td>{c.status}</td>
+              <td>{c.reach.toLocaleString()}</td>
+              <td>{c.conversions.toLocaleString()}</td>
+              <td>${c.spend.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       <Canvas shadows dpr={dpr}>
         <PerformanceMonitor
           onIncline={() => { setDpr(2); setPerf("high"); }}
@@ -496,6 +548,34 @@ export function MarketingCampaignViewer3D() {
       <div className="pointer-events-none absolute left-6 top-6 text-[10px] uppercase tracking-widest text-slate-500">
         Real-time sync · click a hotspot to inspect
       </div>
+
+      {/* Mobile / Responsive Bottom Sheet for Campaign Details */}
+      {selectedCampaign && (
+        <div className="absolute bottom-4 left-4 right-4 bg-slate-950/90 border border-white/10 p-4 rounded-2xl backdrop-blur-md flex justify-between items-center z-20 pointer-events-auto md:hidden animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-2.5 w-2.5 rounded-full animate-pulse"
+              style={{ backgroundColor: CHANNEL_CONFIG[selectedCampaign.channel]?.color ?? "#ffffff" }}
+            />
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {selectedCampaign.channel.toUpperCase()} · Status: {selectedCampaign.status}
+              </div>
+              <div className="text-sm font-bold text-white">{selectedCampaign.name}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Conversions: {selectedCampaign.conversions.toLocaleString()} · CPL: ${selectedCampaign.cpl} · Spend: ${selectedCampaign.spend.toLocaleString()}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setSelectedCampaign(null)}
+            className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 active:bg-white/10"
+            style={{ minHeight: "44px", minWidth: "44px" }}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }

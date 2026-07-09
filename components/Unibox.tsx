@@ -13,7 +13,6 @@ import {
   Send,
   Loader2,
   FileText,
-  MoreVertical,
   Settings,
   Users,
   Upload,
@@ -22,18 +21,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { demoChatMessages, demoUsers } from "@/lib/portal-demo-data";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { FileAttachment } from "@/lib/types";
 
-type UniboxTab = "chat" | "call" | "notes";
+type UniboxTab = "chat" | "call";
 
 export function Unibox() {
-  const { user } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<UniboxTab>("chat");
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -42,22 +37,32 @@ export function Unibox() {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [chatMessages, setChatMessages] = useState([...demoChatMessages]);
-  const [notes, setNotes] = useState("");
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Get dynamic customer name
-  const customer = demoUsers.find(u => u.role === "customer");
-  const customerName = customer?.name || "Customer";
-  // Get initials for avatar
-  const customerInitials = customerName
-    .split(" ")
-    .map(n => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const customerName = "Demo Customer";
+  const customerInitials = "DC";
+
+  // Poll chat messages
+  const fetchMessages = async () => {
+    try {
+      const res = await fetch("/api/portal/chat?sessionId=session-1");
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages(data.messages);
+      }
+    } catch (err) {
+      console.error("[Unibox] Failed to fetch chat messages:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Format file size
   const formatFileSize = (bytes: number): string => {
@@ -66,65 +71,35 @@ export function Unibox() {
     return (bytes / 1048576).toFixed(1) + " MB";
   };
 
-  // Convert File to FileAttachment (simulate upload for demo)
-  const fileToAttachment = (file: File): FileAttachment => ({
-    id: `file-${Date.now()}-${Math.random().toString(36)}`,
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type,
-    url: URL.createObjectURL(file),
-    uploadedAt: new Date().toISOString(),
-    uploadedBy: "current-agent",
-  });
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  useEffect(() => {
-    if (scrollRef.current && activeTab === "chat") {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [chatMessages, activeTab]);
-
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() && selectedFiles.length === 0) return;
+    if (!chatInput.trim()) return;
 
-    const attachments = selectedFiles.map(fileToAttachment);
-    const newMsg = {
-      id: Date.now().toString(),
-      sessionId: "unibox-session",
-      senderId: "current-agent",
-      senderName: "You",
-      senderRole: "agent" as const,
-      content: chatInput,
-      attachments: attachments.length > 0 ? attachments : undefined,
-      timestamp: new Date().toISOString(),
-      read: true,
-    };
-
-    setChatMessages([...chatMessages, newMsg]);
-    setChatInput("");
-    setSelectedFiles([]);
     setIsSending(true);
-
-    // Simulate network call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    setIsSending(false);
+    try {
+      const res = await fetch("/api/portal/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: "session-1",
+          content: chatInput,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatInput("");
+        fetchMessages();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const tabs = [
     { id: "chat" as const, label: "Chat", icon: MessageSquare },
     { id: "call" as const, label: "Call", icon: Phone },
-    { id: "notes" as const, label: "Notes", icon: FileText },
   ];
 
   if (!isOpen) {
@@ -133,7 +108,7 @@ export function Unibox() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-[100] bg-gradient-to-br from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white p-4 rounded-full shadow-xl shadow-teal-600/30 transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-[100] bg-gradient-to-br from-teal-600 to-teal-550 hover:from-teal-550 hover:to-teal-500 text-white p-4 rounded-full shadow-xl shadow-teal-600/30 transition-all hover:scale-105 active:scale-95"
       >
         <MessageSquare className="h-6 w-6" />
       </motion.button>
@@ -231,33 +206,8 @@ export function Unibox() {
                               {msg.senderName}
                             </p>
                             {msg.content && <p className="leading-relaxed">{msg.content}</p>}
-                            {msg.attachments && msg.attachments.length > 0 && (
-                              <div className="mt-3 space-y-2">
-                                {msg.attachments.map((attachment) => (
-                                  <a
-                                    key={attachment.id}
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cn(
-                                      "flex items-center gap-2 p-2 rounded-lg border",
-                                      msg.senderRole === "agent"
-                                        ? "bg-teal-700 border-teal-500 hover:bg-teal-800"
-                                        : "bg-slate-800 border-slate-600 hover:bg-slate-900"
-                                    )}
-                                  >
-                                    <FileText className="h-5 w-5" />
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium truncate">{attachment.fileName}</p>
-                                      <p className="text-[10px] opacity-70">{formatFileSize(attachment.fileSize)}</p>
-                                    </div>
-                                    <Download className="h-4 w-4" />
-                                  </a>
-                                ))}
-                              </div>
-                            )}
                             <p className="text-[10px] mt-1 opacity-70 text-right">
-                              {new Date(msg.timestamp).toLocaleTimeString(undefined, {
+                              {new Date(msg.createdAt || msg.timestamp || "").toLocaleTimeString(undefined, {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
@@ -276,47 +226,10 @@ export function Unibox() {
                     </div>
                   </ScrollArea>
 
-                  {/* Selected Files Preview */}
-                  {selectedFiles.length > 0 && (
-                    <div className="px-3 py-2 border-t border-white/10 bg-slate-800/30">
-                      <div className="flex flex-wrap gap-2">
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center gap-2 bg-slate-700 px-3 py-1 rounded-full text-xs">
-                            <FileText className="h-3 w-3" />
-                            <span className="truncate max-w-[100px]">{file.name}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeFile(index)}
-                              className="text-slate-400 hover:text-white"
-                            >
-                              <XCircle className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   <form
                     onSubmit={handleSendMessage}
                     className="border-t border-white/10 p-3 flex gap-2"
                   >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-slate-600 hover:bg-slate-700/50"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isSending}
-                    >
-                      <Upload className="h-4 w-4" />
-                    </Button>
                     <Input
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
@@ -326,8 +239,8 @@ export function Unibox() {
                     />
                     <Button
                       type="submit"
-                      disabled={isSending || (!chatInput.trim() && selectedFiles.length === 0)}
-                      className="bg-teal-600 hover:bg-teal-500 disabled:opacity-50"
+                      disabled={isSending || !chatInput.trim()}
+                      className="bg-teal-600 hover:bg-teal-550 disabled:opacity-50"
                     >
                       {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
@@ -408,26 +321,6 @@ export function Unibox() {
                       </div>
                     </>
                   )}
-                </div>
-              )}
-
-              {activeTab === "notes" && (
-                <div className="p-4 flex flex-col h-full">
-                  <h3 className="text-white font-semibold text-sm mb-3">Call Notes</h3>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add your notes from the call here..."
-                    className="flex-1 bg-slate-800/80 border border-white/10 rounded-xl p-3 text-sm text-slate-200 resize-none focus:outline-none focus:border-teal-500/50"
-                  />
-                  <div className="mt-3 flex gap-2">
-                    <Button className="flex-1 bg-teal-600 hover:bg-teal-500">
-                      Save Notes
-                    </Button>
-                    <Button variant="outline" className="border-slate-600 hover:bg-slate-700/50">
-                      Clear
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>

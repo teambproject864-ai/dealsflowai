@@ -1,20 +1,83 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads } from "@/lib/memory-storage";
+import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
+import { sanitizeObject } from "@/lib/sanitize";
+import { db } from "@/lib/firebase-admin";
+import { encryptLead } from "@/lib/security";
+import { logAuditEvent } from "@/lib/audit-logger";
+
+// Schema for normalized lead data
+const normalizedLeadSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
+  contactName: z.string().min(1, "Name is required"),
+  contactEmail: z.string().email("Valid email is required"),
+  contactPhone: z.string().optional(),
+  source: z.string().optional(),
+}).passthrough(); // Allow extra fields to be stored
 
 const inMemoryLeads = getInMemoryLeads();
 
+function normalizeLeadData(data: any) {
+  // Normalize the data to the standard field names
+  return {
+    companyName: data.companyName || data.company,
+    contactName: data.contactName || data.name,
+    contactEmail: data.contactEmail || data.emailPersonal || data.email,
+    contactPhone: data.contactPhone || data.phone || "",
+    source: data.source || "unknown",
+    ...data, // Keep all other fields
+  };
+}
+
 export async function POST(req: Request) {
+  // Check rate limit first
+  const rateLimitResponse = await checkRateLimitSensitive(req);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const companyData = await req.json();
-    const leadId = uuidv4();
+    // Sanitize all inputs first
+    const sanitizedData = sanitizeObject(companyData);
+    const normalizedData = normalizeLeadData(sanitizedData);
 
-    inMemoryLeads.set(leadId, {
-      ...companyData,
+    // Validate the normalized data
+    const validationResult = normalizedLeadSchema.safeParse(normalizedData);
+    if (!validationResult.success) {
+      // Get a human-readable error message
+      const errorMessages = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; ');
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Invalid lead data: ${errorMessages}`,
+          details: validationResult.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validationResult.data;
+    const leadId = uuidv4();
+    const leadRecord = {
+      ...validatedData,
       id: leadId,
       createdAt: new Date().toISOString(),
       analysisId: "",
-    });
+    };
+
+    const encryptedLead = encryptLead(leadRecord);
+
+    // Save to Firestore
+    if (db) {
+      await db.collection("leads").doc(leadId).set(encryptedLead);
+    }
+
+    // Log audit event
+    await logAuditEvent(req, leadId, "LEAD_CREATED", { companyName: validatedData.companyName });
+
+    // Keep memory storage cache updated
+    inMemoryLeads.set(leadId, leadRecord);
 
     return NextResponse.json({
       success: true,

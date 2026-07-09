@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const [vectorReport, usersSnapshot] = await Promise.all([
       getVectorSystemReport(),
-      db.collection('users').limit(10).get()
+      db!.collection('users').limit(10).get()
     ]);
 
     const users = usersSnapshot.docs.map(doc => ({

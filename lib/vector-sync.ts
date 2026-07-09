@@ -1,7 +1,9 @@
-import { db } from './firebase-admin';
+import { getDb } from './firebase-admin';
 import { getPineconeIndex } from './pinecone';
 import { ALMAMemory } from './alma';
 import { hfEmbed } from './huggingface';
+
+const db = getDb();
 
 const ALMA_COLLECTION = 'alma_memory';
 const BATCH_SIZE = 100;

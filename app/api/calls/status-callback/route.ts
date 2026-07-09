@@ -12,6 +12,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing callId parameter" }, { status: 400 });
     }
 
+    if (!db) {
+      return NextResponse.json({ success: false, error: "Database not available" }, { status: 500 });
+    }
+
     // Twilio status callbacks are sent as application/x-www-form-urlencoded
     const formData = await req.formData().catch(() => new Headers());
     const callSid = formData.get("CallSid")?.toString();
@@ -21,13 +25,44 @@ export async function POST(req: Request) {
 
     console.log(`[TwilioCallback] callId: ${callId}, CallSid: ${callSid}, Status: ${callStatus}, Duration: ${callDuration}`);
 
+    // Try finding the record in voice_confirmations first
     const configDocRef = db.collection("voice_confirmations").doc(callId);
-    const snap = await configDocRef.get();
+    let snap = await configDocRef.get();
+    let isCustomVoice = false;
+    let targetDocRef = configDocRef;
+
     if (!snap.exists) {
-      return NextResponse.json({ success: false, error: "Voice confirmation record not found" }, { status: 404 });
+      // Fallback check: check custom_voice_calls collection
+      const customDocRef = db.collection("custom_voice_calls").doc(callId);
+      const customSnap = await customDocRef.get();
+      if (customSnap.exists) {
+        snap = customSnap;
+        targetDocRef = customDocRef;
+        isCustomVoice = true;
+      } else {
+        return NextResponse.json({ success: false, error: "Call record not found in either collection" }, { status: 404 });
+      }
     }
 
-    const config = snap.data() as VoiceConfirmationRecord;
+    const currentData = snap.data();
+
+    // Idempotency guard: Don't let late transitional status callbacks overwrite terminal statuses
+    if (currentData?.status === "completed" && ["queued", "ringing", "in-progress"].includes(callStatus || "")) {
+      return NextResponse.json({ success: true, message: "Call already completed, ignoring late callback" });
+    }
+
+    if (isCustomVoice) {
+      const status = callStatus === "completed" ? "completed" : callStatus === "failed" ? "failed" : "in-progress";
+      await targetDocRef.update({
+        status,
+        ...(callStatus === "completed" && { endedAt: new Date().toISOString(), duration: callDuration }),
+        updatedAt: new Date().toISOString(),
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    // Process Voice Confirmation record
+    const config = currentData as VoiceConfirmationRecord;
 
     // Log the callback event
     await db.collection("audit_logs").add({
@@ -87,6 +122,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 export async function GET(req: Request) {
   return NextResponse.json({ success: true, message: "Twilio status callback active (POST requests only)" });
 }
+
