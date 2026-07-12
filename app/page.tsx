@@ -146,22 +146,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- ENTERPRISE VALUE SECTION (Enhanced) --- */}
+      {/* --- ENTERPRISE VALUE SECTION (Redesigned) --- */}
       <section className="max-w-7xl mx-auto px-6 py-24 border-b border-[#24252a]/60">
-        <div className="mb-16">
-          <div className="text-xs uppercase tracking-widest text-[#8a704c] font-semibold mb-3">
+        <div className="text-center mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#8a704c]/30 bg-[#8a704c]/10 text-[#d4a017] text-xs font-semibold uppercase tracking-widest mb-6">
+            <Sparkles className="h-4 w-4" />
             Enterprise Value
           </div>
-          <h2 className="font-display text-4xl font-light text-white leading-tight">
+          <h2 className="font-display text-4xl sm:text-5xl font-light text-white leading-tight mb-6">
             Why revenue teams choose DealFlow AI.
           </h2>
-          <p className="text-[#9f9f93] text-sm mt-4 max-w-2xl font-light">
+          <p className="text-[#9f9f93] text-base sm:text-lg mt-6 max-w-3xl mx-auto leading-relaxed font-light">
             From accelerating pipeline velocity to ensuring compliance, DealFlow AI delivers measurable business value across every stage of the revenue cycle.
           </p>
         </div>
 
         {/* Value Pillars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {[
             {
               icon: Database,
@@ -194,29 +195,29 @@ export default function HomePage() {
           ].map((pillar, index) => (
             <div
               key={index}
-              className="border border-[#24252a]/80 bg-[#111219]/30 rounded-lg p-6 flex flex-col space-y-6 min-h-[280px] hover:border-[#8a704c]/40 transition-all duration-300"
+              className="group relative border border-[#24252a]/80 bg-gradient-to-br from-[#111219]/50 to-[#111219]/20 rounded-2xl p-8 flex flex-col min-h-[300px] hover:border-[#d4a017]/40 hover:from-[#111219]/80 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-[#d4a017]/10"
             >
-              <div className="inline-flex items-center justify-center w-10 h-10 bg-[#8a704c]/10 text-[#d4a017] rounded-md border border-[#8a704c]/20">
-                <pillar.icon className="h-5 w-5" />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4a017]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative inline-flex items-center justify-center w-12 h-12 bg-[#8a704c]/10 text-[#d4a017] rounded-xl border border-[#8a704c]/20 mb-6 group-hover:bg-[#8a704c]/20 transition-all duration-300">
+                <pillar.icon className="h-6 w-6" />
               </div>
-              <div>
-                <h3 className="font-display text-xl font-light text-white mb-2">
+              <div className="relative flex-1">
+                <h3 className="font-display text-xl font-medium text-white mb-3">
                   {pillar.title}
                 </h3>
-                <p className="text-sm text-[#9f9f93] leading-relaxed font-light">
+                <p className="text-sm text-[#9f9f93] leading-relaxed font-light mb-6">
                   {pillar.description}
                 </p>
               </div>
-              <div className="mt-auto">
-                <div className="text-lg font-display text-[#d4a017] font-light mb-3">
+              <div className="relative">
+                <div className="text-xl font-display text-[#d4a017] font-medium mb-4">
                   {pillar.metric}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {pillar.tags.map((tag, tagIndex) => (
                     <span
                       key={tagIndex}
-                      className="text-[10px] uppercase font-semibold text-[#8a704c] bg-[#8a704c]/10 px-2.5 py-0.5 rounded"
-                    >
+                      className="text-[10px] uppercase font-semibold text-[#8a704c] bg-[#8a704c]/15 px-3 py-1 rounded-full border border-[#8a704c]/20">
                       {tag}
                     </span>
                   ))}
@@ -227,21 +228,24 @@ export default function HomePage() {
         </div>
 
         {/* Enterprise Value Metrics Table */}
-        <div className="border border-[#24252a]/80 bg-[#111219]/20 rounded-lg overflow-hidden mb-8">
+        <div className="border border-[#24252a]/80 bg-gradient-to-br from-[#111219]/40 to-[#111219]/10 rounded-2xl overflow-hidden mb-12">
+          <div className="px-8 py-6 border-b border-[#24252a]/80 bg-[#111219]/50">
+            <h3 className="font-display text-lg font-medium text-white">Performance Comparison</h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="border-b border-[#24252a]/80">
-                <tr className="bg-[#111219]/50">
-                  <th className="px-6 py-4 text-xs uppercase tracking-wider text-[#8a704c] font-semibold">
+                <tr className="bg-[#111219]/30">
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
                     Metric
                   </th>
-                  <th className="px-6 py-4 text-xs uppercase tracking-wider text-[#8a704c] font-semibold">
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
                     Manual
                   </th>
-                  <th className="px-6 py-4 text-xs uppercase tracking-wider text-[#8a704c] font-semibold">
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
                     DealFlow AI
                   </th>
-                  <th className="px-6 py-4 text-xs uppercase tracking-wider text-[#8a704c] font-semibold">
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
                     Impact
                   </th>
                 </tr>
@@ -280,16 +284,16 @@ export default function HomePage() {
                   },
                 ].map((row, index) => (
                   <tr key={index} className="hover:bg-[#111219]/40 transition-colors">
-                    <td className="px-6 py-4 text-sm font-light text-white">
+                    <td className="px-8 py-5 text-sm font-medium text-white">
                       {row.metric}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#9f9f93] font-light">
+                    <td className="px-8 py-5 text-sm text-[#9f9f93] font-light">
                       {row.manual}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#d4a017] font-light">
+                    <td className="px-8 py-5 text-sm text-[#d4a017] font-medium">
                       {row.dealflow}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#8a704c] font-semibold">
+                    <td className="px-8 py-5 text-sm text-[#8a704c] font-semibold">
                       {row.impact}
                     </td>
                   </tr>
@@ -300,18 +304,20 @@ export default function HomePage() {
         </div>
 
         {/* Compliance Banner */}
-        <div className="border border-[#24252a]/80 bg-[#111219]/30 p-6 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-[#d4a017]" />
+        <div className="border border-[#24252a]/80 bg-gradient-to-r from-[#111219]/50 via-[#111219]/30 to-[#111219]/50 p-8 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-[#d4a017]/10 text-[#d4a017] rounded-xl border border-[#d4a017]/20">
+              <Shield className="h-6 w-6" />
+            </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">GDPR & Compliance Firewall</h4>
-              <p className="text-xs text-[#9f9f93] font-light mt-0.5">Every document access is audited, and client data flows are isolated and SOC-2 compliant.</p>
+              <h4 className="text-lg font-medium text-white">GDPR & Compliance Firewall</h4>
+              <p className="text-sm text-[#9f9f93] font-light mt-1">Every document access is audited, and client data flows are isolated and SOC-2 compliant.</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <span className="text-[9px] uppercase tracking-wider border border-[#24252a] px-2.5 py-1 rounded text-[#9f9f93] bg-[#090a0f]">SOC 2 Type II</span>
-            <span className="text-[9px] uppercase tracking-wider border border-[#24252a] px-2.5 py-1 rounded text-[#9f9f93] bg-[#090a0f]">GDPR Compliant</span>
-            <span className="text-[9px] uppercase tracking-wider border border-[#24252a] px-2.5 py-1 rounded text-[#9f9f93] bg-[#090a0f]">TCPA Ready</span>
+          <div className="flex flex-wrap gap-3">
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">SOC 2 Type II</span>
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">GDPR Compliant</span>
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">TCPA Ready</span>
           </div>
         </div>
       </section>
