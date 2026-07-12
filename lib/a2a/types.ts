@@ -13,6 +13,16 @@ export enum A2AMessageType {
   ACKNOWLEDGMENT = "acknowledgment",
 }
 
+// Authentication Schema for A2A
+export const A2AAuthSchema = z.object({
+  agentId: z.string().min(1),
+  timestamp: z.number().int().positive(),
+  signature: z.string().min(1),
+  nonce: z.string().min(1),
+});
+
+export type A2AAuth = z.infer<typeof A2AAuthSchema>;
+
 // Message Schema Definition using Zod
 export const A2AMessageSchema = z.object({
   id: z.string().uuid(),
@@ -25,6 +35,7 @@ export const A2AMessageSchema = z.object({
   correlationId: z.string().uuid().optional(),
   priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
   ttl: z.number().int().positive().optional(),
+  auth: A2AAuthSchema.optional(),
 });
 
 // Type inferred from schema

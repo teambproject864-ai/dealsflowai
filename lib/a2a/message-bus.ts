@@ -2,6 +2,7 @@ import { A2AMessage, A2AMessageType, A2AAgentInfo } from "./types";
 import { A2AValidator } from "./validator";
 import { A2ALogger } from "./logger";
 import { A2ARetryManager } from "./retry";
+import { generateA2ANonce, signA2AMessage } from "./auth";
 
 type MessageHandler = (message: A2AMessage) => Promise<void> | void;
 
@@ -140,17 +141,27 @@ export class A2AMessageBus {
       ttl?: number;
     }
   ): Promise<void> {
+    const timestamp = Date.now();
+    const nonce = generateA2ANonce();
+    const signature = signA2AMessage(from, payload, timestamp, nonce);
+
     const message: A2AMessage = {
       id: crypto.randomUUID(),
       from,
       to,
       type,
       payload,
-      timestamp: Date.now(),
+      timestamp,
       version: "1.0.0",
       correlationId: options?.correlationId,
       priority: options?.priority || "medium",
       ttl: options?.ttl,
+      auth: {
+        agentId: from,
+        timestamp,
+        signature,
+        nonce,
+      },
     };
     await this.sendMessage(message);
   }

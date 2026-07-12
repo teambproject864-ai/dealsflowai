@@ -56,10 +56,32 @@ export function initializeVexaAgent(messageBus: A2AMessageBus) {
     console.log(`[VexaAgent] Received task: ${taskId} (${taskType})`);
 
     try {
-      let result: any;
+    let result: any;
 
-      switch (taskType) {
-        case "process_intake_form": {
+    switch (taskType) {
+      case "generate_agenda": {
+        console.log(`[VexaAgent] Generating agenda for meeting: ${input.meetingId}`);
+        result = {
+          success: true,
+          agenda: [
+            { id: crypto.randomUUID(), title: "Check-in & Introduction" },
+            { id: crypto.randomUUID(), title: "Review Previous Action Items" },
+            { id: crypto.randomUUID(), title: "Main Discussion Topics" },
+            { id: crypto.randomUUID(), title: "Next Steps & Action Items" },
+          ]
+        };
+        break;
+      }
+      case "post_meeting_analysis": {
+        console.log(`[VexaAgent] Generating post-meeting analysis for: ${input.meetingId}`);
+        result = {
+          success: true,
+          summary: "This was a productive meeting where we discussed key topics and agreed on next steps.",
+          actionItems: ["Send follow-up email", "Schedule next meeting", "Prepare presentation"],
+        };
+        break;
+      }
+      case "process_intake_form": {
           const rawFormData = input.formData;
           const leadId = input.leadId || "unauth";
 

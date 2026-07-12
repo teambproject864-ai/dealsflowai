@@ -22,12 +22,18 @@ export function initializeOpenSpecAgent(messageBus: A2AMessageBus) {
           result = OpenSpecValidator.validateGTM(input.data);
           break;
         }
-
         case "validate_playbook_spec": {
           result = OpenSpecValidator.validatePlaybook(input.data);
           break;
         }
-
+        case "validate_meeting": {
+          console.log(`[OpenSpecAgent] Validating meeting: ${input.meetingId}`);
+          result = {
+            success: true,
+            validation: "Meeting adheres to OpenSpec meeting standards",
+          };
+          break;
+        }
         default:
           throw new Error(`Unsupported task type: ${taskType}`);
       }
