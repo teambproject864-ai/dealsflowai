@@ -74,7 +74,7 @@ export default function HomePage() {
             </h1>
 
             <p className="max-w-xl text-[#9f9f93] text-base sm:text-lg leading-relaxed font-light">
-              DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep's calendar by automating updates, call dialers, and outreach sequences.
+              DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep&apos;s calendar by automating updates, call dialers, and outreach sequences.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2">

@@ -223,6 +223,8 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
   // Regenerate and feedback states
   const [regenerating, setRegenerating] = useState(false);
   const [userFeedback, setUserFeedback] = useState("");
+  const userFeedbackRef = useRef("");
+  userFeedbackRef.current = userFeedback;
 
   // Ref to prevent multiple runs
   const lastProcessedLeadIdRef = useRef<string | null>(null);
@@ -276,7 +278,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
             leadId,
             companyData,
             regenerate: forceRegenerate,
-            feedback: forceRegenerate ? (stored?.feedback || userFeedback) : undefined
+            feedback: forceRegenerate ? (stored?.feedback || userFeedbackRef.current) : undefined
           })
         });
 
