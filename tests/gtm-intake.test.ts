@@ -46,6 +46,8 @@ async function testGtmIntakeSuccess() {
 
   try {
     const payload = {
+      companyName: "Acme Corp",
+      websiteUrl: "https://acme.com",
       productName: "Neural Outreach Bot",
       productOwnerName: "Sarah Jenkins",
       productOwnerEmail: "sarah@acme.com",
@@ -95,6 +97,8 @@ async function testGtmIntakeValidationFailure() {
   try {
     // Missing required productName and invalid email format
     const payload = {
+      companyName: "Acme Corp",
+      websiteUrl: "https://acme.com",
       productName: "",
       productOwnerName: "Sarah Jenkins",
       productOwnerEmail: "sarah-invalid-email",

@@ -2,6 +2,8 @@ import {
   A2AMessageBus,
   A2AMessageType,
   A2AValidator,
+  generateA2ANonce,
+  signA2AMessage,
 } from "../lib/a2a";
 import { GraphRAGSystem } from "../lib/graph-rag";
 import { ContextGraphLayer, MemoryType } from "../lib/context-graph";
@@ -10,14 +12,25 @@ import { TaskStatus } from "../lib/unified-orchestrator/types";
 import assert from "assert";
 
 async function testA2AProtocolValidateMessages() {
+  const timestamp = Date.now();
+  const nonce = generateA2ANonce();
+  const payload = { taskId: "123" };
+  const signature = signA2AMessage("agent1", payload, timestamp, nonce);
+
   const validMessage = {
     id: crypto.randomUUID(),
     from: "agent1",
     to: "agent2",
     type: A2AMessageType.TASK_DELEGATION,
-    payload: { taskId: "123" },
-    timestamp: Date.now(),
+    payload,
+    timestamp,
     version: "1.0.0",
+    auth: {
+      agentId: "agent1",
+      timestamp,
+      signature,
+      nonce,
+    },
   };
 
   const result = A2AValidator.validateMessage(validMessage);
