@@ -313,6 +313,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
 
     // Attach regenerate to window for easy access
     (window as any).regenerateAnalysis = () => runAnalysis(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 
   // Enhanced download with multiple options
