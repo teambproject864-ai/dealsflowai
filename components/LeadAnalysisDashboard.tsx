@@ -996,66 +996,66 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
     setIsEditing(false);
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+  return (    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Sidebar Navigation - Mobile & Desktop */}
       <div className="lg:col-span-3">
-        <Card className="border-white/10 bg-white/[0.03] backdrop-blur-md sticky top-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-400">Analysis Sections</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <nav aria-label="Analysis sections">
-              <ul className="space-y-1">
-                {sections.map(section => (
-                  <li key={section.id}>
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById(section.id);
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                        setActiveSection(section.id);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${activeSection === section.id ? "bg-teal-500/20 text-teal-300" : "text-slate-300 hover:bg-white/5"}`}
-                      aria-current={activeSection === section.id ? "true" : "false"}
-                    >
-                      <span className="w-4 h-4 opacity-80 flex-shrink-0" aria-hidden="true">{section.icon}</span>
-                      <span className="text-sm font-medium">{section.title}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </CardContent>
-        </Card>
+        <div className="sticky top-6 border border-[#24252a]/60 bg-[#111219]/40 p-5 rounded-md space-y-4">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/60 pb-3">
+            Analysis Sections
+          </div>
+          <nav aria-label="Analysis sections">
+            <ul className="space-y-1">
+              {sections.map(section => (
+                <li key={section.id}>
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById(section.id);
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      setActiveSection(section.id);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded text-xs transition-colors flex items-center gap-2 ${
+                      activeSection === section.id 
+                        ? "bg-[#8a704c]/20 text-[#d4a017] font-semibold border-l-2 border-l-[#d4a017] pl-2.5" 
+                        : "text-slate-400 hover:text-white hover:bg-white/5 pl-3"
+                    }`}
+                    aria-current={activeSection === section.id ? "true" : "false"}
+                  >
+                    <span>{section.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </div>
 
       <div className="lg:col-span-9 space-y-6">
         {/* Input Customer Data Section */}
         <GTMSection title="Input Customer Data" id="input-data" icon={<FileText />}>
-          <div className="rounded-xl bg-blue-950/20 border border-blue-500/20 p-6 mb-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg bg-[#111219]/40 border border-[#24252a] p-6 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-[#24252a]/60 pb-4">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-semibold bg-[#8a704c]/10 text-[#d4a017] uppercase tracking-wider">
                   User-Provided
                 </span>
-                <p className="text-sm text-slate-400">Data you submitted in the intake form</p>
+                <p className="text-xs text-[#9f9f93] font-light">Data you submitted in the intake form</p>
               </div>
               <div className="flex gap-2">
                 {isEditing ? (
                   <>
-                    <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700 text-white">
+                    <Button onClick={handleSaveEdit} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold px-4 h-9">
                       Save
                     </Button>
-                    <Button onClick={() => setIsEditing(false)} className="bg-slate-600 hover:bg-slate-700 text-white">
+                    <Button onClick={() => setIsEditing(false)} className="bg-[#16181f] border border-[#24252a] hover:bg-[#20232d] text-white rounded-md text-xs font-semibold px-4 h-9">
                       Cancel
                     </Button>
                   </>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button onClick={() => setIsEditing(true)} className="bg-[#16181f] border border-[#24252a] hover:bg-[#20232d] text-white rounded-md text-xs font-semibold px-4 h-9">
                     Edit
                   </Button>
                 )}
-                <Button onClick={handleRegenerate} className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Button onClick={handleRegenerate} className="bg-[#d4a017] hover:bg-[#c29014] text-[#090a0f] rounded-md text-xs font-semibold px-4 h-9">
                   Regenerate Analysis
                 </Button>
               </div>
@@ -1073,16 +1073,16 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
         </GTMSection>
 
         {/* Section 1: Executive Summary */}
-        <div className="rounded-xl bg-purple-950/10 border border-purple-500/10 p-4 mb-4">
+        <div className="rounded-lg bg-[#111219]/20 border border-[#24252a]/40 p-4 mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-semibold bg-[#8a704c]/10 text-[#d4a017] uppercase tracking-wider">
               AI-Generated
             </span>
-            <p className="text-sm text-slate-400">Analysis output from DealFlow AI</p>
+            <p className="text-xs text-[#9f9f93] font-light">Analysis output from DealFlow AI</p>
           </div>
         </div>
         <GTMSection title="1. Executive Summary" id="executive" icon={<FileText />}>
-          <p className="text-slate-300 leading-relaxed">{analysis.executiveSummary}</p>
+          <p className="text-[#f4f3f0] leading-relaxed font-light">{analysis.executiveSummary}</p>
         </GTMSection>
 
         {/* Section 2: ICP Definition */}
@@ -1124,32 +1124,32 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" role="table" aria-label="Firmographic segmentation data">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Priority Tier</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Industry</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Company Size</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">ARR Range</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Location</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Primary Cost Driver</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Current Solution</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Sites/Teams</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">ESG/Compliance</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Notes</th>
+                <tr className="border-b border-[#24252a]">
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Priority Tier</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Industry</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Company Size</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">ARR Range</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Location</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Primary Cost Driver</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Current Solution</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Sites/Teams</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">ESG/Compliance</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Notes</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.table1FirmographicDemographic?.map((entry, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="p-3 text-sm text-slate-200">{entry.priorityTier}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.industryVertical}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.companySize}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.arrRange}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.location}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.primaryCostDriver}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.currentSolutionStatus}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.numberOfSitesTeamsLocations}</td>
-                    <td className="p-3 text-sm text-slate-300">{entry.sustainabilityEsgComplianceCommitment}</td>
-                    <td className="p-3 text-sm text-slate-400">{entry.notes}</td>
+                  <tr key={i} className="border-b border-[#24252a]/40 hover:bg-[#111219]/25 transition-colors">
+                    <td className="p-3 text-xs text-[#f4f3f0] font-light">{entry.priorityTier}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.industryVertical}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.companySize}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-medium">{entry.arrRange}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.location}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.primaryCostDriver}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.currentSolutionStatus}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.numberOfSitesTeamsLocations}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{entry.sustainabilityEsgComplianceCommitment}</td>
+                    <td className="p-3 text-xs text-slate-450 font-light">{entry.notes}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1190,30 +1190,30 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" role="table" aria-label="Pain point analysis">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Pain Point</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Severity</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Business Impact</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Frequency</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">How Discovered</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Current Solution</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">DealFlow Solution</th>
+                <tr className="border-b border-[#24252a]">
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Pain Point</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Severity</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Business Impact</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Frequency</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">How Discovered</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Current Solution</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">DealFlow Solution</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.table2PainPointAnalysis?.map((p, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="p-3 text-sm text-slate-200">{p.painPoint}</td>
+                  <tr key={i} className="border-b border-[#24252a]/40 hover:bg-[#111219]/25 transition-colors">
+                    <td className="p-3 text-xs text-[#f4f3f0] font-light">{p.painPoint}</td>
                     <td className="p-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${p.severity === "Critical" ? "bg-red-500/20 text-red-300" : p.severity === "High" ? "bg-orange-500/20 text-orange-300" : "bg-amber-500/20 text-amber-300"}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${p.severity === "Critical" ? "bg-rose-950/40 text-rose-450 border border-rose-900/40" : p.severity === "High" ? "bg-amber-950/40 text-amber-450 border border-amber-900/40" : "bg-neutral-800/40 text-neutral-350"}`}>
                         {p.severity}
                       </span>
                     </td>
-                    <td className="p-3 text-sm text-slate-300">{p.businessImpact}</td>
-                    <td className="p-3 text-sm text-slate-300">{p.frequencyOfPain}</td>
-                    <td className="p-3 text-sm text-slate-300">{p.howPainIsCurrentlyDiscovered}</td>
-                    <td className="p-3 text-sm text-slate-300">{p.competitorCurrentSolutionInUse}</td>
-                    <td className="p-3 text-sm text-teal-300">{p.dealFlowAISolution}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{p.businessImpact}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{p.frequencyOfPain}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{p.howPainIsCurrentlyDiscovered}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{p.competitorCurrentSolutionInUse}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-medium">{p.dealFlowAISolution}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1226,28 +1226,28 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" role="table" aria-label="Decision maker influence matrix">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Role</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Influence</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Core Role</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Top Priorities</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Preferred Channel</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Primary Objection</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Content Preference</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Messaging</th>
+                <tr className="border-b border-[#24252a]">
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Role</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Influence</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Core Role</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Top Priorities</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Preferred Channel</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Primary Objection</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Content Preference</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Messaging</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.table3DecisionMakerInfluence?.map((d, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="p-3 text-sm text-slate-200">{d.role}</td>
-                    <td className="p-3 text-sm text-purple-300 font-semibold">{d.influenceScore}/10</td>
-                    <td className="p-3 text-sm text-slate-300">{d.coreDecisionRole}</td>
-                    <td className="p-3 text-sm text-slate-300">{d.top3Priorities}</td>
-                    <td className="p-3 text-sm text-slate-300">{d.preferredContactChannel}</td>
-                    <td className="p-3 text-sm text-slate-300">{d.primaryObjectionType}</td>
-                    <td className="p-3 text-sm text-slate-300">{d.contentFormatPreference}</td>
-                    <td className="p-3 text-sm text-teal-300">{d.dealFlowAIMessagingFocus}</td>
+                  <tr key={i} className="border-b border-[#24252a]/40 hover:bg-[#111219]/25 transition-colors">
+                    <td className="p-3 text-xs text-[#f4f3f0] font-light">{d.role}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-semibold">{d.influenceScore}/10</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{d.coreDecisionRole}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{d.top3Priorities}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{d.preferredContactChannel}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{d.primaryObjectionType}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{d.contentFormatPreference}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-medium">{d.dealFlowAIMessagingFocus}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1279,41 +1279,41 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
 
         {/* Section 8: Table 4 Lead Scoring */}
         <GTMSection title="8. Table 4: Lead Scoring Framework" id="scoring" icon={<TrendingUp />}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 overflow-x-auto">
               <table className="w-full border-collapse" role="table" aria-label="Lead scoring framework">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Category</th>
-                    <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Criterion</th>
-                    <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Points</th>
+                  <tr className="border-b border-[#24252a]">
+                    <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Category</th>
+                    <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Criterion</th>
+                    <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Points</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analysis.table4LeadScoringFramework?.criteria.map((c, i) => (
-                    <tr key={i} className="border-b border-white/5">
-                      <td className="p-3 text-sm text-slate-300">{c.category}</td>
-                      <td className="p-3 text-sm text-slate-200">{c.criterion}</td>
-                      <td className="p-3 text-sm text-teal-300 font-semibold">{c.points}</td>
+                    <tr key={i} className="border-b border-[#24252a]/40 hover:bg-[#111219]/25 transition-colors">
+                      <td className="p-3 text-xs text-slate-350 font-light">{c.category}</td>
+                      <td className="p-3 text-xs text-[#f4f3f0] font-light">{c.criterion}</td>
+                      <td className="p-3 text-xs text-[#d4a017] font-semibold">{c.points}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6">
-              <h4 className="font-semibold text-white mb-4">Qualification Thresholds</h4>
+            <div className="rounded-md bg-[#111219]/40 border border-[#24252a] p-6 space-y-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/60 pb-2">Qualification Thresholds</h4>
               <ul className="space-y-3">
                 <li className="flex items-center justify-between">
-                  <span className="text-slate-300">MQL</span>
-                  <span className="font-semibold text-amber-300">{analysis.table4LeadScoringFramework?.qualificationThresholds.mql}</span>
+                  <span className="text-xs text-slate-350">MQL</span>
+                  <span className="text-xs font-semibold text-amber-400">{analysis.table4LeadScoringFramework?.qualificationThresholds.mql}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-slate-300">SQL</span>
-                  <span className="font-semibold text-orange-300">{analysis.table4LeadScoringFramework?.qualificationThresholds.sql}</span>
+                  <span className="text-xs text-slate-355">SQL</span>
+                  <span className="text-xs font-semibold text-orange-400">{analysis.table4LeadScoringFramework?.qualificationThresholds.sql}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-slate-300">SAL</span>
-                  <span className="font-semibold text-green-300">{analysis.table4LeadScoringFramework?.qualificationThresholds.sal}</span>
+                  <span className="text-xs text-slate-300">SAL</span>
+                  <span className="text-xs font-semibold text-emerald-400">{analysis.table4LeadScoringFramework?.qualificationThresholds.sal}</span>
                 </li>
               </ul>
             </div>
@@ -1325,28 +1325,28 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" role="table" aria-label="Channel effectiveness analysis">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Channel</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Best For</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Monthly Volume</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Conversion</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">CAC</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">LTV:CAC</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Budget</th>
-                  <th scope="col" className="text-left p-3 text-sm font-semibold text-teal-300">Optimization</th>
+                <tr className="border-b border-[#24252a]">
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Channel</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Best For</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Monthly Volume</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Conversion</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">CAC</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">LTV:CAC</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Budget</th>
+                  <th scope="col" className="text-left p-3 text-xs font-semibold text-[#8a704c] uppercase tracking-wider">Optimization</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.table5ChannelEffectiveness?.map((ch, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="p-3 text-sm text-slate-200">{ch.channel}</td>
-                    <td className="p-3 text-sm text-slate-300">{ch.icpSegmentsBestFor}</td>
-                    <td className="p-3 text-sm text-slate-300">{ch.monthlyLeadVolume}</td>
-                    <td className="p-3 text-sm text-teal-300 font-semibold">{ch.conversionRate}</td>
-                    <td className="p-3 text-sm text-slate-300">{ch.costPerAcquisition}</td>
-                    <td className="p-3 text-sm text-green-300 font-semibold">{ch.ltvToCacRatio}</td>
-                    <td className="p-3 text-sm text-slate-300">{ch.budgetAllocation}</td>
-                    <td className="p-3 text-sm text-slate-300">{ch.optimizationRecommendations}</td>
+                  <tr key={i} className="border-b border-[#24252a]/40 hover:bg-[#111219]/25 transition-colors">
+                    <td className="p-3 text-xs text-[#f4f3f0] font-light">{ch.channel}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{ch.icpSegmentsBestFor}</td>
+                    <td className="p-3 text-xs text-slate-350 font-light">{ch.monthlyLeadVolume}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-semibold">{ch.conversionRate}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{ch.costPerAcquisition}</td>
+                    <td className="p-3 text-xs text-[#d4a017] font-semibold">{ch.ltvToCacRatio}</td>
+                    <td className="p-3 text-xs text-slate-300 font-light">{ch.budgetAllocation}</td>
+                    <td className="p-3 text-xs text-slate-400 font-light">{ch.optimizationRecommendations}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1563,18 +1563,18 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
         {/* Section D: TAM/SAM/SOM */}
         {analysis.sectionDTamSamSom && (
           <GTMSection title="D. TAM/SAM/SOM" id="tamsamsom" icon={<TrendingUp />}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
-                <h4 className="font-semibold text-teal-300 mb-2">TAM</h4>
-                <p className="text-lg text-white">{analysis.sectionDTamSamSom.tam}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 py-4">
+              <div className="border-l border-[#8a704c]/40 pl-4 space-y-1">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c]">Total Addressable Market (TAM)</h4>
+                <p className="text-2xl font-display font-light text-white">{analysis.sectionDTamSamSom.tam}</p>
               </div>
-              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
-                <h4 className="font-semibold text-teal-300 mb-2">SAM</h4>
-                <p className="text-lg text-white">{analysis.sectionDTamSamSom.sam}</p>
+              <div className="border-l border-[#8a704c]/40 pl-4 space-y-1">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c]">Serviceable Addressable Market (SAM)</h4>
+                <p className="text-2xl font-display font-light text-white">{analysis.sectionDTamSamSom.sam}</p>
               </div>
-              <div className="rounded-xl bg-white/[0.02] border border-white/10 p-6 text-center">
-                <h4 className="font-semibold text-teal-300 mb-2">SOM</h4>
-                <p className="text-lg text-white">{analysis.sectionDTamSamSom.som}</p>
+              <div className="border-l border-[#8a704c]/40 pl-4 space-y-1">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c]">Serviceable Obtainable Market (SOM)</h4>
+                <p className="text-2xl font-display font-light text-white">{analysis.sectionDTamSamSom.som}</p>
               </div>
             </div>
           </GTMSection>
@@ -1688,20 +1688,24 @@ function CompleteGTMDisplay({ analysis, context, setAnalysis }: { analysis: Anal
 // Simple wrapper for sections
 function GTMSection({ title, id, icon, children }: any) {
   return (
-    <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} id={id} className="mb-8 scroll-mt-24" aria-labelledby={`${id}-title`}>
-      <Card className="border-white/10 bg-white/[0.03] backdrop-blur-md shadow-xl">
-        <CardHeader className="border-b border-white/5 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400" aria-hidden="true">
-              {icon}
-            </div>
-            <CardTitle className="text-xl font-bold text-white tracking-tight" id={`${id}-title`}>{title}</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {children}
-        </CardContent>
-      </Card>
+    <motion.section 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      id={id} 
+      className="mb-12 scroll-mt-24 border-t border-[#24252a]/60 pt-8" 
+      aria-labelledby={`${id}-title`}
+    >
+      <div className="flex items-center gap-2.5 mb-6">
+        <div className="text-[#8a704c]" aria-hidden="true">
+          {icon}
+        </div>
+        <h3 className="font-display text-2xl font-light text-white tracking-tight" id={`${id}-title`}>
+          {title}
+        </h3>
+      </div>
+      <div className="text-[#f4f3f0] font-light leading-relaxed">
+        {children}
+      </div>
     </motion.section>
   );
 }

@@ -3,6 +3,9 @@ import { GraphRAGSystem } from "./graph-rag";
 import { ContextGraphLayer } from "./context-graph";
 import { UnifiedOrchestrator } from "./unified-orchestrator";
 import { KimiClient } from "./kimi/client";
+import { initializeHermesAgent } from "./agents/hermes-agent";
+import { initializeOpenSpecAgent } from "./agents/openspec-agent";
+import { initializeVexaAgent } from "./agents/vexa-agent";
 
 // Singleton instances
 let messageBus: A2AMessageBus | undefined;
@@ -37,10 +40,40 @@ export function initializeIntegratedSystem(options?: {
     contextGraph,
   });
 
+  // Register agents in the ecosystem
+  orchestrator.registerAgent({
+    id: "hermes-agent",
+    name: "Hermes Memory Agent",
+    type: "memory",
+    capabilities: ["store_memory", "search_memories", "get_memory_metrics"],
+    metadata: {},
+  });
+
+  orchestrator.registerAgent({
+    id: "openspec-agent",
+    name: "OpenSpec Validation Agent",
+    type: "validation",
+    capabilities: ["validate_gtm_spec", "validate_playbook_spec"],
+    metadata: {},
+  });
+
+  orchestrator.registerAgent({
+    id: "vexa-agent",
+    name: "Vexa Reasoning Agent",
+    type: "reasoning",
+    capabilities: ["process_intake_form"],
+    metadata: {},
+  });
+
+  // Initialize agent event loop handlers on the message bus
+  initializeHermesAgent(messageBus);
+  initializeOpenSpecAgent(messageBus);
+  initializeVexaAgent(messageBus);
+
   // Start orchestrator
   orchestrator.start();
 
-  console.log("Integrated system initialized successfully");
+  console.log("Integrated system initialized successfully with Hermes, Vexa, and OpenSpec agents");
 
   return { messageBus, graphRAG, contextGraph, orchestrator };
 }

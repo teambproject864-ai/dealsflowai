@@ -31,6 +31,8 @@ import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
 import { runIntegratedSystemTests } from "@/tests/integrated-system.test";
 import { runSecurityEvals } from "@/tests/security-evals";
 import { testOkfPerformanceBenchmark } from "@/tests/okf-rag-performance.test";
+import { runAgentEcosystemTests } from "@/tests/agent-ecosystem.test";
+import { runGtmIntakeTests } from "@/tests/gtm-intake.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -305,7 +307,9 @@ async function main() {
     runAuditLoggerTests,
     runIntegratedSystemTests,
     runSecurityEvals,
-    testOkfPerformanceBenchmark
+    testOkfPerformanceBenchmark,
+    runAgentEcosystemTests,
+    runGtmIntakeTests
   ];
 
   for (const t of tests) {
