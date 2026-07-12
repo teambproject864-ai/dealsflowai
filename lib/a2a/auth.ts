@@ -30,7 +30,7 @@ export function signA2AMessage(agentId: string, payload: Record<string, any>, ti
   return createHmac("sha256", secret).update(dataToSign).digest("hex");
 }
 
-export function validateA2AAuth(auth: A2AAuth | undefined, payload: Record<string, any>): { valid: boolean; error?: string } {
+export function validateA2AAuth(auth: A2AAuth | undefined, payload: Record<string, any>): { valid: true } | { valid: false; error: string } {
   if (!auth) {
     return { valid: false, error: "Missing authentication" };
   }

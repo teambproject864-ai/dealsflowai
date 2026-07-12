@@ -1,15 +1,14 @@
 
 import crypto from "crypto";
 import { getHermes } from "@/lib/hermes/hermes";
-import { initializeVexaAgent, initializeOpenSpecAgent, initializeHermesAgent } from "@/lib/agents";
 import { getEcosystem, EcosystemSystemId } from "@/lib/a2a/integration-layer";
-import { Meeting, MeetingParticipant, MeetingAgendaItem, MeetingStatus, MeetingPlatform } from "@/lib/types";
-import { createGoogleMeetLink, fetchGoogleCalendarEvent, extractAttendeeStatuses } from "@/lib/google-meet";
+import { A2AMessageType } from "@/lib/a2a/types";
+import { Meeting, MeetingParticipant, MeetingAgendaItem, MeetingPlatform } from "@/lib/types";
+import { createGoogleMeetLink } from "@/lib/google-meet";
 import { logger } from "@/lib/logger";
 
 // Encryption utilities for sensitive meeting data
 const ENCRYPTION_ALGORITHM = "aes-256-gcm";
-const KEY_SIZE = 32; // 256 bits
 const IV_LENGTH = 12; // 96 bits
 
 function getEncryptionKey(): Buffer {
@@ -128,9 +127,11 @@ export class UnifiedMeetingSystem {
       const encryptedMeeting = encryptMeetingData(serializedMeeting);
       const memory = await hermes.storeMemory({
         content: encryptedMeeting,
-        type: "long_term",
-        tags: ["meeting", `meeting:${meeting.id}`, `company:${meeting.createdBy}`],
-        priority: "high",
+        category: "meeting",
+        tier: "long-term",
+        keywords: ["meeting", `meeting:${meeting.id}`, `company:${meeting.createdBy}`],
+        importance: 8,
+        metadata: {},
       });
       // Update meeting with memory ID
       meeting.hermesMemoryId = memory.id;
@@ -149,10 +150,10 @@ export class UnifiedMeetingSystem {
     if (!meeting) {
       try {
         const hermes = getHermes();
-        const memories = await hermes.searchMemories(`meeting:${meetingId}`, 1);
+        const memories = await hermes.searchMemories({ query: `meeting:${meetingId}`, limit: 1 });
         if (memories.length > 0) {
           const decrypted = decryptMeetingData(memories[0].content);
-          meeting = JSON.parse(decrypted);
+          meeting = JSON.parse(decrypted) as Meeting;
           this.meetings.set(meeting.id, meeting);
         }
       } catch (error) {
@@ -209,7 +210,7 @@ export class UnifiedMeetingSystem {
       await ecosystem.getMessageBus().createAndSendMessage(
         EcosystemSystemId.HERMES,
         EcosystemSystemId.VEXA,
-        "task_delegation",
+        A2AMessageType.TASK_DELEGATION,
         {
           taskType: "generate_agenda",
           meetingId: meeting.id,
@@ -233,7 +234,7 @@ export class UnifiedMeetingSystem {
       await bus.createAndSendMessage(
         EcosystemSystemId.HERMES,
         EcosystemSystemId.VEXA,
-        "task_delegation",
+        A2AMessageType.TASK_DELEGATION,
         {
           taskType: "post_meeting_analysis",
           meetingId: meeting.id,
@@ -244,7 +245,7 @@ export class UnifiedMeetingSystem {
       await bus.createAndSendMessage(
         EcosystemSystemId.HERMES,
         EcosystemSystemId.OPENSPEC,
-        "task_delegation",
+        A2AMessageType.TASK_DELEGATION,
         {
           taskType: "validate_meeting",
           meetingId: meeting.id,

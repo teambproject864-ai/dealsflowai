@@ -1,4 +1,4 @@
-export type LogLevel = "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogPayload {
   timestamp: string;
@@ -45,6 +45,10 @@ class StructuredLogger {
     }
 
     return JSON.stringify(payload);
+  }
+
+  debug(message: string, metadata?: any) {
+    console.log(this.formatLog("debug", message, metadata));
   }
 
   info(message: string, metadata?: any) {

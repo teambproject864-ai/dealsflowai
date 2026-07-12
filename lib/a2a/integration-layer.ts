@@ -1,5 +1,6 @@
 
-import { A2AMessageBus, A2AMessageType } from "./message-bus";
+import { A2AMessageBus } from "./message-bus";
+import { A2AMessageType } from "./types";
 import { A2ALogger } from "./logger";
 import { A2AAgentInfo, A2ACapability } from "./types";
 import { initializeHermesAgent } from "../agents/hermes-agent";

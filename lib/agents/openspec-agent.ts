@@ -15,7 +15,7 @@ export function initializeOpenSpecAgent(messageBus: A2AMessageBus) {
     console.log(`[OpenSpecAgent] Received task: ${taskId} (${taskType})`);
 
     try {
-      let result: { success: boolean; errors?: string[] };
+      let result: { success: boolean; errors?: string[]; validation?: string };
 
       switch (taskType) {
         case "validate_gtm_spec": {

@@ -31,7 +31,7 @@ export class A2AValidator {
       // Validate authentication
       const authResult = validateA2AAuth(validated.auth, validated.payload);
       if (!authResult.valid) {
-        return authResult;
+        return { valid: false, error: authResult.error };
       }
       
       return { valid: true, message: validated };
