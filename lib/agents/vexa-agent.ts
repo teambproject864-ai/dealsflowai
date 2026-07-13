@@ -1,6 +1,8 @@
 import { A2AMessageBus, A2AMessageType } from "../a2a";
 import { ScraplingCrawler } from "../scrapling";
 import { performDynamicInferenceJSON } from "../ai-provider-router";
+import crypto from "crypto";
+import { generateMockCompleteGTM, generateMockPlaybook } from "../mock-responses";
 
 export function initializeVexaAgent(messageBus: A2AMessageBus) {
   const agentId = "vexa-agent";
@@ -162,7 +164,7 @@ Follow this JSON structure exactly:
       "customerActions": "string",
       "customerNeedsQuestions": "string",
       "channelPreferences": "string",
-      "dealFlowAIAssetsEngagement: "string"
+      "dealFlowAIAssetsEngagement": "string"
     }
   ],
   "table4LeadScoringFramework": {
@@ -175,7 +177,7 @@ Follow this JSON structure exactly:
     ],
     "qualificationThresholds": {
       "mql": "string",
-      "sql: "string",
+      "sql": "string",
       "sal": "string"
     }
   },
@@ -208,11 +210,17 @@ Follow this JSON structure exactly:
 }
 `;
 
-          const gtmAnalysis = await performDynamicInferenceJSON(
-            gtmUserPrompt,
-            gtmSystemPrompt,
-            { requestType: `gtm-analysis-${leadId}` }
-          );
+          let gtmAnalysis;
+          try {
+            gtmAnalysis = await performDynamicInferenceJSON(
+              gtmUserPrompt,
+              gtmSystemPrompt,
+              { requestType: `gtm-analysis-${leadId}` }
+            );
+          } catch (error) {
+            console.warn(`[VexaAgent] Failed to generate GTM analysis via LLM, using fallback:`, error);
+            gtmAnalysis = generateMockCompleteGTM(structuredIntake.companyName, rawFormData);
+          }
 
           // Validate GTM Analysis via OpenSpec agent
           console.log(`[VexaAgent] Validating GTM Analysis with OpenSpec agent...`);
@@ -228,6 +236,7 @@ Follow this JSON structure exactly:
             category: "gtm_analysis",
             tier: "long-term",
             leadId,
+            metadata: {}
           });
 
           // Step 2: Generate Playbook
@@ -299,11 +308,17 @@ Follow this JSON structure exactly:
 }
 `;
 
-          const playbook = await performDynamicInferenceJSON(
-            playbookUserPrompt,
-            playbookSystemPrompt,
-            { requestType: `gtm-playbook-${leadId}` }
-          );
+          let playbook;
+          try {
+            playbook = await performDynamicInferenceJSON(
+              playbookUserPrompt,
+              playbookSystemPrompt,
+              { requestType: `gtm-playbook-${leadId}` }
+            );
+          } catch (error) {
+            console.warn(`[VexaAgent] Failed to generate playbook via LLM, using fallback:`, error);
+            playbook = generateMockPlaybook(structuredIntake.companyName);
+          }
 
           // Validate Playbook via OpenSpec agent
           console.log(`[VexaAgent] Validating Outreach Playbook with OpenSpec agent...`);
@@ -319,6 +334,7 @@ Follow this JSON structure exactly:
             category: "playbook",
             tier: "long-term",
             leadId,
+            metadata: {}
           });
 
           result = {
