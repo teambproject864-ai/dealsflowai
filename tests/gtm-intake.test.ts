@@ -1,6 +1,18 @@
 import assert from "assert";
-import { POST as gtmIntakePost } from "../app/api/gtm-intake/route";
-import { db } from "../lib/firebase-admin";
+
+// Set mock environment variables for Firebase configuration before requiring modules
+if (!process.env.FIREBASE_PROJECT_ID) {
+  process.env.FIREBASE_PROJECT_ID = "mock-project";
+}
+if (!process.env.FIREBASE_CLIENT_EMAIL) {
+  process.env.FIREBASE_CLIENT_EMAIL = "mock-email";
+}
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  process.env.FIREBASE_PRIVATE_KEY = "mock-key";
+}
+
+const { POST: gtmIntakePost } = require("../app/api/gtm-intake/route") as typeof import("../app/api/gtm-intake/route");
+const { db } = require("../lib/firebase-admin") as typeof import("../lib/firebase-admin");
 
 let mockStore: Record<string, Record<string, any>> = {};
 
