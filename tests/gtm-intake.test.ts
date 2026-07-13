@@ -1,6 +1,6 @@
 import assert from "assert";
 
-// Set mock environment variables for Firebase configuration before requiring modules
+// Set mock environment variables for Firebase configuration and LLM API keys before requiring modules
 if (!process.env.FIREBASE_PROJECT_ID) {
   process.env.FIREBASE_PROJECT_ID = "mock-project";
 }
@@ -9,6 +9,18 @@ if (!process.env.FIREBASE_CLIENT_EMAIL) {
 }
 if (!process.env.FIREBASE_PRIVATE_KEY) {
   process.env.FIREBASE_PRIVATE_KEY = "mock-key";
+}
+if (!process.env.HUGGINGFACE_API_KEY) {
+  process.env.HUGGINGFACE_API_KEY = "mock-key";
+}
+if (!process.env.HUGGINGFACE_API_TOKEN) {
+  process.env.HUGGINGFACE_API_TOKEN = "mock-token";
+}
+if (!process.env.NVIDIA_API_KEY) {
+  process.env.NVIDIA_API_KEY = "mock-key";
+}
+if (!process.env.KIMI_API_KEY) {
+  process.env.KIMI_API_KEY = "mock-key";
 }
 
 const { POST: gtmIntakePost } = require("../app/api/gtm-intake/route") as typeof import("../app/api/gtm-intake/route");
