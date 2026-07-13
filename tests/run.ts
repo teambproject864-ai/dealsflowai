@@ -1,5 +1,6 @@
 import { loadEnvConfig } from "@next/env";
 loadEnvConfig(process.cwd());
+process.env.NODE_ENV = "test";
 
 import assert from "assert";
 import { parseIcsEvents, parseIcsDate } from "@/lib/ics";

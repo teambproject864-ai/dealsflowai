@@ -62,7 +62,7 @@ export function getDb(): admin.firestore.Firestore | null {
 
 /** Lazy Firestore handle for existing imports — initializes on first property access. Returns null if not configured. */
 export const db: admin.firestore.Firestore | null =
-  (typeof window === "undefined" && loadServiceAccount())
+  (typeof window === "undefined" && (loadServiceAccount() || process.env.NODE_ENV === "test"))
     ? new Proxy({} as admin.firestore.Firestore, {
         get(_target, prop) {
           const mock = (globalThis as any).firestoreMock;
