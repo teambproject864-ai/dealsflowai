@@ -1,5 +1,76 @@
 import { z } from "zod";
 
+// Unified Meeting System Types
+export type MeetingStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
+export type MeetingPlatform = "google_meet" | "zoom" | "microsoft_teams" | "other";
+export type RecordingStatus = "not_recorded" | "recording" | "processed" | "failed";
+
+export type MeetingParticipant = {
+  id: string;
+  name: string;
+  email: string;
+  role: "host" | "attendee" | "agent";
+  joinedAt?: Date;
+  leftAt?: Date;
+  isPresent: boolean;
+};
+
+export type MeetingAgendaItem = {
+  id: string;
+  title: string;
+  description?: string;
+  durationMinutes?: number;
+  completedAt?: Date;
+  notes?: string;
+};
+
+export type MeetingRecording = {
+  id: string;
+  storageUrl: string;
+  durationSeconds: number;
+  sizeBytes: number;
+  recordedAt: Date;
+  status: RecordingStatus;
+};
+
+export type MeetingTranscript = {
+  id: string;
+  content: string;
+  segments: Array<{
+    speakerId: string;
+    speakerName: string;
+    text: string;
+    timestamp: number;
+  }>;
+  createdAt: Date;
+};
+
+export type Meeting = {
+  id: string;
+  title: string;
+  description?: string;
+  status: MeetingStatus;
+  platform: MeetingPlatform;
+  meetingUrl: string;
+  startAt: Date;
+  endAt: Date;
+  participants: MeetingParticipant[];
+  agenda?: MeetingAgendaItem[];
+  recordings?: MeetingRecording[];
+  transcript?: MeetingTranscript;
+  summary?: string;
+  actionItems?: string[];
+  followUpTasks?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  hermesMemoryId?: string;
+  vexaAnalysisId?: string;
+  openspecValidationId?: string;
+  metadata?: Record<string, any>;
+};
+
+
 // New options
 export const caseStudyOptions = ["Yes", "No", "In Progress"] as const;
 export const certificationOptions = ["GDPR", "ISO 27001", "SOC 2", "HIPAA", "PCI DSS", "Other"] as const;

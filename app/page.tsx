@@ -1,149 +1,34 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IntakeForm } from "@/components/IntakeForm";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Zap,
   Shield,
-  Brain,
   TrendingUp,
   CheckCircle2,
   ChevronRight,
-  Sparkles,
   Database,
   Cpu,
-  GitBranch,
-  Network,
-  PlayCircle,
-  Bot,
   Target,
-  Rocket,
-  BarChart2,
-  RefreshCw,
-  Users,
-  Layers,
-  MessageSquare,
-  Phone,
-  CreditCard,
-  Lock,
-  Mail,
-  ArrowUpRight,
-  Activity,
-  Check,
-  CheckSquare,
-  Star,
-  Volume2,
-  Compass,
-  LayoutDashboard,
-  Bell,
-  Clock,
-  Terminal,
-  Send,
-  UserCheck,
+  Sparkles,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
-
-// ─── Floating Orb (Vibrant Cosmic Accents) ───────────────────────────────────
-const FloatingOrb = React.memo(function FloatingOrb({ className, delay = 0, color }: { className?: string; delay?: number; color: string }) {
-  return (
-    <motion.div
-      className={`absolute rounded-full blur-3xl opacity-35 pointer-events-none ${className}`}
-      style={{ background: color }}
-      animate={{
-        y: [0, -40, 0],
-        x: [0, 20, 0],
-        scale: [1, 1.15, 1],
-        opacity: [0.25, 0.45, 0.25],
-      }}
-      transition={{
-        duration: 10,
-        repeat: Infinity,
-        delay,
-        ease: "easeInOut",
-      }}
-    />
-  );
-});
-
-// ─── SVG LOGOS for Integrations Marquee ──────────────────────────────────────
-const SVG_LOGOS = [
-  {
-    name: "Salesforce",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
-      </svg>
-    ),
-  },
-  {
-    name: "HubSpot",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 14a3 3 0 113-3 3 3 0 01-3 3zm0-8a1 1 0 111-1 1 1 0 01-1 1z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Slack",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-violet-500" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M5.042 15.165a2.528 2.528 0 01-2.52 2.523 2.528 2.528 0 01-2.522-2.523 2.528 2.528 0 012.522-2.52h2.52v2.52zm1.261 0a2.528 2.528 0 012.52-2.52h5.043a2.528 2.528 0 012.522 2.52v5.042a2.528 2.528 0 01-2.522 2.52H8.824a2.528 2.528 0 01-2.52-2.52v-5.042z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Gong",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" fill="none">
-        <path d="M12 3v18M8 6v12M4 9v6M16 6v12M20 9v6" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    name: "Outreach",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-pink-500" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" fill="none">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v12M6 12h12" />
-      </svg>
-    ),
-  },
-  {
-    name: "ZoomInfo",
-    svg: (
-      <svg className="w-6 h-6 mr-2 text-cyan-500" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-      </svg>
-    ),
-  },
-];
+import { PLANS, CONVERSION_RATES } from "@/lib/pricing";
 
 export default function HomePage() {
   const router = useRouter();
-  const [abVariant] = useState<"A" | "B">("A");
-  const [isClient, setIsClient] = useState(false);
-
-
-
-
-
-  // Pricing States
+  const [mounted, setMounted] = useState(false);
   const [isAnnual, setIsAnnual] = useState(true);
   const [currency, setCurrency] = useState<"USD" | "EUR" | "GBP" | "CAD" | "INR">("USD");
 
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
   }, []);
 
-
-
-  // Currency Formatter helper
   const formatCurrency = (amount: number, currencyCode: string) => {
     const localeMap: Record<string, string> = {
       USD: "en-US",
@@ -160,369 +45,438 @@ export default function HomePage() {
     }).format(convertedAmount);
   };
 
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#090a0f] text-[#f4f3f0]" />;
+  }
+
   return (
-    <main className="min-h-screen text-white bg-[#060612] relative overflow-hidden font-sans">
+    <main className="min-h-screen bg-[#090a0f] text-[#f4f3f0] font-sans selection:bg-[#d4a017] selection:text-[#090a0f]">
       
-      {/* ─── DYNAMIC COLORFUL BACKGROUND ORBS ──────────────────────────────────── */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(108,59,255,0.22),transparent_60%)]" />
-        
-        <FloatingOrb className="w-[550px] h-[550px] top-[8%] -left-[12%] opacity-25" color="radial-gradient(circle, #7c3aed 0%, transparent 70%)" delay={0} />
-        <FloatingOrb className="w-[480px] h-[480px] top-[28%] -right-[12%] opacity-30" color="radial-gradient(circle, #06b6d4 0%, transparent 70%)" delay={2} />
-        <FloatingOrb className="w-[420px] h-[420px] bottom-[22%] left-[22%] opacity-22" color="radial-gradient(circle, #ec4899 0%, transparent 70%)" delay={4} />
-        <FloatingOrb className="w-[350px] h-[350px] top-[55%] right-[8%] opacity-18" color="radial-gradient(circle, #10b981 0%, transparent 70%)" delay={1} />
-        <FloatingOrb className="w-[300px] h-[300px] bottom-[8%] left-[5%] opacity-15" color="radial-gradient(circle, #f59e0b 0%, transparent 70%)" delay={3} />
-      </div>
+      {/* Editorial Decorative Top Stripe */}
+      <div className="h-1 bg-gradient-to-r from-[#8a704c] via-[#d4a017] to-[#8a704c]" />
 
-      {/* ─── HERO SECTION ──────────────────────────────────────────────────────── */}
-      <section id="hero" className="relative z-10 pt-28 pb-16 flex flex-col items-center justify-center text-center px-6 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600/15 to-indigo-600/15 text-violet-200 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_20px_rgba(124,58,237,0.2)]"
-        >
-          <Sparkles className="h-4.5 w-4.5 text-violet-400 animate-spin" />
-          The Next-Generation Revenue Intelligence OS
-          <ChevronRight className="h-3 w-3 text-slate-400" />
-        </motion.div>
+      {/* --- HERO SECTION (Asymmetric Editorial Style) --- */}
+      <section className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 border-b border-[#24252a]/60">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          
+          <div className="lg:col-span-8 space-y-8 text-left">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#8a704c]/40 bg-[#8a704c]/5 text-[#d4a017] text-xs font-semibold uppercase tracking-wider">
+              <Sparkles className="h-3.5 w-3.5" />
+              Pipeline Orchestration OS
+            </div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-[1.05] mb-8 bg-gradient-to-r from-white via-violet-200 to-cyan-200 via-emerald-200 bg-clip-text text-transparent"
-        >
-          Close more deals.
-          <br />
-          <span className="gradient-text-hero drop-shadow-[0_0_40px_rgba(20,184,166,0.25)]">
-            Let the agents do it.
-          </span>
-        </motion.h1>
+            <h1 className="font-display text-5xl sm:text-7xl font-light tracking-tight leading-[1.08] text-white">
+              Close more deals.
+              <br />
+              <span className="font-normal italic text-[#d4a017]">
+                Let the agents do it.
+              </span>
+            </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-3xl text-slate-300 text-base sm:text-lg leading-relaxed mb-10"
-        >
-          DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep&apos;s calendar by automating updates, call dialers, and outreach sequences.
-        </motion.p>
+            <p className="max-w-xl text-[#9f9f93] text-base sm:text-lg leading-relaxed font-light">
+              {"DealFlow AI deploys collaborative agents with persistent memory directly integrated with your CRM. Reclaim 60% of your sales rep's calendar by automating updates, call dialers, and outreach sequences."}
+            </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex flex-wrap justify-center gap-4 mb-6"
-        >
-          <Link
-            href="/portal"
-            onClick={() => trackEvent("cta_landing_portal", { surface: "hero" })}
-            className="btn-primary group text-sm"
-          >
-            Launch Portals
-            <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <a
-              href="#gtm-assessment"
-              className="btn-primary group text-sm bg-white/5 hover:bg-white/10"
-            >
-              Go to Market Assessment
-              <Target className="h-4.5 w-4.5 text-teal-400 group-hover:animate-bounce" />
-            </a>
-        </motion.div>
-        <span className="text-xs text-slate-400 tracking-wide">
-          Fully compliant with SOC-2 &amp; GDPR · 14-day trial period · Instant results
-        </span>
-      </section>
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                href="/portal"
+                onClick={() => trackEvent("cta_landing_portal", { surface: "hero" })}
+                className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#d4a017] hover:bg-[#c29014] text-[#090a0f] font-semibold text-sm rounded-md transition-all duration-300 transform hover:-translate-y-0.5"
+              >
+                Launch Portals
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#gtm-assessment"
+                className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#16181f] hover:bg-[#20232d] border border-[#24252a] text-[#f4f3f0] font-semibold text-sm rounded-md transition-all duration-300"
+              >
+                Go to Market Assessment
+                <Target className="h-4 w-4 text-[#d4a017]" />
+              </a>
+            </div>
+          </div>
 
-      {/* divider */}
-      <div className="divider-gradient mx-auto max-w-5xl" />
+          {/* Quick Metrics Editorial Panel */}
+          <div className="lg:col-span-4 border border-[#24252a]/80 bg-[#111219]/60 p-8 rounded-lg space-y-6">
+            <div className="text-xs uppercase tracking-widest text-[#8a704c] font-semibold border-b border-[#24252a]/60 pb-3">
+              Platform Metrics
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="text-3xl font-display font-light text-white">$12.4M</div>
+                <div className="text-xs text-[#9f9f93] mt-1">Pipeline Generated</div>
+              </div>
+              <div className="border-t border-[#24252a]/40 pt-4">
+                <div className="text-3xl font-display font-light text-white">62%</div>
+                <div className="text-xs text-[#9f9f93] mt-1">Meeting Prep Saved</div>
+              </div>
+              <div className="border-t border-[#24252a]/40 pt-4">
+                <div className="text-3xl font-display font-light text-white">14.8x</div>
+                <div className="text-xs text-[#9f9f93] mt-1">Average ROI</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8a704c] font-light leading-relaxed">
+              * SOC-2 Type II audit completed successfully.
+            </div>
+          </div>
 
-      {/* --- GTM ASSESSMENT INTAKE FORM --- */}
-      <section id="gtm-assessment" className="relative z-10 py-20 px-6 max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <span className="eyebrow-teal mb-3 flex items-center justify-center gap-2">
-            <Target className="h-4 w-4" /> GTM Assessment
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-            Start Your Go-to-Market Assessment
-          </h2>
-          <p className="text-slate-400 text-sm mt-2 max-w-2xl mx-auto">
-            Complete the questionnaire to configure the AI model and generate tailored, real-time go-to-market pipelines.
-          </p>
-        </div>
-
-        <div className="w-full flex justify-center bg-slate-950/20 backdrop-blur-sm rounded-3xl border border-white/5 p-4 sm:p-6 shadow-2xl">
-          <IntakeForm />
         </div>
       </section>
 
-      {/* divider */}
-      <div className="divider-gradient mx-auto max-w-5xl" />
-
-      {/* ─── WHY REVENUE LEADERS CHOOSE US (BENTO GRID) ────────────────────────── */}
-      <section className="relative z-10 py-24 border-y border-white/5 bg-[#08081a]/50">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.02),transparent)] pointer-events-none" />
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="text-center mb-16">
-            <span className="eyebrow-violet mb-3">Enterprise Value</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-              Why revenue teams choose DealFlow AI
+      {/* --- GTM ASSESSMENT INTAKE FORM (Refined Editorial Frame) --- */}
+      <section id="gtm-assessment" className="max-w-6xl mx-auto px-6 py-20 border-b border-[#24252a]/60">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          
+          <div className="lg:col-span-4 space-y-4 text-left">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#d4a017] uppercase tracking-wider">
+              <Target className="h-3.5 w-3.5" /> GTM Assessment
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-light text-white leading-tight">
+              Assess your Go-to-Market potential.
             </h2>
-            <p className="text-slate-400 text-sm mt-2 max-w-lg mx-auto">
-              We isolate and automate the administrative load so your sellers can concentrate on building client relations.
+            <p className="text-[#9f9f93] text-sm leading-relaxed font-light">
+              Complete the questionnaire to configure the AI model and generate tailored, real-time go-to-market pipelines.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-teal-950/30 via-black/40 to-transparent hover:border-teal-500/40 bento-glow card-accent-teal transition-all duration-500 flex flex-col justify-between min-h-[250px]">
-              <div className="df-specular" />
-              <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-teal-500/15 text-teal-400 mb-4 border border-teal-500/25 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
-                  <Database className="h-5.5 w-5.5" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">Eliminate CRM Drudgery</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  Our Memory OS automatically transcribes sales calls, pulls key deal parameters, and updates Salesforce or HubSpot logs. Save up to 6 hours per week per representative.
-                </p>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <span className="text-[10px] font-mono text-teal-300 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
-                  ✓ Salesforce Synced
-                </span>
-                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
-                  ✓ HubSpot Synced
-                </span>
-              </div>
-            </div>
-
-            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-amber-950/30 via-black/40 to-transparent hover:border-amber-500/40 bento-glow card-accent-amber transition-all duration-500 flex flex-col justify-between min-h-[250px]">
-              <div className="df-specular" />
-              <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/15 text-amber-400 mb-4 border border-amber-500/25 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                  <TrendingUp className="h-5.5 w-5.5" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">Rescue Stalled Deals</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  Proactive triggers alert agents the moment a pipeline opportunity stalls or decision-maker response latency spikes.
-                </p>
-              </div>
-              <div className="mt-6 flex justify-between items-center text-[10px] font-mono text-slate-400">
-                <span>Active Triggers:</span>
-                <span className="text-amber-400 font-bold stat-glow animate-pulse">● OUTREACH QUEUED</span>
-              </div>
-            </div>
-
-            <div className="md:col-span-4 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-violet-950/30 via-black/40 to-transparent hover:border-violet-500/40 bento-glow card-accent-violet transition-all duration-500 flex flex-col justify-between min-h-[250px]">
-              <div className="df-specular" />
-              <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-violet-500/15 text-violet-400 mb-4 border border-violet-500/25 shadow-[0_0_15px_rgba(124,58,237,0.1)]">
-                  <Cpu className="h-5.5 w-5.5" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">Fleet of Specialized Agents</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  Orchestrate collaborative agents for outreach campaigns, calendar booking management, and pre-meeting dossiers.
-                </p>
-              </div>
-              <div className="mt-6">
-                <span className="text-[10px] font-mono text-violet-200 bg-violet-500/15 border border-violet-500/25 px-3 py-1 rounded-full stat-glow">
-                  Average Win Rate: +22%
-                </span>
-              </div>
-            </div>
-
-            <div className="md:col-span-8 group relative p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-rose-950/30 via-black/40 to-transparent hover:border-rose-500/40 bento-glow card-accent-rose transition-all duration-500 flex flex-col justify-between min-h-[250px]">
-              <div className="df-specular" />
-              <div>
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-rose-500/15 text-rose-400 mb-4 border border-rose-500/25 shadow-[0_0_15px_rgba(244,63,94,0.1)]">
-                  <Shield className="h-5.5 w-5.5" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">GDPR &amp; Compliance Firewall</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and SOC-2 compliant. Strict role-based layouts prevent unauthorized interactions.
-                </p>
-              </div>
-              <div className="mt-6 flex justify-between items-center flex-wrap gap-4 text-[10px] font-mono">
-                <div className="flex gap-2">
-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-300">SOC 2 Type II</span>
-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-300">GDPR Compliant</span>
-                </div>
-                <span className="text-rose-400 flex items-center gap-1 stat-glow">🔒 Full Session Isolation</span>
-              </div>
-            </div>
+          <div className="lg:col-span-8 bg-[#111219]/40 border border-[#24252a] rounded-lg p-6 shadow-xl">
+            <IntakeForm />
           </div>
+
         </div>
       </section>
 
-      {/* divider */}
-      <div className="divider-gradient mx-auto max-w-5xl" />
+      {/* --- ENTERPRISE VALUE SECTION (Redesigned) --- */}
+      <section className="max-w-7xl mx-auto px-6 py-24 border-b border-[#24252a]/60">
+        <div className="text-center mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#8a704c]/30 bg-[#8a704c]/10 text-[#d4a017] text-xs font-semibold uppercase tracking-widest mb-6">
+            <Sparkles className="h-4 w-4" />
+            Enterprise Value
+          </div>
+          <h2 className="font-display text-4xl sm:text-5xl font-light text-white leading-tight mb-6">
+            Why revenue teams choose DealFlow AI.
+          </h2>
+          <p className="text-[#9f9f93] text-base sm:text-lg mt-6 max-w-3xl mx-auto leading-relaxed font-light">
+            From accelerating pipeline velocity to ensuring compliance, DealFlow AI delivers measurable business value across every stage of the revenue cycle.
+          </p>
+        </div>
 
-      {/* ─── PRICING SECTION ───────────────────────────────────────────────────── */}
-      <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center mb-12">
-            <span className="eyebrow-amber mb-3">Pricing Options</span>
-            <h2 className="text-4xl font-extrabold text-white">Simple, transparent pricing</h2>
-            <p className="text-slate-400 text-sm mt-2">Start free for 14 days. No credit card required.</p>
-
-            {/* billing toggler and currency */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-8">
-              <div className="flex items-center justify-center gap-3">
-                <span className={`text-xs font-semibold ${!isAnnual ? "text-teal-400 font-bold" : "text-slate-500"}`}>Monthly</span>
-                <button
-                  onClick={() => setIsAnnual(!isAnnual)}
-                  className="relative w-12 h-6 bg-slate-900 border border-white/10 rounded-full transition-colors flex items-center p-0.5 cursor-pointer"
-                  aria-label="Toggle annual pricing"
-                >
-                  <motion.div
-                    className="w-4.5 h-4.5 bg-gradient-to-tr from-teal-500 to-cyan-400 rounded-full"
-                    animate={{ x: isAnnual ? 24 : 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  />
-                </button>
-                <span className={`text-xs font-semibold ${isAnnual ? "text-teal-400 font-bold" : "text-slate-500"} flex items-center gap-1`}>
-                  Annually
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
-                    Save 20%
-                  </span>
-                </span>
+        {/* Value Pillars Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {[
+            {
+              icon: Database,
+              title: "Eliminate CRM Drudgery",
+              description: "Automatically transcribe calls, update logs, and sync deal data between systems.",
+              metric: "-6 hours/rep/week",
+              tags: ["Salesforce", "HubSpot"],
+            },
+            {
+              icon: TrendingUp,
+              title: "Rescue Stalled Deals",
+              description: "Proactive alerts trigger outreach when opportunities stall or response latency spikes.",
+              metric: "+24% show rate",
+              tags: ["Outreach", "Sequencing"],
+            },
+            {
+              icon: Cpu,
+              title: "Agent Fleet Orchestration",
+              description: "Collaborative agents handle outreach, booking, and pre-meeting prep at scale.",
+              metric: "+22% win rate",
+              tags: ["AI Agents", "Automation"],
+            },
+            {
+              icon: Target,
+              title: "GTM Strategy Acceleration",
+              description: "AI-powered assessments generate tailored launch strategies in minutes, not weeks.",
+              metric: "-95% strategy time",
+              tags: ["GTM", "Strategy"],
+            },
+          ].map((pillar, index) => (
+            <div
+              key={index}
+              className="group relative border border-[#24252a]/80 bg-gradient-to-br from-[#111219]/50 to-[#111219]/20 rounded-2xl p-8 flex flex-col min-h-[300px] hover:border-[#d4a017]/40 hover:from-[#111219]/80 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-[#d4a017]/10"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4a017]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative inline-flex items-center justify-center w-12 h-12 bg-[#8a704c]/10 text-[#d4a017] rounded-xl border border-[#8a704c]/20 mb-6 group-hover:bg-[#8a704c]/20 transition-all duration-300">
+                <pillar.icon className="h-6 w-6" />
               </div>
-
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-xs text-slate-500 font-semibold">Currency:</span>
-                <div className="flex bg-slate-900 border border-white/10 rounded-full p-0.5">
-                  {(["USD", "EUR", "GBP", "CAD", "INR"] as const).map((curr) => (
-                    <button
-                      key={curr}
-                      onClick={() => setCurrency(curr)}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all duration-200 ${
-                        currency === curr
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-400 text-white"
-                          : "text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {curr}
-                    </button>
+              <div className="relative flex-1">
+                <h3 className="font-display text-xl font-medium text-white mb-3">
+                  {pillar.title}
+                </h3>
+                <p className="text-sm text-[#9f9f93] leading-relaxed font-light mb-6">
+                  {pillar.description}
+                </p>
+              </div>
+              <div className="relative">
+                <div className="text-xl font-display text-[#d4a017] font-medium mb-4">
+                  {pillar.metric}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {pillar.tags.map((tag, tagIndex) => (
+                    <span
+                      key={tagIndex}
+                      className="text-[10px] uppercase font-semibold text-[#8a704c] bg-[#8a704c]/15 px-3 py-1 rounded-full border border-[#8a704c]/20">
+                      {tag}
+                    </span>
                   ))}
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Enterprise Value Metrics Table */}
+        <div className="border border-[#24252a]/80 bg-gradient-to-br from-[#111219]/40 to-[#111219]/10 rounded-2xl overflow-hidden mb-12">
+          <div className="px-8 py-6 border-b border-[#24252a]/80 bg-[#111219]/50">
+            <h3 className="font-display text-lg font-medium text-white">Performance Comparison</h3>
           </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b border-[#24252a]/80">
+                <tr className="bg-[#111219]/30">
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
+                    Metric
+                  </th>
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
+                    Manual
+                  </th>
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
+                    DealFlow AI
+                  </th>
+                  <th className="px-8 py-5 text-xs uppercase tracking-widest text-[#8a704c] font-semibold">
+                    Impact
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#24252a]/60">
+                {[
+                  {
+                    metric: "Lead-to-Strategy Latency",
+                    manual: "30-45 minutes",
+                    dealflow: "< 60 seconds",
+                    impact: "97.8% reduction",
+                  },
+                  {
+                    metric: "Demo Show Rate",
+                    manual: "60-65%",
+                    dealflow: "85-90%",
+                    impact: "+24 percentage points",
+                  },
+                  {
+                    metric: "Cost per Qualified Lead",
+                    manual: "~$120",
+                    dealflow: "~$5",
+                    impact: "95.8% reduction",
+                  },
+                  {
+                    metric: "GTM Strategy Time",
+                    manual: "2-3 weeks",
+                    dealflow: "15 minutes",
+                    impact: "95% reduction",
+                  },
+                  {
+                    metric: "Regulatory Violations",
+                    manual: "Variable risk",
+                    dealflow: "0 (guaranteed)",
+                    impact: "Full compliance",
+                  },
+                ].map((row, index) => (
+                  <tr key={index} className="hover:bg-[#111219]/40 transition-colors">
+                    <td className="px-8 py-5 text-sm font-medium text-white">
+                      {row.metric}
+                    </td>
+                    <td className="px-8 py-5 text-sm text-[#9f9f93] font-light">
+                      {row.manual}
+                    </td>
+                    <td className="px-8 py-5 text-sm text-[#d4a017] font-medium">
+                      {row.dealflow}
+                    </td>
+                    <td className="px-8 py-5 text-sm text-[#8a704c] font-semibold">
+                      {row.impact}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
-            {PLANS.map((plan) => {
-              const isPopular = plan.popular;
-              const isEnterprise = plan.price === null;
-              const priceVal = isEnterprise
-                ? "Custom"
-                : formatCurrency(isAnnual ? plan.price!.annual : plan.price!.monthly, currency);
-
-              return (
-                <div
-                  key={plan.name}
-                  className={`relative p-8 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    isPopular
-                      ? "border-violet-500/40 bg-gradient-to-b from-violet-950/20 to-[#070716] shadow-xl shadow-violet-500/10 hover:-translate-y-1 hover:border-violet-500/60"
-                      : "border-white/5 bg-slate-900/40 hover:border-white/10 hover:bg-slate-900/60"
-                  }`}
-                >
-                  {isPopular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="space-y-6">
-                    <div>
-                      <div className={`${isPopular ? "text-violet-400" : "text-slate-400"} text-[10px] font-bold uppercase tracking-widest mb-1`}>
-                        {plan.name}
-                      </div>
-                      <div className="text-3xl font-bold text-white font-mono">
-                        {priceVal}{!isEnterprise && "/mo"}
-                      </div>
-                      <div className="text-[9px] text-slate-500 mt-1">
-                        {isEnterprise ? "Custom parameters" : isAnnual ? "Billed annually" : "Billed monthly"}
-                      </div>
-                    </div>
-
-                    <p className="text-slate-400 text-xs leading-relaxed min-h-[36px]">
-                      {plan.description}
-                    </p>
-
-                    <div className={`border-t ${isPopular ? "border-violet-500/10" : "border-white/5"} my-4`} />
-
-                    <ul className="space-y-3">
-                      {plan.features.map((f, i) => (
-                        <li key={i} className="flex items-start gap-2.5">
-                          <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-violet-400" : "text-teal-500"}`} />
-                          <span className={`text-xs ${f.included ? "text-slate-300" : "text-slate-600 line-through"}`}>
-                            {f.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-8 space-y-3">
-                    <Link
-                      href={isEnterprise ? "/book-demo" : "/portal/customer/login?signup=true"}
-                      className={`w-full h-11 flex items-center justify-center rounded-xl font-bold text-xs transition-all ${
-                        isPopular
-                          ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
-                          : "border border-white/10 bg-white/5 hover:bg-white/10 text-white"
-                      }`}
-                    >
-                      {plan.cta}
-                    </Link>
-                    <span className="text-[9px] text-slate-500 text-center block">
-                      No credit card required · Cancel anytime
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+        {/* Compliance Banner */}
+        <div className="border border-[#24252a]/80 bg-gradient-to-r from-[#111219]/50 via-[#111219]/30 to-[#111219]/50 p-8 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-[#d4a017]/10 text-[#d4a017] rounded-xl border border-[#d4a017]/20">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="text-lg font-medium text-white">GDPR & Compliance Firewall</h4>
+              <p className="text-sm text-[#9f9f93] font-light mt-1">Every document access is audited, and client data flows are isolated and SOC-2 compliant.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">SOC 2 Type II</span>
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">GDPR Compliant</span>
+            <span className="text-[10px] uppercase tracking-wider border border-[#24252a] px-4 py-2 rounded-full text-[#9f9f93] bg-[#090a0f] font-semibold">TCPA Ready</span>
           </div>
         </div>
       </section>
 
-      {/* ─── FINAL CALL-TO-ACTION ─────────────────────────────────────────────── */}
-      <section className="relative z-10 py-28 border-t border-white/5 bg-[#05050e]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.10),transparent_65%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,rgba(20,184,166,0.06),transparent_55%)] pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
-          <span className="eyebrow-violet">
-            <Target className="h-3.5 w-3.5 text-violet-400" /> Start Automating
-          </span>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight">
-            Ready to accelerate GTM operations
-            <br />
-            <span className="gradient-text-hero">
-              at autonomous speeds?
-            </span>
-          </h2>
-          <p className="text-slate-300 text-sm max-w-xl mx-auto leading-relaxed">
-            Onboard in under 2 minutes. Sync your SDR campaigns, dialers, and CRM pipelines with a dedicated fleet of revenue agents today.
-          </p>
+      {/* --- PRICING SECTION (Elegant Grid) --- */}
+      <section id="pricing" className="max-w-7xl mx-auto px-6 py-24 border-b border-[#24252a]/60">
+        <div className="text-center mb-16 space-y-4">
+          <span className="text-xs uppercase tracking-widest text-[#8a704c] font-semibold">Pricing Structure</span>
+          <h2 className="font-display text-4xl font-light text-white">Simple, transparent pricing</h2>
+          <p className="text-[#9f9f93] text-sm font-light">Start free for 14 days. Cancel anytime.</p>
 
-          <div className="flex flex-wrap justify-center gap-4 pt-2">
-            <Link
-              href="/portal/customer/login?signup=true"
-              className="btn-primary group text-sm"
-            >
-              Get Started Free
-              <ArrowRight className="h-4.5 w-4.5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/book-demo"
-              className="inline-flex items-center gap-2 px-8 py-4.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-all duration-300 hover:-translate-y-0.5"
-            >
-              Talk with Sales
-            </Link>
+          {/* Pricing Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+            <div className="flex items-center gap-3">
+              <span className={`text-xs ${!isAnnual ? "text-[#d4a017] font-semibold" : "text-[#9f9f93]"}`}>Monthly</span>
+              <button
+                onClick={() => setIsAnnual(!isAnnual)}
+                className="relative w-11 h-6 bg-[#16181f] border border-[#24252a] rounded-full transition-colors flex items-center p-0.5 cursor-pointer"
+                aria-label="Toggle annual pricing"
+              >
+                <div
+                  className={`w-4 h-4 bg-[#d4a017] rounded-full transition-transform duration-300 ${
+                    isAnnual ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+              <span className={`text-xs ${isAnnual ? "text-[#d4a017] font-semibold" : "text-[#9f9f93]"} flex items-center gap-1`}>
+                Annually
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-bold">
+                  Save 20%
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#9f9f93]">Currency:</span>
+              <div className="flex bg-[#16181f] border border-[#24252a] rounded-full p-0.5">
+                {(["USD", "EUR", "GBP", "CAD", "INR"] as const).map((curr) => (
+                  <button
+                    key={curr}
+                    onClick={() => setCurrency(curr)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all duration-200 ${
+                      currency === curr
+                        ? "bg-[#d4a017] text-[#090a0f]"
+                        : "text-[#9f9f93] hover:text-[#f4f3f0]"
+                    }`}
+                  >
+                    {curr}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+          {PLANS.map((plan) => {
+            const isPopular = plan.popular;
+            const isEnterprise = plan.price === null;
+            const priceVal = isEnterprise
+              ? "Custom"
+              : formatCurrency(isAnnual ? plan.price!.annual : plan.price!.monthly, currency);
+
+            return (
+              <div
+                key={plan.name}
+                className={`relative p-8 rounded-lg border flex flex-col justify-between transition-all duration-300 ${
+                  isPopular
+                    ? "border-[#d4a017] bg-[#111219]/60 shadow-lg shadow-[#d4a017]/5"
+                    : "border-[#24252a] bg-[#111219]/25 hover:border-[#383a45]"
+                }`}
+              >
+                {isPopular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="px-3 py-1 rounded-full bg-[#d4a017] text-[#090a0f] text-[9px] font-bold uppercase tracking-wider">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] mb-1">
+                      {plan.name}
+                    </div>
+                    <div className="text-3xl font-display font-light text-white">
+                      {priceVal}{!isEnterprise && "/mo"}
+                    </div>
+                    <div className="text-[9px] text-[#9f9f93] mt-1">
+                      {isEnterprise ? "Custom parameters" : isAnnual ? "Billed annually" : "Billed monthly"}
+                    </div>
+                  </div>
+
+                  <p className="text-[#9f9f93] text-xs leading-relaxed min-h-[36px] font-light">
+                    {plan.description}
+                  </p>
+
+                  <div className="border-t border-[#24252a] my-4" />
+
+                  <ul className="space-y-3">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-[#d4a017]" : "text-[#8a704c]"}`} />
+                        <span className={`text-xs font-light ${f.included ? "text-slate-300" : "text-slate-600 line-through"}`}>
+                          {f.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-8 space-y-3">
+                  <Link
+                    href={isEnterprise ? "/book-demo" : "/portal/customer/login?signup=true"}
+                    className={`w-full h-11 flex items-center justify-center rounded font-semibold text-xs transition-all ${
+                      isPopular
+                        ? "bg-[#d4a017] hover:bg-[#c29014] text-[#090a0f]"
+                        : "border border-[#24252a] bg-[#16181f] hover:bg-[#20232d] text-white"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                  <span className="text-[9px] text-[#9f9f93] text-center block font-light">
+                    No credit card required · Cancel anytime
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* --- FINAL CALL-TO-ACTION (Editorial Style) --- */}
+      <section className="max-w-4xl mx-auto px-6 py-28 text-center space-y-8">
+        <span className="text-xs uppercase tracking-widest text-[#8a704c] font-semibold">Start Automating</span>
+        <h2 className="font-display text-4xl sm:text-5xl font-light text-white leading-tight">
+          Ready to accelerate GTM operations
+          <br />
+          <span className="italic text-[#d4a017]">at autonomous speeds?</span>
+        </h2>
+        <p className="text-[#9f9f93] text-sm max-w-xl mx-auto leading-relaxed font-light">
+          Onboard in under 2 minutes. Sync your SDR campaigns, dialers, and CRM pipelines with a dedicated fleet of revenue agents today.
+        </p>
+
+        <div className="flex flex-wrap justify-center gap-4 pt-2">
+          <Link
+            href="/portal/customer/login?signup=true"
+            className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#d4a017] hover:bg-[#c29014] text-[#090a0f] font-semibold text-sm rounded transition-all duration-300 transform hover:-translate-y-0.5"
+          >
+            Get Started Free
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/book-demo"
+            className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#16181f] hover:bg-[#20232d] border border-[#24252a] text-white font-semibold text-sm rounded transition-all"
+          >
+            Talk with Sales
+          </Link>
         </div>
       </section>
 

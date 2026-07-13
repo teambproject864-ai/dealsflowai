@@ -10,6 +10,7 @@ import {
   A2AHeartbeatPayloadSchema,
   A2AMessage,
 } from "./types";
+import { validateA2AAuth } from "./auth";
 
 export class A2AValidator {
   /**
@@ -25,6 +26,12 @@ export class A2AValidator {
         if (age > validated.ttl) {
           return { valid: false, error: "Message has expired (TTL exceeded)" };
         }
+      }
+      
+      // Validate authentication
+      const authResult = validateA2AAuth(validated.auth, validated.payload);
+      if (!authResult.valid) {
+        return { valid: false, error: authResult.error };
       }
       
       return { valid: true, message: validated };

@@ -348,36 +348,25 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   }
 
   return (
-    <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-teal-500/20 bg-white dark:bg-slate-950 p-6 md:p-8 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45),0_0_40px_rgba(20,184,166,0.08)] relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,rgba(124,58,237,0.18),transparent)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_35%_at_85%_90%,rgba(20,184,166,0.12),transparent)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_40%_30%_at_80%_10%,rgba(244,63,94,0.07),transparent)]" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
-
-      <div className="mb-8 flex items-center justify-between gap-4 relative z-10">
+    <div className="w-full max-w-2xl rounded-lg border border-[#24252a] bg-[#111219]/60 p-6 md:p-8 relative overflow-hidden">
+      
+      {/* Header and Step Indicators */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#24252a]/60 pb-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider gradient-text-teal">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c]">
             Step {step + 1} of {stepTitles.length}
           </p>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stepTitles[step]}</h2>
+          <h2 className="text-xl font-display font-light text-white tracking-tight mt-1">{stepTitles[step]}</h2>
         </div>
-        <div className="flex gap-1">
-          {stepTitles.map((_, i) => {
-            const colors = ["bg-teal-400", "bg-cyan-400", "bg-violet-400", "bg-fuchsia-400", "bg-rose-400", "bg-amber-400"];
-            const glowColors = ["shadow-[0_0_10px_#14b8a6]", "shadow-[0_0_10px_#22d3ee]", "shadow-[0_0_10px_#a78bfa]", "shadow-[0_0_10px_#e879f9]", "shadow-[0_0_10px_#fb7185]", "shadow-[0_0_10px_#fbbf24]"];
-            return (
-              <span
-                key={i}
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  i < step
-                    ? `w-4 ${colors[i] || "bg-teal-500"} ${glowColors[i] || ""}`
-                    : i === step
-                    ? `w-5 ${colors[i] || "bg-teal-500"} ${glowColors[i] || ""} animate-pulse`
-                    : "w-3.5 bg-white/10"
-                }`}
-              />
-            );
-          })}
+        <div className="flex gap-1.5 w-full sm:w-32 items-center">
+          {stepTitles.map((_, i) => (
+            <span
+              key={i}
+              className={`h-0.5 flex-1 transition-all duration-300 ${
+                i <= step ? "bg-[#d4a017]" : "bg-[#24252a]"
+              }`}
+            />
+          ))}
         </div>
       </div>
 
@@ -385,10 +374,10 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
         <div
           role="alert"
           aria-live="polite"
-          className="bg-rose-900/30 border border-rose-500/50 p-3 mb-4 rounded-xl text-xs text-rose-200 relative z-10"
+          className="bg-rose-950/20 border border-rose-800/40 p-4 mb-6 rounded-md text-xs text-rose-300 relative z-10"
         >
-          <p className="font-semibold mb-1 text-rose-300">Validation issues:</p>
-          <ul className="list-disc pl-4 text-rose-200">
+          <p className="font-semibold mb-1 text-rose-400">Please correct the following fields:</p>
+          <ul className="list-disc pl-4 text-rose-300 space-y-0.5">
             {schemaErrors.map((e, i) => (
               <li key={i}>{e}</li>
             ))}
@@ -399,115 +388,113 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-5 relative z-10 min-h-[360px]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.18 }}
+          className="space-y-6 relative z-10 min-h-[340px]"
         >
           {/* --- Step 1: Company Information --- */}
           {step === 0 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
-                Company Information
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
+                Company Details
               </h3>
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-700 dark:text-slate-200">Full Name</Label>
-                <Input
-                  id="name"
-                  value={data.name}
-                  onChange={(e) => setData({ ...data, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                  aria-invalid={!!errors.name}
-                  aria-describedby={errors.name ? 'name-error' : undefined}
-                />
-                {errors.name && (
-                  <p
-                    id="name-error"
-                    role="alert"
-                    className="text-xs text-red-400"
-                  >
-                    {errors.name}
-                  </p>
-                )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-xs font-semibold text-slate-350">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={data.name}
+                    onChange={(e) => setData({ ...data, name: e.target.value })}
+                    placeholder="John Doe"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
+                    aria-invalid={!!errors.name}
+                    aria-describedby={errors.name ? 'name-error' : undefined}
+                  />
+                  {errors.name && (
+                    <p id="name-error" role="alert" className="text-xs text-red-400 font-light">{errors.name}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="emailPersonal" className="text-xs font-semibold text-slate-350">Primary Email</Label>
+                  <Input
+                    id="emailPersonal"
+                    type="email"
+                    value={data.emailPersonal}
+                    onChange={(e) => setData({ ...data, emailPersonal: e.target.value })}
+                    placeholder="john@company.com"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
+                  />
+                  {errors.emailPersonal && <p className="text-xs text-red-400 font-light">{errors.emailPersonal}</p>}
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="emailPersonal" className="text-slate-700 dark:text-slate-200">Primary Email Address</Label>
-                <Input
-                  id="emailPersonal"
-                  type="email"
-                  value={data.emailPersonal}
-                  onChange={(e) => setData({ ...data, emailPersonal: e.target.value })}
-                  placeholder="john@company.com"
-                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                />
-                {errors.emailPersonal && <p className="text-xs text-red-400">{errors.emailPersonal}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="additionalEmail" className="text-slate-700 dark:text-slate-200">Additional Email Address</Label>
+                <Label htmlFor="additionalEmail" className="text-xs font-semibold text-slate-350">Secondary Email (Optional)</Label>
                 <Input
                   id="additionalEmail"
                   type="email"
                   value={data.additionalEmail}
                   onChange={(e) => setData({ ...data, additionalEmail: e.target.value })}
-                  placeholder="optional@company.com"
-                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
+                  placeholder="operations@company.com"
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-450 mt-1">We will copy this address on all onboarding updates and campaign reports.</p>
+                <p className="text-[10px] text-[#9f9f93] font-light">We will copy this address on onboarding updates and GTM reports.</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-slate-700 dark:text-slate-200">Company Name</Label>
-                <Input
-                  id="companyName"
-                  value={data.companyName}
-                  onChange={(e) => setData({ ...data, companyName: e.target.value })}
-                  placeholder="Acme Corp"
-                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                />
-                {errors.companyName && <p className="text-xs text-red-400">{errors.companyName}</p>}
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName" className="text-xs font-semibold text-slate-350">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    value={data.companyName}
+                    onChange={(e) => setData({ ...data, companyName: e.target.value })}
+                    placeholder="Acme Corp"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
+                  />
+                  {errors.companyName && <p className="text-xs text-red-400 font-light">{errors.companyName}</p>}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="websiteUrl" className="text-slate-700 dark:text-slate-200">Company Website</Label>
-                <Input
-                  id="websiteUrl"
-                  value={data.websiteUrl}
-                  onChange={(e) => setData({ ...data, websiteUrl: e.target.value })}
-                  placeholder="https://acme.com"
-                  className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                />
-                {errors.websiteUrl && <p className="text-xs text-red-400">{errors.websiteUrl}</p>}
+                <div className="space-y-2">
+                  <Label htmlFor="websiteUrl" className="text-xs font-semibold text-slate-350">Company Website</Label>
+                  <Input
+                    id="websiteUrl"
+                    value={data.websiteUrl}
+                    onChange={(e) => setData({ ...data, websiteUrl: e.target.value })}
+                    placeholder="https://acme.com"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
+                  />
+                  {errors.websiteUrl && <p className="text-xs text-red-400 font-light">{errors.websiteUrl}</p>}
+                </div>
               </div>
             </div>
           )}
-
           {/* --- Step 2: Proof of Results & Credibility --- */}
           {step === 1 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
                 Proof of Results & Credibility
               </h3>
 
               <div className="space-y-2">
-                <Label htmlFor="caseStudies">
-                  Can you share at least three case studies with measurable outcomes?
+                <Label htmlFor="caseStudies" className="text-xs font-semibold text-slate-350">
+                  Share at least three case studies with measurable outcomes:
                 </Label>
                 <Textarea
                   id="caseStudies"
                   value={data.caseStudies}
                   onChange={(e) => setData({ ...data, caseStudies: e.target.value })}
-                  placeholder="Case 1: X company grew by 40%... Bonus: Include video testimonials, customer quotes, or success stories..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[120px]"
+                  placeholder="Case 1: Grew revenue by 40%... Case 2: Reduced churn... (Include customer quotes or success stories)"
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[110px]"
                 />
-                {errors.caseStudies && <p className="text-xs text-red-400">{errors.caseStudies}</p>}
+                {errors.caseStudies && <p className="text-xs text-red-400 font-light">{errors.caseStudies}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="case-study-upload">Upload Supporting Case Study Documents</Label>
+                <Label htmlFor="case-study-upload" className="text-xs font-semibold text-slate-350">Upload Supporting Documents</Label>
                 <div
                   role="button"
                   tabIndex={0}
@@ -519,11 +506,11 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                     }
                   }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-white/10 hover:border-teal-500/50 bg-black/20 rounded-xl p-4 text-center cursor-pointer transition-all hover:bg-white/[0.02]"
+                  className="border border-dashed border-[#24252a] hover:border-[#8a704c] bg-[#16181f]/40 rounded-lg p-6 text-center cursor-pointer transition-colors"
                 >
-                  <Upload className="mx-auto h-8 w-8 text-teal-400 mb-2" aria-hidden="true" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Drag & drop files here or click to browse</p>
-                  <p className="text-xs text-slate-500 mt-1">Supports PDF, DOCX, PNG, MP4 up to 50MB</p>
+                  <Upload className="mx-auto h-7 w-7 text-[#d4a017] mb-2" aria-hidden="true" />
+                  <p className="text-xs font-semibold text-white">Drag & drop files here or click to browse</p>
+                  <p className="text-[10px] text-[#9f9f93] mt-1">Supports PDF, DOCX, PNG, MP4 up to 50MB</p>
                   <input
                     id="case-study-upload"
                     type="file"
@@ -531,15 +518,14 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                     onChange={handleFileUpload}
                     multiple
                     className="sr-only"
-                    aria-describedby="file-upload-description"
                   />
                 </div>
                 {(data.uploadedDocuments || []).length > 0 && (
-                  <div className="space-y-1.5 mt-2 max-h-[100px] overflow-y-auto">
+                  <div className="space-y-1.5 mt-2 max-h-[100px] overflow-y-auto pr-1">
                     {(data.uploadedDocuments || []).map((doc: string, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+                      <div key={idx} className="flex items-center justify-between bg-[#16181f] border border-[#24252a] rounded px-3 py-1.5 text-xs text-slate-300">
                         <div className="flex items-center gap-2 truncate">
-                          <File className="h-3.5 w-3.5 text-teal-400 flex-shrink-0" />
+                          <File className="h-3.5 w-3.5 text-[#d4a017] flex-shrink-0" />
                           <span className="truncate">{doc}</span>
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); removeUploadedDocument(idx); }} className="text-slate-500 hover:text-red-400 p-0.5 transition-colors">
@@ -552,17 +538,17 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
               </div>
 
               <div className="space-y-3">
-                <Label>What certifications or compliance standards does your company hold?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
-                  {certificationOptions.map((cert) => (
-                    <div key={cert} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
+                <Label className="text-xs font-semibold text-slate-355">Certifications & Compliance Standards</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {certificationOptions.map((c) => (
+                    <div key={c} className="flex items-center space-x-2 rounded-md border border-[#24252a] bg-[#111219]/40 px-3 py-2">
                       <Checkbox
-                        id={`cert-${cert}`}
-                        checked={(data.certifications || []).includes(cert)}
-                        onCheckedChange={() => toggleArrayItem("certifications", cert)}
+                        id={`cert-${c}`}
+                        checked={(data.certifications || []).includes(c)}
+                        onCheckedChange={() => toggleArrayItem("certifications", c)}
                       />
-                      <label htmlFor={`cert-${cert}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {cert}
+                      <label htmlFor={`cert-${c}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                        {c}
                       </label>
                     </div>
                   ))}
@@ -572,129 +558,133 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                     placeholder="Specify other certification..."
                     value={data.certificationsOther}
                     onChange={(e) => setData({ ...data, certificationsOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="trustFactors">Why should prospects trust your company even if they&apos;ve never heard of your brand?</Label>
-                <Textarea
+                <Label htmlFor="trustFactors" className="text-xs font-semibold text-slate-355">
+                  Why should prospects trust your company? (Social proof, reviews, guarantees)
+                </Label>
+                <Input
                   id="trustFactors"
                   value={data.trustFactors}
                   onChange={(e) => setData({ ...data, trustFactors: e.target.value })}
-                  placeholder="Social proof, authority, industry recognition, unique positioning, credibility indicators, etc."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="G2 leadership badges, 99% SLA uptime, references..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10"
                 />
-                {errors.trustFactors && <p className="text-xs text-red-400">{errors.trustFactors}</p>}
+                {errors.trustFactors && <p className="text-xs text-red-400 font-light">{errors.trustFactors}</p>}
               </div>
             </div>
           )}
 
           {/* --- Step 3: Brand Presence & Positioning --- */}
           {step === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
                 Brand Presence & Positioning
               </h3>
 
               <div className="space-y-3">
-                <Label>Is your brand actively visible on social platforms?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
-                  {socialOptions.map((ch) => (
-                    <div key={ch} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
+                <Label className="text-xs font-semibold text-slate-350">Which social platforms is your company most active on?</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {socialOptions.map((s) => (
+                    <div key={s} className="flex items-center space-x-2 rounded-md border border-[#24252a] bg-[#111219]/40 px-3 py-2">
                       <Checkbox
-                        id={`social-${ch}`}
-                        checked={(data.socialPlatforms || []).includes(ch)}
-                        onCheckedChange={() => toggleArrayItem("socialPlatforms", ch)}
+                        id={`social-${s}`}
+                        checked={(data.socialPlatforms || []).includes(s)}
+                        onCheckedChange={() => toggleArrayItem("socialPlatforms", s)}
                       />
-                      <label htmlFor={`social-${ch}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {ch}
+                      <label htmlFor={`social-${s}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                        {s}
                       </label>
                     </div>
                   ))}
                 </div>
-                {errors.socialPlatforms && <p className="text-xs text-red-400">{errors.socialPlatforms}</p>}
+                {errors.socialPlatforms && <p className="text-xs text-red-400 font-light">{errors.socialPlatforms}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="linkedInContent">What type of content or messaging do you share on LinkedIn?</Label>
-                <Textarea
-                  id="linkedInContent"
-                  value={data.linkedInContent}
-                  onChange={(e) => setData({ ...data, linkedInContent: e.target.value })}
-                  placeholder="What do you post on LinkedIn?"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[70px]"
-                />
-              </div>
+              {(data.socialPlatforms || []).includes("LinkedIn") && (
+                <div className="space-y-2">
+                  <Label htmlFor="linkedInContent" className="text-xs font-semibold text-slate-350">What type of content do you share on LinkedIn?</Label>
+                  <Textarea
+                    id="linkedInContent"
+                    value={data.linkedInContent || ""}
+                    onChange={(e) => setData({ ...data, linkedInContent: e.target.value })}
+                    placeholder="We publish client case studies, industry trend commentary, etc..."
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[70px]"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
-                <Label htmlFor="publishingFrequency">How consistently do you publish content?</Label>
+                <Label htmlFor="publishingFrequency" className="text-xs font-semibold text-slate-350">How consistently do you publish content?</Label>
                 <Select value={data.publishingFrequency} onValueChange={(v) => setData({ ...data, publishingFrequency: v })}>
-                  <SelectTrigger className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <SelectTrigger className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] focus:border-[#d4a017] rounded-md h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent className="bg-[#111219] border-[#24252a] text-[#f4f3f0]">
                     {publishingOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt} className="hover:bg-teal-500/20">{opt}</SelectItem>
+                      <SelectItem key={opt} value={opt} className="hover:bg-[#16181f] focus:bg-[#16181f] focus:text-white">{opt}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="offerPromise">What is the clear, no-fluff promise your offer delivers?</Label>
+                <Label htmlFor="offerPromise" className="text-xs font-semibold text-slate-350">What is the clear, no-fluff promise your offer delivers?</Label>
                 <Textarea
                   id="offerPromise"
                   value={data.offerPromise}
                   onChange={(e) => setData({ ...data, offerPromise: e.target.value })}
-                  placeholder="Clear, concise promise..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[70px]"
+                  placeholder="Example: We build a fully functional outbound agent campaign in 7 days..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[70px]"
                 />
-                {errors.offerPromise && <p className="text-xs text-red-400">{errors.offerPromise}</p>}
+                {errors.offerPromise && <p className="text-xs text-red-400 font-light">{errors.offerPromise}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="irresistibleHook">Do you have an irresistible hook or offer?</Label>
+                <Label htmlFor="irresistibleHook" className="text-xs font-semibold text-slate-350">Do you have an irresistible hook or offer?</Label>
                 <Textarea
                   id="irresistibleHook"
                   value={data.irresistibleHook}
                   onChange={(e) => setData({ ...data, irresistibleHook: e.target.value })}
-                  placeholder="Examples: Free Audit, Guaranteed Results, Done-for-You in 7 Days, Free Strategy Session..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[70px]"
+                  placeholder="Example: Get a free customized target account dataset when you book a meeting..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[70px]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="painPoint">What pain point does your offer solve in one sentence?</Label>
+                <Label htmlFor="painPoint" className="text-xs font-semibold text-slate-355">What pain point does your offer solve in one sentence?</Label>
                 <Textarea
                   id="painPoint"
                   value={data.painPoint}
                   onChange={(e) => setData({ ...data, painPoint: e.target.value })}
-                  placeholder="Focus on the prospect's problem rather than product features..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[70px]"
+                  placeholder="Sales reps waste hours manually dialing and writing personalized emails..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[70px]"
                 />
-                {errors.painPoint && <p className="text-xs text-red-400">{errors.painPoint}</p>}
+                {errors.painPoint && <p className="text-xs text-red-400 font-light">{errors.painPoint}</p>}
               </div>
             </div>
           )}
 
-          {/* --- Step4: Offer & Sales Process --- */}
+          {/* --- Step 4: Offer & Sales Process --- */}
           {step === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
                 Offer & Sales Process
               </h3>
 
               <div className="space-y-3">
-                <Label>Do you offer any risk-reversal mechanisms?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
+                <Label className="text-xs font-semibold text-slate-350">Do you offer any risk-reversal mechanisms?</Label>
+                <div className="grid grid-cols-2 gap-2">
                   {riskReversalOptions.map((rr) => (
-                    <div key={rr} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
+                    <div key={rr} className="flex items-center space-x-2 rounded-md border border-[#24252a] bg-[#111219]/40 px-3 py-2">
                       <Checkbox
                         id={`rr-${rr}`}
                         checked={(data.riskReversal || []).includes(rr)}
                         onCheckedChange={() => toggleArrayItem("riskReversal", rr)}
                       />
-                      <label htmlFor={`rr-${rr}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
+                      <label htmlFor={`rr-${rr}`} className="text-xs text-slate-300 cursor-pointer select-none">
                         {rr}
                       </label>
                     </div>
@@ -702,59 +692,59 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                 </div>
                 {(data.riskReversal || []).includes("Other (Specify)") && (
                   <Input
-                    placeholder="Specify other risk-reversal mechanism..."
+                    placeholder="Specify other guarantee..."
                     value={data.riskReversalOther}
                     onChange={(e) => setData({ ...data, riskReversalOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="timeToStart">How quickly can a customer get started with your offer?</Label>
+                <Label htmlFor="timeToStart" className="text-xs font-semibold text-slate-350">How quickly can a customer get started with your offer?</Label>
                 <Select value={data.timeToStart} onValueChange={(v) => setData({ ...data, timeToStart: v })}>
-                  <SelectTrigger className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <SelectTrigger className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] focus:border-[#d4a017] rounded-md h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent className="bg-[#111219] border-[#24252a] text-[#f4f3f0]">
                     {timeToStartOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt} className="hover:bg-teal-500/20">{opt}</SelectItem>
+                      <SelectItem key={opt} value={opt} className="hover:bg-[#16181f] focus:bg-[#16181f] focus:text-white">{opt}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.timeToStart && <p className="text-xs text-red-400">{errors.timeToStart}</p>}
+                {errors.timeToStart && <p className="text-xs text-red-400 font-light">{errors.timeToStart}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="primaryCta">What is your primary Call-to-Action (CTA) for this campaign?</Label>
+                <Label htmlFor="primaryCta" className="text-xs font-semibold text-slate-355">What is your primary Call-to-Action (CTA) for this campaign?</Label>
                 <Select value={data.primaryCta} onValueChange={(v) => setData({ ...data, primaryCta: v })}>
-                  <SelectTrigger className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <SelectTrigger className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] focus:border-[#d4a017] rounded-md h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent className="bg-[#111219] border-[#24252a] text-[#f4f3f0]">
                     {primaryCtaOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt} className="hover:bg-teal-500/20">{opt}</SelectItem>
+                      <SelectItem key={opt} value={opt} className="hover:bg-[#16181f] focus:bg-[#16181f] focus:text-white">{opt}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.primaryCta && <p className="text-xs text-red-400">{errors.primaryCta}</p>}
+                {errors.primaryCta && <p className="text-xs text-red-400 font-light">{errors.primaryCta}</p>}
                 {data.primaryCta === "Other" && (
                   <Input
                     placeholder="Specify other CTA..."
                     value={data.primaryCtaOther}
                     onChange={(e) => setData({ ...data, primaryCtaOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-2 placeholder-slate-500"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
               </div>
 
               <div className="space-y-3">
-                <Label>What is the minimum viable asset we can share in the first outreach message?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
+                <Label className="text-xs font-semibold text-slate-350">What is the minimum viable outreach asset we can share?</Label>
+                <div className="grid grid-cols-2 gap-2">
                   {outreachAssets.map((oa) => (
-                    <div key={oa} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
+                    <div key={oa} className="flex items-center space-x-2 rounded-md border border-[#24252a] bg-[#111219]/40 px-3 py-2">
                       <Checkbox
                         id={`asset-${oa}`}
                         checked={(data.minimumAsset || []).includes(oa)}
                         onCheckedChange={() => toggleArrayItem("minimumAsset", oa)}
                       />
-                      <label htmlFor={`asset-${oa}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
+                      <label htmlFor={`asset-${oa}`} className="text-xs text-slate-300 cursor-pointer select-none">
                         {oa}
                       </label>
                     </div>
@@ -762,203 +752,206 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                 </div>
                 {(data.minimumAsset || []).includes("Other") && (
                   <Input
-                    placeholder="Specify other asset..."
+                    placeholder="Specify other outreach asset..."
                     value={data.minimumAssetOther}
                     onChange={(e) => setData({ ...data, minimumAssetOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="objectionsHandling">What objections do prospects most commonly raise, and how do you address them?</Label>
+                <Label htmlFor="objectionsHandling" className="text-xs font-semibold text-slate-355">What objections do prospects most commonly raise, and how do you address them?</Label>
                 <Textarea
                   id="objectionsHandling"
                   value={data.objectionsHandling}
                   onChange={(e) => setData({ ...data, objectionsHandling: e.target.value })}
-                  placeholder="Common objections and your responses..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="Objection details and responses..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[80px]"
                 />
-                {errors.objectionsHandling && <p className="text-xs text-red-400">{errors.objectionsHandling}</p>}
+                {errors.objectionsHandling && <p className="text-xs text-red-400 font-light">{errors.objectionsHandling}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="emailSequenceThemes">If you were writing a 5-email outbound sequence yourself, what themes, messaging, and proof points would you include?</Label>
+                <Label htmlFor="emailSequenceThemes" className="text-xs font-semibold text-slate-355">If you were writing a 5-email outbound sequence, what messaging points would you include?</Label>
                 <Textarea
                   id="emailSequenceThemes"
                   value={data.emailSequenceThemes}
                   onChange={(e) => setData({ ...data, emailSequenceThemes: e.target.value })}
-                  placeholder="What themes and messaging should we include?"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="Messaging and proof points..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[80px]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="giftCard">Would you be open to offering a small thank-you gift card ($50) for a 15-minute customer research call?</Label>
+                <Label htmlFor="giftCard" className="text-xs font-semibold text-slate-350">Offer a small thank-you incentive (e.g. $50 gift card) for research calls?</Label>
                 <Select value={data.giftCard} onValueChange={(v) => setData({ ...data, giftCard: v })}>
-                  <SelectTrigger className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <SelectTrigger className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] focus:border-[#d4a017] rounded-md h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent className="bg-[#111219] border-[#24252a] text-[#f4f3f0]">
                     {giftCardOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt} className="hover:bg-teal-500/20">{opt}</SelectItem>
+                      <SelectItem key={opt} value={opt} className="hover:bg-[#16181f] focus:bg-[#16181f] focus:text-white">{opt}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.giftCard && <p className="text-xs text-red-400">{errors.giftCard}</p>}
+                {errors.giftCard && <p className="text-xs text-red-400 font-light">{errors.giftCard}</p>}
               </div>
             </div>
           )}
 
-          {/* --- Step 5: Ideal Customer Profile (ICP) --- */}
+          {/* --- Step 5: Ideal Customer Profile --- */}
           {step === 4 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
                 Ideal Customer Profile
               </h3>
 
               <div className="space-y-2">
-                <Label htmlFor="icpDescription">Who is your Ideal Customer Profile (ICP)?</Label>
+                <Label htmlFor="icpDescription" className="text-xs font-semibold text-slate-355">Who is your Ideal Customer Profile (ICP)?</Label>
                 <Textarea
                   id="icpDescription"
                   value={data.icpDescription}
                   onChange={(e) => setData({ ...data, icpDescription: e.target.value })}
-                  placeholder="Describe your ICP..."
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="Describe your ICP in detail..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[90px]"
                 />
-                {errors.icpDescription && <p className="text-xs text-red-400">{errors.icpDescription}</p>}
+                {errors.icpDescription && <p className="text-xs text-red-400 font-light">{errors.icpDescription}</p>}
               </div>
 
-              <div className="space-y-3">
-                <Label>Target Industry Verticals</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[150px] overflow-y-auto pr-1">
-                  {targetIndustries.map((ind) => (
-                    <div key={ind} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
-                      <Checkbox
-                        id={`ind-${ind}`}
-                        checked={(data.targetIndustries || []).includes(ind)}
-                        onCheckedChange={() => toggleArrayItem("targetIndustries", ind)}
-                      />
-                      <label htmlFor={`ind-${ind}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {ind}
-                      </label>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold text-slate-355">Target Industry Verticals</Label>
+                  <div className="grid grid-cols-1 gap-2 max-h-[140px] overflow-y-auto pr-1">
+                    {targetIndustries.map((ind) => (
+                      <div key={ind} className="flex items-center space-x-2 rounded border border-[#24252a] bg-[#111219]/40 px-3 py-2">
+                        <Checkbox
+                          id={`ind-${ind}`}
+                          checked={(data.targetIndustries || []).includes(ind)}
+                          onCheckedChange={() => toggleArrayItem("targetIndustries", ind)}
+                        />
+                        <label htmlFor={`ind-${ind}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                          {ind}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {errors.targetIndustries && <p className="text-xs text-red-400 font-light">{errors.targetIndustries}</p>}
+                  {(data.targetIndustries || []).includes("Other") && (
+                    <Input
+                      placeholder="Specify other industry..."
+                      value={data.targetIndustriesOther}
+                      onChange={(e) => setData({ ...data, targetIndustriesOther: e.target.value })}
+                      className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
+                    />
+                  )}
                 </div>
-                {errors.targetIndustries && <p className="text-xs text-red-400">{errors.targetIndustries}</p>}
-                {(data.targetIndustries || []).includes("Other") && (
-                  <Input
-                    placeholder="Specify other industry..."
-                    value={data.targetIndustriesOther}
-                    onChange={(e) => setData({ ...data, targetIndustriesOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
-                  />
-                )}
-              </div>
 
-              <div className="space-y-3">
-                <Label>Target Company Size / Growth Stage</Label>
-                <div className="grid grid-cols-1 gap-2.5 max-h-[180px] overflow-y-auto pr-1">
-                  {targetCompanySizes.map((cs) => (
-                    <div key={cs} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
-                      <Checkbox
-                        id={`cs-${cs}`}
-                        checked={(data.targetCompanySizes || []).includes(cs)}
-                        onCheckedChange={() => toggleArrayItem("targetCompanySizes", cs)}
-                      />
-                      <label htmlFor={`cs-${cs}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {cs}
-                      </label>
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold text-slate-355">Target Company Sizes</Label>
+                  <div className="grid grid-cols-1 gap-2 max-h-[140px] overflow-y-auto pr-1">
+                    {targetCompanySizes.map((sz) => (
+                      <div key={sz} className="flex items-center space-x-2 rounded border border-[#24252a] bg-[#111219]/40 px-3 py-2">
+                        <Checkbox
+                          id={`size-${sz}`}
+                          checked={(data.targetCompanySizes || []).includes(sz)}
+                          onCheckedChange={() => toggleArrayItem("targetCompanySizes", sz)}
+                        />
+                        <label htmlFor={`size-${sz}`} className="text-xs text-slate-300 cursor-pointer select-none truncate">
+                          {sz}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {errors.targetCompanySizes && <p className="text-xs text-red-400 font-light">{errors.targetCompanySizes}</p>}
                 </div>
-                {errors.targetCompanySizes && <p className="text-xs text-red-400">{errors.targetCompanySizes}</p>}
               </div>
 
-              {/* --- User requested Target Geographic Regions as TEXT AREA --- */}
               <div className="space-y-2">
-                <Label htmlFor="targetGeographicRegionsText">Target Geographic Regions</Label>
+                <Label htmlFor="targetGeographicRegionsText" className="text-xs font-semibold text-slate-355">Target Geographic Regions (comma separated)</Label>
                 <Textarea
                   id="targetGeographicRegionsText"
                   value={data.targetGeographicRegionsText}
                   onChange={(e) => setData({ ...data, targetGeographicRegionsText: e.target.value })}
-                  placeholder="North America, Europe, APAC, etc. (comma separated)"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="North America, Europe, APAC..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[60px]"
                 />
-                {errors.targetGeographicRegionsText && <p className="text-xs text-red-400">{errors.targetGeographicRegionsText}</p>}
+                {errors.targetGeographicRegionsText && <p className="text-xs text-red-400 font-light">{errors.targetGeographicRegionsText}</p>}
               </div>
 
-              <div className="space-y-3">
-                <Label>Who are the decision-makers and influencers you are targeting?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
-                  {decisionMakers.map((dm) => (
-                    <div key={dm} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
-                      <Checkbox
-                        id={`dm-${dm}`}
-                        checked={(data.decisionMakers || []).includes(dm)}
-                        onCheckedChange={() => toggleArrayItem("decisionMakers", dm)}
-                      />
-                      <label htmlFor={`dm-${dm}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {dm}
-                      </label>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold text-slate-355">Key Decision Maker Roles</Label>
+                  <div className="grid grid-cols-1 gap-2 max-h-[130px] overflow-y-auto pr-1">
+                    {decisionMakers.map((dm) => (
+                      <div key={dm} className="flex items-center space-x-2 rounded border border-[#24252a] bg-[#111219]/40 px-3 py-2">
+                        <Checkbox
+                          id={`dm-${dm}`}
+                          checked={(data.decisionMakers || []).includes(dm)}
+                          onCheckedChange={() => toggleArrayItem("decisionMakers", dm)}
+                        />
+                        <label htmlFor={`dm-${dm}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                          {dm}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {errors.decisionMakers && <p className="text-xs text-red-400 font-light">{errors.decisionMakers}</p>}
+                  {(data.decisionMakers || []).includes("Other") && (
+                    <Input
+                      placeholder="Specify other decision maker..."
+                      value={data.decisionMakersOther}
+                      onChange={(e) => setData({ ...data, decisionMakersOther: e.target.value })}
+                      className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
+                    />
+                  )}
                 </div>
-                {errors.decisionMakers && <p className="text-xs text-red-400">{errors.decisionMakers}</p>}
-                {(data.decisionMakers || []).includes("Other") && (
-                  <Input
-                    placeholder="Specify other decision maker..."
-                    value={data.decisionMakersOther}
-                    onChange={(e) => setData({ ...data, decisionMakersOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
-                  />
-                )}
-              </div>
 
-              <div className="space-y-3">
-                <Label>Any specific buying triggers or events you target?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[150px] overflow-y-auto pr-1">
-                  {buyingTriggers.map((bt) => (
-                    <div key={bt} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
-                      <Checkbox
-                        id={`bt-${bt}`}
-                        checked={(data.buyingTriggers || []).includes(bt)}
-                        onCheckedChange={() => toggleArrayItem("buyingTriggers", bt)}
-                      />
-                      <label htmlFor={`bt-${bt}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
-                        {bt}
-                      </label>
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold text-slate-355">Target Buying Triggers</Label>
+                  <div className="grid grid-cols-1 gap-2 max-h-[130px] overflow-y-auto pr-1">
+                    {buyingTriggers.map((bt) => (
+                      <div key={bt} className="flex items-center space-x-2 rounded border border-[#24252a] bg-[#111219]/40 px-3 py-2">
+                        <Checkbox
+                          id={`bt-${bt}`}
+                          checked={(data.buyingTriggers || []).includes(bt)}
+                          onCheckedChange={() => toggleArrayItem("buyingTriggers", bt)}
+                        />
+                        <label htmlFor={`bt-${bt}`} className="text-xs text-slate-300 cursor-pointer select-none">
+                          {bt}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {(data.buyingTriggers || []).includes("Other") && (
+                    <Input
+                      placeholder="Specify other trigger..."
+                      value={data.buyingTriggersOther}
+                      onChange={(e) => setData({ ...data, buyingTriggersOther: e.target.value })}
+                      className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
+                    />
+                  )}
                 </div>
-                {(data.buyingTriggers || []).includes("Other") && (
-                  <Input
-                    placeholder="Specify other trigger..."
-                    value={data.buyingTriggersOther}
-                    onChange={(e) => setData({ ...data, buyingTriggersOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
-                  />
-                )}
               </div>
             </div>
           )}
 
           {/* --- Step 6: Tech Stack & Outreach --- */}
           {step === 5 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="space-y-5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#8a704c] border-b border-[#24252a]/40 pb-2">
                 Tech Stack & Outreach
               </h3>
 
               <div className="space-y-3">
-                <Label>What tools or platforms do you currently use for outreach, CRM, and lead tracking?</Label>
-                <div className="grid grid-cols-2 gap-2.5 max-h-[170px] overflow-y-auto pr-1">
+                <Label className="text-xs font-semibold text-slate-350">What tools or platforms do you currently use for outreach/CRM?</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {techTools.map((tool) => (
-                    <div key={tool} className="flex items-center space-x-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2.5">
+                    <div key={tool} className="flex items-center space-x-2 rounded-md border border-[#24252a] bg-[#111219]/40 px-3 py-2">
                       <Checkbox
                         id={`tool-${tool}`}
                         checked={(data.currentTools || []).includes(tool)}
                         onCheckedChange={() => toggleArrayItem("currentTools", tool)}
                       />
-                      <label htmlFor={`tool-${tool}`} className="text-xs font-semibold text-slate-300 leading-none cursor-pointer">
+                      <label htmlFor={`tool-${tool}`} className="text-xs text-slate-300 cursor-pointer select-none">
                         {tool}
                       </label>
                     </div>
@@ -969,19 +962,19 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                     placeholder="Specify other tool..."
                     value={data.currentToolsOther}
                     onChange={(e) => setData({ ...data, currentToolsOther: e.target.value })}
-                    className="bg-black/20 border-white/10 text-white mt-1.5 placeholder-slate-500"
+                    className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="additionalNotes">Additional Notes or Requirements</Label>
+                <Label htmlFor="additionalNotes" className="text-xs font-semibold text-slate-355">Additional Notes or Special Requirements</Label>
                 <Textarea
                   id="additionalNotes"
                   value={data.additionalNotes}
                   onChange={(e) => setData({ ...data, additionalNotes: e.target.value })}
-                  placeholder="Any other notes or requirements?"
-                  className="bg-slate-100/50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 min-h-[80px]"
+                  placeholder="Tell us any other parameters, details, or custom workflow ideas..."
+                  className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors min-h-[110px]"
                 />
               </div>
             </div>
@@ -989,19 +982,27 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* --- Regular step navigation --- */}
-      <div className="mt-8 flex justify-between gap-4 relative z-10">
+      {/* --- Step Navigation --- */}
+      <div className="mt-8 flex justify-between gap-4 border-t border-[#24252a]/60 pt-5 relative z-10">
         {step > 0 ? (
-          <Button variant="outline" onClick={back} className="border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white px-4 h-11 rounded-xl">
+          <Button
+            variant="outline"
+            onClick={back}
+            className="border border-[#24252a] bg-[#16181f] hover:bg-[#20232d] text-white hover:text-white rounded-md font-semibold px-5 h-10 transition-colors"
+          >
             <IconArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
         ) : (
           <div />
         )}
-        <Button onClick={next} disabled={submitting} className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-6 h-11 rounded-xl shadow-lg shadow-teal-600/30 transition-all">
+        <Button
+          onClick={next}
+          disabled={submitting}
+          className="bg-[#d4a017] hover:bg-[#c29014] text-[#090a0f] rounded-md font-semibold px-6 h-10 transition-colors"
+        >
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+              <Loader2 className="h-4 w-4 mr-2 animate-spin animate-none" /> Saving...
             </>
           ) : step === stepTitles.length - 1 ? (
             "Submit"

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { analysisGraph } from "@/lib/agents/analysisGraph";
 import { v4 as uuidv4 } from "uuid";
 import { getInMemoryLeads, getInMemoryAnalyses } from "@/lib/memory-storage";
 import { ExtendedLeadRecord } from "@/lib/types";
@@ -11,6 +10,8 @@ import { terminateLLMJobsForAnalysis } from "@/lib/llm-job-tracker";
 import { cached, invalidateCache } from "@/lib/cache";
 import { taskQueue } from "@/lib/task-queue";
 import { perf } from "@/lib/performance";
+import { initializeIntegratedSystem } from "@/lib/integrated-system";
+import { TaskStatus } from "@/lib/unified-orchestrator/types";
 
 export const maxDuration = 120; // Extended from 60 to allow more time
 export const dynamic = "force-dynamic";
@@ -125,16 +126,55 @@ export async function POST(req: Request) {
       feedback: feedback || companyData?.feedback || ""
     };
 
-    console.log("[analyze/route] Invoking analysis graph...");
-    const graphState = await perf.measure("analysisGraph", async () => {
-      return await analysisGraph.invoke({ companyData: companyDataWithAnalysisId });
+    console.log("[analyze/route] Dispatching task to Vexa agent via orchestrator...");
+    const gtmResult = await perf.measure("gtmAgentWorkflow", async () => {
+      const { orchestrator } = initializeIntegratedSystem();
+      
+      const task = orchestrator.createTask({
+        type: "process_intake_form",
+        input: {
+          formData: companyDataWithAnalysisId,
+          leadId: leadId || "unauth-analysis",
+        },
+        priority: "high",
+        tags: ["gtm_analysis", "playbook"],
+        metadata: { analysisId },
+      });
+
+      // Poll orchestrator for task completion
+      const timeoutMs = 80000; // 80 seconds max
+      const startMs = Date.now();
+      let polledTask = orchestrator.getTask(task.id);
+
+      while (
+        polledTask &&
+        polledTask.status !== TaskStatus.COMPLETED &&
+        polledTask.status !== TaskStatus.FAILED &&
+        polledTask.status !== TaskStatus.CANCELLED
+      ) {
+        if (Date.now() - startMs > timeoutMs) {
+          throw new Error("GTM agent workflow timed out");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        polledTask = orchestrator.getTask(task.id);
+      }
+
+      if (!polledTask || polledTask.status === TaskStatus.FAILED) {
+        throw new Error(polledTask?.error || "GTM agent workflow failed");
+      }
+
+      return polledTask.result;
     }, { companyName: companyData.companyName });
 
-    if (graphState.error) {
-      throw new Error(graphState.error);
+    if (!gtmResult || !gtmResult.gtmAnalysis || !gtmResult.playbook) {
+      throw new Error("Failed to receive completed report from Vexa agent");
     }
 
-    const analysis = graphState.analysisResult;
+    // Merge GTM Analysis and Strategic Playbook outputs
+    const analysis = {
+      ...gtmResult.gtmAnalysis,
+      ...gtmResult.playbook,
+    };
     success = true;
 
     const analysisRecord = {
