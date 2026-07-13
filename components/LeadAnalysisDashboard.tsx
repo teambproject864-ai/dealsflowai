@@ -229,6 +229,7 @@ export function LeadAnalysisDashboard({ leadId }: { leadId?: string }) {
   // Ref to prevent multiple runs
   const lastProcessedLeadIdRef = useRef<string | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     async function runAnalysis(forceRegenerate = false) {
       // Skip if we've already processed this leadId and not forcing regenerate
