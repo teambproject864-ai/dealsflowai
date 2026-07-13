@@ -34,7 +34,7 @@ async function testA2AProtocolValidateMessages() {
   };
 
   const result = A2AValidator.validateMessage(validMessage);
-  assert.ok(result.valid);
+  assert.ok(result.valid, result.valid ? "" : (result as any).error);
 }
 
 async function testA2AProtocolSendReceiveMessages() {
