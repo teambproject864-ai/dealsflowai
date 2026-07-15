@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import {
   CheckCircle2,
   MessageSquare,
@@ -32,14 +33,18 @@ import {
   Send,
   X,
   Loader2,
+  Search,
+  ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
+  { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "business-toolset", label: "Model Toolset", icon: Layers, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
   { id: "icp-entries", label: "ICP Entries", icon: Users, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
   { id: "gtm-analysis", label: "GTM Analysis", icon: FileText, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
@@ -92,6 +97,28 @@ function CustomerPortalContent() {
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
   const [callsList, setCallsList] = useState<any[]>([]);
 
+  // Content Hub States
+  const [contentSubTab, setContentSubTab] = useState<"workspace" | "assets">("workspace");
+  const [contentAssets, setContentAssets] = useState<any[]>([]);
+  const [contentSearch, setContentSearch] = useState("");
+  const [contentTacticFilter, setContentTacticFilter] = useState("all");
+  const [contentStatusFilter, setContentStatusFilter] = useState("all");
+  const [contentSortField, setContentSortField] = useState("updatedAt");
+  const [contentSortOrder, setContentSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Selected Content Asset for Review & Publishing
+  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [isPublishingAsset, setIsPublishingAsset] = useState(false);
+  const [publishScheduleDate, setPublishScheduleDate] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  // Edit states for content assets
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isSavingAsset, setIsSavingAsset] = useState(false);
+
   // Form States
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketDescription, setTicketDescription] = useState("");
@@ -120,7 +147,7 @@ function CustomerPortalContent() {
   // Real-time synchronization polling (3s interval)
   const fetchCustomerData = async () => {
     try {
-      const [ticketsRes, gtmRes, docsRes, chatRes, icpRes, feedbackRes, callsRes, configRes] = await Promise.all([
+      const [ticketsRes, gtmRes, docsRes, chatRes, icpRes, feedbackRes, callsRes, configRes, contentRes] = await Promise.all([
         fetch("/api/portal/tickets"),
         fetch("/api/portal/gtm-reports"),
         fetch("/api/portal/documents"),
@@ -129,9 +156,10 @@ function CustomerPortalContent() {
         fetch("/api/portal/feedback"),
         fetch("/api/portal/calls"),
         fetch("/api/customer/config"),
+        fetch("/api/portal/content"),
       ]);
 
-      const [ticketsData, gtmData, docsData, chatData, icpData, feedbackData, callsData, configData] = await Promise.all([
+      const [ticketsData, gtmData, docsData, chatData, icpData, feedbackData, callsData, configData, contentData] = await Promise.all([
         ticketsRes.json(),
         gtmRes.json(),
         docsRes.json(),
@@ -140,6 +168,7 @@ function CustomerPortalContent() {
         feedbackRes.json(),
         callsRes.json(),
         configRes.json(),
+        contentRes.json(),
       ]);
 
       if (ticketsData.success) setTickets(ticketsData.tickets);
@@ -149,6 +178,15 @@ function CustomerPortalContent() {
       if (icpData.success) setIcpEntries(icpData.icpEntries);
       if (feedbackData.success) setFeedbackList(feedbackData.feedback);
       if (callsData.success) setCallsList(callsData.calls);
+      if (contentData.success) {
+        setContentAssets(contentData.assets);
+        // Sync selected asset detail in real-time
+        setSelectedAsset((curr: any) => {
+          if (!curr) return null;
+          const updated = contentData.assets.find((a: any) => a.id === curr.id);
+          return updated || curr;
+        });
+      }
 
       if (configData.success && configData.customer) {
         setBusinessModel(configData.customer.businessModel || "b2b");
@@ -180,6 +218,146 @@ function CustomerPortalContent() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleSaveAsset = async (assetId: string | null, title: string, tactic: string, content: string, status?: string) => {
+    setIsSavingAsset(true);
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          id: assetId,
+          title,
+          tactic,
+          content,
+          status: status || "draft",
+          customerId: user?.id,
+          customerName: user?.name
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Asset Saved", `Asset "${title}" saved successfully.`);
+        setIsEditing(false);
+        fetchCustomerData();
+      } else {
+        showToast("error", "Failed to Save", data.error || "Unknown error occurred");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Error", "Failed to connect to the server.");
+    } finally {
+      setIsSavingAsset(false);
+    }
+  };
+
+  const handlePostComment = async (assetId: string, comment: string) => {
+    if (!comment.trim()) return;
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "comment",
+          id: assetId,
+          comment
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Comment Added", "Your comment has been posted.");
+        setNewCommentText("");
+        fetchCustomerData();
+      } else {
+        showToast("error", "Comment Failed", data.error || "Could not save comment");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReviewAsset = async (assetId: string, status: string) => {
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "review",
+          id: assetId,
+          status
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Review Updated", `Status marked as ${status.replace("_", " ").toUpperCase()}`);
+        fetchCustomerData();
+      } else {
+        showToast("error", "Review Failed", data.error || "Failed to update review status");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRollbackAsset = async (assetId: string, versionNumber: number) => {
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "rollback",
+          id: assetId,
+          versionNumber
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Rollback Complete", `Successfully rolled back to version ${versionNumber}.`);
+        if (isEditing) {
+          setEditTitle(data.title);
+          setEditContent(data.content);
+        }
+        fetchCustomerData();
+      } else {
+        showToast("error", "Rollback Failed", data.error || "Failed to restore version");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePublishAsset = async (assetId: string, dateStr?: string) => {
+    setIsPublishingAsset(true);
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "publish",
+          id: assetId,
+          scheduledDate: dateStr || null
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const msg = dateStr 
+          ? `Scheduled successfully to publish to: ${data.platforms.join(", ")}` 
+          : `Published successfully to: ${data.platforms.join(", ")}`;
+        showToast("success", dateStr ? "Campaign Scheduled" : "Campaign Published", msg);
+        setIsScheduling(false);
+        setPublishScheduleDate("");
+        fetchCustomerData();
+      } else {
+        showToast("error", "Publish Failed", data.error || "Could not publish");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Error", "Failed to connect to server");
+    } finally {
+      setIsPublishingAsset(false);
     }
   };
 
@@ -293,6 +471,71 @@ function CustomerPortalContent() {
       console.error(err);
     }
   };
+
+  const MARKETING_TACTICS = [
+    "Blog Posts",
+    "SEO Landing Pages",
+    "Case Studies",
+    "Customer Testimonials",
+    "Product Demo Videos",
+    "Explainer Videos",
+    "Webinars",
+    "LinkedIn Marketing",
+    "Instagram/Facebook Marketing",
+    "YouTube Content",
+    "Email Automation",
+    "Google Ads",
+    "Meta Ads",
+    "LinkedIn Ads",
+    "Retargeting Ads",
+    "Cold Email",
+    "Referral Programs",
+    "Affiliate Marketing",
+    "Community Building",
+    "Customer Reviews",
+    "Interactive Tools (ROI Calculator, Quiz)",
+    "AI Content Repurposing",
+    "AI Personalization",
+    "Product Tours",
+    "Industry Reports & Research"
+  ];
+
+  const filteredContentAssets = contentAssets
+    .filter((asset) => {
+      const matchesSearch =
+        (asset.title || "").toLowerCase().includes(contentSearch.toLowerCase()) ||
+        (asset.content || "").toLowerCase().includes(contentSearch.toLowerCase());
+      
+      const matchesTactic = contentTacticFilter === "all" || asset.tactic === contentTacticFilter;
+      const matchesStatus = contentStatusFilter === "all" || asset.status === contentStatusFilter;
+
+      return matchesSearch && matchesTactic && matchesStatus;
+    })
+    .sort((a, b) => {
+      let fieldA: any = "";
+      let fieldB: any = "";
+
+      if (contentSortField === "updatedAt") {
+        fieldA = a.updatedAt || "";
+        fieldB = b.updatedAt || "";
+      } else if (contentSortField === "title") {
+        fieldA = a.title || "";
+        fieldB = b.title || "";
+      } else if (contentSortField === "views") {
+        fieldA = a.performanceMetrics?.views || 0;
+        fieldB = b.performanceMetrics?.views || 0;
+      } else if (contentSortField === "conversionRate") {
+        fieldA = a.performanceMetrics?.conversionRate || 0;
+        fieldB = b.performanceMetrics?.conversionRate || 0;
+      }
+
+      if (typeof fieldA === "string") {
+        const comparison = fieldA.localeCompare(fieldB);
+        return contentSortOrder === "asc" ? comparison : -comparison;
+      } else {
+        return contentSortOrder === "asc" ? fieldA - fieldB : fieldB - fieldA;
+      }
+    });
 
   if (isLoading) {
     return (
@@ -444,6 +687,592 @@ function CustomerPortalContent() {
                 </div>
               </GlassPanel>
             </div>
+          </div>
+        )}
+
+        {/* CONTENT HUB */}
+        {activeTab === "content-hub" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Sub-navigation Toggles */}
+            <div className="flex justify-start items-center gap-2 bg-slate-900/30 p-4 rounded-2xl border border-slate-800/85 mb-6">
+              <button
+                onClick={() => setContentSubTab("workspace")}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  contentSubTab === "workspace"
+                    ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-lg"
+                    : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Campaign Strategy & Workflows
+              </button>
+              <button
+                onClick={() => setContentSubTab("assets")}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  contentSubTab === "assets"
+                    ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-lg"
+                    : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Asset Review & Publishing
+              </button>
+            </div>
+
+            {contentSubTab === "workspace" ? (
+              user ? (
+                <ContentWorkflowWorkspace
+                  customerId={user.id}
+                  customerName={user.name}
+                  initialCustomerData={user}
+                  userRole="customer"
+                  onSaveCustomer={async (updatedFields) => {
+                    try {
+                      const res = await fetch("/api/customer/config", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          customerId: user.id,
+                          ...updatedFields
+                        })
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        await fetchCustomerData();
+                        return true;
+                      }
+                      return false;
+                    } catch (err) {
+                      console.error(err);
+                      return false;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
+                  <p className="text-sm text-slate-400">Loading user profile details...</p>
+                </div>
+              )
+            ) : (
+              <>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100">Centralized Marketing Content Hub</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Access, review, approve, and publish content assets across all 25 high-performing marketing channels.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditTitle("");
+                  setEditContent("");
+                  setIsEditing(true);
+                  setSelectedAsset({
+                    id: null,
+                    title: "",
+                    tactic: "Blog Posts",
+                    content: "",
+                    status: "draft",
+                    versions: [],
+                    comments: [],
+                    auditLogs: []
+                  });
+                }}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-500/15"
+              >
+                <Plus className="h-4 w-4" /> Create Draft Asset
+              </button>
+            </div>
+
+            {/* Metrics Dashboard */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Total Reach (Views)</p>
+                <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+                  {contentAssets.reduce((sum, a) => sum + (a.performanceMetrics?.views || 0), 0).toLocaleString()}
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Total Interactions (Clicks)</p>
+                <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+                  {contentAssets.reduce((sum, a) => sum + (a.performanceMetrics?.clicks || 0), 0).toLocaleString()}
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Average Conversion</p>
+                <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
+                  {(
+                    contentAssets.filter(a => (a.performanceMetrics?.views || 0) > 0).reduce((sum, a) => sum + (a.performanceMetrics?.conversionRate || 0), 0) /
+                    (contentAssets.filter(a => (a.performanceMetrics?.views || 0) > 0).length || 1)
+                  ).toFixed(2)}%
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Active Tactics</p>
+                <h3 className="text-2xl font-extrabold text-purple-400 mt-1">
+                  {new Set(contentAssets.filter(a => a.status === "published" || a.status === "scheduled").map(a => a.tactic)).size} / 25
+                </h3>
+              </GlassPanel>
+            </div>
+
+            {/* Filters and Controls */}
+            <GlassPanel tilt={false} className="border-slate-800 p-4 bg-slate-900/20 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                {/* Search */}
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-850 px-3 py-2 rounded-xl w-full md:w-80">
+                  <Search className="h-4 w-4 text-slate-500" />
+                  <label htmlFor="content-search" className="sr-only">Search Content Assets</label>
+                  <input
+                    id="content-search"
+                    type="text"
+                    placeholder="Search by title or content keywords..."
+                    value={contentSearch}
+                    onChange={(e) => setContentSearch(e.target.value)}
+                    className="bg-transparent border-none text-slate-200 text-xs focus:outline-none w-full"
+                  />
+                </div>
+
+                <div className="flex gap-4 flex-wrap w-full md:w-auto items-center">
+                  {/* Tactic dropdown */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="content-tactic-filter" className="text-slate-400 font-medium">Tactic:</label>
+                    <select
+                      id="content-tactic-filter"
+                      value={contentTacticFilter}
+                      onChange={(e) => setContentTacticFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none max-w-[200px]"
+                    >
+                      <option value="all">All 25 Tactics</option>
+                      {MARKETING_TACTICS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Status Dropdown */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="content-status-filter" className="text-slate-400 font-medium">Status:</label>
+                    <select
+                      id="content-status-filter"
+                      value={contentStatusFilter}
+                      onChange={(e) => setContentStatusFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="draft">Draft</option>
+                      <option value="under_review">Under Review</option>
+                      <option value="approved">Approved</option>
+                      <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
+                    </select>
+                  </div>
+
+                  {/* Sort */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="content-sort-field" className="text-slate-400 font-medium">Sort By:</label>
+                    <select
+                      id="content-sort-field"
+                      value={contentSortField}
+                      onChange={(e) => setContentSortField(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="updatedAt">Last Updated</option>
+                      <option value="title">Title</option>
+                      <option value="views">Views</option>
+                      <option value="conversionRate">Conversion Rate</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => setContentSortOrder(o => o === "asc" ? "desc" : "asc")}
+                    className="p-2 border border-slate-850 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-200"
+                    aria-label={`Toggle sort order. Current order: ${contentSortOrder}`}
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </GlassPanel>
+
+            {/* Content Assets Grid */}
+            {filteredContentAssets.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-850 rounded-2xl bg-slate-900/10">
+                <FileText className="h-10 w-10 text-slate-700 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No content assets found matching your criteria.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredContentAssets.map((asset) => (
+                  <GlassPanel
+                    key={asset.id}
+                    tilt={true}
+                    className="border-slate-800 bg-slate-900/15 p-5 space-y-4 hover:border-violet-500/30 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="bg-slate-950 border border-slate-850 text-slate-400 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase truncate max-w-[150px]">
+                          {asset.tactic}
+                        </span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                          asset.status === "published" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          asset.status === "approved" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          asset.status === "scheduled" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                          asset.status === "under_review" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          "bg-slate-800 text-slate-400 border-slate-700"
+                        )}>
+                          {asset.status.replace("_", " ")}
+                        </span>
+                      </div>
+
+                      <h4 className="font-extrabold text-white text-sm mt-3 line-clamp-2">{asset.title}</h4>
+                      <p className="text-xs text-slate-400 line-clamp-3 mt-1.5 font-light">{asset.content}</p>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-slate-900 mt-2">
+                      <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Views</span>
+                          <span className="font-bold text-slate-300 font-mono">{(asset.performanceMetrics?.views || 0).toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Clicks</span>
+                          <span className="font-bold text-slate-300 font-mono">{(asset.performanceMetrics?.clicks || 0).toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Conv %</span>
+                          <span className="font-bold text-emerald-400 font-mono">{asset.performanceMetrics?.conversionRate || 0}%</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono pt-1">
+                        <span>Ver: {asset.versions?.length || 1} • Comm: {asset.comments?.length || 0}</span>
+                        <span>{new Date(asset.updatedAt).toLocaleDateString()}</span>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedAsset(asset);
+                          setEditTitle(asset.title);
+                          setEditContent(asset.content);
+                          setIsEditing(false);
+                        }}
+                        className="w-full bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-300 hover:text-white font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                      >
+                        Review & Manage <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </GlassPanel>
+                ))}
+              </div>
+            )}
+
+            {/* Preview & Review Dialog/Drawer */}
+            {selectedAsset && (
+              <div className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                <GlassPanel tilt={false} className="border-slate-800 bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl p-6 relative flex flex-col max-h-[90vh]">
+                  {/* Close button */}
+                  <button
+                    onClick={() => {
+                      setSelectedAsset(null);
+                      setIsEditing(false);
+                    }}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <div className="flex justify-between items-start gap-2 pr-6 pb-4 border-b border-slate-800">
+                    <div>
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <span className="bg-slate-950 border border-slate-850 text-slate-400 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
+                          {selectedAsset.tactic}
+                        </span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                          selectedAsset.status === "published" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          selectedAsset.status === "approved" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          selectedAsset.status === "scheduled" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                          selectedAsset.status === "under_review" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          "bg-slate-800 text-slate-400 border-slate-700"
+                        )}>
+                          {selectedAsset.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <h3 className="font-extrabold text-white text-lg mt-2">{selectedAsset.id ? selectedAsset.title : "New Draft"}</h3>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto my-4 space-y-6 pr-2 scrollbar-thin">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Left 2/3 Content Preview / Edit */}
+                      <div className="md:col-span-2 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Asset Copy Content</h5>
+                          {!isEditing ? (
+                            <button
+                              onClick={() => {
+                                setEditTitle(selectedAsset.title);
+                                setEditContent(selectedAsset.content);
+                                setIsEditing(true);
+                              }}
+                              className="text-violet-400 hover:text-violet-300 text-xs font-bold"
+                            >
+                              Edit Copy
+                            </button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setIsEditing(false)}
+                                className="text-slate-400 hover:text-slate-300 text-xs font-medium"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSaveAsset(selectedAsset.id, editTitle, selectedAsset.tactic, editContent, selectedAsset.status)}
+                                disabled={isSavingAsset}
+                                className="text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center gap-1"
+                              >
+                                {isSavingAsset && <Loader2 className="h-3 w-3 animate-spin" />} Save
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {!isEditing ? (
+                          <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl text-xs text-slate-300 leading-relaxed whitespace-pre-wrap select-text max-h-[300px] overflow-y-auto">
+                            {selectedAsset.content || <em className="text-slate-500">No content text entered yet. Click Edit Copy to begin writing.</em>}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label htmlFor="edit-title" className="text-[10px] text-slate-500 font-bold uppercase">Asset Title</label>
+                              <Input
+                                id="edit-title"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="bg-slate-950 border-slate-850 text-xs text-slate-200"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label htmlFor="edit-content" className="text-[10px] text-slate-500 font-bold uppercase">Content Body</label>
+                              <textarea
+                                id="edit-content"
+                                rows={8}
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500 leading-relaxed"
+                              />
+                            </div>
+                            {selectedAsset.id === null && (
+                              <div className="space-y-1">
+                                <label htmlFor="select-tactic" className="text-[10px] text-slate-500 font-bold uppercase">Marketing Tactic</label>
+                                <select
+                                  id="select-tactic"
+                                  value={selectedAsset.tactic}
+                                  onChange={(e) => setSelectedAsset({ ...selectedAsset, tactic: e.target.value })}
+                                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                                >
+                                  {MARKETING_TACTICS.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            {selectedAsset.id === null && (
+                              <button
+                                onClick={() => handleSaveAsset(null, editTitle, selectedAsset.tactic, editContent, "draft")}
+                                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-2 rounded-xl text-xs shadow-md"
+                              >
+                                Save New Asset Draft
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Version Control and Audits */}
+                        {selectedAsset.id && (
+                          <div className="space-y-4 pt-4 border-t border-slate-850">
+                            <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Version History & Revisions</h5>
+                            <div className="space-y-2.5 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin">
+                              {(selectedAsset.versions || []).slice().reverse().map((ver: any, idx: number) => (
+                                <div key={idx} className="p-3 bg-slate-950/40 border border-slate-855 rounded-xl flex justify-between items-center text-xs">
+                                  <div>
+                                    <p className="font-bold text-slate-200">Version {ver.version} <span className="text-[10px] font-normal text-slate-500">by {ver.updatedBy} ({ver.updatedByRole})</span></p>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{new Date(ver.updatedAt).toLocaleString()}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleRollbackAsset(selectedAsset.id, ver.version)}
+                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-2.5 py-1 rounded text-[10px] transition-all"
+                                  >
+                                    Restore
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right 1/3 Workflow Actions & Comments */}
+                      <div className="space-y-6">
+                        {/* Approval Workflows */}
+                        {selectedAsset.id && (
+                          <GlassPanel tilt={false} className="border-slate-800 bg-black/45 p-4 space-y-3.5">
+                            <h5 className="text-xs text-slate-355 font-bold uppercase tracking-wider">Review & Publish Workflow</h5>
+                            
+                            {/* Draft / Under Review States */}
+                            {(selectedAsset.status === "draft" || selectedAsset.status === "under_review") && (
+                              <div className="space-y-2">
+                                <button
+                                  onClick={() => handleReviewAsset(selectedAsset.id, "approved")}
+                                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5"
+                                >
+                                  <Check className="h-4 w-4" /> Approve Content
+                                </button>
+                                {selectedAsset.status !== "under_review" && (
+                                  <button
+                                    onClick={() => handleReviewAsset(selectedAsset.id, "under_review")}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    Submit for Review
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Approved State */}
+                            {selectedAsset.status === "approved" && (
+                              <div className="space-y-3">
+                                <button
+                                  onClick={() => handlePublishAsset(selectedAsset.id)}
+                                  disabled={isPublishingAsset}
+                                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-50 hover:to-indigo-505 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-lg flex items-center justify-center gap-1.5"
+                                >
+                                  {isPublishingAsset ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                      Publishing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Send className="h-4 w-4" /> Publish Now
+                                    </>
+                                  )}
+                                </button>
+
+                                <div className="border-t border-slate-850 pt-2.5 space-y-2">
+                                  {!isScheduling ? (
+                                    <button
+                                      onClick={() => setIsScheduling(true)}
+                                      className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-850 text-slate-300 py-1.5 rounded-xl text-xs font-bold"
+                                    >
+                                      Schedule Publication
+                                    </button>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <label htmlFor="schedule-time" className="text-[9px] text-slate-500 font-bold uppercase block">Schedule Date & Time</label>
+                                      <input
+                                        id="schedule-time"
+                                        type="datetime-local"
+                                        value={publishScheduleDate}
+                                        onChange={(e) => setPublishScheduleDate(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+                                      />
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => setIsScheduling(false)}
+                                          className="flex-1 bg-slate-800 text-slate-300 py-1 rounded-xl text-[10px] font-semibold"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={() => handlePublishAsset(selectedAsset.id, publishScheduleDate)}
+                                          disabled={isPublishingAsset || !publishScheduleDate}
+                                          className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-1 rounded-xl text-[10px] font-bold"
+                                        >
+                                          Schedule
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Published / Scheduled States */}
+                            {(selectedAsset.status === "published" || selectedAsset.status === "scheduled") && (
+                              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[10px] space-y-2 text-slate-400">
+                                <p className="font-bold text-emerald-400 flex items-center gap-1">
+                                  <ShieldCheck className="h-4 w-4" /> Secure Sync Active
+                                </p>
+                                <p>Connected Platforms:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {(selectedAsset.publishedPlatforms || []).map((p: string) => (
+                                    <span key={p} className="bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded text-slate-300">{p}</span>
+                                  ))}
+                                </div>
+                                <p className="text-[9px] text-slate-555 italic mt-1 truncate">
+                                  Payload AES-256 encrypted in transit
+                                </p>
+                                <button
+                                  onClick={() => handleReviewAsset(selectedAsset.id, "draft")}
+                                  className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 mt-2 py-1 rounded border border-slate-800 text-[10px]"
+                                >
+                                  Revert to Draft
+                                </button>
+                              </div>
+                            )}
+                          </GlassPanel>
+                        )}
+
+                        {/* Comments System */}
+                        {selectedAsset.id && (
+                          <div className="space-y-3.5">
+                            <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Comments & Revisions</h5>
+                            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
+                              {(selectedAsset.comments || []).length === 0 ? (
+                                <p className="text-slate-500 text-xs italic py-4">No comments left on this asset yet.</p>
+                              ) : (
+                                (selectedAsset.comments || []).map((comm: any) => (
+                                  <div key={comm.id} className="p-2.5 bg-slate-950/30 border border-slate-850 rounded-xl space-y-1 text-xs">
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                                      <span className="font-bold text-slate-350">{comm.authorName} ({comm.authorRole})</span>
+                                      <span>{new Date(comm.createdAt).toLocaleTimeString()}</span>
+                                    </div>
+                                    <p className="text-slate-300 font-light">{comm.comment}</p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <label htmlFor="drawer-comment-text" className="sr-only">Add comment</label>
+                              <Input
+                                id="drawer-comment-text"
+                                placeholder="Add revision request..."
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                className="bg-slate-950 border-slate-850 text-xs"
+                              />
+                              <button
+                                onClick={() => handlePostComment(selectedAsset.id, newCommentText)}
+                                className="bg-violet-600 hover:bg-violet-700 text-white font-bold p-2.5 rounded-xl text-xs"
+                                aria-label="Post comment"
+                              >
+                                <Send className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </GlassPanel>
+              </div>
+            )}
+            </>
+            )}
           </div>
         )}
 

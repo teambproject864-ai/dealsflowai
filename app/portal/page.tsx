@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, LineChart, MessageSquare, Phone, ShieldCheck, Loader2 } from "lucide-react";
-import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { StaggerReveal } from "@/components/immersive/StaggerReveal";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function PortalLanding() {

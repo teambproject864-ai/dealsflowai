@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Upload, File, X, CheckCircle2 } from "lucide-react";
 import { IconArrowLeft, IconArrowRight } from "@/components/gtm/GtmIcons";
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // --- Custom field options as per user's request ---

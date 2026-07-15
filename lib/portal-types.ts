@@ -540,3 +540,100 @@ export interface EnhancedICPEntry extends ICPEntry {
   conversionRate: number;
   averageDealSize: number;
 }
+
+// --- Content Types & Marketing Tactics ---
+export type ContentType = "blog-post" | "social-media" | "email-campaign" | "video" | "infographic" | "whitepaper" | "case-study";
+export type ContentLifecycle = "draft" | "review" | "approved" | "scheduled" | "published" | "archived";
+
+export interface ContentAsset {
+  id: string;
+  customerId: string;
+  title: string;
+  type: ContentType;
+  content: string;
+  metadata: {
+    keywords?: string[];
+    seoTitle?: string;
+    seoDescription?: string;
+    tags?: string[];
+    targetAudience?: string;
+  };
+  lifecycle: ContentLifecycle;
+  version: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  scheduledFor?: string;
+  accessRoles: Array<"admin" | "agent" | "customer">;
+}
+
+export type TacticChannel = "email" | "social" | "search" | "display" | "influencer" | "events" | "content";
+export type TacticStatus = "draft" | "planned" | "active" | "paused" | "completed" | "archived";
+
+export interface MarketingTactic {
+  id: string;
+  customerId: string;
+  name: string;
+  description: string;
+  channel: TacticChannel;
+  status: TacticStatus;
+  contentAssets: string[]; // Array of ContentAsset IDs
+  targetAudience: string;
+  budget?: number;
+  startDate: string;
+  endDate?: string;
+  performanceMetrics: {
+    impressions?: number;
+    clicks?: number;
+    conversions?: number;
+    roi?: number;
+    ctr?: number;
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  accessRoles: Array<"admin" | "agent" | "customer">;
+}
+
+// --- MAO (Multi-Agent Orchestration) ---
+export type MAOAgentRole = "content-creator" | "audience-segmenter" | "campaign-optimizer" | "performance-analyst";
+
+export interface MAOAgent {
+  id: string;
+  role: MAOAgentRole;
+  name: string;
+  status: "idle" | "working" | "error" | "offline";
+  currentTaskId?: string;
+  tasksCompleted: number;
+  lastActive: string;
+  createdAt: string;
+}
+
+export type MAOTaskStatus = "pending" | "assigned" | "in-progress" | "completed" | "failed" | "cancelled";
+
+export interface MAOTask {
+  id: string;
+  type: "content-generation" | "audience-analysis" | "campaign-optimization" | "performance-report";
+  status: MAOTaskStatus;
+  assignedAgentId?: string;
+  customerId: string;
+  inputData: Record<string, any>;
+  outputData?: Record<string, any>;
+  error?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  priority: "low" | "medium" | "high" | "urgent";
+}
+
+export interface MAOMetrics {
+  activeAgents: number;
+  totalAgents: number;
+  tasksPending: number;
+  tasksInProgress: number;
+  tasksCompleted: number;
+  tasksFailed: number;
+  averageTaskDuration: number;
+  systemUptime: number;
+}

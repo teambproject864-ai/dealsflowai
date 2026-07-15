@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Loader2 } from "lucide-react";
-import { ExtrudedButton } from "@/components/immersive";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 
 export default function LogoutButton({
   variant = "outline",

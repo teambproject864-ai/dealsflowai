@@ -4,7 +4,7 @@ import { useState, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, ChevronRight, HelpCircle, Sparkles, ArrowRight, Shield, Award, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 import Link from "next/link";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 

@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
-import { MarketingStrategyModule } from "@/components/MarketingStrategyModule";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
 import {
-  Menu,
-  Users,
-  CheckCircle2,
-  Clock,
   Phone,
   MessageSquare,
   Star,
@@ -38,6 +37,14 @@ import {
   CreditCard,
   CalendarCheck,
   PhoneOff,
+  Play,
+  ArrowUpDown,
+  Target,
+  ShieldCheck,
+  ArrowRight,
+  Users,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { COUNTRIES } from "@/lib/countries";
 import { cn } from "@/lib/utils";
@@ -46,7 +53,9 @@ import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const tabs = [
-  { id: "requirements", label: "Requirements", icon: Users, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
+  { id: "customers", label: "Customers", icon: Users, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
+  { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
+  { id: "requirements", label: "Requirements", icon: FileText, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
   { id: "tasks", label: "Tasks", icon: CheckCircle2, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
   { id: "chat", label: "Chat Messenger", icon: MessageSquare, color: "text-sky-400 border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10" },
   { id: "calls", label: "Calls Dialer", icon: Phone, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
@@ -55,7 +64,16 @@ const tabs = [
 
 function AgentPortalContent() {
   const { user, isLoading: userLoading } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("requirements");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("customers");
+
+  useEffect(() => {
+    if (tabParam && tabs.some((t) => t.id === tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [tabParam]);
   
   // Data States
   const [tasks, setTasks] = useState<any[]>([]);
@@ -64,6 +82,45 @@ function AgentPortalContent() {
   const [callsList, setCallsList] = useState<any[]>([]);
   const [feedback, setFeedback] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+
+  // Content Hub States
+  const [contentSubTab, setContentSubTab] = useState<"workspace" | "assets">("workspace");
+  const [activeStrategyCustomerId, setActiveStrategyCustomerId] = useState<string>("");
+  const [contentAssets, setContentAssets] = useState<any[]>([]);
+  const [contentSearch, setContentSearch] = useState("");
+  const [contentTacticFilter, setContentTacticFilter] = useState("all");
+  const [contentStatusFilter, setContentStatusFilter] = useState("all");
+  const [contentSortField, setContentSortField] = useState("updatedAt");
+  const [contentSortOrder, setContentSortOrder] = useState<"asc" | "desc">("desc");
+  const [contentCustomerFilter, setContentCustomerFilter] = useState("all");
+
+  // Selected Content Asset for details modal / drawer
+  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [isPublishingAsset, setIsPublishingAsset] = useState(false);
+  const [publishScheduleDate, setPublishScheduleDate] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  // Edit states for content assets
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isSavingAsset, setIsSavingAsset] = useState(false);
+  const [editCustomerId, setEditCustomerId] = useState("");
+  const [editCustomerName, setEditCustomerName] = useState("");
+
+  // Customers filtering/search/sorting states
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerStatusFilter, setCustomerStatusFilter] = useState("all");
+  const [customerSortField, setCustomerSortField] = useState("companyName");
+  const [customerSortOrder, setCustomerSortOrder] = useState<"asc" | "desc">("asc");
+
+  // GTM Workflows states
+  const [workflows, setWorkflows] = useState<any[]>([]);
+  const [workflowMetrics, setWorkflowMetrics] = useState<any>({ cacheHits: 0, totalRequests: 0, hitRate: 0, latencySavedMs: 0 });
+  const [triggeringWorkflow, setTriggeringWorkflow] = useState(false);
+  const [selectedWorkflowCustomer, setSelectedWorkflowCustomer] = useState("");
+  const [selectedWorkflowType, setSelectedWorkflowType] = useState<"gtm-audit" | "outreach-campaign">("gtm-audit");
 
   // Interactive Dialer States
   const [dialedNumber, setDialedNumber] = useState("");
@@ -94,22 +151,26 @@ function AgentPortalContent() {
   // Real-time synchronization polling
   const fetchAgentData = async () => {
     try {
-      const [tasksRes, reqsRes, chatRes, callsRes, feedbackRes, customersRes] = await Promise.all([
+      const [tasksRes, reqsRes, chatRes, callsRes, feedbackRes, customersRes, workflowsRes, contentRes] = await Promise.all([
         fetch("/api/portal/tasks"),
         fetch("/api/portal/requirements"),
         fetch("/api/portal/chat?sessionId=session-1"),
         fetch("/api/portal/calls"),
         fetch("/api/portal/feedback"),
         fetch("/api/admin/customers"),
+        fetch("/api/portal/workflows"),
+        fetch("/api/portal/content"),
       ]);
 
-      const [tasksData, reqsData, chatData, callsData, feedbackData, customersData] = await Promise.all([
+      const [tasksData, reqsData, chatData, callsData, feedbackData, customersData, workflowsData, contentData] = await Promise.all([
         tasksRes.json(),
         reqsRes.json(),
         chatRes.json(),
         callsRes.json(),
         feedbackRes.json(),
         customersRes.json(),
+        workflowsRes.json(),
+        contentRes.json(),
       ]);
 
       if (tasksData.success) setTasks(tasksData.tasks);
@@ -117,7 +178,30 @@ function AgentPortalContent() {
       if (chatData.success) setChatMessages(chatData.messages);
       if (callsData.success) setCallsList(callsData.calls);
       if (feedbackData.success) setFeedback(feedbackData.feedback);
-      if (customersData.success) setCustomers(customersData.customers);
+      if (contentData.success) {
+        setContentAssets(contentData.assets);
+        // Sync selected asset detail in real-time
+        setSelectedAsset((curr: any) => {
+          if (!curr) return null;
+          const updated = contentData.assets.find((a: any) => a.id === curr.id);
+          return updated || curr;
+        });
+      }
+      if (customersData.success) {
+        setCustomers(customersData.customers);
+        // Pre-select first customer for workflow trigger if not set
+        if (customersData.customers.length > 0 && !selectedWorkflowCustomer) {
+          const firstCustomer = customersData.customers[0];
+          setSelectedWorkflowCustomer(firstCustomer.id);
+        }
+        if (customersData.customers.length > 0 && !activeStrategyCustomerId) {
+          setActiveStrategyCustomerId(customersData.customers[0].id);
+        }
+      }
+      if (workflowsData.success) {
+        setWorkflows(workflowsData.workflows);
+        setWorkflowMetrics(workflowsData.performance);
+      }
     } catch (error) {
       console.error("[Agent Portal] polling error:", error);
     }
@@ -209,6 +293,150 @@ function AgentPortalContent() {
     }
   };
 
+  const handleSaveAsset = async (assetId: string | null, title: string, tactic: string, content: string, status?: string, targetCustomerId?: string) => {
+    setIsSavingAsset(true);
+    try {
+      const cId = targetCustomerId || editCustomerId || "";
+      const cObj = customers.find(c => c.id === cId);
+      const cName = cObj ? (cObj.companyName || cObj.name) : "Selected Customer";
+
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          id: assetId,
+          title,
+          tactic,
+          content,
+          status: status || "draft",
+          customerId: cId,
+          customerName: cName
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Asset Saved", `Asset "${title}" saved successfully.`);
+        setIsEditing(false);
+        fetchAgentData();
+      } else {
+        showToast("error", "Failed to Save", data.error || "Unknown error occurred");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Error", "Failed to connect to the server.");
+    } finally {
+      setIsSavingAsset(false);
+    }
+  };
+
+  const handlePostComment = async (assetId: string, comment: string) => {
+    if (!comment.trim()) return;
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "comment",
+          id: assetId,
+          comment
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Comment Added", "Your comment has been posted.");
+        setNewCommentText("");
+        fetchAgentData();
+      } else {
+        showToast("error", "Comment Failed", data.error || "Could not save comment");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReviewAsset = async (assetId: string, status: string) => {
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "review",
+          id: assetId,
+          status
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Review Updated", `Status marked as ${status.replace("_", " ").toUpperCase()}`);
+        fetchAgentData();
+      } else {
+        showToast("error", "Review Failed", data.error || "Failed to update review status");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRollbackAsset = async (assetId: string, versionNumber: number) => {
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "rollback",
+          id: assetId,
+          versionNumber
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Rollback Complete", `Successfully rolled back to version ${versionNumber}.`);
+        if (isEditing) {
+          setEditTitle(data.title);
+          setEditContent(data.content);
+        }
+        fetchAgentData();
+      } else {
+        showToast("error", "Rollback Failed", data.error || "Failed to restore version");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePublishAsset = async (assetId: string, dateStr?: string) => {
+    setIsPublishingAsset(true);
+    try {
+      const res = await fetch("/api/portal/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "publish",
+          id: assetId,
+          scheduledDate: dateStr || null
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const msg = dateStr 
+          ? `Scheduled successfully to publish to: ${data.platforms.join(", ")}` 
+          : `Published successfully to: ${data.platforms.join(", ")}`;
+        showToast("success", dateStr ? "Campaign Scheduled" : "Campaign Published", msg);
+        setIsScheduling(false);
+        setPublishScheduleDate("");
+        fetchAgentData();
+      } else {
+        showToast("error", "Publish Failed", data.error || "Could not publish");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Error", "Failed to connect to server");
+    } finally {
+      setIsPublishingAsset(false);
+    }
+  };
+
   const handleInitiateCall = async () => {
     if (!dialedNumber.trim()) return;
     setCallState("ringing");
@@ -244,6 +472,42 @@ function AgentPortalContent() {
     }
   };
 
+  const handleTriggerWorkflow = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedWorkflowCustomer) return;
+    const targetCustomer = customers.find(c => c.id === selectedWorkflowCustomer);
+    if (!targetCustomer) return;
+
+    setTriggeringWorkflow(true);
+    try {
+      const res = await fetch("/api/portal/workflows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: selectedWorkflowType,
+          customerId: targetCustomer.id,
+          customerName: targetCustomer.personalIdentifiers?.fullName || targetCustomer.name || targetCustomer.companyName || "Unknown",
+          metadata: {
+            websiteUrl: targetCustomer.companyInformation?.websiteUrl || "https://example.com",
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Workflow Triggered", `Successfully started ${selectedWorkflowType === "gtm-audit" ? "GTM Audit" : "Outreach Campaign"} for ${targetCustomer.companyName || targetCustomer.name}`);
+        fetchAgentData();
+      } else {
+        showToast("error", "Trigger Failed", data.error || "Failed to start workflow");
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast("error", "Trigger Failed", "Network error encountered.");
+    } finally {
+      setTriggeringWorkflow(false);
+    }
+  };
+
   // Calculations
   const currentAgentId = user?.id || "";
   const myTasks = tasks.filter(t => t.assignedAgentId === currentAgentId || !t.assignedAgentId);
@@ -253,6 +517,111 @@ function AgentPortalContent() {
   const rating = feedback.length 
     ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) 
     : "4.8";
+
+  // Search & Filter & Sort Customers List
+  const filteredCustomers = customers
+    .filter((c) => {
+      const personal = c.personalIdentifiers || {};
+      const company = c.companyInformation || {};
+      const matchesSearch =
+        (c.name || personal.fullName || "").toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.companyName || company.companyName || "").toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.email || personal.email || "").toLowerCase().includes(customerSearch.toLowerCase());
+      
+      const statusValue = c.status || "active";
+      const matchesStatus = customerStatusFilter === "all" || statusValue.toLowerCase() === customerStatusFilter.toLowerCase();
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const aPersonal = a.personalIdentifiers || {};
+      const bPersonal = b.personalIdentifiers || {};
+      const aCompany = a.companyInformation || {};
+      const bCompany = b.companyInformation || {};
+
+      let fieldA = "";
+      let fieldB = "";
+
+      if (customerSortField === "companyName") {
+        fieldA = a.companyName || aCompany.companyName || "";
+        fieldB = b.companyName || bCompany.companyName || "";
+      } else if (customerSortField === "contactName") {
+        fieldA = a.name || aPersonal.fullName || "";
+        fieldB = b.name || bPersonal.fullName || "";
+      } else if (customerSortField === "createdAt") {
+        fieldA = a.createdAt || "";
+        fieldB = b.createdAt || "";
+      }
+
+      const comparison = fieldA.localeCompare(fieldB);
+      return customerSortOrder === "asc" ? comparison : -comparison;
+    });
+
+  const MARKETING_TACTICS = [
+    "Blog Posts",
+    "SEO Landing Pages",
+    "Case Studies",
+    "Customer Testimonials",
+    "Product Demo Videos",
+    "Explainer Videos",
+    "Webinars",
+    "LinkedIn Marketing",
+    "Instagram/Facebook Marketing",
+    "YouTube Content",
+    "Email Automation",
+    "Google Ads",
+    "Meta Ads",
+    "LinkedIn Ads",
+    "Retargeting Ads",
+    "Cold Email",
+    "Referral Programs",
+    "Affiliate Marketing",
+    "Community Building",
+    "Customer Reviews",
+    "Interactive Tools (ROI Calculator, Quiz)",
+    "AI Content Repurposing",
+    "AI Personalization",
+    "Product Tours",
+    "Industry Reports & Research"
+  ];
+
+  const filteredContentAssets = contentAssets
+    .filter((asset) => {
+      const matchesSearch =
+        (asset.title || "").toLowerCase().includes(contentSearch.toLowerCase()) ||
+        (asset.content || "").toLowerCase().includes(contentSearch.toLowerCase());
+      
+      const matchesTactic = contentTacticFilter === "all" || asset.tactic === contentTacticFilter;
+      const matchesStatus = contentStatusFilter === "all" || asset.status === contentStatusFilter;
+      const matchesCustomer = contentCustomerFilter === "all" || asset.customerId === contentCustomerFilter;
+
+      return matchesSearch && matchesTactic && matchesStatus && matchesCustomer;
+    })
+    .sort((a, b) => {
+      let fieldA: any = "";
+      let fieldB: any = "";
+
+      if (contentSortField === "updatedAt") {
+        fieldA = a.updatedAt || "";
+        fieldB = b.updatedAt || "";
+      } else if (contentSortField === "title") {
+        fieldA = a.title || "";
+        fieldB = b.title || "";
+      } else if (contentSortField === "views") {
+        fieldA = a.performanceMetrics?.views || 0;
+        fieldB = b.performanceMetrics?.views || 0;
+      } else if (contentSortField === "conversionRate") {
+        fieldA = a.performanceMetrics?.conversionRate || 0;
+        fieldB = b.performanceMetrics?.conversionRate || 0;
+      }
+
+      if (typeof fieldA === "string") {
+        const comparison = fieldA.localeCompare(fieldB);
+        return contentSortOrder === "asc" ? comparison : -comparison;
+      } else {
+        return contentSortOrder === "asc" ? fieldA - fieldB : fieldB - fieldA;
+      }
+    });
 
   return (
     <div className="space-y-8 relative pb-12">
@@ -357,34 +726,840 @@ function AgentPortalContent() {
       </GlassPanel>
 
       {/* Tab Control List */}
-      <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl">
+      <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl relative">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
           return (
-            <ExtrudedButton
+            <button
               key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3.5",
-                activeTab === tab.id
-                  ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/20"
-                  : "border-transparent bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                "relative rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3.5 flex items-center justify-center overflow-hidden outline-none",
+                isActive ? "text-white" : "text-slate-400 hover:text-slate-200"
               )}
             >
-              <Icon className={cn("h-4 w-4", tab.color.split(" ")[0])} />
-              {tab.label}
-            </ExtrudedButton>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute inset-0 bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg shadow-purple-500/20 rounded-xl"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  style={{ zIndex: 0 }}
+                />
+              )}
+              <Icon className={cn("h-4 w-4 relative z-10", tab.color.split(" ")[0])} />
+              <span className="relative z-10">{tab.label}</span>
+            </button>
           );
         })}
       </div>
 
       {/* Tab Panels */}
       <div className="mt-4">
+        <AnimatePresence mode="wait">
         
+        {/* 0. CUSTOMERS TAB */}
+        {activeTab === "customers" && (
+          <motion.div
+            key="customers"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6"
+          >
+            {/* Search, Filter, Sort Controls */}
+            <GlassPanel tilt={false} className="border-slate-800 p-5 bg-slate-900/10 flex flex-col md:flex-row gap-4 justify-between items-center flex-wrap">
+              <div className="flex items-center gap-2 bg-slate-950 border border-slate-850 px-3 py-2 rounded-xl w-full md:w-80">
+                <Search className="h-4 w-4 text-slate-500" />
+                <label htmlFor="customer-search" className="sr-only">Search Customers</label>
+                <input
+                  id="customer-search"
+                  type="text"
+                  placeholder="Search company, contact name, or email..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="bg-transparent border-none text-slate-200 text-xs focus:outline-none w-full"
+                />
+              </div>
+
+              <div className="flex gap-4 flex-wrap w-full md:w-auto items-center">
+                <div className="flex items-center gap-2 text-xs">
+                  <label htmlFor="customer-status-filter" className="text-slate-400 font-medium">Status:</label>
+                  <select
+                    id="customer-status-filter"
+                    value={customerStatusFilter}
+                    onChange={(e) => setCustomerStatusFilter(e.target.value)}
+                    className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="onboarded">Onboarded</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <label htmlFor="customer-sort-field" className="text-slate-400 font-medium">Sort By:</label>
+                  <select
+                    id="customer-sort-field"
+                    value={customerSortField}
+                    onChange={(e) => setCustomerSortField(e.target.value)}
+                    className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                  >
+                    <option value="companyName">Company Name</option>
+                    <option value="contactName">Contact Name</option>
+                    <option value="createdAt">Date Created</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setCustomerSortOrder(o => o === "asc" ? "desc" : "asc")}
+                  className="p-2 border border-slate-850 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-200"
+                  aria-label={`Toggle sort order. Current order: ${customerSortOrder}`}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </button>
+              </div>
+            </GlassPanel>
+
+            {/* Customers Listing */}
+            {filteredCustomers.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
+                <Users className="h-10 w-10 text-slate-700 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No customers found matching filters.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCustomers.map((c: any) => {
+                  const personal = c.personalIdentifiers || {};
+                  const company = c.companyInformation || {};
+                  const nameVal = c.name || personal.fullName || "Unspecified";
+                  const emailVal = c.email || personal.email || "";
+                  const companyNameVal = c.companyName || company.companyName || "Unknown Company";
+                  const statusVal = c.status || "Active";
+
+                  return (
+                    <GlassPanel key={c.id} tilt={true} className="border-slate-800 bg-slate-900/20 p-5 space-y-4 hover:border-blue-500/30 transition-all flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="text-base font-extrabold text-white leading-snug">{companyNameVal}</h4>
+                            <p className="text-[10px] font-mono text-slate-500 mt-0.5">ID: {c.id}</p>
+                          </div>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                            statusVal.toLowerCase() === "active" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                            statusVal.toLowerCase() === "onboarded" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                            "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          )}>
+                            {statusVal}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1 text-xs">
+                          <p className="text-slate-350"><span className="text-slate-500">Contact:</span> {nameVal}</p>
+                          {emailVal && <p className="text-slate-400 font-mono text-[11px]">{emailVal}</p>}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-850 flex justify-between items-center gap-2">
+                        <span className="text-[10px] text-slate-500">Created: {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "N/A"}</span>
+                        <ExtrudedButton
+                          size="sm"
+                          onClick={() => router.push(`/portal/agent/workspace?leadId=${c.id}`)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl py-1.5 px-3"
+                        >
+                          Open Workspace
+                        </ExtrudedButton>
+                      </div>
+                    </GlassPanel>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+        {/* CONTENT & WORKFLOW HUB */}
+        {activeTab === "content-hub" && (
+          <motion.div
+            key="content-hub"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6"
+          >
+            {/* Sub-navigation Toggles */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/30 p-4 rounded-2xl border border-slate-800/80">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setContentSubTab("workspace")}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                    contentSubTab === "workspace"
+                      ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-lg"
+                      : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  Campaign Strategy & Workflows
+                </button>
+                <button
+                  onClick={() => setContentSubTab("assets")}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                    contentSubTab === "assets"
+                      ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-lg"
+                      : "bg-transparent border-transparent text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  Asset Review & Publishing
+                </button>
+              </div>
+
+              {contentSubTab === "workspace" && customers.length > 0 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <label htmlFor="agent-strategy-customer-select" className="text-slate-400 font-medium">Select Client Account:</label>
+                  <select
+                    id="agent-strategy-customer-select"
+                    value={activeStrategyCustomerId}
+                    onChange={(e) => setActiveStrategyCustomerId(e.target.value)}
+                    className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                  >
+                    {customers.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        {c.companyName || c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {contentSubTab === "workspace" ? (
+              (() => {
+                const activeCust = customers.find(c => c.id === activeStrategyCustomerId);
+                if (!activeCust) {
+                  return (
+                    <div className="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
+                      <p className="text-sm text-slate-400">Please select or onboard a customer account to begin.</p>
+                    </div>
+                  );
+                }
+                return (
+                  <ContentWorkflowWorkspace
+                    customerId={activeCust.id}
+                    customerName={activeCust.companyName || activeCust.name}
+                    initialCustomerData={activeCust}
+                    userRole="agent"
+                    onSaveCustomer={async (updatedFields: any) => {
+                      try {
+                        const res = await fetch("/api/admin/customers", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            action: "update",
+                            customerId: activeCust.id,
+                            customer: updatedFields
+                          })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          await fetchAgentData();
+                          return true;
+                        }
+                        return false;
+                      } catch (err) {
+                        console.error(err);
+                        return false;
+                      }
+                    }}
+                  />
+                );
+              })()
+            ) : (
+              <>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100">Centralized Marketing Content Hub (Oversight View)</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Agent moderation panel: manage, review, edit, approve, and publish content assets for all active customer accounts.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditTitle("");
+                  setEditContent("");
+                  setEditCustomerId("");
+                  setEditCustomerName("");
+                  setIsEditing(true);
+                  setSelectedAsset({
+                    id: null,
+                    title: "",
+                    tactic: "Blog Posts",
+                    content: "",
+                    status: "draft",
+                    versions: [],
+                    comments: [],
+                    auditLogs: []
+                  });
+                }}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-500/15"
+              >
+                <Plus className="h-4 w-4" /> Create Draft Asset
+              </button>
+            </div>
+
+            {/* Metrics Dashboard */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Total Reach (Views)</p>
+                <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+                  {contentAssets.reduce((sum, a) => sum + (a.performanceMetrics?.views || 0), 0).toLocaleString()}
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Total Interactions (Clicks)</p>
+                <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+                  {contentAssets.reduce((sum, a) => sum + (a.performanceMetrics?.clicks || 0), 0).toLocaleString()}
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Average Conversion</p>
+                <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
+                  {(
+                    contentAssets.filter(a => (a.performanceMetrics?.views || 0) > 0).reduce((sum, a) => sum + (a.performanceMetrics?.conversionRate || 0), 0) /
+                    (contentAssets.filter(a => (a.performanceMetrics?.views || 0) > 0).length || 1)
+                  ).toFixed(2)}%
+                </h3>
+              </GlassPanel>
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Total Assets Categorized</p>
+                <h3 className="text-2xl font-extrabold text-purple-400 mt-1">
+                  {contentAssets.length} Assets
+                </h3>
+              </GlassPanel>
+            </div>
+
+            {/* Filters and Controls */}
+            <GlassPanel tilt={false} className="border-slate-800 p-4 bg-slate-900/20 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                {/* Search */}
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-850 px-3 py-2 rounded-xl w-full md:w-80">
+                  <Search className="h-4 w-4 text-slate-500" />
+                  <label htmlFor="agent-content-search" className="sr-only">Search Content Assets</label>
+                  <input
+                    id="agent-content-search"
+                    type="text"
+                    placeholder="Search by title or content keywords..."
+                    value={contentSearch}
+                    onChange={(e) => setContentSearch(e.target.value)}
+                    className="bg-transparent border-none text-slate-200 text-xs focus:outline-none w-full"
+                  />
+                </div>
+
+                <div className="flex gap-4 flex-wrap w-full md:w-auto items-center">
+                  {/* Customer Select filter */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="agent-customer-filter" className="text-slate-400 font-medium">Customer Account:</label>
+                    <select
+                      id="agent-customer-filter"
+                      value={contentCustomerFilter}
+                      onChange={(e) => setContentCustomerFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="all">All Customers</option>
+                      {customers.map((c: any) => (
+                        <option key={c.id} value={c.id}>
+                          {c.companyName || c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tactic dropdown */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="agent-content-tactic-filter" className="text-slate-400 font-medium">Tactic:</label>
+                    <select
+                      id="agent-content-tactic-filter"
+                      value={contentTacticFilter}
+                      onChange={(e) => setContentTacticFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none max-w-[200px]"
+                    >
+                      <option value="all">All 25 Tactics</option>
+                      {MARKETING_TACTICS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Status Dropdown */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="agent-content-status-filter" className="text-slate-400 font-medium">Status:</label>
+                    <select
+                      id="agent-content-status-filter"
+                      value={contentStatusFilter}
+                      onChange={(e) => setContentStatusFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="draft">Draft</option>
+                      <option value="under_review">Under Review</option>
+                      <option value="approved">Approved</option>
+                      <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
+                    </select>
+                  </div>
+
+                  {/* Sort */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <label htmlFor="agent-content-sort-field" className="text-slate-400 font-medium">Sort By:</label>
+                    <select
+                      id="agent-content-sort-field"
+                      value={contentSortField}
+                      onChange={(e) => setContentSortField(e.target.value)}
+                      className="bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="updatedAt">Last Updated</option>
+                      <option value="title">Title</option>
+                      <option value="views">Views</option>
+                      <option value="conversionRate">Conversion Rate</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => setContentSortOrder(o => o === "asc" ? "desc" : "asc")}
+                    className="p-2 border border-slate-850 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-200"
+                    aria-label={`Toggle sort order. Current order: ${contentSortOrder}`}
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </GlassPanel>
+
+            {/* Content Assets Grid */}
+            {filteredContentAssets.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-850 rounded-2xl bg-slate-900/10">
+                <FileText className="h-10 w-10 text-slate-700 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No content assets found matching your criteria.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredContentAssets.map((asset) => (
+                  <GlassPanel
+                    key={asset.id}
+                    tilt={true}
+                    className="border-slate-800 bg-slate-900/15 p-5 space-y-4 hover:border-violet-500/30 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="bg-slate-950 border border-slate-850 text-slate-400 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase truncate max-w-[120px]">
+                          {asset.tactic}
+                        </span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                          asset.status === "published" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          asset.status === "approved" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          asset.status === "scheduled" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                          asset.status === "under_review" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          "bg-slate-800 text-slate-400 border-slate-700"
+                        )}>
+                          {asset.status.replace("_", " ")}
+                        </span>
+                      </div>
+
+                      <h4 className="font-extrabold text-white text-sm mt-3 line-clamp-2">{asset.title}</h4>
+                      <p className="text-[10px] text-slate-500 font-medium mt-1">For: {asset.customerName || "N/A"} ({asset.customerId})</p>
+                      <p className="text-xs text-slate-400 line-clamp-3 mt-1.5 font-light">{asset.content}</p>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-slate-900 mt-2">
+                      <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Views</span>
+                          <span className="font-bold text-slate-300 font-mono">{(asset.performanceMetrics?.views || 0).toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Clicks</span>
+                          <span className="font-bold text-slate-300 font-mono">{(asset.performanceMetrics?.clicks || 0).toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 uppercase font-mono">Conv %</span>
+                          <span className="font-bold text-emerald-400 font-mono">{asset.performanceMetrics?.conversionRate || 0}%</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono pt-1">
+                        <span>Ver: {asset.versions?.length || 1} â€¢ Comm: {asset.comments?.length || 0}</span>
+                        <span>{new Date(asset.updatedAt).toLocaleDateString()}</span>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedAsset(asset);
+                          setEditTitle(asset.title);
+                          setEditContent(asset.content);
+                          setEditCustomerId(asset.customerId || "");
+                          setEditCustomerName(asset.customerName || "");
+                          setIsEditing(false);
+                        }}
+                        className="w-full bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-300 hover:text-white font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                      >
+                        Oversight & Manage <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </GlassPanel>
+                ))}
+              </div>
+            )}
+
+            {/* Preview & Review Dialog/Drawer */}
+            {selectedAsset && (
+              <div className="fixed inset-0 z-45 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                <GlassPanel tilt={false} className="border-slate-800 bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl p-6 relative flex flex-col max-h-[90vh]">
+                  {/* Close button */}
+                  <button
+                    onClick={() => {
+                      setSelectedAsset(null);
+                      setIsEditing(false);
+                    }}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <div className="flex justify-between items-start gap-2 pr-6 pb-4 border-b border-slate-800">
+                    <div>
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <span className="bg-slate-955 border border-slate-850 text-slate-400 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
+                          {selectedAsset.tactic}
+                        </span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                          selectedAsset.status === "published" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          selectedAsset.status === "approved" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          selectedAsset.status === "scheduled" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                          selectedAsset.status === "under_review" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          "bg-slate-800 text-slate-400 border-slate-700"
+                        )}>
+                          {selectedAsset.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <h3 className="font-extrabold text-white text-lg mt-2">{selectedAsset.id ? selectedAsset.title : "New Draft (Agent Creation)"}</h3>
+                      {selectedAsset.id && (
+                        <p className="text-xs text-slate-500">Customer Account: <span className="font-semibold text-slate-300">{selectedAsset.customerName}</span> ({selectedAsset.customerId})</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto my-4 space-y-6 pr-2 scrollbar-thin">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Left 2/3 Content Preview / Edit */}
+                      <div className="md:col-span-2 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Asset Copy Content</h5>
+                          {!isEditing ? (
+                            <button
+                              onClick={() => {
+                                setEditTitle(selectedAsset.title);
+                                setEditContent(selectedAsset.content);
+                                setEditCustomerId(selectedAsset.customerId || "");
+                                setEditCustomerName(selectedAsset.customerName || "");
+                                setIsEditing(true);
+                              }}
+                              className="text-violet-400 hover:text-violet-300 text-xs font-bold"
+                            >
+                              Edit Copy
+                            </button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setIsEditing(false)}
+                                className="text-slate-400 hover:text-slate-300 text-xs font-medium"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSaveAsset(selectedAsset.id, editTitle, selectedAsset.tactic, editContent, selectedAsset.status, editCustomerId)}
+                                disabled={isSavingAsset}
+                                className="text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center gap-1"
+                              >
+                                {isSavingAsset && <Loader2 className="h-3 w-3 animate-spin" />} Save
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {!isEditing ? (
+                          <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl text-xs text-slate-300 leading-relaxed whitespace-pre-wrap select-text max-h-[300px] overflow-y-auto">
+                            {selectedAsset.content || <em className="text-slate-500">No content text entered yet. Click Edit Copy to begin writing.</em>}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {selectedAsset.id === null && (
+                              <div className="space-y-1">
+                                <label htmlFor="agent-select-customer-field" className="text-[10px] text-slate-500 font-bold uppercase block">Associate with Customer</label>
+                                <select
+                                  id="agent-select-customer-field"
+                                  value={editCustomerId}
+                                  onChange={(e) => {
+                                    setEditCustomerId(e.target.value);
+                                    const cObj = customers.find(c => c.id === e.target.value);
+                                    setEditCustomerName(cObj ? (cObj.companyName || cObj.name) : "");
+                                  }}
+                                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                                >
+                                  <option value="">Select Customer Account...</option>
+                                  {customers.map(c => (
+                                    <option key={c.id} value={c.id}>{c.companyName || c.name} ({c.id})</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
+                            <div className="space-y-1">
+                              <label htmlFor="agent-edit-title-field" className="text-[10px] text-slate-500 font-bold uppercase">Asset Title</label>
+                              <Input
+                                id="agent-edit-title-field"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="bg-slate-950 border-slate-850 text-xs text-slate-200"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label htmlFor="agent-edit-content-field" className="text-[10px] text-slate-500 font-bold uppercase">Content Body</label>
+                              <textarea
+                                id="agent-edit-content-field"
+                                rows={8}
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="w-full bg-slate-955 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500 leading-relaxed"
+                              />
+                            </div>
+                            {selectedAsset.id === null && (
+                              <div className="space-y-1">
+                                <label htmlFor="agent-select-tactic-field" className="text-[10px] text-slate-500 font-bold uppercase">Marketing Tactic</label>
+                                <select
+                                  id="agent-select-tactic-field"
+                                  value={selectedAsset.tactic}
+                                  onChange={(e) => setSelectedAsset({ ...selectedAsset, tactic: e.target.value })}
+                                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                                >
+                                  {MARKETING_TACTICS.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            {selectedAsset.id === null && (
+                              <button
+                                onClick={() => handleSaveAsset(null, editTitle, selectedAsset.tactic, editContent, "draft", editCustomerId)}
+                                disabled={!editCustomerId || !editTitle || !editContent}
+                                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-50"
+                              >
+                                Save New Asset Draft
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Version Control and Audits */}
+                        {selectedAsset.id && (
+                          <div className="space-y-4 pt-4 border-t border-slate-850">
+                            <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Version History & Revisions</h5>
+                            <div className="space-y-2.5 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin">
+                              {(selectedAsset.versions || []).slice().reverse().map((ver: any, idx: number) => (
+                                <div key={idx} className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl flex justify-between items-center text-xs">
+                                  <div>
+                                    <p className="font-bold text-slate-200">Version {ver.version} <span className="text-[10px] font-normal text-slate-500">by {ver.updatedBy} ({ver.updatedByRole})</span></p>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{new Date(ver.updatedAt).toLocaleString()}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleRollbackAsset(selectedAsset.id, ver.version)}
+                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-2.5 py-1 rounded text-[10px] transition-all"
+                                  >
+                                    Restore
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right 1/3 Workflow Actions & Comments */}
+                      <div className="space-y-6">
+                        {/* Approval Workflows */}
+                        {selectedAsset.id && (
+                          <GlassPanel tilt={false} className="border-slate-800 bg-black/45 p-4 space-y-3.5">
+                            <h5 className="text-xs text-slate-355 font-bold uppercase tracking-wider">Review & Publish Workflow</h5>
+                            
+                            {/* Draft / Under Review States */}
+                            {(selectedAsset.status === "draft" || selectedAsset.status === "under_review") && (
+                              <div className="space-y-2">
+                                <button
+                                  onClick={() => handleReviewAsset(selectedAsset.id, "approved")}
+                                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5"
+                                >
+                                  <Check className="h-4 w-4" /> Approve Content
+                                </button>
+                                {selectedAsset.status !== "under_review" && (
+                                  <button
+                                    onClick={() => handleReviewAsset(selectedAsset.id, "under_review")}
+                                    className="w-full bg-slate-850 hover:bg-slate-800 text-slate-300 font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    Submit for Review
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Approved State */}
+                            {selectedAsset.status === "approved" && (
+                              <div className="space-y-3">
+                                <button
+                                  onClick={() => handlePublishAsset(selectedAsset.id)}
+                                  disabled={isPublishingAsset}
+                                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-50 hover:to-indigo-505 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-lg flex items-center justify-center gap-1.5"
+                                >
+                                  {isPublishingAsset ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                      Publishing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Send className="h-4 w-4" /> Publish Now
+                                    </>
+                                  )}
+                                </button>
+
+                                <div className="border-t border-slate-850 pt-2.5 space-y-2">
+                                  {!isScheduling ? (
+                                    <button
+                                      onClick={() => setIsScheduling(true)}
+                                      className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-850 text-slate-300 py-1.5 rounded-xl text-xs font-bold"
+                                    >
+                                      Schedule Publication
+                                    </button>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <label htmlFor="agent-schedule-time" className="text-[9px] text-slate-500 font-bold uppercase block">Schedule Date & Time</label>
+                                      <input
+                                        id="agent-schedule-time"
+                                        type="datetime-local"
+                                        value={publishScheduleDate}
+                                        onChange={(e) => setPublishScheduleDate(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+                                      />
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => setIsScheduling(false)}
+                                          className="flex-1 bg-slate-800 text-slate-300 py-1 rounded-xl text-[10px] font-semibold"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={() => handlePublishAsset(selectedAsset.id, publishScheduleDate)}
+                                          disabled={isPublishingAsset || !publishScheduleDate}
+                                          className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-1 rounded-xl text-[10px] font-bold"
+                                        >
+                                          Schedule
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Published / Scheduled States */}
+                            {(selectedAsset.status === "published" || selectedAsset.status === "scheduled") && (
+                              <div className="bg-slate-955 p-3 rounded-xl border border-slate-850 text-[10px] space-y-2 text-slate-400">
+                                <p className="font-bold text-emerald-450 flex items-center gap-1">
+                                  <ShieldCheck className="h-4 w-4 text-emerald-450" /> Secure Sync Active
+                                </p>
+                                <p>Connected Platforms:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {(selectedAsset.publishedPlatforms || []).map((p: string) => (
+                                    <span key={p} className="bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded text-slate-300">{p}</span>
+                                  ))}
+                                </div>
+                                <p className="text-[9px] text-slate-555 italic mt-1 truncate">
+                                  Payload AES-256 encrypted in transit
+                                </p>
+                                <button
+                                  onClick={() => handleReviewAsset(selectedAsset.id, "draft")}
+                                  className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 mt-2 py-1 rounded border border-slate-800 text-[10px]"
+                                >
+                                  Revert to Draft
+                                </button>
+                              </div>
+                            )}
+                          </GlassPanel>
+                        )}
+
+                        {/* Comments System */}
+                        {selectedAsset.id && (
+                          <div className="space-y-3.5">
+                            <h5 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Comments & Revisions</h5>
+                            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
+                              {(selectedAsset.comments || []).length === 0 ? (
+                                <p className="text-slate-500 text-xs italic py-4">No comments left on this asset yet.</p>
+                              ) : (
+                                (selectedAsset.comments || []).map((comm: any) => (
+                                  <div key={comm.id} className="p-2.5 bg-slate-950/30 border border-slate-850 rounded-xl space-y-1 text-xs">
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                                      <span className="font-bold text-slate-350">{comm.authorName} ({comm.authorRole})</span>
+                                      <span>{new Date(comm.createdAt).toLocaleTimeString()}</span>
+                                    </div>
+                                    <p className="text-slate-300 font-light">{comm.comment}</p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <label htmlFor="agent-drawer-comment-text-field" className="sr-only">Add comment</label>
+                              <Input
+                                id="agent-drawer-comment-text-field"
+                                placeholder="Write response/feedback..."
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                className="bg-slate-950 border-slate-850 text-xs"
+                              />
+                              <button
+                                onClick={() => handlePostComment(selectedAsset.id, newCommentText)}
+                                className="bg-violet-600 hover:bg-violet-700 text-white font-bold p-2.5 rounded-xl text-xs"
+                                aria-label="Post comment"
+                              >
+                                <Send className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </GlassPanel>
+              </div>
+            )}
+            </>
+            )}
+          </motion.div>
+        )}
+
         {/* 1. REQUIREMENTS TAB */}
         {activeTab === "requirements" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+          <motion.div
+            key="requirements"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
             {/* Create requirement form */}
             <GlassPanel tilt={false} className="border-slate-800 p-5 h-fit">
               <h3 className="text-lg font-bold text-slate-100 mb-4">Request CRM Resource</h3>
@@ -461,12 +1636,19 @@ function AgentPortalContent() {
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* 2. TASKS TAB */}
         {activeTab === "tasks" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
+          <motion.div
+            key="tasks"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-4"
+          >
             <h2 className="text-2xl font-bold text-slate-100">Tasks Queue</h2>
             {myTasks.length === 0 ? (
               <p className="text-slate-500 text-sm py-12 text-center bg-slate-900/20 border border-slate-800 rounded-xl">No tasks assigned to your workspace.</p>
@@ -502,12 +1684,19 @@ function AgentPortalContent() {
                 </GlassPanel>
               ))
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* 3. CHAT MESSENGER TAB */}
         {activeTab === "chat" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
+          <motion.div
+            key="chat"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-4"
+          >
             <h2 className="text-2xl font-bold text-slate-100">Live Client Messenger</h2>
             <GlassPanel className="border-slate-800 bg-slate-900/20 p-4 h-[500px] flex flex-col justify-between">
               <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin">
@@ -542,12 +1731,19 @@ function AgentPortalContent() {
                 </ExtrudedButton>
               </form>
             </GlassPanel>
-          </div>
+          </motion.div>
         )}
 
         {/* 4. CALLS DIALER TAB */}
         {activeTab === "calls" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+          <motion.div
+            key="calls"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
             {/* Interactive Dialer Card */}
             <GlassPanel tilt={false} className="border-slate-800 p-5 h-fit text-center space-y-6">
               <h3 className="text-lg font-bold text-slate-200">Outbound Softphone</h3>
@@ -558,13 +1754,15 @@ function AgentPortalContent() {
               {callState === "idle" && (
                 <div className="grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
                   {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(k => (
-                    <button
+                    <motion.button
                       key={k}
+                      whileHover={{ scale: 1.08, borderColor: "rgba(168, 85, 247, 0.4)" }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => setDialedNumber(n => n + k)}
-                      className="h-12 w-12 rounded-full border border-slate-800 hover:bg-slate-800/50 text-slate-200 text-lg font-bold flex items-center justify-center transition-colors"
+                      className="h-12 w-12 rounded-full border border-slate-800 hover:bg-slate-800/50 text-slate-200 text-lg font-bold flex items-center justify-center transition-colors duration-150"
                     >
                       {k}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               )}
@@ -635,12 +1833,20 @@ function AgentPortalContent() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* 5. VOICE & WHATSAPP CONFIG TAB */}
         {activeTab === "voice-whatsapp" && (
-          <GlassPanel tilt={false} className="border-slate-800 p-6 max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
+          <motion.div
+            key="voice-whatsapp"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-2xl mx-auto"
+          >
+            <GlassPanel tilt={false} className="border-slate-800 p-6 space-y-6">
             <h3 className="text-xl font-bold text-slate-100">AI Voice & Messaging Parameters</h3>
             <div className="space-y-4">
               <div className="space-y-1.5">
@@ -672,9 +1878,10 @@ function AgentPortalContent() {
               </ExtrudedButton>
             </div>
           </GlassPanel>
-        )}
-
-      </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
     </div>
   );
 }
@@ -682,7 +1889,13 @@ function AgentPortalContent() {
 export default function AgentPortal() {
   return (
     <AuthProvider allowedRoles={["agent"]}>
-      <AgentPortalContent />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+        </div>
+      }>
+        <AgentPortalContent />
+      </Suspense>
     </AuthProvider>
   );
 }

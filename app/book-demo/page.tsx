@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Settings, ToggleLeft, ToggleRight, Bell, Shield, Sliders, Save, CheckCircle, ArrowLeft, Loader2, Key, Database, RefreshCw, Volume2 } from "lucide-react";
-import { ExtrudedButton, GlassPanel, SunkenInput } from "@/components/immersive";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { SunkenInput } from "@/components/immersive/SunkenInput";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";

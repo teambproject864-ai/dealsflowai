@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Loader2, Search, Play, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { Input } from "@/components/ui/input";
 import type { HeyGenVideo } from "@/lib/types";
 

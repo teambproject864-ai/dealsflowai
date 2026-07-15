@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Settings as SettingsIcon, CheckCircle, AlertCircle } from "lucide-react";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 

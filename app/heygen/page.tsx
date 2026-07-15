@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { Video, Library, Activity, Settings } from "lucide-react";
-import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { StaggerReveal } from "@/components/immersive/StaggerReveal";
 
 export default function HeyGenLanding() {
   return (

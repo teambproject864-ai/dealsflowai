@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 import { 
   BookOpen, 
   Search, 

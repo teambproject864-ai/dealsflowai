@@ -21,7 +21,7 @@ import {
 } from "@/components/gtm/GtmIcons";
 import { type AnalysisResult, getRevenueAgentCatalog } from "@/lib/types";
 import { getLeadOffline, saveLeadOffline } from "@/lib/offlineStore";
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";

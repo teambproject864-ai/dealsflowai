@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useFirestoreCollection } from "@/lib/firestore-realtime";
@@ -19,7 +20,13 @@ import {
   Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GlassPanel, StaggerReveal, ScatterCloud3D } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { StaggerReveal } from "@/components/immersive/StaggerReveal";
+
+const ScatterCloud3D = dynamic(
+  () => import("@/components/immersive/ScatterCloud3D").then((mod) => mod.ScatterCloud3D),
+  { ssr: false }
+);
 
 const SOLUTIONS_NAV = [
   { href: "/solutions",           label: "Overview Console", active: true },

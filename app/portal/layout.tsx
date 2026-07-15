@@ -4,7 +4,10 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { GlassPanel, Loader3D, Magnetic, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { Loader3D } from "@/components/immersive/Loader3D";
+import { Magnetic } from "@/components/immersive/Magnetic";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function PortalLayout({
