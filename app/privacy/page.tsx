@@ -1,6 +1,6 @@
 "use client";
 
-import { GlassPanel } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
 
 export default function PrivacyPage() {
   return (

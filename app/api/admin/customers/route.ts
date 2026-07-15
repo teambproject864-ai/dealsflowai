@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { user, errorResponse } = await requireAuth(req, ["admin"]);
+  const { user, errorResponse } = await requireAuth(req, ["admin", "agent"]);
   if (errorResponse) return errorResponse;
 
   try {
@@ -51,6 +51,9 @@ export async function POST(req: Request) {
     }
 
     if (action === "onboard" || action === "create") {
+      if (user!.role !== "admin") {
+        return NextResponse.json({ success: false, error: "Forbidden: Only admins can onboard new customers" }, { status: 403 });
+      }
       const customerData = action === "onboard" ? body : body.customer;
       const { name, email, phone, companyName, industry, assignedAgentId, assignedAgentName, businessModel, serviceConfigurations, status, personalIdentifiers, companyInformation, accountHistory } = customerData || body;
 

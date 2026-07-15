@@ -60,7 +60,26 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { businessModel, serviceConfigurations, companyName, industry, name, email, phone } = body;
+    const {
+      businessModel,
+      serviceConfigurations,
+      companyName,
+      industry,
+      name,
+      email,
+      phone,
+      targetAudience,
+      businessGoals,
+      marketingObjectives,
+      brandTone,
+      brandVoice,
+      competitors,
+      marketingChannels,
+      keywords,
+      geographicMarkets,
+      customerJourneyStage,
+      campaignStrategy
+    } = body;
 
     let updatedData: any = {};
     if (businessModel) updatedData.businessModel = businessModel;
@@ -70,6 +89,18 @@ export async function POST(req: Request) {
     if (name) updatedData.name = name;
     if (email) updatedData.email = email;
     if (phone) updatedData.phone = phone;
+    
+    if (targetAudience !== undefined) updatedData.targetAudience = targetAudience;
+    if (businessGoals !== undefined) updatedData.businessGoals = businessGoals;
+    if (marketingObjectives !== undefined) updatedData.marketingObjectives = marketingObjectives;
+    if (brandTone !== undefined) updatedData.brandTone = brandTone;
+    if (brandVoice !== undefined) updatedData.brandVoice = brandVoice;
+    if (competitors !== undefined) updatedData.competitors = competitors;
+    if (marketingChannels !== undefined) updatedData.marketingChannels = marketingChannels;
+    if (keywords !== undefined) updatedData.keywords = keywords;
+    if (geographicMarkets !== undefined) updatedData.geographicMarkets = geographicMarkets;
+    if (customerJourneyStage !== undefined) updatedData.customerJourneyStage = customerJourneyStage;
+    if (campaignStrategy !== undefined) updatedData.campaignStrategy = campaignStrategy;
 
     updatedData.updatedAt = new Date().toISOString();
 

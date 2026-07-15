@@ -12,11 +12,19 @@ const DEV_PASSWORDS = {
   anilCustomer: process.env.CUSTOMER_ANIL_PASSWORD || "Anil@123!",
 };
 
+let isSeeded = false;
+
 export async function seedFirestore() {
+  if (isSeeded) {
+    return;
+  }
+
   if (!db) {
     console.log("[db-init] Firestore not configured. Skipping seeding.");
     return;
   }
+
+  isSeeded = true;
 
   try {
     // 1. Seed users collection
@@ -541,7 +549,774 @@ export async function seedFirestore() {
       console.log("[db-init] Seeded chat_messages collection successfully.");
     }
 
+    // 12. Seed content_assets collection
+    const contentSnap = await db.collection("content_assets").limit(1).get();
+    if (contentSnap.empty) {
+      console.log("[db-init] Seeding content_assets collection...");
+      
+      const tacticsList = [
+        "Blog Posts",
+        "SEO Landing Pages",
+        "Case Studies",
+        "Customer Testimonials",
+        "Product Demo Videos",
+        "Explainer Videos",
+        "Webinars",
+        "LinkedIn Marketing",
+        "Instagram/Facebook Marketing",
+        "YouTube Content",
+        "Email Automation",
+        "Google Ads",
+        "Meta Ads",
+        "LinkedIn Ads",
+        "Retargeting Ads",
+        "Cold Email",
+        "Referral Programs",
+        "Affiliate Marketing",
+        "Community Building",
+        "Customer Reviews",
+        "Interactive Tools (ROI Calculator, Quiz)",
+        "AI Content Repurposing",
+        "AI Personalization",
+        "Product Tours",
+        "Industry Reports & Research"
+      ];
+
+      const defaultContentAssets = [
+        {
+          id: "asset-1",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "Scaling B2B Revenue Operations in 2026",
+          tactic: "Blog Posts",
+          status: "published",
+          content: "In 2026, scaling revenue operations requires alignment across sales, marketing, and customer success. By automating pipeline synchronization and using AI-assisted outbound dialing, teams can recover up to 15 hours per week of lost administrative time. This guide breaks down the core objectives: 1. Audit your tech stack to remove duplicate entries. 2. Establish clear data handoffs between systems. 3. Monitor data quality metrics in real-time.",
+          versions: [
+            {
+              version: 1,
+              title: "SaaS Scaling Strategies in 2026",
+              content: "Scaling revenue operations is crucial. Use AI to automate pipeline sync. Audit your CRM data regularly.",
+              updatedAt: "2026-06-01T09:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            },
+            {
+              version: 2,
+              title: "Scaling B2B Revenue Operations in 2026",
+              content: "In 2026, scaling revenue operations requires alignment across sales, marketing, and customer success. By automating pipeline synchronization and using AI-assisted outbound dialing, teams can recover up to 15 hours per week of lost administrative time. This guide breaks down the core objectives: 1. Audit your tech stack to remove duplicate entries. 2. Establish clear data handoffs between systems. 3. Monitor data quality metrics in real-time.",
+              updatedAt: "2026-06-05T14:30:00Z",
+              updatedBy: "customer-demo",
+              updatedByRole: "customer"
+            }
+          ],
+          comments: [
+            {
+              id: "comm-1",
+              comment: "Looks excellent! I updated the title to specify 'B2B Revenue Operations'. Please review.",
+              authorName: "Demo Customer",
+              authorRole: "customer",
+              createdAt: "2026-06-05T14:30:00Z"
+            }
+          ],
+          performanceMetrics: { views: 1450, clicks: 390, conversions: 28, conversionRate: 1.93, roi: 185 },
+          publishedPlatforms: ["WordPress", "LinkedIn"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-01T09:00:00Z" },
+            { action: "updated", details: "Draft updated to version 2 by Demo Customer", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-05T14:30:00Z" },
+            { action: "approved", details: "Asset approved by Demo Customer", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-06T10:00:00Z" },
+            { action: "published", details: "Published to WordPress & LinkedIn", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-06T10:15:00Z" }
+          ],
+          createdAt: "2026-06-01T09:00:00Z",
+          updatedAt: "2026-06-06T10:15:00Z"
+        },
+        {
+          id: "asset-2",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "Ideal Customer Profile (ICP) Analysis & Setup",
+          tactic: "SEO Landing Pages",
+          status: "published",
+          content: "Find and lock down your high-value enterprise accounts. This interactive landing page walks you through identifying firmographic markers, matching technology stacks, and finding key decision-makers (VP Sales, VP RevOps, CTO). Scale your outbound pipeline with structured, clean lead entries.",
+          versions: [
+            {
+              version: 1,
+              title: "Ideal Customer Profile (ICP) Analysis & Setup",
+              content: "Find and lock down your high-value enterprise accounts. This interactive landing page walks you through identifying firmographic markers, matching technology stacks, and finding key decision-makers (VP Sales, VP RevOps, CTO). Scale your outbound pipeline with structured, clean lead entries.",
+              updatedAt: "2026-06-10T10:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 2800, clicks: 640, conversions: 55, conversionRate: 1.96 },
+          publishedPlatforms: ["Webflow"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-10T10:00:00Z" },
+            { action: "published", details: "Published to Webflow", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-12T11:00:00Z" }
+          ],
+          createdAt: "2026-06-10T10:00:00Z",
+          updatedAt: "2026-06-12T11:00:00Z"
+        },
+        {
+          id: "asset-3",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "How Acme Corp Accelerated Deal Flow by 250%",
+          tactic: "Case Studies",
+          status: "approved",
+          content: "Learn how manufacturing giant Acme Corp integrated DealFlow AI into their legacy Salesforce setup. In less than 30 days, they eliminated duplicate entries, established automated phone dialing for hot leads, and saw sales representative conversion rates jump from 1.5% to 3.8%. Download the complete performance audit report inside.",
+          versions: [
+            {
+              version: 1,
+              title: "How Acme Corp Accelerated Deal Flow by 250%",
+              content: "Learn how manufacturing giant Acme Corp integrated DealFlow AI into their legacy Salesforce setup. In less than 30 days, they eliminated duplicate entries, established automated phone dialing for hot leads, and saw sales representative conversion rates jump from 1.5% to 3.8%. Download the complete performance audit report inside.",
+              updatedAt: "2026-06-15T09:30:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [
+            { id: "comm-2", comment: "Excellent case study draft. Ready for publication.", authorName: "Praneeth", authorRole: "agent", createdAt: "2026-06-16T11:00:00Z" }
+          ],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-15T09:30:00Z" },
+            { action: "approved", details: "Approved for publication", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-17T15:00:00Z" }
+          ],
+          createdAt: "2026-06-15T09:30:00Z",
+          updatedAt: "2026-06-17T15:00:00Z"
+        },
+        {
+          id: "asset-4",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "Why TechStartup Loves DealFlow AI's Real-time Dashboards",
+          tactic: "Customer Testimonials",
+          status: "under_review",
+          content: "\"DealFlow AI gave our developers and sales team a single source of truth. We went from manually copying Leads from custom hooks to a fully automated pipeline. The real-time notification alerts kept us on top of high-intent buyers immediately.\" - Founder, TechStartup",
+          versions: [
+            {
+              version: 1,
+              title: "Why TechStartup Loves DealFlow AI's Real-time Dashboards",
+              content: "\"DealFlow AI gave our developers and sales team a single source of truth. We went from manually copying Leads from custom hooks to a fully automated pipeline. The real-time notification alerts kept us on top of high-intent buyers immediately.\" - Founder, TechStartup",
+              updatedAt: "2026-06-18T14:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [
+            { id: "comm-3", comment: "Can we include the specific metrics of our pipeline growth?", authorName: "Praneeth Burada", authorRole: "customer", createdAt: "2026-06-19T08:30:00Z" }
+          ],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-18T14:00:00Z" },
+            { action: "submitted", details: "Submitted for customer review", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-18T14:15:00Z" }
+          ],
+          createdAt: "2026-06-18T14:00:00Z",
+          updatedAt: "2026-06-18T14:15:00Z"
+        },
+        {
+          id: "asset-5",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "DealFlow Platform Feature walkthrough Video Script",
+          tactic: "Product Demo Videos",
+          status: "draft",
+          content: "[Opening Shot: Screen share of DealFlow dashboard] \"Hello everyone! Today we are showing how DealFlow tracks, updates, and scores leads automatically. See this dashboard? The metrics update every 3 seconds. Watch what happens when a lead registers on our custom landing page...\"",
+          versions: [
+            {
+              version: 1,
+              title: "DealFlow Platform Feature walkthrough Video Script",
+              content: "[Opening Shot: Screen share of DealFlow dashboard] \"Hello everyone! Today we are showing how DealFlow tracks, updates, and scores leads automatically. See this dashboard? The metrics update every 3 seconds. Watch what happens when a lead registers on our custom landing page...\"",
+              updatedAt: "2026-06-20T10:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-20T10:00:00Z" }
+          ],
+          createdAt: "2026-06-20T10:00:00Z",
+          updatedAt: "2026-06-20T10:00:00Z"
+        },
+        {
+          id: "asset-6",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "RevOps Automation Simplified in 90 Seconds",
+          tactic: "Explainer Videos",
+          status: "published",
+          content: "Animated Explainer Video focusing on small business bottlenecks. Illustrates manual data entry errors, the anxiety of delayed outreach calls, and how DealFlow's integrated dialer connects you to hot leads instantly. Watch our explainer to see how simple integrations can be.",
+          versions: [
+            {
+              version: 1,
+              title: "RevOps Automation Simplified in 90 Seconds",
+              content: "Animated Explainer Video focusing on small business bottlenecks. Illustrates manual data entry errors, the anxiety of delayed outreach calls, and how DealFlow's integrated dialer connects you to hot leads instantly. Watch our explainer to see how simple integrations can be.",
+              updatedAt: "2026-06-21T11:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 4200, clicks: 880, conversions: 90, conversionRate: 2.14, engagementRate: 4.8 },
+          publishedPlatforms: ["YouTube", "Vimeo"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-06-21T11:00:00Z" },
+            { action: "published", details: "Published to YouTube & Vimeo", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-06-23T14:00:00Z" }
+          ],
+          createdAt: "2026-06-21T11:00:00Z",
+          updatedAt: "2026-06-23T14:00:00Z"
+        },
+        {
+          id: "asset-7",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "SaaS Growth Secrets: Live Webinar Presentation",
+          tactic: "Webinars",
+          status: "scheduled",
+          content: "Join B2B growth leaders on July 20th as we unpack advanced outbound orchestration frameworks. Learn: - Setting up dynamic segment routing. - Managing WhatsApp triggers programmatically. - Calculating ROI metrics for multi-channel sales sequences.",
+          versions: [
+            {
+              version: 1,
+              title: "SaaS Growth Secrets: Live Webinar Presentation",
+              content: "Join B2B growth leaders on July 20th as we unpack advanced outbound orchestration frameworks. Learn: - Setting up dynamic segment routing. - Managing WhatsApp triggers programmatically. - Calculating ROI metrics for multi-channel sales sequences.",
+              updatedAt: "2026-06-24T16:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: ["Zoom", "LinkedIn Events"],
+          scheduledAt: "2026-07-20T18:00:00Z",
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-24T16:00:00Z" },
+            { action: "scheduled", details: "Scheduled for publication on July 20th", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-25T11:00:00Z" }
+          ],
+          createdAt: "2026-06-24T16:00:00Z",
+          updatedAt: "2026-06-25T11:00:00Z"
+        },
+        {
+          id: "asset-8",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "5 CRM Traps Destroying Your Sales Velocity",
+          tactic: "LinkedIn Marketing",
+          status: "published",
+          content: "If your sales reps are spending 4 hours a day manually entering phone calls and logging chat sessions, your CRM is a trap. ❌ 1. Expired Auth Tokens ❌ 2. Untracked Lead Paths ❌ 3. Fragmented WhatsApp sequences. Here is how we automated operations at Acme Corp to double lead velocity. 👇 [Link]",
+          versions: [
+            {
+              version: 1,
+              title: "5 CRM Traps Destroying Your Sales Velocity",
+              content: "If your sales reps are spending 4 hours a day manually entering phone calls and logging chat sessions, your CRM is a trap. ❌ 1. Expired Auth Tokens ❌ 2. Untracked Lead Paths ❌ 3. Fragmented WhatsApp sequences. Here is how we automated operations at Acme Corp to double lead velocity. 👇 [Link]",
+              updatedAt: "2026-06-25T08:00:00Z",
+              updatedBy: "customer-demo",
+              updatedByRole: "customer"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 7600, clicks: 1200, conversions: 65, conversionRate: 0.85, engagementRate: 6.8 },
+          publishedPlatforms: ["LinkedIn"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Demo Customer", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-25T08:00:00Z" },
+            { action: "published", details: "Published to LinkedIn", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-06-25T09:00:00Z" }
+          ],
+          createdAt: "2026-06-25T08:00:00Z",
+          updatedAt: "2026-06-25T09:00:00Z"
+        },
+        {
+          id: "asset-9",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "RevOps Life: Before & After DealFlow AI Automation",
+          tactic: "Instagram/Facebook Marketing",
+          status: "published",
+          content: "[Reel Concept] Split-screen. Left: RevOps engineer surrounded by spreadsheets, coffee spilled, phone ringing off the hook. Right: Calm engineer drinking tea while the DealFlow dialer runs in the background. Caption: Work smarter, not harder. #RevOps #Automation #Productivity",
+          versions: [
+            {
+              version: 1,
+              title: "RevOps Life: Before & After DealFlow AI Automation",
+              content: "[Reel Concept] Split-screen. Left: RevOps engineer surrounded by spreadsheets, coffee spilled, phone ringing off the hook. Right: Calm engineer drinking tea while the DealFlow dialer runs in the background. Caption: Work smarter, not harder. #RevOps #Automation #Productivity",
+              updatedAt: "2026-06-26T12:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 9800, clicks: 520, conversions: 18, conversionRate: 0.18, engagementRate: 9.2 },
+          publishedPlatforms: ["Instagram", "Facebook"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-26T12:00:00Z" },
+            { action: "published", details: "Published to Instagram and Facebook", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-06-27T10:00:00Z" }
+          ],
+          createdAt: "2026-06-26T12:00:00Z",
+          updatedAt: "2026-06-27T10:00:00Z"
+        },
+        {
+          id: "asset-10",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "How to Build an Automated CRM Pipeline in 10 Minutes",
+          tactic: "YouTube Content",
+          status: "published",
+          content: "Comprehensive video tutorial covering: 1. Database initializations using Firestore. 2. Fetching API data in real-time. 3. Hooking up outbound calling triggers. Code repository linked in the description. Don't forget to like and subscribe!",
+          versions: [
+            {
+              version: 1,
+              title: "How to Build an Automated CRM Pipeline in 10 Minutes",
+              content: "Comprehensive video tutorial covering: 1. Database initializations using Firestore. 2. Fetching API data in real-time. 3. Hooking up outbound calling triggers. Code repository linked in the description. Don't forget to like and subscribe!",
+              updatedAt: "2026-06-28T15:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 15400, clicks: 1950, conversions: 98, conversionRate: 0.63, engagementRate: 5.9 },
+          publishedPlatforms: ["YouTube"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-06-28T15:00:00Z" },
+            { action: "published", details: "Published to YouTube", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-06-30T09:00:00Z" }
+          ],
+          createdAt: "2026-06-28T15:00:00Z",
+          updatedAt: "2026-06-30T09:00:00Z"
+        },
+        {
+          id: "asset-11",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "Onboarding Sequence: Welcome to DealFlow AI",
+          tactic: "Email Automation",
+          status: "under_review",
+          content: "Subject: Welcome to DealFlow AI, {first_name}! \n\nWe are excited to help you scale your GTM operations. Here is a quick 3-step list to get you started: \n1. Complete your business profile configuration. \n2. Seed your initial customer database. \n3. Trigger your first GTM audit workflow. \n\nClick here to log into your portal: {portal_link}.",
+          versions: [
+            {
+              version: 1,
+              title: "Onboarding Sequence: Welcome to DealFlow AI",
+              content: "Subject: Welcome to DealFlow AI, {first_name}! \n\nWe are excited to help you scale your GTM operations. Here is a quick 3-step list to get you started: \n1. Complete your business profile configuration. \n2. Seed your initial customer database. \n3. Trigger your first GTM audit workflow. \n\nClick here to log into your portal: {portal_link}.",
+              updatedAt: "2026-07-01T09:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [
+            { id: "comm-4", comment: "Can we add a discount code for purchasing extra credits to this email?", authorName: "Praneeth Burada", authorRole: "customer", createdAt: "2026-07-02T10:00:00Z" }
+          ],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-01T09:00:00Z" },
+            { action: "submitted", details: "Submitted for review", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-01T09:10:00Z" }
+          ],
+          createdAt: "2026-07-01T09:00:00Z",
+          updatedAt: "2026-07-01T09:10:00Z"
+        },
+        {
+          id: "asset-12",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "Google Search Ads: Top Automated RevOps Platform",
+          tactic: "Google Ads",
+          status: "published",
+          content: "Headline 1: Automated RevOps Platform\nHeadline 2: Scale Sales Lead Velocity\nHeadline 3: DealFlow AI Integrations\nDescription 1: Sync your CRM data automatically, Dial hot leads instantly, and audit GTM performance.\nDescription 2: Get 100 free credits upon signup. Simple self-service onboarding. Build pipelines that convert.",
+          versions: [
+            {
+              version: 1,
+              title: "Google Search Ads: Top Automated RevOps Platform",
+              content: "Headline 1: Automated RevOps Platform\nHeadline 2: Scale Sales Lead Velocity\nHeadline 3: DealFlow AI Integrations\nDescription 1: Sync your CRM data automatically, Dial hot leads instantly, and audit GTM performance.\nDescription 2: Get 100 free credits upon signup. Simple self-service onboarding. Build pipelines that convert.",
+              updatedAt: "2026-07-02T11:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 48000, clicks: 2600, conversions: 210, conversionRate: 8.08, roi: 260 },
+          publishedPlatforms: ["Google Ads"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-02T11:00:00Z" },
+            { action: "published", details: "Published to Google Ads Account", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-03T08:00:00Z" }
+          ],
+          createdAt: "2026-07-02T11:00:00Z",
+          updatedAt: "2026-07-03T08:00:00Z"
+        },
+        {
+          id: "asset-13",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "Meta Retargeting: Tired of Spreadsheet Errors?",
+          tactic: "Meta Ads",
+          status: "published",
+          content: "Ad Copy: Stop copying leads manually. Spreadsheet mistakes cost money. Let DealFlow AI sync, score, and dial leads in real-time. Click to claim your free onboarding credits today. [Image Description: RevOps engineer looking relieved with DealFlow dashboard]",
+          versions: [
+            {
+              version: 1,
+              title: "Meta Retargeting: Tired of Spreadsheet Errors?",
+              content: "Ad Copy: Stop copying leads manually. Spreadsheet mistakes cost money. Let DealFlow AI sync, score, and dial leads in real-time. Click to claim your free onboarding credits today. [Image Description: RevOps engineer looking relieved with DealFlow dashboard]",
+              updatedAt: "2026-07-03T10:00:00Z",
+              updatedBy: "customer-anil",
+              updatedByRole: "customer"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 68000, clicks: 3300, conversions: 235, conversionRate: 7.12, roi: 205 },
+          publishedPlatforms: ["Meta Ads Manager"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Customer Anil", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-03T10:00:00Z" },
+            { action: "published", details: "Published to Meta Ads Manager", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-03T11:00:00Z" }
+          ],
+          createdAt: "2026-07-03T10:00:00Z",
+          updatedAt: "2026-07-03T11:00:00Z"
+        },
+        {
+          id: "asset-14",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "LinkedIn Ads: Account Based Marketing InMail",
+          tactic: "LinkedIn Ads",
+          status: "draft",
+          content: "Subject: Streamlining your RevOps workload\n\nDear {first_name},\n\nIf you are managing enterprise growth, you know administrative bottlenecks are draining your team. DealFlow AI automatically handles lead synchronization, dial logs, and security-compliance requirements. Let's discuss an integration for {company_name}.",
+          versions: [
+            {
+              version: 1,
+              title: "LinkedIn Ads: Account Based Marketing InMail",
+              content: "Subject: Streamlining your RevOps workload\n\nDear {first_name},\n\nIf you are managing enterprise growth, you know administrative bottlenecks are draining your team. DealFlow AI automatically handles lead synchronization, dial logs, and security-compliance requirements. Let's discuss an integration for {company_name}.",
+              updatedAt: "2026-07-04T14:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-04T14:00:00Z" }
+          ],
+          createdAt: "2026-07-04T14:00:00Z",
+          updatedAt: "2026-07-04T14:00:00Z"
+        },
+        {
+          id: "asset-15",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "GDN Retargeting Banner: Re-engage Visitors",
+          tactic: "Retargeting Ads",
+          status: "published",
+          content: "Tagline: The Outbound Sales Dialer that Thinks. \nSubtext: Double contact rates and automate dial tracking. Claim 100 free credits. \nCall To Action: Launch Free Trial",
+          versions: [
+            {
+              version: 1,
+              title: "GDN Retargeting Banner: Re-engage Visitors",
+              content: "Tagline: The Outbound Sales Dialer that Thinks. \nSubtext: Double contact rates and automate dial tracking. Claim 100 free credits. \nCall To Action: Launch Free Trial",
+              updatedAt: "2026-07-05T09:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 22000, clicks: 510, conversions: 22, conversionRate: 4.31, roi: 125 },
+          publishedPlatforms: ["Google Ads"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-05T09:00:00Z" },
+            { action: "published", details: "Published to Google Display Network", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-05T12:00:00Z" }
+          ],
+          createdAt: "2026-07-05T09:00:00Z",
+          updatedAt: "2026-07-05T12:00:00Z"
+        },
+        {
+          id: "asset-16",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "Cold Email: Scaling Sales Pipeline Automations",
+          tactic: "Cold Email",
+          status: "under_review",
+          content: "Subject: Eliminating manual dial logs for {company_name}\n\nHi {first_name},\n\nI noticed you have a growing sales team. Most teams lose 15+ hours weekly to manual logs. DealFlow AI automates this, syncing direct records into your CRM. Would you be open to a 5-minute chat next Tuesday?\n\nBest,\n{my_name}",
+          versions: [
+            {
+              version: 1,
+              title: "Cold Email: Scaling Sales Pipeline Automations",
+              content: "Subject: Eliminating manual dial logs for {company_name}\n\nHi {first_name},\n\nI noticed you have a growing sales team. Most teams lose 15+ hours weekly to manual logs. DealFlow AI automates this, syncing direct records into your CRM. Would you be open to a 5-minute chat next Tuesday?\n\nBest,\n{my_name}",
+              updatedAt: "2026-07-06T10:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [
+            { id: "comm-5", comment: "Please replace '{my_name}' with the active agent's signature block.", authorName: "Demo Customer", authorRole: "customer", createdAt: "2026-07-07T11:00:00Z" }
+          ],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-06T10:00:00Z" },
+            { action: "submitted", details: "Submitted for review", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-06T10:15:00Z" }
+          ],
+          createdAt: "2026-07-06T10:00:00Z",
+          updatedAt: "2026-07-06T10:15:00Z"
+        },
+        {
+          id: "asset-17",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "Referral Program: Share DealFlow, Earn Credits",
+          tactic: "Referral Programs",
+          status: "approved",
+          content: "Introduce a colleague to DealFlow AI. When they activate their first GTM audit workflow, both of you will receive 100 platform credits absolutely free. Share your unique referral link: dealflow.ai/ref/{ref_id}",
+          versions: [
+            {
+              version: 1,
+              title: "Referral Program: Share DealFlow, Earn Credits",
+              content: "Introduce a colleague to DealFlow AI. When they activate their first GTM audit workflow, both of you will receive 100 platform credits absolutely free. Share your unique referral link: dealflow.ai/ref/{ref_id}",
+              updatedAt: "2026-07-08T11:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-08T11:00:00Z" },
+            { action: "approved", details: "Approved by Customer Anil", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-09T10:00:00Z" }
+          ],
+          createdAt: "2026-07-08T11:00:00Z",
+          updatedAt: "2026-07-09T10:00:00Z"
+        },
+        {
+          id: "asset-18",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "Affiliate Creators Commission structure guide",
+          tactic: "Affiliate Marketing",
+          status: "draft",
+          content: "Earn 20% recurring monthly commission on all subscriptions referred for up to 12 months. Access prebuilt promotional banners, explainer videos, and social templates to share with your audience.",
+          versions: [
+            {
+              version: 1,
+              title: "Affiliate Creators Commission structure guide",
+              content: "Earn 20% recurring monthly commission on all subscriptions referred for up to 12 months. Access prebuilt promotional banners, explainer videos, and social templates to share with your audience.",
+              updatedAt: "2026-07-09T12:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-09T12:00:00Z" }
+          ],
+          createdAt: "2026-07-09T12:00:00Z",
+          updatedAt: "2026-07-09T12:00:00Z"
+        },
+        {
+          id: "asset-19",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "Community Launch: Join Our Slack Workspace",
+          tactic: "Community Building",
+          status: "published",
+          content: "Join over 500+ RevOps and Sales leaders in the DealFlow Insiders Slack. Ask questions, share workflow templates, and interact directly with DealFlow product engineers. Join link: dealflow.ai/community",
+          versions: [
+            {
+              version: 1,
+              title: "Community Launch: Join Our Slack Workspace",
+              content: "Join over 500+ RevOps and Sales leaders in the DealFlow Insiders Slack. Ask questions, share workflow templates, and interact directly with DealFlow product engineers. Join link: dealflow.ai/community",
+              updatedAt: "2026-07-10T09:00:00Z",
+              updatedBy: "customer-anil",
+              updatedByRole: "customer"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 1800, clicks: 520, conversions: 210, conversionRate: 11.66 },
+          publishedPlatforms: ["Slack", "LinkedIn"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Customer Anil", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-10T09:00:00Z" },
+            { action: "published", details: "Published to Slack and LinkedIn", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-10T10:00:00Z" }
+          ],
+          createdAt: "2026-07-10T09:00:00Z",
+          updatedAt: "2026-07-10T10:00:00Z"
+        },
+        {
+          id: "asset-20",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "G2 Review Outreach Campaign",
+          tactic: "Customer Reviews",
+          status: "scheduled",
+          content: "Did DealFlow help you scale your RevOps strategy? Leave an honest review on G2 and receive a $10 Amazon gift card or 25 extra platform credits. Let's make DealFlow the top-rated tool on the market!",
+          versions: [
+            {
+              version: 1,
+              title: "G2 Review Outreach Campaign",
+              content: "Did DealFlow help you scale your RevOps strategy? Leave an honest review on G2 and receive a $10 Amazon gift card or 25 extra platform credits. Let's make DealFlow the top-rated tool on the market!",
+              updatedAt: "2026-07-11T10:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: ["Mailgun"],
+          scheduledAt: "2026-07-25T09:00:00Z",
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-11T10:00:00Z" },
+            { action: "scheduled", details: "Scheduled for review invitation email blast", performedBy: "customer-anil", performedByRole: "customer", createdAt: "2026-07-12T14:00:00Z" }
+          ],
+          createdAt: "2026-07-11T10:00:00Z",
+          updatedAt: "2026-07-12T14:00:00Z"
+        },
+        {
+          id: "asset-21",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "Interactive GTM Sales ROI Calculator Tool",
+          tactic: "Interactive Tools (ROI Calculator, Quiz)",
+          status: "published",
+          content: "Calculate your potential RevOps savings! Input your team size, average hours spent per rep on manual logging, and monthly lead volume to see how much time and money you save with automated sync. Try it now.",
+          versions: [
+            {
+              version: 1,
+              title: "Interactive GTM Sales ROI Calculator Tool",
+              content: "Calculate your potential RevOps savings! Input your team size, average hours spent per rep on manual logging, and monthly lead volume to see how much time and money you save with automated sync. Try it now.",
+              updatedAt: "2026-07-12T11:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 8400, clicks: 3900, conversions: 620, conversionRate: 7.38, roi: 450 },
+          publishedPlatforms: ["WordPress"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-12T11:00:00Z" },
+            { action: "published", details: "Published to WordPress integration", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-13T09:00:00Z" }
+          ],
+          createdAt: "2026-07-12T11:00:00Z",
+          updatedAt: "2026-07-13T09:00:00Z"
+        },
+        {
+          id: "asset-22",
+          customerId: "customer-anil",
+          customerName: "Anil Kumar",
+          title: "AI Video Script Repurposing Plan",
+          tactic: "AI Content Repurposing",
+          status: "draft",
+          content: "Take your top performing blog post ('Scaling B2B RevOps') and use AI content generation to automatically output: 1. A 90-second YouTube script. 2. A 3-part Twitter thread. 3. A LinkedIn carousel PDF slide structure.",
+          versions: [
+            {
+              version: 1,
+              title: "AI Video Script Repurposing Plan",
+              content: "Take your top performing blog post ('Scaling B2B RevOps') and use AI content generation to automatically output: 1. A 90-second YouTube script. 2. A 3-part Twitter thread. 3. A LinkedIn carousel PDF slide structure.",
+              updatedAt: "2026-07-13T10:00:00Z",
+              updatedBy: "agent-ashok",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Ashok (Agent)", performedBy: "agent-ashok", performedByRole: "agent", createdAt: "2026-07-13T10:00:00Z" }
+          ],
+          createdAt: "2026-07-13T10:00:00Z",
+          updatedAt: "2026-07-13T10:00:00Z"
+        },
+        {
+          id: "asset-23",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "Personalized Landing Page for Fintech Prospects",
+          tactic: "AI Personalization",
+          status: "published",
+          content: "Dynamic content header: 'The Secure, Compliant Way to Automate Fintech Pipelines.' Adjusts references from standard Salesforce to specific financial-compliant systems based on visitor industry classification tags.",
+          versions: [
+            {
+              version: 1,
+              title: "Personalized Landing Page for Fintech Prospects",
+              content: "Dynamic content header: 'The Secure, Compliant Way to Automate Fintech Pipelines.' Adjusts references from standard Salesforce to specific financial-compliant systems based on visitor industry classification tags.",
+              updatedAt: "2026-07-13T14:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 9200, clicks: 2100, conversions: 235, conversionRate: 2.55 },
+          publishedPlatforms: ["Webflow"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-13T14:00:00Z" },
+            { action: "published", details: "Published to Webflow personalization blocks", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-13T15:00:00Z" }
+          ],
+          createdAt: "2026-07-13T14:00:00Z",
+          updatedAt: "2026-07-13T15:00:00Z"
+        },
+        {
+          id: "asset-24",
+          customerId: "customer-praneeth",
+          customerName: "Praneeth Burada",
+          title: "Interactive User Onboarding Guided Product Tour",
+          tactic: "Product Tours",
+          status: "approved",
+          content: "Interactive tour highlighting: Step 1: Navigating your active workspace. Step 2: Creating a custom voice dialing framework. Step 3: Triggering outbound sync sequences. Step 4: Tracking analytics dashboards.",
+          versions: [
+            {
+              version: 1,
+              title: "Interactive User Onboarding Guided Product Tour",
+              content: "Interactive tour highlighting: Step 1: Navigating your active workspace. Step 2: Creating a custom voice dialing framework. Step 3: Triggering outbound sync sequences. Step 4: Tracking analytics dashboards.",
+              updatedAt: "2026-07-14T09:00:00Z",
+              updatedBy: "agent-praneeth",
+              updatedByRole: "agent"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 0, clicks: 0, conversions: 0, conversionRate: 0 },
+          publishedPlatforms: [],
+          auditLogs: [
+            { action: "created", details: "Asset created by Praneeth (Agent)", performedBy: "agent-praneeth", performedByRole: "agent", createdAt: "2026-07-14T09:00:00Z" },
+            { action: "approved", details: "Approved for publication by Customer Praneeth", performedBy: "customer-praneeth", performedByRole: "customer", createdAt: "2026-07-14T10:00:00Z" }
+          ],
+          createdAt: "2026-07-14T09:00:00Z",
+          updatedAt: "2026-07-14T10:00:00Z"
+        },
+        {
+          id: "asset-25",
+          customerId: "customer-demo",
+          customerName: "Demo Customer",
+          title: "2026 Enterprise GTM Tech Stack Report",
+          tactic: "Industry Reports & Research",
+          status: "published",
+          content: "Our annual research survey of 300+ enterprise VP Sales and CTOs reveals: - 78% report CRM entry bottlenecks. - AI voice dialers boost sales pipeline velocity by 3.2x. - Security compliance is the #1 priority for cloud tools.",
+          versions: [
+            {
+              version: 1,
+              title: "2026 Enterprise GTM Tech Stack Report",
+              content: "Our annual research survey of 300+ enterprise VP Sales and CTOs reveals: - 78% report CRM entry bottlenecks. - AI voice dialers boost sales pipeline velocity by 3.2x. - Security compliance is the #1 priority for cloud tools.",
+              updatedAt: "2026-07-14T11:00:00Z",
+              updatedBy: "customer-demo",
+              updatedByRole: "customer"
+            }
+          ],
+          comments: [],
+          performanceMetrics: { views: 3400, clicks: 1350, conversions: 380, conversionRate: 11.17, roi: 320 },
+          publishedPlatforms: ["WordPress"],
+          auditLogs: [
+            { action: "created", details: "Asset created by Demo Customer", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-07-14T11:00:00Z" },
+            { action: "published", details: "Published to WordPress reports page", performedBy: "customer-demo", performedByRole: "customer", createdAt: "2026-07-14T12:00:00Z" }
+          ],
+          createdAt: "2026-07-14T11:00:00Z",
+          updatedAt: "2026-07-14T12:00:00Z"
+        }
+      ];
+
+      for (const asset of defaultContentAssets) {
+        await db.collection("content_assets").doc(asset.id).set(asset);
+      }
+      console.log("[db-init] Seeded content_assets collection successfully.");
+    }
+
   } catch (error) {
+    isSeeded = false;
     console.error("[db-init] Error seeding Firestore:", error);
   }
 }

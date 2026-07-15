@@ -1,1033 +1,1240 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { GlassPanel } from "@/components/immersive";
+import React, { useState } from 'react'
 import {
+  LayoutDashboard,
+  TrendingUp,
   Users,
-  Users2,
-  CheckCircle2,
-  Phone,
-  MessageSquare,
-  Star,
-  Zap,
-  Briefcase,
   FileText,
   Settings,
+  Bell,
+  Search,
+  Plus,
+  MoreHorizontal,
+  Target,
+  Zap,
+  Filter,
+  Calendar,
   Mail,
-  Sparkles,
-  MessageCircle,
-  VideoIcon,
-  Mic2,
-  Brain,
-  SearchIcon,
-  CreditCard,
-  CalendarCheck,
-  ChevronLeft,
-  Loader2,
-  AlertCircle,
-  Check,
+  Phone,
   CheckCircle,
+  Clock,
   ArrowRight,
-  BookOpen,
-  Music2,
-  PenTool,
-  Key,
-  Database,
-  Building2,
+  PieChart,
+  BarChart3,
+  Activity,
+  UserPlus,
+  FileSearch,
   FileSpreadsheet,
-  Layers,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+  BarChart2,
+  TrendingDown,
+  CheckCircle2,
+  Rocket,
+  MessageSquare,
+  Video,
+  Smartphone
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-// The 12 specified strategy & content options matching exactly the user prompt
-const MARKETING_CATEGORIES = [
+// Sample data for demonstration
+const deals = [
   {
-    id: "outreach",
-    title: "Outreach & Direct Engagement",
-    icon: Mail,
-    color: "text-teal-400",
-    hoverColor: "hover:border-teal-500/40",
-    borderColor: "border-teal-500/20",
-    glowColor: "shadow-teal-500/10",
-    engine: "Smartlead Outreach CRM API",
-    items: [
-      "Cold email outreach (sequences, personalization at scale)",
-      "LinkedIn outreach / social selling",
-      "Cold calling / SDR outreach",
-      "Account-based marketing (ABM) campaigns"
-    ]
+    id: '1',
+    company: 'Stark Industries',
+    contact: 'Tony Stark',
+    value: 250000,
+    stage: 'proposal',
+    lastActivity: '2 days ago',
+    avatar: 'SI'
   },
   {
-    id: "influencer",
-    title: "Influencer & creator partnerships",
-    icon: Sparkles,
-    color: "text-purple-400",
-    hoverColor: "hover:border-purple-500/40",
-    borderColor: "border-purple-500/20",
-    glowColor: "shadow-purple-500/10",
-    engine: "PartnerStack Affiliate API",
-    items: [
-      "Affiliate marketing programs",
-      "PR outreach / journalist pitching (HARO, etc.)"
-    ]
+    id: '2',
+    company: 'Wayne Enterprises',
+    contact: 'Bruce Wayne',
+    value: 450000,
+    stage: 'negotiation',
+    lastActivity: '5 hours ago',
+    avatar: 'WE'
   },
   {
-    id: "written",
-    title: "Written Content",
-    icon: BookOpen,
-    color: "text-blue-400",
-    hoverColor: "hover:border-blue-500/40",
-    borderColor: "border-blue-500/20",
-    glowColor: "shadow-blue-500/10",
-    engine: "OpenAI GPT-4 Content Engine",
-    items: [
-      "Blog posts (educational, SEO-focused, thought leadership)",
-      "Guest posting on other sites",
-      "Case studies / customer success stories",
-      "Whitepapers & ebooks (gated for lead gen)",
-      "Newsletters (email digests)",
-      "Press releases",
-      "Comparison pages (\"X vs Y\" content for SEO)",
-      "Glossary / definition pages (SEO long-tail)",
-      "Documentation-as-marketing (great docs that rank in search)"
-    ]
-  },
-  {
-    id: "social",
-    title: "Social Media Posts",
-    icon: MessageCircle,
-    color: "text-pink-400",
-    hoverColor: "hover:border-pink-500/40",
-    borderColor: "border-pink-500/20",
-    glowColor: "shadow-pink-500/10",
-    engine: "Buffer Social Queue API",
-    items: [
-      "LinkedIn posts (company page + founder/employee personal brand)",
-      "Twitter/X threads",
-      "Instagram posts/reels",
-      "Facebook posts/ads",
-      "Reddit engagement (organic, community-driven)",
-      "Quora answers"
-    ]
-  },
-  {
-    id: "video",
-    title: "Video Content",
-    icon: VideoIcon,
-    color: "text-emerald-400",
-    hoverColor: "hover:border-emerald-500/40",
-    borderColor: "border-emerald-500/20",
-    glowColor: "shadow-emerald-500/10",
-    engine: "HeyGen Video Avatar Generator",
-    items: [
-      "Auto video generation (AI tools turning blog posts/scripts into videos)",
-      "Explainer videos / product demos",
-      "YouTube tutorials",
-      "Short-form video (Reels, TikTok, YouTube Shorts)",
-      "Webinars (live + recorded)",
-      "Customer testimonial videos",
-      "Founder vlogs / behind-the-scenes",
-      "Animated product walkthroughs"
-    ]
-  },
-  {
-    id: "audio",
-    title: "Audio",
-    icon: Music2,
-    color: "text-yellow-400",
-    hoverColor: "hover:border-yellow-500/40",
-    borderColor: "border-yellow-500/20",
-    glowColor: "shadow-yellow-500/10",
-    engine: "ElevenLabs Voice Over API",
-    items: [
-      "Podcasts (own podcast + guest appearances)",
-      "AI-generated audio summaries of content"
-    ]
-  },
-  {
-    id: "visual",
-    title: "Visual/Design Content",
-    icon: PenTool,
-    color: "text-indigo-400",
-    hoverColor: "hover:border-indigo-500/40",
-    borderColor: "border-indigo-500/20",
-    glowColor: "shadow-indigo-500/10",
-    engine: "Midjourney Visuals Synthesis",
-    items: [
-      "Infographics",
-      "Carousel posts (LinkedIn/Instagram)",
-      "Memes (industry-specific humor)",
-      "Data visualizations / original research graphics",
-      "Slide decks shared publicly (SlideShare-style)"
-    ]
-  },
-  {
-    id: "ai",
-    title: "AI-Generated / Automated Content",
-    icon: Brain,
-    color: "text-violet-400",
-    hoverColor: "hover:border-violet-500/40",
-    borderColor: "border-violet-500/20",
-    glowColor: "shadow-violet-500/10",
-    engine: "Zapier Automated Workflows API",
-    items: [
-      "AI blog post generation (then human-edited)",
-      "AI video generation (Synthesia, HeyGen-style avatar videos)",
-      "AI image generation for visuals",
-      "AI-personalized email content",
-      "Auto-generated social posts from long-form content (repurposing)",
-      "AI voiceovers for videos",
-      "Chatbot-driven content delivery"
-    ]
-  },
-  {
-    id: "seo",
-    title: "SEO-Specific Tactics",
-    icon: SearchIcon,
-    color: "text-green-400",
-    hoverColor: "hover:border-green-500/40",
-    borderColor: "border-green-500/20",
-    glowColor: "shadow-green-500/10",
-    engine: "Ahrefs SEO Crawling API",
-    items: [
-      "Keyword-targeted landing pages",
-      "Programmatic SEO (auto-generated pages at scale, e.g., \"best tool for X city/industry\")",
-      "Backlink building campaigns",
-      "Internal linking strategy content"
-    ]
-  },
-  {
-    id: "paid",
-    title: "Paid Promotion",
-    icon: CreditCard,
-    color: "text-orange-400",
-    hoverColor: "hover:border-orange-500/40",
-    borderColor: "border-orange-500/20",
-    glowColor: "shadow-orange-500/10",
-    engine: "Google Ads Developer API",
-    items: [
-      "Google Ads / search ads",
-      "LinkedIn Ads",
-      "Retargeting ads",
-      "Sponsored newsletter placements",
-      "Podcast sponsorships"
-    ]
-  },
-  {
-    id: "community",
-    title: "Community-Driven Content",
-    icon: Users2,
-    color: "text-cyan-400",
-    hoverColor: "hover:border-cyan-500/40",
-    borderColor: "border-cyan-500/20",
-    glowColor: "shadow-cyan-500/10",
-    engine: "G2 Review Tracker Webhooks",
-    items: [
-      "User-generated content (UGC) campaigns",
-      "Review site presence (G2, Capterra, TrustRadius)",
-      "Community Q&A / forums",
-      "Open-source contributions (if applicable) as marketing"
-    ]
-  },
-  {
-    id: "events",
-    title: "Events",
-    icon: CalendarCheck,
-    color: "text-rose-400",
-    hoverColor: "hover:border-rose-500/40",
-    borderColor: "border-rose-500/20",
-    glowColor: "shadow-rose-500/10",
-    engine: "Luma Events Management API",
-    items: [
-      "Webinars",
-      "Virtual summits / conferences",
-      "Local meetups",
-      "Trade show presence"
-    ]
+    id: '3',
+    company: 'Wakanda Industries',
+    contact: "T'Challa",
+    value: 800000,
+    stage: 'closed-won',
+    lastActivity: '1 week ago',
+    avatar: 'WI'
   }
-];
+]
 
-const tabs = [
-  { id: "requirements", label: "Requirements", icon: Users },
-  { id: "icp-entries", label: "ICP Entries", icon: FileText },
-  { id: "tasks", label: "Tasks", icon: CheckCircle2 },
-  { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "calls", label: "Calls", icon: Phone },
-  { id: "playbook", label: "ICP Playbook", icon: FileText },
-  { id: "workspace", label: "Workspace", icon: Briefcase },
-  { id: "metrics", label: "My Metrics", icon: Star },
-  { id: "credits", label: "Credits", icon: Zap },
-  { id: "voice-whatsapp", label: "Voice & WhatsApp", icon: Settings },
-] as const;
+const stages = [
+  { id: 'lead', label: 'Lead', color: 'text-gray-400 bg-gray-900' },
+  { id: 'qualification', label: 'Qualification', color: 'text-blue-400 bg-blue-900/30' },
+  { id: 'proposal', label: 'Proposal', color: 'text-purple-400 bg-purple-900/30' },
+  { id: 'negotiation', label: 'Negotiation', color: 'text-orange-400 bg-orange-900/30' },
+  { id: 'closed-won', label: 'Closed Won', color: 'text-green-400 bg-green-900/30' },
+  { id: 'closed-lost', label: 'Closed Lost', color: 'text-red-400 bg-red-900/30' }
+]
+
+const contentAssets = [
+  {
+    id: '1',
+    title: 'Enterprise Cold Email Template',
+    type: 'Email',
+    performance: 85,
+    lastModified: '2024-01-15',
+    tags: ['Enterprise', 'Cold Outreach']
+  },
+  {
+    id: '2',
+    title: 'Product One-Pager',
+    type: 'Document',
+    performance: 92,
+    lastModified: '2024-01-10',
+    tags: ['Sales Enablement']
+  },
+  {
+    id: '3',
+    title: 'Case Study - TechCorp',
+    type: 'PDF',
+    performance: 78,
+    lastModified: '2024-01-05',
+    tags: ['Case Study', 'Tech']
+  }
+]
+
+const marketingTactics = [
+  {
+    id: '1',
+    name: 'LinkedIn Outreach',
+    status: 'active',
+    reach: 2500,
+    engagement: 12.5,
+    leads: 45,
+    budget: 5000
+  },
+  {
+    id: '2',
+    name: 'Email Campaign',
+    status: 'active',
+    reach: 10000,
+    engagement: 8.2,
+    leads: 120,
+    budget: 3000
+  },
+  {
+    id: '3',
+    name: 'Webinar Series',
+    status: 'draft',
+    reach: 0,
+    engagement: 0,
+    leads: 0,
+    budget: 8000
+  }
+]
+
+const categories = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, color: 'text-blue-400' },
+  { id: 'deals', label: 'Deals', icon: TrendingUp, color: 'text-green-400' },
+  { id: 'marketing-intake', label: 'Marketing Intake', icon: FileSearch, color: 'text-cyan-400' },
+  { id: 'marketing-profile', label: 'Marketing Profile', icon: FileSpreadsheet, color: 'text-emerald-400' },
+  { id: 'content', label: 'Content', icon: FileText, color: 'text-purple-400' },
+  { id: 'tactics', label: 'Tactics', icon: Target, color: 'text-orange-400' },
+  { id: 'contacts', label: 'Contacts', icon: Users, color: 'text-pink-400' },
+  { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-400' }
+]
 
 export default function WorkspaceContent() {
-  const router = useRouter();
-
-  // Component States
-  const [leads, setLeads] = useState<any[]>([]);
-  const [activeWSLeadId, setActiveWSLeadId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<typeof MARKETING_CATEGORIES[number] | null>(null);
-  const [selectedTacticName, setSelectedTacticName] = useState<string | null>(null);
-  const [workspaceTone, setWorkspaceTone] = useState("Professional");
-  const [workspaceKeywords, setWorkspaceKeywords] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState("");
-  const [loadingLeads, setLoadingLeads] = useState(true);
-  const [errorLoading, setErrorLoading] = useState<string | null>(null);
-
-  // Synced states
-  const [syncedTasks, setSyncedTasks] = useState<any[]>([]);
-  const [syncedMessages, setSyncedMessages] = useState<any[]>([]);
-
-  // API Credentials Config state (Individual API key per category)
-  const [apiKeys, setApiKeys] = useState<Record<string, string>>({
-    outreach: "df-outreach-sk-••••••••••••",
-    influencer: "df-influencer-sk-••••••••••••",
-    written: "df-openai-sk-••••••••••••",
-    social: "df-social-sk-••••••••••••",
-    video: "df-heygen-sk-••••••••••••",
-    audio: "df-elevenlabs-sk-••••••••••••",
-    visual: "df-midjourney-sk-••••••••••••",
-    ai: "df-automation-sk-••••••••••••",
-    seo: "df-ahrefs-sk-••••••••••••",
-    paid: "df-googleads-sk-••••••••••••",
-    community: "df-reddit-sk-••••••••••••",
-    events: "df-luma-sk-••••••••••••",
-  });
-  const [consoleTab, setConsoleTab] = useState<"generate" | "api">("generate");
-
-  // Toast Notification
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    title: string;
-    message: string;
-  } | null>(null);
-
-  const showToast = (type: "success" | "error" | "info", title: string, message: string) => {
-    setToast({ type, title, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 4000);
-  };
-
-  // Fetch leads and localStorage records on mount
-  useEffect(() => {
-    async function loadWorkspaceData() {
-      try {
-        setLoadingLeads(true);
-        const res = await fetch("/api/leads");
-        if (!res.ok) {
-          throw new Error(`Leads fetch failed with status ${res.status}`);
-        }
-        const data = await res.json();
-        if (data.success && data.leads) {
-          setLeads(data.leads);
-          if (data.leads.length > 0) {
-            setActiveWSLeadId(data.leads[0].id);
-          }
-          setErrorLoading(null);
-        } else {
-          throw new Error(data.message || "Failed to load leads from system database.");
-        }
-      } catch (err: any) {
-        console.error(err);
-        setErrorLoading(err?.message || "An unexpected error occurred while loading clients.");
-      } finally {
-        setLoadingLeads(false);
-      }
-    }
-
-    // Load API Keys
-    const savedKeys = localStorage.getItem("df_workspace_api_keys");
-    if (savedKeys) {
-      try {
-        setApiKeys(JSON.parse(savedKeys));
-      } catch (e) {
-        console.error("Failed to parse saved API keys:", e);
-      }
-    }
-
-    // Read synced tasks/messages
-    const savedTasks = localStorage.getItem("df_agent_tasks");
-    if (savedTasks) {
-      try { setSyncedTasks(JSON.parse(savedTasks)); } catch (e) { setSyncedTasks([]); }
-    } else {
-      setSyncedTasks([]);
-    }
-
-    const savedMsgs = localStorage.getItem("df_chat_messages");
-    if (savedMsgs) {
-      try { setSyncedMessages(JSON.parse(savedMsgs)); } catch (e) { setSyncedMessages([]); }
-    } else {
-      setSyncedMessages([]);
-    }
-
-    loadWorkspaceData();
-  }, []);
-
-  const handleApiKeyChange = (category: string, value: string) => {
-    const updated = { ...apiKeys, [category]: value };
-    setApiKeys(updated);
-    localStorage.setItem("df_workspace_api_keys", JSON.stringify(updated));
-  };
-
-  // Update tasks/messages inside localStorage
-  const updateLocalTasks = (newTasks: any[]) => {
-    setSyncedTasks(newTasks);
-    localStorage.setItem("df_agent_tasks", JSON.stringify(newTasks));
-  };
-
-  const updateLocalMessages = (newMsgs: any[]) => {
-    setSyncedMessages(newMsgs);
-    localStorage.setItem("df_chat_messages", JSON.stringify(newMsgs));
-  };
-
-  // Safe leads lookup
-  const activeWSLead = leads.find((l) => l.id === activeWSLeadId) || leads[0];
-
-  // Campaign templates list for one-click generation
-  const OUTREACH_TEMPLATES = [
-    {
-      name: "Intro Hook",
-      subject: "Operational bottlenecks?",
-      generate: (company: string, prom: string, pain: string) =>
-        `Subject: Resolving manual ${pain} bottleneck at ${company}?\n\nHi {{Contact Name}},\n\nI noticed ${company} is scaling operations but dealing with manual ${pain}.\n\nWe deployed specialized AI revenue agents that help you ${prom} autonomously and save up to 6 hours weekly.\n\nAre you open to a 10-minute chat next Tuesday?\n\nBest,\n\n[Agent Name]`
+  const [selectedCategory, setSelectedCategory] = useState(categories[0])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [formStep, setFormStep] = useState(1)
+  const [marketingIntakeData, setMarketingIntakeData] = useState({
+    businessInfo: {
+      officialBusinessName: '',
+      primaryWebsiteUrl: '',
+      industryVertical: '',
+      businessType: 'B2B' as const,
+      companySize: { numberOfEmployees: '', revenueBracket: '' },
+      coreProductServiceName: '',
+      productServiceDescription: '',
+      uniqueValueProposition: '',
+      pricingModel: '',
+      targetMarket: '',
+      targetCountries: [] as string[],
+      targetLanguages: [] as string[]
     },
-    {
-      name: "SDR Follow-up",
-      subject: "Following up: GTM efficiency",
-      generate: (company: string, prom: string, pain: string) =>
-        `Subject: Following up: GTM efficiency for ${company}\n\nHi {{Contact Name}},\n\nI wanted to share a quick metric: we recently worked with a firm similar to ${company} who was struggling with ${pain}. By automating their sync, they was able to ${prom} and saw 40% higher pipeline speed.\n\nLet me know if you have 5 minutes this week.\n\nBest,\n\n[Agent Name]`
+    customerInfo: {
+      idealCustomerProfile: '',
+      buyerPersonas: '',
+      keyDecisionMakers: '',
+      customerPainPoints: '',
+      customerChallenges: '',
+      buyingTriggers: '',
+      commonObjections: ''
     },
-    {
-      name: "Meeting Booking",
-      subject: "Calendar invite proposal",
-      generate: (company: string, prom: string, pain: string) =>
-        `Subject: Proposal to solve manual CRM logging at ${company}\n\nHi {{Contact Name}},\n\nI've loaded a direct meeting proposal. Let's lock in 10 minutes next Tuesday to walk through how DealFlow AI solves ${pain} and automates ${prom}.\n\nHere is a calendar link: {{Calendar Link}}\n\nBest,\n\n[Agent Name]`
-    },
-    {
-      name: "Re-engagement",
-      subject: "Resuscitating discussion",
-      generate: (company: string, prom: string, pain: string) =>
-        `Subject: Resuscitating discussion on ${pain}\n\nHi {{Contact Name}},\n\nAre you still looking to optimize ${company}'s sales pipelines and eliminate ${pain}? We just rolled out our new autonomous dialer to help teams ${prom}.\n\nLet me know if you are open to re-opening the thread.\n\nBest,\n\n[Agent Name]`
+    marketingInfo: {
+      primaryBusinessGoal: '',
+      measurableMarketingObjectives: '',
+      currentMarketingChannels: [] as string[],
+      existingMarketingAssets: '',
+      competitors: '',
+      primaryKeywords: '',
+      longTailKeywords: '',
+      brandTone: '',
+      brandVoice: '',
+      marketingBudget: '',
+      salesCycleLength: ''
     }
-  ];
-
-  const handleApplyTemplate = (template: typeof OUTREACH_TEMPLATES[number]) => {
-    if (!activeWSLead) return;
-    setIsGenerating(true);
-    setTimeout(() => {
-      const formattedText = template.generate(
-        activeWSLead.companyName || "your company",
-        activeWSLead.offerPromise || "optimize revenue pipelines",
-        activeWSLead.painPoint || "manual administrative tasks"
-      );
-      setGeneratedContent(formattedText);
-      setIsGenerating(false);
-      showToast("success", "Template Applied", `Successfully generated "${template.name}" outreach template.`);
-    }, 450);
-  };
-
-  const handleGenerate = () => {
-    if (!selectedTacticName) {
-      showToast("error", "Tactic Required", "Please select a specific tactic from the categories list.");
-      return;
-    }
-    setIsGenerating(true);
-    setTimeout(() => {
-      // Direct baseline builder
-      const prom = activeWSLead?.offerPromise || "Optimize GTM pipelines";
-      const pain = activeWSLead?.painPoint || "manual admin workload";
-      const brand = activeWSLead?.companyName || "your team";
-      
-      const text = `Campaign Type: ${selectedTacticName} Strategy\nClient: ${brand}\nTone: ${workspaceTone}\n\n[Generated copy]\nSubject: Solving GTM inefficiencies for ${brand}\n\nHi {{Name}},\n\nI noticed ${brand} is experiencing bottleneck operational delays. Most sales reps spend hours on manual admin rather than talking with leads.\n\nWe help teams ${prom} to resolve ${pain} automatically.\n\nAre you open to a brief chat next Tuesday?\n\nBest,\n[Agent Name]`;
-      
-      setGeneratedContent(text);
-      setIsGenerating(false);
-      showToast("success", "Synthesis Complete", "Generated campaign strategy based on client parameters.");
-    }, 700);
-  };
+  })
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [marketingProfile, setMarketingProfile] = useState<any>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <GlassPanel
-            tilt={false}
-            className={cn(
-              "p-4 rounded-2xl border flex items-start gap-3 shadow-2xl max-w-sm",
-              toast.type === "success" ? "border-emerald-500/30 bg-emerald-950/80" : "border-rose-500/30 bg-rose-950/80"
-            )}
-          >
-            <div className="mt-0.5">
-              {toast.type === "success" ? (
-                <CheckCircle className="h-5 w-5 text-emerald-400 animate-pulse" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-rose-400" />
-              )}
-            </div>
-            <div>
-              <p className="font-bold text-sm text-white">{toast.title}</p>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">{toast.message}</p>
-            </div>
-          </GlassPanel>
-        </div>
-      )}
-
-      {/* Main Top Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-b from-slate-950 to-slate-950/90 backdrop-blur-xl border-b border-slate-800">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push("/portal/agent")}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              aria-label="Back to Agent Dashboard"
-            >
-              <ChevronLeft className="h-4.5 w-4.5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-teal-400" />
-                Campaign Workspace
-              </h1>
-              <p className="text-xs text-slate-400">Define, generate, and execute marketing channels</p>
-            </div>
-          </div>
+    <div className="flex min-h-screen bg-slate-950 text-slate-200">
+      {/* Sidebar */}
+      <aside className="w-64 border-r border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        <div className="flex h-16 items-center border-b border-slate-800 px-6">
           <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+              DealFlow
+            </span>
+          </div>
+        </div>
+
+        <nav className="space-y-1 p-4">
+          {categories.map((category) => (
             <button
-              onClick={() => router.push("/portal/agent")}
-              className="text-xs font-semibold px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-xl transition-all"
+              key={category.id}
+              onClick={() => setSelectedCategory(category)}
+              className={cn(
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                selectedCategory.id === category.id
+                  ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-white shadow-lg shadow-blue-500/10'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent hover:border-slate-700'
+              )}
             >
-              Close Workspace
+              <category.icon className="h-5 w-5" />
+              <span className="font-medium">{category.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">
+              JD
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">Jane Doe</p>
+              <p className="text-xs text-slate-500 truncate">Sales Manager</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-16 border-b border-slate-800 bg-slate-900/30 backdrop-blur-sm flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search deals, contacts, or content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 w-96 rounded-xl border border-slate-700 bg-slate-900 pl-10 pr-4 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="relative p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-all">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg shadow-blue-500/20">
+              <Plus className="h-4 w-4" />
+              <span>New Deal</span>
             </button>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Navigation tabs frame to preserve dashboard routing */}
-      <div className="container mx-auto px-6 pt-6">
-        <div className="bg-slate-900/50 border border-slate-800/80 p-2 rounded-2xl flex flex-wrap gap-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isWorkspace = tab.id === "workspace";
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  if (!isWorkspace) {
-                    router.push(`/portal/agent?tab=${tab.id}`);
-                  }
-                }}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200",
-                  isWorkspace
-                    ? "bg-slate-800 text-white shadow-lg border border-slate-700 cursor-default"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                )}
-                aria-current={isWorkspace ? "page" : undefined}
-                disabled={isWorkspace}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        {/* Content area */}
+        <div className="flex-1 overflow-auto p-6">
+          {/* Category Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-white mb-2">
+                  {selectedCategory.label}
+                </h1>
+                <p className="text-slate-400">
+                  Manage your {selectedCategory.label.toLowerCase()} and track performance
+                </p>
+              </div>
+            </div>
+          </div>
 
-      {/* Primary Content Container */}
-      <main className="container mx-auto px-6 py-8 flex-1 flex flex-col">
-        {loadingLeads ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 text-teal-400 animate-spin" />
-            <p className="text-slate-400 text-sm mt-3 animate-pulse">Initializing clients and outreach strategies...</p>
-          </div>
-        ) : errorLoading ? (
-          <div className="flex-1 flex items-center justify-center py-16">
-            <GlassPanel tilt={false} className="border-rose-500/20 max-w-md w-full p-6 text-center">
-              <AlertCircle className="h-12 w-12 text-rose-400 mx-auto mb-4" />
-              <h2 className="text-lg font-bold text-white mb-2">Workspace Load Failed</h2>
-              <p className="text-sm text-slate-400 mb-6">{errorLoading}</p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-5"
-              >
-                Retry Loading
-              </Button>
-            </GlassPanel>
-          </div>
-        ) : (
-          <div className="space-y-8 flex-1 flex flex-col">
-            {/* Top Workspace Configuration Dashboard */}
-            <GlassPanel tilt={false} className="border-slate-800/80 p-5 bg-slate-900/30">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-1">
-                  <h2 className="text-lg font-bold text-white">Active Marketing Client</h2>
-                  <p className="text-xs text-slate-400">Select the customer account to customize campaign variables</p>
+          {/* Overview Dashboard */}
+          {selectedCategory.id === 'overview' && (
+            <div className="space-y-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                  title="Total Revenue"
+                  value="$1.5M"
+                  change="+24%"
+                  positive={true}
+                  icon={TrendingUp}
+                />
+                <StatCard
+                  title="Active Deals"
+                  value="24"
+                  change="+5"
+                  positive={true}
+                  icon={Target}
+                />
+                <StatCard
+                  title="Conversion Rate"
+                  value="32%"
+                  change="+8%"
+                  positive={true}
+                  icon={CheckCircle}
+                />
+                <StatCard
+                  title="Pipeline Value"
+                  value="$4.2M"
+                  change="+12%"
+                  positive={true}
+                  icon={PieChart}
+                />
+              </div>
+
+              {/* Recent Deals and Performance */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Recent Deals</h3>
+                    <div className="space-y-4">
+                      {deals.map((deal) => (
+                        <DealCard key={deal.id} deal={deal} />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full md:w-80">
-                  <label htmlFor="workspace-client-select" className="sr-only">
-                    Select Customer Lead
-                  </label>
-                  <select
-                    id="workspace-client-select"
-                    value={activeWSLeadId}
-                    onChange={(e) => {
-                      setActiveWSLeadId(e.target.value);
-                      setGeneratedContent("");
-                    }}
-                    className="w-full bg-slate-950 border border-slate-850 hover:border-slate-750 text-slate-200 rounded-xl px-4.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 cursor-pointer"
-                  >
-                    {leads.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.companyName} ({l.contactName || "Contact"})
-                      </option>
+
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Stage Overview</h3>
+                  <div className="space-y-3">
+                    {stages.map((stage) => (
+                      <div key={stage.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={cn('px-2 py-1 rounded-lg text-xs font-medium', stage.color)}>
+                            {stage.label}
+                          </span>
+                        </div>
+                        <span className="text-slate-400 text-sm">5 deals</span>
+                      </div>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
-            </GlassPanel>
+            </div>
+          )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
-              
-              {/* Column 1: Direct Customer Profile Sidebar (Span 3) */}
-              {activeWSLead && (
-                <div className="lg:col-span-3 space-y-6">
-                  <GlassPanel className="border border-slate-800 p-5 space-y-5 bg-slate-900/10">
-                    <div className="flex items-center gap-2 pb-3 border-b border-slate-850">
-                      <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                        <Building2 className="h-4.5 w-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-xs text-slate-100 uppercase tracking-wider">Client Profile</h3>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{activeWSLead.id}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 text-xs">
-                      <div>
-                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Company Name</span>
-                        <span className="text-white font-medium block text-sm">{activeWSLead.companyName}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Primary Contact</span>
-                        <span className="text-slate-250 block">{activeWSLead.contactName || "Unspecified"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Target Persona / ICP</span>
-                        <span className="text-purple-400 font-medium block leading-normal">{activeWSLead.icpDescription || "Enterprise B2B SaaS Decision Makers"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Core Pain Point</span>
-                        <span className="text-slate-300 block leading-normal">{activeWSLead.painPoint || "Administrative tasks bottlenecking rep sales calls"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-550 uppercase tracking-widest block font-bold mb-1">Offer Promise</span>
-                        <span className="text-teal-350 block leading-normal">{activeWSLead.offerPromise || "Optimize sales dialers and CRM sync autonomously"}</span>
-                      </div>
-                      <div className="pt-2 border-t border-slate-850 flex justify-between items-center text-[10px]">
-                        <span className="text-slate-500">GTM Status:</span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 font-bold">Active Sync</span>
-                      </div>
-                    </div>
-                  </GlassPanel>
+          {/* Deals Pipeline */}
+          {selectedCategory.id === 'deals' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
+                    <Filter className="h-4 w-4" />
+                    Filter
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    Timeline
+                  </button>
                 </div>
-              )}
+              </div>
 
-              {/* Column 2: Marketing Channels & Strategy Categories (Span 5) */}
-              <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-4">Marketing Channels & Strategy Categories</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {MARKETING_CATEGORIES.map((category) => {
-                      const Icon = category.icon;
-                      const isExpanded = selectedCategory?.id === category.id;
-                      const hasKey = apiKeys[category.id] && apiKeys[category.id].trim().length > 0;
-                      return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {stages.map((stage) => (
+                  <div key={stage.id} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={cn('px-3 py-1 rounded-lg text-xs font-semibold', stage.color)}>
+                        {stage.label}
+                      </span>
+                      <span className="text-slate-500 text-sm">5</span>
+                    </div>
+                    <div className="space-y-3">
+                      {deals.map((deal) => (
                         <div
-                          key={category.id}
-                          tabIndex={0}
-                          role="button"
-                          aria-expanded={isExpanded}
-                          aria-label={`Marketing Category: ${category.title}. Press enter to expand tactics.`}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setSelectedCategory(isExpanded ? null : category);
-                            }
-                          }}
-                          onClick={() => setSelectedCategory(isExpanded ? null : category)}
-                          className={cn(
-                            "text-left bg-slate-900/40 border rounded-2xl p-4 transition-all duration-300 relative group flex flex-col justify-between hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 cursor-pointer min-h-[110px]",
-                            category.borderColor,
-                            category.glowColor,
-                            isExpanded
-                              ? "border-teal-500 shadow-md shadow-teal-500/10 bg-slate-800/40"
-                              : "hover:border-slate-650 hover:bg-slate-800/20"
-                          )}
+                          key={deal.id}
+                          className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className={cn("p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 transition-colors group-hover:bg-slate-900", category.color)}>
-                              <Icon className="h-5 w-5" />
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                              {deal.avatar}
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="text-[10px] bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded-full text-slate-400 group-hover:text-slate-200">
-                                {category.items.length} tactics
-                              </span>
-                              <span className={cn(
-                                "text-[9px] font-semibold px-2 py-0.5 rounded-full",
-                                hasKey ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-slate-800 text-slate-400"
-                              )}>
-                                {hasKey ? "API Connected" : "No API Key"}
-                              </span>
-                            </div>
+                            <span className="text-xs text-slate-500">{deal.lastActivity}</span>
                           </div>
-                          <div className="mt-3">
-                            <h4 className="font-bold text-sm text-slate-200 group-hover:text-white transition-colors">
-                              {category.title}
-                            </h4>
+                          <p className="font-medium text-white mb-1">{deal.company}</p>
+                          <p className="text-sm text-slate-400 mb-3">{deal.contact}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-lg font-bold text-green-400">
+                              ${deal.value.toLocaleString()}
+                            </span>
+                            <button className="p-1.5 text-slate-500 hover:text-slate-300">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Content Assets */}
+          {selectedCategory.id === 'content' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {contentAssets.map((asset) => (
+                  <div
+                    key={asset.id}
+                    className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-blue-500/30 transition-all hover:shadow-lg hover:shadow-blue-500/5"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-medium text-slate-500">
+                          {asset.type}
+                        </span>
+                      </div>
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">{asset.title}</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-slate-400">Performance Score</span>
+                          <span className="text-green-400 font-medium">{asset.performance}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                            style={{ width: `${asset.performance}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {asset.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 rounded-lg text-xs bg-slate-800 text-slate-400"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Last modified: {asset.lastModified}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Marketing Intake */}
+          {selectedCategory.id === 'marketing-intake' && (
+            <div className="space-y-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-white">Marketing Strategy Intake Form</h2>
+                  <div className="flex gap-2">
+                    {[1,2,3].map(step => (
+                      <div 
+                        key={step}
+                        onClick={() => setFormStep(step)}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
+                          formStep === step
+                            ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                      >
+                        Step {step}
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                {/* Sub-tactics accordion style list */}
-                {selectedCategory && (
-                  <div className="bg-slate-900/50 border border-slate-850 p-6 rounded-2xl animate-fade-in space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-850 pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className={cn("p-1.5 rounded-lg bg-slate-950 border border-slate-800", selectedCategory.color)}>
-                          <selectedCategory.icon className="h-4 w-4" />
+                <div className="p-6">
+                  {/* Step 1: Business Info */}
+                  {formStep === 1 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-4 lg:col-span-2">
+                        <h3 className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
+                          <FileText className="h-5 w-5" /> Business Information
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Official Business Name</label>
+                            <input 
+                              type="text" 
+                              value={marketingIntakeData.businessInfo.officialBusinessName}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: { ...prev.businessInfo, officialBusinessName: e.target.value }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                              placeholder="Acme Corporation"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Primary Website URL</label>
+                            <input 
+                              type="url" 
+                              value={marketingIntakeData.businessInfo.primaryWebsiteUrl}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: { ...prev.businessInfo, primaryWebsiteUrl: e.target.value }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                              placeholder="https://acme.com"
+                            />
+                          </div>
                         </div>
-                        <h4 className="font-bold text-sm text-white">{selectedCategory.title} Options</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Industry Vertical</label>
+                            <input 
+                              type="text" 
+                              value={marketingIntakeData.businessInfo.industryVertical}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: { ...prev.businessInfo, industryVertical: e.target.value }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                              placeholder="e.g., SaaS, Healthcare, Fintech"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Business Type</label>
+                            <select
+                              value={marketingIntakeData.businessInfo.businessType}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: { 
+                                  ...prev.businessInfo, 
+                                  businessType: e.target.value as any
+                                }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                            >
+                              <option value="B2B">B2B</option>
+                              <option value="B2C">B2C</option>
+                              <option value="D2C">D2C</option>
+                              <option value="eCommerce">eCommerce</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Number of Employees</label>
+                            <input 
+                              type="text" 
+                              value={marketingIntakeData.businessInfo.companySize.numberOfEmployees}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: {
+                                  ...prev.businessInfo,
+                                  companySize: {
+                                    ...prev.businessInfo.companySize,
+                                    numberOfEmployees: e.target.value
+                                  }
+                                }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                              placeholder="e.g., 1-10, 11-50, 51-200"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Revenue Bracket</label>
+                            <input 
+                              type="text" 
+                              value={marketingIntakeData.businessInfo.companySize.revenueBracket}
+                              onChange={(e) => setMarketingIntakeData(prev => ({
+                                ...prev,
+                                businessInfo: {
+                                  ...prev.businessInfo,
+                                  companySize: {
+                                    ...prev.businessInfo.companySize,
+                                    revenueBracket: e.target.value
+                                  }
+                                }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                              placeholder="e.g., $0-1M, $1M-$5M"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Core Product/Service Name</label>
+                          <input 
+                            type="text" 
+                            value={marketingIntakeData.businessInfo.coreProductServiceName}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              businessInfo: { ...prev.businessInfo, coreProductServiceName: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                            placeholder="Acme Sales Tool"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Detailed Product/Service Description</label>
+                          <textarea
+                            value={marketingIntakeData.businessInfo.productServiceDescription}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              businessInfo: { ...prev.businessInfo, productServiceDescription: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[120px]"
+                            placeholder="What does your product or service do? What are core functionalities/use cases?"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Formal Unique Value Proposition (UVP)</label>
+                          <textarea
+                            value={marketingIntakeData.businessInfo.uniqueValueProposition}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              businessInfo: { ...prev.businessInfo, uniqueValueProposition: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[80px]"
+                            placeholder="What makes you unique?"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Current Pricing Model</label>
+                          <input 
+                            type="text" 
+                            value={marketingIntakeData.businessInfo.pricingModel}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              businessInfo: { ...prev.businessInfo, pricingModel: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                            placeholder="Subscription, one-time, freemium, tiered, etc."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Defined Target Market</label>
+                          <textarea
+                            value={marketingIntakeData.businessInfo.targetMarket}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              businessInfo: { ...prev.businessInfo, targetMarket: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[80px]"
+                            placeholder="Demographics, firmographics, etc."
+                          />
+                        </div>
                       </div>
-                      <button
-                        onClick={() => setSelectedCategory(null)}
-                        className="text-xs text-slate-500 hover:text-slate-300"
-                      >
-                        Deselect
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {selectedCategory.items.map((item) => {
-                        const isSelected = selectedTacticName === item;
-                        return (
-                          <button
-                            key={item}
-                            onClick={() => {
-                              setSelectedTacticName(item);
-                              setGeneratedContent("");
-                            }}
-                            className={cn(
-                              "text-left p-3.5 rounded-xl border text-xs font-medium transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-teal-500/50",
-                              isSelected
-                                ? "bg-teal-500/10 border-teal-500 text-teal-300"
-                                : "bg-slate-950/60 border-slate-850 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
-                            )}
-                          >
-                            <span className="line-clamp-2 pr-2">{item}</span>
-                            {isSelected ? (
-                              <Check className="h-4 w-4 text-teal-400 flex-shrink-0" />
-                            ) : (
-                              <ArrowRight className="h-3 w-3 text-slate-600 group-hover:text-slate-400 flex-shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Column 3: AI Campaign Console & One-Click Outreach Templates (Span 4) */}
-              <div className="lg:col-span-4 flex flex-col">
-                <GlassPanel tilt={false} className="border-slate-800 flex-1 flex flex-col p-6 bg-slate-900/10">
-                  <div className="border-b border-slate-850 pb-4 mb-5 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Brain className="h-5 w-5 text-teal-400" />
-                        AI Campaign Console
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-1">Configure integrations and auto-generate assets</p>
-                    </div>
-                  </div>
-
-                  {/* Console Tabs Selector */}
-                  <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-850 mb-5">
-                    <button
-                      onClick={() => setConsoleTab("generate")}
-                      className={cn(
-                        "py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
-                        consoleTab === "generate"
-                          ? "bg-slate-800 text-white shadow-md border border-slate-700"
-                          : "text-slate-400 hover:text-slate-300"
-                      )}
-                    >
-                      <Brain className="h-3.5 w-3.5" />
-                      Generate Assets
-                    </button>
-                    <button
-                      onClick={() => setConsoleTab("api")}
-                      className={cn(
-                        "py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
-                        consoleTab === "api"
-                          ? "bg-slate-800 text-white shadow-md border border-slate-700"
-                          : "text-slate-400 hover:text-slate-300"
-                      )}
-                    >
-                      <Key className="h-3.5 w-3.5" />
-                      API Credentials
-                    </button>
-                  </div>
-
-                  {consoleTab === "generate" ? (
-                    <div className="space-y-6 flex-1 flex flex-col justify-between">
-                      {/* One-Click Outreach Templates */}
-                      <div className="space-y-3.5">
-                        <span className="block text-xs font-semibold text-slate-300">
-                          One-Click Outreach Templates
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          {OUTREACH_TEMPLATES.map((tmpl) => (
-                            <button
-                              key={tmpl.name}
-                              onClick={() => handleApplyTemplate(tmpl)}
-                              className="p-2.5 bg-slate-900 border border-slate-800 text-[10px] text-slate-300 hover:border-teal-500/40 hover:text-teal-400 hover:bg-teal-500/5 transition-all text-left rounded-xl font-bold flex flex-col justify-between h-14"
-                            >
-                              <span>{tmpl.name}</span>
-                              <span className="text-[8px] text-slate-500 font-normal truncate">{tmpl.subject}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {selectedTacticName ? (
-                        <div className="space-y-6 flex-1 flex flex-col justify-between mt-4">
-                          {/* Configuration fields */}
-                          <div className="space-y-4">
-                            <div className="bg-slate-950/60 border border-slate-850 p-4 rounded-xl relative overflow-hidden">
-                              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1 font-semibold">Target Tactic</p>
-                              <p className="text-xs font-bold text-white">{selectedCategory?.title}</p>
-                              <p className="text-[11px] text-teal-400 font-semibold mt-1">{selectedTacticName}</p>
-                              
-                              {/* API Key Status Indicator */}
-                              {selectedCategory && (
-                                <div className="mt-3 pt-2 border-t border-slate-850 flex items-center justify-between text-[10px]">
-                                  <span className="text-slate-400 flex items-center gap-1">
-                                    <Database className="h-3 w-3 text-slate-500" />
-                                    {selectedCategory.engine}
-                                  </span>
-                                  <span className={cn(
-                                    "font-bold",
-                                    apiKeys[selectedCategory.id]?.trim() ? "text-emerald-400 animate-pulse" : "text-amber-500"
-                                  )}>
-                                    {apiKeys[selectedCategory.id]?.trim() ? "API key active" : "Using local model"}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Tone selection */}
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-300 mb-2">
-                                Outreach Tone
-                              </label>
-                              <div className="grid grid-cols-5 gap-1">
-                                {["Professional", "Casual", "Bold", "Friendly", "Empathic"].map((tone) => (
-                                  <button
-                                    key={tone}
-                                    onClick={() => {
-                                      setWorkspaceTone(tone);
-                                      setGeneratedContent("");
-                                    }}
-                                    className={cn(
-                                      "py-2 px-1 text-[10px] font-bold rounded-lg border text-center transition-all",
-                                      workspaceTone === tone
-                                        ? "bg-slate-800 border-slate-700 text-white shadow-md shadow-black/40"
-                                        : "bg-slate-950 border-slate-850 text-slate-400 hover:text-slate-300 hover:border-slate-700"
-                                    )}
-                                  >
-                                    {tone}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Keywords */}
-                            <div>
-                              <label htmlFor="campaign-keywords" className="block text-xs font-semibold text-slate-300 mb-2">
-                                Additional Keywords (Optional)
-                              </label>
-                              <Input
-                                id="campaign-keywords"
-                                placeholder="e.g., Q3 promo, direct response, compliance, 20% discount"
-                                value={workspaceKeywords}
-                                onChange={(e) => setWorkspaceKeywords(e.target.value)}
-                                className="bg-slate-950 border-slate-850 text-slate-200 text-xs rounded-xl focus:border-teal-500 py-3"
-                              />
-                            </div>
-
-                            <Button
-                              onClick={handleGenerate}
-                              disabled={isGenerating}
-                              className="w-full bg-gradient-to-r from-teal-600 via-cyan-500 to-teal-500 hover:from-teal-500 hover:via-cyan-400 hover:to-teal-400 text-white rounded-xl py-5 text-xs font-bold shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2"
-                            >
-                              {isGenerating ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                                  Custom Synthesizing content...
-                                </>
-                              ) : (
-                                <>
-                                  <Brain className="h-4 w-4 text-white" />
-                                  Generate Campaign Assets
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-850 rounded-xl py-8 px-4 mt-6 text-center">
-                          <Brain className="h-8 w-8 text-slate-700 mb-2" />
-                          <p className="text-xs text-slate-450 font-medium">Outreach Strategy Standby</p>
-                          <p className="text-[10px] text-slate-550 max-w-[200px] mt-1">Select a tactic from categories list, or use outreach templates above.</p>
-                        </div>
-                      )}
-
-                      {/* Display Generated Output */}
-                      {generatedContent && (
-                        <div className="space-y-4 mt-6 animate-fade-in">
-                          <div>
-                            <span className="block text-xs font-semibold text-slate-300 mb-2">Generated Outreach Assets</span>
-                            <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl max-h-60 overflow-y-auto font-mono text-[11px] text-teal-400 leading-relaxed whitespace-pre-wrap">
-                              {generatedContent}
-                            </div>
-                          </div>
-
-                          {/* Quick integrations panel */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              onClick={() => {
-                                const newTask = {
-                                  id: `task-ws-${Date.now()}`,
-                                  title: `[Campaign] ${selectedTacticName || "Outreach"} - ${activeWSLead?.companyName}`,
-                                  description: `Execute campaign outreach for ${activeWSLead?.companyName}. Tone: ${workspaceTone}.`,
-                                  status: "todo" as const,
-                                  assignedAgentId: "agent-1",
-                                  customerId: activeWSLead?.customerId || activeWSLead?.id || "demo-customer",
-                                  priority: "medium" as const,
-                                  progressNotes: ["Drafted campaign assets from agent Workspace."],
-                                  milestones: [
-                                    { id: "m1", title: "Review copywriting outputs", completed: false },
-                                    { id: "m2", title: "Verify lead tracking tags", completed: false },
-                                    { id: "m3", title: "Schedule delivery queue", completed: false },
-                                  ],
-                                  createdAt: new Date().toISOString(),
-                                  updatedAt: new Date().toISOString(),
-                                };
-                                updateLocalTasks([newTask, ...syncedTasks]);
-                                showToast("success", "Task Appended", "Campaign setup added to agent checklist.");
-                              }}
-                              variant="outline"
-                              className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
-                            >
-                              <CheckCircle className="h-3.5 w-3.5 text-teal-400" />
-                              Add as Task
-                            </Button>
-
-                            <Button
-                              onClick={() => {
-                                const newMsg = {
-                                  id: `msg-ws-${Date.now()}`,
-                                  sessionId: "session-1",
-                                  senderId: "agent-1",
-                                  senderName: "Campaign Agent",
-                                  senderRole: "agent" as const,
-                                  content: `Hi! I've drafted our outreach campaign setup for ${activeWSLead?.companyName}. Preview copy:\n\n${generatedContent}`,
-                                  timestamp: new Date().toISOString(),
-                                  status: "sent" as const,
-                                };
-                                updateLocalMessages([newMsg, ...syncedMessages]);
-                                showToast("success", "Message Drafted", "Outreach templates copied to customer chat.");
-                              }}
-                              variant="outline"
-                              className="border-slate-850 hover:bg-slate-800/80 hover:text-white text-[11px] text-slate-300 rounded-xl py-4 flex items-center justify-center gap-1.5"
-                            >
-                              <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
-                              Draft Message
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* API Settings Panel Tab view */
-                    <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-1 scrollbar-thin">
-                      <div className="bg-slate-900 border border-slate-850 p-4 rounded-xl mb-3">
-                        <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                          <Settings className="h-3.5 w-3.5 text-teal-400 animate-spin" />
-                          Category API Integration Keys
-                        </h4>
-                        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                          Customize developer keys for each of the 12 marketing channels. DealFlow will connect straight to these engines.
-                        </p>
-                      </div>
-
-                      {MARKETING_CATEGORIES.map((cat) => {
-                        const Icon = cat.icon;
-                        return (
-                          <div key={cat.id} className="p-3 bg-slate-950 border border-slate-850 rounded-xl space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                                <span className={cn("p-1 rounded bg-slate-900", cat.color)}>
-                                  <Icon className="h-3.5 w-3.5" />
-                                </span>
-                                {cat.title}
-                              </span>
-                              <span className="text-[9px] text-slate-500 font-semibold">{cat.engine}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <label htmlFor={`api-key-${cat.id}`} className="sr-only">
-                                {cat.title} API Key
-                              </label>
-                              <Input
-                                id={`api-key-${cat.id}`}
-                                value={apiKeys[cat.id]}
-                                onChange={(e) => handleApiKeyChange(cat.id, e.target.value)}
-                                placeholder="Enter API Key / Token..."
-                                className="bg-slate-900 border-slate-850 text-slate-200 text-xs rounded-lg py-2.5 h-9 font-mono"
-                              />
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  handleApiKeyChange(cat.id, "");
-                                  showToast("info", "API Key Reset", `Reset key for ${cat.title}.`);
-                                }}
-                                className="h-9 px-3 border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-white"
-                              >
-                                Clear
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
                     </div>
                   )}
-                </GlassPanel>
+
+                  {/* Step 2: Customer Info */}
+                  {formStep === 2 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
+                        <Users className="h-5 w-5" /> Customer Information
+                      </h3>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Formal Ideal Customer Profile (ICP)</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.idealCustomerProfile}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, idealCustomerProfile: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[100px]"
+                          placeholder="Who is your ideal customer?"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Documented Buyer Personas</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.buyerPersonas}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, buyerPersonas: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[100px]"
+                          placeholder="Include demographics, psychographics, behaviors, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Key Decision Makers in Buying Process</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.keyDecisionMakers}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, keyDecisionMakers: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
+                          placeholder="Who makes the decisions?"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Verified Customer Pain Points</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.customerPainPoints}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, customerPainPoints: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
+                          placeholder="What pain points do you solve?"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Core Customer Challenges Preventing Purchase</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.customerChallenges}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, customerChallenges: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
+                          placeholder="What stops customers from buying?"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Confirmed Buying Triggers</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.buyingTriggers}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, buyingTriggers: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
+                          placeholder="What drives customers to look for your solution?"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Common Customer Objections</label>
+                        <textarea
+                          value={marketingIntakeData.customerInfo.commonObjections}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            customerInfo: { ...prev.customerInfo, commonObjections: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
+                          placeholder="What objections do you face?"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Marketing Info */}
+                  {formStep === 3 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                        <BarChart2 className="h-5 w-5" /> Marketing Information
+                      </h3>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Primary Business Goal for Next 12 Months</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.primaryBusinessGoal}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, primaryBusinessGoal: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="Revenue, customers, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Measurable Marketing Objectives</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.measurableMarketingObjectives}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, measurableMarketingObjectives: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="E.g., Increase leads by 30% in 6 months"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Existing Marketing Assets</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.existingMarketingAssets}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, existingMarketingAssets: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="Content, creative, tools, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Direct and Indirect Competitors</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.competitors}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, competitors: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="Who are your competitors?"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Primary Keywords</label>
+                          <textarea
+                            value={marketingIntakeData.marketingInfo.primaryKeywords}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              marketingInfo: { ...prev.marketingInfo, primaryKeywords: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                            placeholder="Keywords you target"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Long-Tail Keywords</label>
+                          <textarea
+                            value={marketingIntakeData.marketingInfo.longTailKeywords}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              marketingInfo: { ...prev.marketingInfo, longTailKeywords: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                            placeholder="Expanded, specific keywords"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Brand Tone Guidelines</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.brandTone}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, brandTone: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="Professional, fun, casual, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Brand Voice Parameters</label>
+                        <textarea
+                          value={marketingIntakeData.marketingInfo.brandVoice}
+                          onChange={(e) => setMarketingIntakeData(prev => ({
+                            ...prev,
+                            marketingInfo: { ...prev.marketingInfo, brandVoice: e.target.value }
+                          }))}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
+                          placeholder="How do you speak to your audience?"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Marketing Budget</label>
+                          <input 
+                            type="text" 
+                            value={marketingIntakeData.marketingInfo.marketingBudget}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              marketingInfo: { ...prev.marketingInfo, marketingBudget: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            placeholder="Annual/quarterly budget"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-300">Average Sales Cycle Length</label>
+                          <input 
+                            type="text" 
+                            value={marketingIntakeData.marketingInfo.salesCycleLength}
+                            onChange={(e) => setMarketingIntakeData(prev => ({
+                              ...prev,
+                              marketingInfo: { ...prev.marketingInfo, salesCycleLength: e.target.value }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                            placeholder="E.g., 2 weeks, 3 months"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Footer Actions */}
+                <div className="p-6 border-t border-slate-800 flex justify-between">
+                  <button 
+                    disabled={formStep === 1}
+                    onClick={() => setFormStep(prev => Math.max(1, prev - 1))}
+                    className="px-6 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  >
+                    Back
+                  </button>
+                  {formStep === 3 ? (
+                    <button 
+                      onClick={() => {
+                        setIsGenerating(true)
+                        setTimeout(() => {
+                          setMarketingProfile({
+                            businessSummary: "This is a sample business summary based on the provided info.",
+                            industryAnalysis: "Industry trends indicate strong demand in this vertical.",
+                            strategicPositioning: "Differentiate via AI-powered automation.",
+                            refinedUSP: "Deliver 2x ROI in half the time of competitors.",
+                            targetAudienceSummary: "Target VP Sales and Demand Gen managers.",
+                            prioritizedPainPoints: [
+                              "Manual data entry",
+                              "Slow lead follow-up",
+                              "Low conversion rates"
+                            ],
+                            buyerJourney: "Awareness → Consideration → Decision",
+                            recommendedChannels: ["LinkedIn Ads", "Cold Email", "Content Marketing"],
+                            recommendedContent: ["Case Studies", "Whitepapers", "Webinars"],
+                            seoOpportunities: ["Blog posts", "On-page SEO", "Link building"],
+                            paidOpportunities: ["Search ads", "Social ads", "Retargeting"],
+                            communityOpportunities: ["Slack community", "User groups"],
+                            videoOpportunities: ["Explainer videos", "Testimonials"],
+                            emailOpportunities: ["Nurture sequences", "Newsletters"],
+                            aiOpportunities: ["AI personalization", "AI-generated content"],
+                            topTactics: [
+                              { name: "LinkedIn Outreach", effort: "High", impact: "High", priority: "High", roi3mo: "15%", roi6mo: "40%", roi12mo: "80%" },
+                              { name: "Content Marketing", effort: "Medium", impact: "High", priority: "High", roi3mo: "10%", roi6mo: "35%", roi12mo: "90%" },
+                              { name: "Paid Ads", effort: "Medium", impact: "Medium", priority: "Medium", roi3mo: "20%", roi6mo: "50%", roi12mo: "75%" }
+                            ]
+                          })
+                          setIsGenerating(false)
+                          setSelectedCategory(categories.find(c => c.id === 'marketing-profile')!)
+                        }, 2000)
+                      }}
+                      disabled={isGenerating}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 font-semibold flex items-center gap-2"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="h-4 w-4" />
+                          Generate Marketing Profile
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setFormStep(prev => prev + 1)}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 font-semibold"
+                    >
+                      Next Step
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Marketing Profile */}
+          {selectedCategory.id === 'marketing-profile' && (
+            <div className="space-y-6">
+              {!marketingProfile ? (
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center">
+                  <FileSpreadsheet className="h-16 w-16 mx-auto text-slate-500 mb-4" />
+                  <h2 className="text-xl font-semibold text-white mb-2">No Marketing Profile Yet</h2>
+                  <p className="text-slate-400 max-w-md mx-auto">
+                    Complete the Marketing Intake form to generate a comprehensive marketing strategy profile.
+                  </p>
+                  <button 
+                    onClick={() => setSelectedCategory(categories.find(c => c.id === 'marketing-intake')!)}
+                    className="mt-6 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold"
+                  >
+                    Go to Intake Form
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-400" /> Marketing Profile Generated Successfully
+                    </h2>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Business Summary</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.businessSummary}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Industry Analysis</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.industryAnalysis}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Strategic Positioning</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.strategicPositioning}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Refined USP</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.refinedUSP}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Target Audience</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.targetAudienceSummary}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Pain Points</h3>
+                          <ul className="space-y-1 text-sm text-slate-300">
+                            {marketingProfile.prioritizedPainPoints.map((pp: string, i: number) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <CheckCircle className="h-4 w-4 text-purple-400 mt-0.5" />
+                                {pp}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Buyer Journey</h3>
+                          <p className="text-sm text-slate-300">{marketingProfile.buyerJourney}</p>
+                        </div>
+                        
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-xs font-semibold text-emerald-400 mb-2">Recommended Channels</h4>
+                            <ul className="space-y-1 text-xs text-slate-300">
+                              {marketingProfile.recommendedChannels.map((ch: string, i: number) => (
+                                <li key={i} className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                                  {ch}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-semibold text-emerald-400 mb-2">Recommended Content</h4>
+                            <ul className="space-y-1 text-xs text-slate-300">
+                              {marketingProfile.recommendedContent.map((ct: string, i: number) => (
+                                <li key={i} className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                                  {ct}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <h3 className="text-sm font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                        <Target className="h-5 w-5" />
+                        Top Recommended Marketing Tactics
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-700">
+                              <th className="text-left py-3 text-slate-400 font-semibold">Tactic</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">Effort</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">Impact</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">Priority</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">3-Mo ROI</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">6-Mo ROI</th>
+                              <th className="text-center py-3 text-slate-400 font-semibold">12-Mo ROI</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-700">
+                            {marketingProfile.topTactics.map((tactic: any, i: number) => (
+                              <tr key={i} className="hover:bg-slate-700/30">
+                                <td className="py-3 text-white font-medium">{tactic.name}</td>
+                                <td className={`text-center py-3 font-semibold ${
+                                  tactic.effort === 'High' ? 'text-orange-400' : 
+                                  tactic.effort === 'Medium' ? 'text-amber-400' : 
+                                  'text-green-400'
+                                }`}>{tactic.effort}</td>
+                                <td className={`text-center py-3 font-semibold ${
+                                  tactic.impact === 'High' ? 'text-green-400' : 
+                                  tactic.impact === 'Medium' ? 'text-amber-400' : 
+                                  'text-orange-400'
+                                }`}>{tactic.impact}</td>
+                                <td className={`text-center py-3 font-semibold ${
+                                  tactic.priority === 'High' ? 'text-red-400' : 
+                                  tactic.priority === 'Medium' ? 'text-amber-400' : 
+                                  'text-green-400'
+                                }`}>{tactic.priority}</td>
+                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi3mo}</td>
+                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi6mo}</td>
+                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi12mo}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Marketing Tactics */}
+          {selectedCategory.id === 'tactics' && (
+            <div className="space-y-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-800">
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Campaign
+                        </th>
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Reach
+                        </th>
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Engagement
+                        </th>
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Leads
+                        </th>
+                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Budget
+                        </th>
+                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {marketingTactics.map((tactic) => (
+                        <tr key={tactic.id} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <div className="font-medium text-white">{tactic.name}</div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className={cn(
+                              'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium',
+                              tactic.status === 'active'
+                                ? 'bg-green-500/10 text-green-400'
+                                : 'bg-slate-800 text-slate-400'
+                            )}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                              {tactic.status.charAt(0).toUpperCase() + tactic.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-slate-300">
+                            {tactic.reach.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-6 text-slate-300">
+                            {tactic.engagement}%
+                          </td>
+                          <td className="py-4 px-6 text-slate-300">
+                            {tactic.leads}
+                          </td>
+                          <td className="py-4 px-6 text-slate-300">
+                            ${tactic.budget.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                              View details →
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
-  );
+  )
+}
+
+function StatCard({
+  title,
+  value,
+  change,
+  positive,
+  icon: Icon
+}: {
+  title: string
+  value: string
+  change: string
+  positive: boolean
+  icon: any
+}) {
+  return (
+    <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-slate-400">{title}</h3>
+        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-white mb-1">{value}</p>
+        <p className={cn('text-sm font-medium flex items-center gap-1', positive ? 'text-green-400' : 'text-red-400')}>
+          {change}
+          <ArrowRight className={cn('h-3 w-3', positive ? 'text-green-400' : 'text-red-400 rotate-[-90deg]')} />
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function DealCard({ deal }: { deal: typeof deals[0] }) {
+  const stage = stages.find(s => s.id === deal.stage)!
+
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-all">
+      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+        {deal.avatar}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-white truncate">{deal.company}</p>
+        <p className="text-sm text-slate-400 truncate">{deal.contact}</p>
+      </div>
+      <div className="text-right">
+        <p className="font-bold text-green-400">${deal.value.toLocaleString()}</p>
+        <div className="flex items-center gap-2 justify-end mt-1">
+          <span className={cn('px-2 py-0.5 rounded-lg text-xs font-medium', stage.color)}>
+            {stage.label}
+          </span>
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {deal.lastActivity}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
 }

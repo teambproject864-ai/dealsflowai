@@ -5,7 +5,9 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GlassPanel, ExtrudedButton, StaggerReveal } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { StaggerReveal } from "@/components/immersive/StaggerReveal";
 import {
   Users,
   Activity,

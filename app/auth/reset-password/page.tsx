@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlassPanel, ExtrudedButton, SunkenInput } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { SunkenInput } from "@/components/immersive/SunkenInput";
 import { cn } from "@/lib/utils";
 
 // ─── JWT Decoder (client-side, no verification) ───────────────────────────────

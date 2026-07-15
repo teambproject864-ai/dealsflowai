@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Target, TrendingUp, DollarSign, Users, Award, ShieldAlert, Sparkles, RefreshCw } from "lucide-react";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 

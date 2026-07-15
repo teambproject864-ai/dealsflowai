@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Clock, CheckCircle, XCircle, Play, RefreshCw } from "lucide-react";
-import { GlassPanel, ExtrudedButton } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import type { HeyGenVideo } from "@/lib/types";
 
 export default function HeyGenStatus() {

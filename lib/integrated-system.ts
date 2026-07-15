@@ -6,12 +6,14 @@ import { KimiClient } from "./kimi/client";
 import { initializeHermesAgent } from "./agents/hermes-agent";
 import { initializeOpenSpecAgent } from "./agents/openspec-agent";
 import { initializeVexaAgent } from "./agents/vexa-agent";
+import { MicrosoftAgentFramework } from "./microsoft-agent-framework";
 
 // Singleton instances
 let messageBus: A2AMessageBus | undefined;
 let graphRAG: GraphRAGSystem | undefined;
 let contextGraph: ContextGraphLayer | undefined;
 let orchestrator: UnifiedOrchestrator | undefined;
+let microsoftAgentFramework: MicrosoftAgentFramework | undefined;
 
 /**
  * Initializes the integrated system
@@ -23,9 +25,10 @@ export function initializeIntegratedSystem(options?: {
   graphRAG: GraphRAGSystem;
   contextGraph: ContextGraphLayer;
   orchestrator: UnifiedOrchestrator;
+  microsoftAgentFramework?: MicrosoftAgentFramework;
 } {
-  if (messageBus && graphRAG && contextGraph && orchestrator) {
-    return { messageBus, graphRAG, contextGraph, orchestrator };
+  if (messageBus && graphRAG && contextGraph && orchestrator && microsoftAgentFramework) {
+    return { messageBus, graphRAG, contextGraph, orchestrator, microsoftAgentFramework };
   }
 
   // Initialize components
@@ -39,6 +42,7 @@ export function initializeIntegratedSystem(options?: {
     graphRAG,
     contextGraph,
   });
+  microsoftAgentFramework = MicrosoftAgentFramework.getInstance();
 
   // Register agents in the ecosystem
   orchestrator.registerAgent({
@@ -75,7 +79,7 @@ export function initializeIntegratedSystem(options?: {
 
   console.log("Integrated system initialized successfully with Hermes, Vexa, and OpenSpec agents");
 
-  return { messageBus, graphRAG, contextGraph, orchestrator };
+  return { messageBus, graphRAG, contextGraph, orchestrator, microsoftAgentFramework };
 }
 
 /**
@@ -116,4 +120,14 @@ export function getOrchestrator(): UnifiedOrchestrator {
     throw new Error("Integrated system not initialized. Call initializeIntegratedSystem first.");
   }
   return orchestrator;
+}
+
+/**
+ * Gets the initialized Microsoft Agent Framework instance
+ */
+export function getMicrosoftAgentFramework(): MicrosoftAgentFramework {
+  if (!microsoftAgentFramework) {
+    throw new Error("Integrated system not initialized. Call initializeIntegratedSystem first.");
+  }
+  return microsoftAgentFramework;
 }

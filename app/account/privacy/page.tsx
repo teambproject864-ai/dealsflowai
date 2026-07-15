@@ -15,7 +15,9 @@ import {
   User,
   Info,
 } from "lucide-react";
-import { ExtrudedButton, GlassPanel, SunkenInput } from "@/components/immersive";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { SunkenInput } from "@/components/immersive/SunkenInput";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 

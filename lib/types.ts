@@ -99,6 +99,56 @@ const urlWithProtocol = z.preprocess((val) => {
   return t;
 }, z.string().url("Enter a valid URL"));
 
+// New Content Hub Data Collection Schema
+export const contentHubIntakeSchema = z.object({
+  // 1. Required Business Information
+  businessInfo: z.object({
+    officialBusinessName: z.string().min(1, "Official business name is required"),
+    primaryWebsiteUrl: z.string().url("Please provide a valid website URL"),
+    industryVertical: z.string().min(1, "Industry vertical is required"),
+    businessType: z.enum(["B2B", "B2C", "D2C", "eCommerce", "Other"], {
+      errorMap: () => ({ message: "Please select a business type" }),
+    }),
+    companySize: z.object({
+      numberOfEmployees: z.string().min(1, "Number of employees is required"),
+      revenueBracket: z.string().min(1, "Revenue bracket is required"),
+    }),
+    coreProductServiceName: z.string().min(1, "Core product/service name is required"),
+    productServiceDescription: z.string().min(1, "Detailed product/service description is required"),
+    uniqueValueProposition: z.string().min(1, "Formal UVP is required"),
+    pricingModel: z.string().min(1, "Current pricing model is required"),
+    targetMarket: z.string().min(1, "Target market description is required"),
+    targetCountries: z.array(z.string()).min(1, "Please select at least one target country"),
+    targetLanguages: z.array(z.string()).min(1, "Please select at least one target language"),
+  }),
+
+  // 2. Required Customer Information
+  customerInfo: z.object({
+    idealCustomerProfile: z.string().min(1, "ICP description is required"),
+    buyerPersonas: z.string().min(1, "Buyer personas are required"),
+    keyDecisionMakers: z.string().min(1, "Key decision makers are required"),
+    customerPainPoints: z.string().min(1, "Customer pain points are required"),
+    customerChallenges: z.string().min(1, "Customer challenges are required"),
+    buyingTriggers: z.string().min(1, "Buying triggers are required"),
+    commonObjections: z.string().min(1, "Common objections are required"),
+  }),
+
+  // 3. Required Marketing Information
+  marketingInfo: z.object({
+    primaryBusinessGoal: z.string().min(1, "Primary business goal is required"),
+    measurableMarketingObjectives: z.string().min(1, "Measurable objectives are required"),
+    currentMarketingChannels: z.array(z.string()).min(1, "Please list current marketing channels"),
+    existingMarketingAssets: z.string().min(1, "Inventory of existing assets is required"),
+    competitors: z.string().min(1, "Competitors are required"),
+    primaryKeywords: z.string().min(1, "Primary keywords are required"),
+    longTailKeywords: z.string().min(1, "Long-tail keywords are required"),
+    brandTone: z.string().min(1, "Brand tone guidelines are required"),
+    brandVoice: z.string().min(1, "Brand voice parameters are required"),
+    marketingBudget: z.string().min(1, "Marketing budget is required"),
+    salesCycleLength: z.string().min(1, "Average sales cycle length is required"),
+  }),
+});
+
 export const intakeSchema = z.object({
   // Step 1: Contact Information
   name: z.string().min(1, "Full name is required"),
@@ -211,6 +261,7 @@ export const intakeSchema = z.object({
 });
 
 export type IntakeFormData = z.infer<typeof intakeSchema>;
+export type ContentHubIntakeData = z.infer<typeof contentHubIntakeSchema>;
 
 export type PainPoint = {
   title: string;

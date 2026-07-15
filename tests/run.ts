@@ -32,6 +32,7 @@ import { runSecurityEvals } from "@/tests/security-evals";
 import { testOkfPerformanceBenchmark } from "@/tests/okf-rag-performance.test";
 import { runAgentEcosystemTests } from "@/tests/agent-ecosystem.test";
 import { runGtmIntakeTests } from "@/tests/gtm-intake.test";
+import { runMicrosoftAgentFrameworkTests } from "./microsoft-agent-framework.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -308,7 +309,8 @@ async function main() {
     runSecurityEvals,
     testOkfPerformanceBenchmark,
     runAgentEcosystemTests,
-    runGtmIntakeTests
+    runGtmIntakeTests,
+    runMicrosoftAgentFrameworkTests
   ];
 
   for (const t of tests) {

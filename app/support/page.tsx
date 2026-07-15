@@ -11,7 +11,10 @@ import {
   Globe,
 } from "lucide-react";
 import Link from "next/link";
-import { GlassPanel, ExtrudedButton, SunkenInput, StaggerReveal } from "@/components/immersive";
+import { GlassPanel } from "@/components/immersive/GlassPanel";
+import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
+import { SunkenInput } from "@/components/immersive/SunkenInput";
+import { StaggerReveal } from "@/components/immersive/StaggerReveal";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
