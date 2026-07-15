@@ -11,7 +11,7 @@ const WAF_PATTERNS = [
   /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
   /javascript:/i,
   /\s(on\w+)\s*=/i,
-  /\.\.[\\/\\]/
+  /\.\.[\\/]/
 ];
 
 function isMalicious(text: string): boolean {
@@ -21,6 +21,11 @@ function isMalicious(text: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const ip = (request as any).ip || request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+  const url = new URL(request.url);
+
+  // Skip WAF for our internal API routes that handle form data (we validate those separately)
+  const skipWafPaths = ["/api/leads/save", "/api/gtm-intake", "/api/gtm-analysis"];
+  const shouldSkipWaf = skipWafPaths.some(path => url.pathname.startsWith(path));
 
   // 1. IP Filtering
   if (BLOCKED_IPS.has(ip)) {
@@ -30,28 +35,29 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // 2. Query String and Header WAF Checks
-  const url = new URL(request.url);
-  if (isMalicious(url.search) || isMalicious(request.headers.get("user-agent") || "")) {
-    return new NextResponse(
-      JSON.stringify({ success: false, error: "Access Denied: Malicious request blocked by Edge WAF" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
+  if (!shouldSkipWaf) {
+    // 2. Query String and Header WAF Checks
+    if (isMalicious(url.search) || isMalicious(request.headers.get("user-agent") || "")) {
+      return new NextResponse(
+        JSON.stringify({ success: false, error: "Access Denied: Malicious request blocked by Edge WAF" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-  // 3. Request Body WAF Check (JSON/Form payload)
-  if (["POST", "PUT", "PATCH"].includes(request.method) && url.pathname.startsWith("/api")) {
-    try {
-      const clone = request.clone();
-      const bodyText = await clone.text();
-      if (isMalicious(bodyText)) {
-        return new NextResponse(
-          JSON.stringify({ success: false, error: "Access Denied: Malicious body blocked by Edge WAF" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        );
+    // 3. Request Body WAF Check (JSON/Form payload)
+    if (["POST", "PUT", "PATCH"].includes(request.method) && url.pathname.startsWith("/api")) {
+      try {
+        const clone = request.clone();
+        const bodyText = await clone.text();
+        if (isMalicious(bodyText)) {
+          return new NextResponse(
+            JSON.stringify({ success: false, error: "Access Denied: Malicious body blocked by Edge WAF" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      } catch {
+        // safe fallback
       }
-    } catch {
-      // safe fallback
     }
   }
 
