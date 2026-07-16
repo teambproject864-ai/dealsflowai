@@ -69,6 +69,7 @@ export async function POST(req: Request) {
     const outgoingAgentName = outgoingAgentProfile?.name || "Unassigned";
 
     // 3. Perform Reassignment in memory and Firestore
+    const leadWithCustomer = lead as ExtendedLeadRecord & { customerId?: string };
     const updatedLead = {
       ...lead,
       assignedAgentKey: newAgentKey,
@@ -78,6 +79,13 @@ export async function POST(req: Request) {
 
     if (db) {
       await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
+      if (leadWithCustomer.customerId) {
+        await db.collection("customers").doc(leadWithCustomer.customerId).update({
+          assignedAgentId: `agent-${newAgentKey}`,
+          assignedAgentName: newAgentProfile.name,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     }
 
     // 4. Create/update assignment record

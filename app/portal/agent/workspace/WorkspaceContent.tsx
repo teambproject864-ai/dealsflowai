@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { generateCampaignStrategy } from '@/lib/campaign-generator'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -145,6 +147,12 @@ const categories = [
 ]
 
 export default function WorkspaceContent() {
+  const searchParams = useSearchParams()
+  const leadId = searchParams.get('leadId')
+  const [customer, setCustomer] = useState<any>(null)
+  const [assets, setAssets] = useState<any[]>(contentAssets)
+  const [tactics, setTactics] = useState<any[]>(marketingTactics)
+
   const [selectedCategory, setSelectedCategory] = useState(categories[0])
   const [searchQuery, setSearchQuery] = useState('')
   const [formStep, setFormStep] = useState(1)
@@ -189,6 +197,155 @@ export default function WorkspaceContent() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [marketingProfile, setMarketingProfile] = useState<any>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!leadId) return;
+
+    async function loadCustomerAndAssets() {
+      try {
+        const res = await fetch("/api/admin/customers");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.customers)) {
+          const found = data.customers.find((c: any) => c.id === leadId);
+          if (found) {
+            setCustomer(found);
+
+            const company = found.companyInformation || {};
+            const personal = found.personalIdentifiers || {};
+            const intake = found.intakeData || {};
+
+            setMarketingIntakeData({
+              businessInfo: {
+                officialBusinessName: found.companyName || company.companyName || '',
+                primaryWebsiteUrl: company.websiteUrl || '',
+                industryVertical: company.industry || found.industry || '',
+                businessType: (company.businessModel?.toUpperCase() || found.businessModel?.toUpperCase() || 'B2B') as any,
+                companySize: {
+                  numberOfEmployees: company.companySize || '',
+                  revenueBracket: company.revenueRange || ''
+                },
+                coreProductServiceName: intake.productsServices || intake.productName || '',
+                productServiceDescription: intake.companyDescription || '',
+                uniqueValueProposition: intake.uniqueValueProp || '',
+                pricingModel: intake.pricingModel || '',
+                targetMarket: intake.targetMarket || company.revenueRange || '',
+                targetCountries: intake.targetGeographics || [company.headquarters?.country || 'United States'],
+                targetLanguages: intake.preferredLanguages || ['English']
+              },
+              customerInfo: {
+                idealCustomerProfile: intake.icpDescription || '',
+                buyerPersonas: intake.buyingRoles ? intake.buyingRoles.join(', ') : '',
+                keyDecisionMakers: intake.targetDecisionMakers || (intake.buyingRoles && intake.buyingRoles.join(', ')) || '',
+                customerPainPoints: intake.painPoint || '',
+                customerChallenges: intake.keyChallenges || '',
+                buyingTriggers: intake.buyingSignals ? intake.buyingSignals.join(', ') : '',
+                commonObjections: intake.commonObjections || ''
+              },
+              marketingInfo: {
+                primaryBusinessGoal: intake.primaryOutcome || '',
+                measurableMarketingObjectives: intake.primaryOutcome || '',
+                currentMarketingChannels: intake.brandChannels || [],
+                existingMarketingAssets: intake.outreachAssets ? intake.outreachAssets.join(', ') : '',
+                competitors: intake.competitors || '',
+                primaryKeywords: intake.messagingThemes || '',
+                longTailKeywords: intake.messagingThemes || '',
+                brandTone: intake.publishingFrequency || '',
+                brandVoice: intake.publishingFrequency || '',
+                marketingBudget: intake.budgetDepartments ? intake.budgetDepartments.join(', ') : '',
+                salesCycleLength: intake.timeToValue || ''
+              }
+            });
+
+            if (found.campaignStrategy) {
+              const strategy = found.campaignStrategy;
+              setMarketingProfile({
+                businessSummary: strategy.businessSummary,
+                industryAnalysis: strategy.marketingStrategy,
+                strategicPositioning: strategy.targetAudienceInsights,
+                refinedUSP: strategy.targetAudienceInsights,
+                targetAudienceSummary: strategy.targetAudienceInsights,
+                prioritizedPainPoints: strategy.priorityRecommendations || [],
+                buyerJourney: strategy.customerJourney,
+                recommendedChannels: strategy.recommendedChannels || [],
+                recommendedContent: strategy.contentIdeas?.blogTopics || [],
+                seoOpportunities: strategy.contentIdeas?.seoContent || [],
+                paidOpportunities: strategy.contentIdeas?.adCopy || [],
+                communityOpportunities: [],
+                videoOpportunities: strategy.contentIdeas?.socialMediaPosts || [],
+                emailOpportunities: strategy.contentIdeas?.emailCampaigns || [],
+                aiOpportunities: [],
+                topTactics: (strategy.tactics || []).map((t: any) => ({
+                  name: t.name,
+                  effort: t.priority === "P1" ? "Low" : "Medium",
+                  impact: t.impact,
+                  priority: t.priority === "P1" ? "High" : "Medium",
+                  roi3mo: "15%",
+                  roi6mo: "35%",
+                  roi12mo: "80%"
+                }))
+              });
+
+              setTactics((strategy.tactics || []).map((t: any, idx: number) => ({
+                id: String(idx + 1),
+                name: t.name,
+                status: t.priority === "P1" ? "active" : "draft",
+                reach: t.priority === "P1" ? 2500 : 0,
+                engagement: t.priority === "P1" ? 12.5 : 0.0,
+                leads: t.priority === "P1" ? 45 : 0,
+                budget: t.priority === "P1" ? 5000 : 2000,
+              })));
+            } else {
+              setMarketingProfile(null);
+              setTactics(marketingTactics);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error loading customer in workspace:", err);
+      }
+
+      try {
+        const res = await fetch(`/api/portal/content?customerId=${leadId}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.assets)) {
+          setAssets(data.assets.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            type: a.tactic || "Content",
+            performance: a.performanceMetrics?.conversionRate || 80,
+            lastModified: new Date(a.updatedAt || a.createdAt).toLocaleDateString(),
+            tags: [a.tactic || "Content"]
+          })));
+        } else {
+          setAssets([]);
+        }
+      } catch (err) {
+        console.error("Error loading content assets in workspace:", err);
+      }
+    }
+
+    loadCustomerAndAssets();
+  }, [leadId]);
+
+  const handleSaveCustomer = async (updatedFields: any) => {
+    if (!leadId) return false;
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          customerId: leadId,
+          customer: updatedFields
+        })
+      });
+      const data = await res.json();
+      return data.success;
+    } catch (err) {
+      console.error("Error saving customer strategy:", err);
+      return false;
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-200">
@@ -272,10 +429,13 @@ export default function WorkspaceContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-white mb-2">
-                  {selectedCategory.label}
+                  {selectedCategory.label} {customer ? `• ${customer.companyName || customer.name}` : ''}
                 </h1>
                 <p className="text-slate-400">
-                  Manage your {selectedCategory.label.toLowerCase()} and track performance
+                  {customer 
+                    ? `Manage ${customer.companyName || customer.name}'s ${selectedCategory.label.toLowerCase()} and track performance`
+                    : `Manage your ${selectedCategory.label.toLowerCase()} and track performance`
+                  }
                 </p>
               </div>
             </div>
@@ -408,7 +568,7 @@ export default function WorkspaceContent() {
           {selectedCategory.id === 'content' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {contentAssets.map((asset) => (
+                {assets.map((asset) => (
                   <div
                     key={asset.id}
                     className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-blue-500/30 transition-all hover:shadow-lg hover:shadow-blue-500/5"
@@ -438,7 +598,7 @@ export default function WorkspaceContent() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {asset.tags.map((tag) => (
+                        {asset.tags.map((tag: string) => (
                           <span
                             key={tag}
                             className="px-2 py-1 rounded-lg text-xs bg-slate-800 text-slate-400"
@@ -895,38 +1055,87 @@ export default function WorkspaceContent() {
                   </button>
                   {formStep === 3 ? (
                     <button 
-                      onClick={() => {
-                        setIsGenerating(true)
-                        setTimeout(() => {
-                          setMarketingProfile({
-                            businessSummary: "This is a sample business summary based on the provided info.",
-                            industryAnalysis: "Industry trends indicate strong demand in this vertical.",
-                            strategicPositioning: "Differentiate via AI-powered automation.",
-                            refinedUSP: "Deliver 2x ROI in half the time of competitors.",
-                            targetAudienceSummary: "Target VP Sales and Demand Gen managers.",
-                            prioritizedPainPoints: [
-                              "Manual data entry",
-                              "Slow lead follow-up",
-                              "Low conversion rates"
-                            ],
-                            buyerJourney: "Awareness → Consideration → Decision",
-                            recommendedChannels: ["LinkedIn Ads", "Cold Email", "Content Marketing"],
-                            recommendedContent: ["Case Studies", "Whitepapers", "Webinars"],
-                            seoOpportunities: ["Blog posts", "On-page SEO", "Link building"],
-                            paidOpportunities: ["Search ads", "Social ads", "Retargeting"],
-                            communityOpportunities: ["Slack community", "User groups"],
-                            videoOpportunities: ["Explainer videos", "Testimonials"],
-                            emailOpportunities: ["Nurture sequences", "Newsletters"],
-                            aiOpportunities: ["AI personalization", "AI-generated content"],
-                            topTactics: [
-                              { name: "LinkedIn Outreach", effort: "High", impact: "High", priority: "High", roi3mo: "15%", roi6mo: "40%", roi12mo: "80%" },
-                              { name: "Content Marketing", effort: "Medium", impact: "High", priority: "High", roi3mo: "10%", roi6mo: "35%", roi12mo: "90%" },
-                              { name: "Paid Ads", effort: "Medium", impact: "Medium", priority: "Medium", roi3mo: "20%", roi6mo: "50%", roi12mo: "75%" }
-                            ]
-                          })
-                          setIsGenerating(false)
-                          setSelectedCategory(categories.find(c => c.id === 'marketing-profile')!)
-                        }, 2000)
+                      onClick={async () => {
+                        setIsGenerating(true);
+                        
+                        const bizParams = {
+                          officialBusinessName: marketingIntakeData.businessInfo.officialBusinessName,
+                          companyName: marketingIntakeData.businessInfo.officialBusinessName,
+                          industryVertical: marketingIntakeData.businessInfo.industryVertical,
+                          industry: marketingIntakeData.businessInfo.industryVertical,
+                          businessType: marketingIntakeData.businessInfo.businessType,
+                          businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
+                          idealCustomerProfile: marketingIntakeData.customerInfo.idealCustomerProfile,
+                          targetAudience: marketingIntakeData.customerInfo.idealCustomerProfile,
+                          primaryBusinessGoal: marketingIntakeData.marketingInfo.primaryBusinessGoal,
+                          businessGoals: marketingIntakeData.marketingInfo.primaryBusinessGoal,
+                          marketingObjectives: marketingIntakeData.marketingInfo.measurableMarketingObjectives,
+                          currentMarketingChannels: marketingIntakeData.marketingInfo.currentMarketingChannels,
+                          primaryKeywords: marketingIntakeData.marketingInfo.primaryKeywords,
+                          longTailKeywords: marketingIntakeData.marketingInfo.longTailKeywords,
+                          salesCycleLength: marketingIntakeData.marketingInfo.salesCycleLength,
+                        };
+
+                        const strategy = generateCampaignStrategy(bizParams);
+
+                        const profileData = {
+                          businessSummary: strategy.businessSummary,
+                          industryAnalysis: strategy.marketingStrategy,
+                          strategicPositioning: strategy.targetAudienceInsights,
+                          refinedUSP: strategy.targetAudienceInsights,
+                          targetAudienceSummary: strategy.targetAudienceInsights,
+                          prioritizedPainPoints: strategy.priorityRecommendations || [],
+                          buyerJourney: strategy.customerJourney,
+                          recommendedChannels: strategy.recommendedChannels || [],
+                          recommendedContent: strategy.contentIdeas?.blogTopics || [],
+                          seoOpportunities: strategy.contentIdeas?.seoContent || [],
+                          paidOpportunities: strategy.contentIdeas?.adCopy || [],
+                          communityOpportunities: [],
+                          videoOpportunities: strategy.contentIdeas?.socialMediaPosts || [],
+                          emailOpportunities: strategy.contentIdeas?.emailCampaigns || [],
+                          aiOpportunities: [],
+                          topTactics: (strategy.tactics || []).map((t: any) => ({
+                            name: t.name,
+                            effort: t.priority === "P1" ? "Low" : "Medium",
+                            impact: t.impact,
+                            priority: t.priority === "P1" ? "High" : "Medium",
+                            roi3mo: "15%",
+                            roi6mo: "35%",
+                            roi12mo: "80%"
+                          }))
+                        };
+
+                        setMarketingProfile(profileData);
+
+                        setTactics((strategy.tactics || []).map((t: any, idx: number) => ({
+                          id: String(idx + 1),
+                          name: t.name,
+                          status: t.priority === "P1" ? "active" : "draft",
+                          reach: t.priority === "P1" ? 2500 : 0,
+                          engagement: t.priority === "P1" ? 12.5 : 0.0,
+                          leads: t.priority === "P1" ? 45 : 0,
+                          budget: t.priority === "P1" ? 5000 : 2000,
+                        })));
+
+                        if (leadId) {
+                          const updatedFields = {
+                            companyName: marketingIntakeData.businessInfo.officialBusinessName,
+                            businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
+                            companyInformation: {
+                              ...(customer?.companyInformation || {}),
+                              companyName: marketingIntakeData.businessInfo.officialBusinessName,
+                              websiteUrl: marketingIntakeData.businessInfo.primaryWebsiteUrl,
+                              industry: marketingIntakeData.businessInfo.industryVertical,
+                              businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
+                            },
+                            campaignStrategy: strategy,
+                            updatedAt: new Date().toISOString()
+                          };
+                          await handleSaveCustomer(updatedFields);
+                        }
+
+                        setIsGenerating(false);
+                        setSelectedCategory(categories.find(c => c.id === 'marketing-profile')!);
                       }}
                       disabled={isGenerating}
                       className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 font-semibold flex items-center gap-2"
@@ -1132,7 +1341,7 @@ export default function WorkspaceContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {marketingTactics.map((tactic) => (
+                      {tactics.map((tactic) => (
                         <tr key={tactic.id} className="hover:bg-slate-800/50 transition-colors">
                           <td className="py-4 px-6">
                             <div className="font-medium text-white">{tactic.name}</div>

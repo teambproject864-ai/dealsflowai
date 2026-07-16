@@ -541,8 +541,12 @@ export function BookingWidget({
     } else if (!/^\+?[1-9]\d{1,14}$/.test(formData.phone.replace(/[\s()+-]/g, ""))) {
       errors.phone = "Invalid phone number format";
     }
-    if (!password || password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 8) {
+      errors.password = "Password must be at least 8 characters long";
+    } else if (!/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).*$/.test(password)) {
+      errors.password = "Password must include at least one letter, one number, and one special character";
     }
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);

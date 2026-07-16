@@ -86,6 +86,7 @@ export async function POST(req: Request) {
     }
 
     if (lead) {
+      const leadWithCustomer = lead as ExtendedLeadRecord & { customerId?: string };
       const updatedLead = {
         ...lead,
         assignedAgentKey: finalAgentKey,
@@ -94,6 +95,13 @@ export async function POST(req: Request) {
       leadsMap.set(leadId, updatedLead);
       if (db) {
         await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
+        if (leadWithCustomer.customerId) {
+          await db.collection("customers").doc(leadWithCustomer.customerId).update({
+            assignedAgentId: `agent-${finalAgentKey}`,
+            assignedAgentName: agentProfile.name,
+            updatedAt: new Date().toISOString(),
+          });
+        }
       }
     }
 
@@ -271,6 +279,7 @@ export async function PUT(req: Request) {
     }
 
     if (lead) {
+      const leadWithCustomer = lead as ExtendedLeadRecord & { customerId?: string };
       const updatedLead = {
         ...lead,
         assignedAgentKey: newAgentKey as any,
@@ -279,6 +288,13 @@ export async function PUT(req: Request) {
       leadsMap.set(leadId, updatedLead);
       if (db) {
         await db.collection("leads").doc(leadId).set(encryptLead(updatedLead));
+        if (leadWithCustomer.customerId) {
+          await db.collection("customers").doc(leadWithCustomer.customerId).update({
+            assignedAgentId: `agent-${newAgentKey}`,
+            assignedAgentName: agentProfile.name,
+            updatedAt: new Date().toISOString(),
+          });
+        }
       }
     }
 
