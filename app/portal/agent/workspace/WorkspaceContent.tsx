@@ -151,6 +151,7 @@ const categories = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, color: 'text-blue-400' },
   { id: 'calls', label: 'Call Center', icon: Phone, color: 'text-cyan-400' },
   { id: 'content-workspace', label: 'Content Workspace', icon: FileText, color: 'text-violet-400' },
+  { id: 'gtm-intakes', label: 'GTM Intakes', icon: FileText, color: 'text-indigo-400' },
   { id: 'gtm-reports', label: 'GTM Reports', icon: TrendingUp, color: 'text-purple-400' },
   { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-400' }
 ] as const;
@@ -240,6 +241,37 @@ export default function WorkspaceContent() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Fetch GTM Intakes
+  const fetchGtmIntakes = async () => {
+    setGtmIntakesLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", gtmPage.toString());
+      params.set("limit", gtmLimit.toString());
+      if (gtmSearch) params.set("search", gtmSearch);
+
+      const res = await fetch(`/api/portal/gtm-intakes?${params.toString()}`);
+      const data = await res.json();
+      
+      if (data.success) {
+        setGtmIntakes(data.intakes);
+        setGtmTotal(data.pagination.total);
+        setGtmTotalPages(data.pagination.totalPages);
+      }
+    } catch (error) {
+      console.error("Error fetching GTM intakes:", error);
+    } finally {
+      setGtmIntakesLoading(false);
+    }
+  };
+
+  // Effect to fetch GTM intakes when category or filters change
+  useEffect(() => {
+    if (selectedCategory.id === "gtm-intakes") {
+      fetchGtmIntakes();
+    }
+  }, [selectedCategory.id, gtmPage, gtmLimit, gtmSearch]);
 
   // Synthesize soft Alert/Ringtone
   const startRingtone = () => {
@@ -394,6 +426,16 @@ export default function WorkspaceContent() {
 
   // Document Upload
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  // GTM Intakes
+  const [gtmIntakes, setGtmIntakes] = useState<any[]>([]);
+  const [gtmIntakesLoading, setGtmIntakesLoading] = useState(false);
+  const [gtmSearch, setGtmSearch] = useState("");
+  const [gtmPage, setGtmPage] = useState(1);
+  const [gtmLimit, setGtmLimit] = useState(10);
+  const [gtmTotal, setGtmTotal] = useState(0);
+  const [gtmTotalPages, setGtmTotalPages] = useState(0);
+  const [selectedGtmIntake, setSelectedGtmIntake] = useState<any>(null);
 
   // Unsaved changes state computed dynamically
   const hasUnsavedChanges = 
@@ -1418,7 +1460,243 @@ export default function WorkspaceContent() {
           )}
 
           {/* ──────────────────────────────────────────────────────────────────
-              4. GTM REPORTS
+              4. GTM ANALYSIS REPORTS & STRATEGY
+              ────────────────────────────────────────────────────────────────── */}
+          {selectedCategory.id === 'gtm-intakes' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">GTM Analysis Reports & Strategy</h2>
+                <p className="text-sm text-slate-400">View, search, and manage all customer-submitted GTM intake forms and analysis reports</p>
+              </div>
+
+              {/* Search & Filters */}
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                  <div className="relative flex-1 w-full md:w-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="Search by company, product, owner name/email, or tracking ID..."
+                      value={gtmSearch}
+                      onChange={(e) => {
+                        setGtmSearch(e.target.value);
+                        setGtmPage(1); // Reset to page 1 when searching
+                      }}
+                      className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={gtmLimit}
+                      onChange={(e) => {
+                        setGtmLimit(parseInt(e.target.value));
+                        setGtmPage(1);
+                      }}
+                      className="h-10 bg-slate-900 border border-slate-800 rounded-xl px-3 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value={5}>5 per page</option>
+                      <option value={10}>10 per page</option>
+                      <option value={20}>20 per page</option>
+                      <option value={50}>50 per page</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Intakes List / Detail View */}
+              {selectedGtmIntake ? (
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-6">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-white flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-indigo-400" />
+                        {selectedGtmIntake.companyName} - {selectedGtmIntake.productName}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Tracking ID: {selectedGtmIntake.id} · Submitted: {new Date(selectedGtmIntake.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedGtmIntake(null)}
+                      className="flex items-center gap-1 text-xs font-bold text-teal-400 hover:text-teal-300"
+                    >
+                      <ArrowLeft className="h-3 w-3" /> Back to all intakes
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Company & Product Info</h4>
+                      <div className="space-y-3 text-xs">
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Company Name</span>
+                          <span className="text-slate-200 font-medium">{selectedGtmIntake.companyName}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Product Name</span>
+                          <span className="text-slate-200 font-medium">{selectedGtmIntake.productName}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Product Owner</span>
+                          <span className="text-slate-200 font-medium">{selectedGtmIntake.productOwnerName} ({selectedGtmIntake.productOwnerEmail})</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Target Launch Date</span>
+                          <span className="text-slate-200 font-medium">{new Date(selectedGtmIntake.targetLaunchDate).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Target Market Region</span>
+                          <span className="text-slate-200 font-medium">{selectedGtmIntake.targetMarketRegion}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-800 pb-2">
+                          <span className="text-slate-500">Primary Use Case</span>
+                          <span className="text-slate-200 font-medium">{selectedGtmIntake.primaryUseCase}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Additional Details</h4>
+                      <div className="space-y-3 text-xs">
+                        <div className="border-b border-slate-800 pb-2">
+                          <span className="text-slate-500 block mb-1">Stakeholders</span>
+                          <span className="text-slate-200 font-medium">{Array.isArray(selectedGtmIntake.stakeholders) ? selectedGtmIntake.stakeholders.join(", ") : selectedGtmIntake.stakeholders}</span>
+                        </div>
+                        {selectedGtmIntake.icpDescription && (
+                          <div className="border-b border-slate-800 pb-2">
+                            <span className="text-slate-500 block mb-1">ICP Description</span>
+                            <p className="text-slate-200 font-medium whitespace-pre-line">{selectedGtmIntake.icpDescription}</p>
+                          </div>
+                        )}
+                        {selectedGtmIntake.targetIndustries && (
+                          <div className="border-b border-slate-800 pb-2">
+                            <span className="text-slate-500 block mb-1">Target Industries</span>
+                            <span className="text-slate-200 font-medium">{Array.isArray(selectedGtmIntake.targetIndustries) ? selectedGtmIntake.targetIndustries.join(", ") : selectedGtmIntake.targetIndustries}</span>
+                          </div>
+                        )}
+                        {selectedGtmIntake.additionalNotes && (
+                          <div className="border-b border-slate-800 pb-2">
+                            <span className="text-slate-500 block mb-1">Additional Notes</span>
+                            <p className="text-slate-200 font-medium whitespace-pre-line">{selectedGtmIntake.additionalNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                  {/* Table Header */}
+                  <div className="border-b border-slate-800 bg-slate-900/20 p-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">Customer Submitted Intakes</h3>
+                    <span className="text-xs text-slate-500">Total: {gtmTotal}</span>
+                  </div>
+
+                  {/* Loading State */}
+                  {gtmIntakesLoading ? (
+                    <div className="p-8 text-center">
+                      <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4" />
+                      <p className="text-xs text-slate-500">Loading GTM intakes...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Intakes Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead className="bg-slate-900/20">
+                            <tr className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                              <th className="px-6 py-3">Tracking ID</th>
+                              <th className="px-6 py-3">Company</th>
+                              <th className="px-6 py-3">Product</th>
+                              <th className="px-6 py-3">Owner</th>
+                              <th className="px-6 py-3">Submitted</th>
+                              <th className="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {gtmIntakes.length === 0 ? (
+                              <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                  <p className="text-sm text-slate-500">No GTM intakes found.</p>
+                                </td>
+                              </tr>
+                            ) : (
+                              gtmIntakes.map((intake) => (
+                                <tr
+                                  key={intake.id}
+                                  className="hover:bg-slate-850/30 transition-colors cursor-pointer"
+                                  onClick={() => setSelectedGtmIntake(intake)}
+                                >
+                                  <td className="px-6 py-4">
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                      {intake.id}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-sm font-medium text-white">{intake.companyName}</p>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-xs text-slate-400">{intake.productName}</p>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-xs text-slate-400">{intake.productOwnerName}</p>
+                                    <p className="text-[10px] text-slate-500">{intake.productOwnerEmail}</p>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-xs text-slate-400">{new Date(intake.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-[10px] text-slate-500">{new Date(intake.createdAt).toLocaleTimeString()}</p>
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedGtmIntake(intake);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700 hover:border-teal-500/30 hover:text-teal-400 hover:bg-teal-500/10 text-slate-400 transition-all"
+                                    >
+                                      View Details
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination */}
+                      {gtmTotalPages > 1 && (
+                        <div className="p-4 border-t border-slate-800 flex items-center justify-between gap-4">
+                          <div className="text-xs text-slate-500">
+                            Page {gtmPage} of {gtmTotalPages}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setGtmPage(prev => Math.max(1, prev - 1))}
+                              disabled={gtmPage === 1}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                              Previous
+                            </button>
+                            <button
+                              onClick={() => setGtmPage(prev => Math.min(gtmTotalPages, prev + 1))}
+                              disabled={gtmPage === gtmTotalPages}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ──────────────────────────────────────────────────────────────────
+              5. GTM REPORTS
               ────────────────────────────────────────────────────────────────── */}
           {selectedCategory.id === 'gtm-reports' && (
             <div className="space-y-6">

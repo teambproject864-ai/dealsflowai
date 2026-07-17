@@ -1,0 +1,124 @@
+[1mdiff --git a/app/page.tsx b/app/page.tsx[m
+[1mindex ae7773f..455c26f 100644[m
+[1m--- a/app/page.tsx[m
+[1m+++ b/app/page.tsx[m
+[36m@@ -55,6 +55,26 @@[m [mconst FloatingOrb = React.memo(function FloatingOrb({[m
+   );[m
+ });[m
+ [m
+[32m+[m[32mconst renderFeatureText = (text: string) => {[m
+[32m+[m[32m  if (text.includes("ALMA")) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <span className="relative inline-block group">[m
+[32m+[m[32m        <Link[m
+[32m+[m[32m          href="/features#alma"[m
+[32m+[m[32m          className="underline decoration-dotted decoration-teal-400/50 hover:text-teal-300 transition-colors cursor-help"[m
+[32m+[m[32m        >[m
+[32m+[m[32m          {text}[m
+[32m+[m[32m        </Link>[m
+[32m+[m[32m        <span className="absolute bottom-full left-0 mb-2 w-64 p-3.5 rounded-xl bg-slate-950 border border-white/10 text-[11px] normal-case tracking-normal leading-relaxed text-slate-350 shadow-xl z-55 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">[m
+[32m+[m[32m          <strong className="text-teal-455 block mb-1">ALMA (Agent Learning & Memory Architecture)</strong>[m
+[32m+[m[32m          Our proprietary self-supervised AI engine that fine-tunes email templates and outreach logic based on actual sales success rates in your CRM.[m
+[32m+[m[32m        </span>[m
+[32m+[m[32m      </span>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return text;[m
+[32m+[m[32m};[m
+[32m+[m
+ export default function HomePage() {[m
+   const [isClient, setIsClient] = useState(false);[m
+ [m
+[36m@@ -186,8 +206,9 @@[m [mexport default function HomePage() {[m
+             View Pricing[m
+           </a>[m
+         </motion.div>[m
+[31m-        <span className="text-xs text-slate-500 tracking-wide">[m
+[31m-          Fully compliant with SOC-2 & GDPR · 14-day trial period · Instant results[m
+[32m+[m[41m        [m
+[32m+[m[32m        <span className="text-xs text-slate-500 tracking-wide mb-12">[m
+[32m+[m[32m          SOC 2 Type II audit in progress · GDPR ready · 14-day trial period · Instant results[m
+         </span>[m
+       </section>[m
+ [m
+[36m@@ -295,12 +316,12 @@[m [mexport default function HomePage() {[m
+                 </div>[m
+                 <h3 className="text-xl font-bold text-white mb-2">GDPR & Compliance Firewall</h3>[m
+                 <p className="text-sm text-slate-400 leading-relaxed">[m
+[31m-                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and SOC-2 compliant. Strict role-based layouts prevent unauthorized interactions.[m
+[32m+[m[32m                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and compliant (SOC 2 Type II audit in progress). Strict role-based layouts prevent unauthorized interactions.[m
+                 </p>[m
+               </div>[m
+               <div className="mt-6 flex justify-between items-center flex-wrap gap-4 text-[10px] font-mono">[m
+                 <div className="flex gap-2">[m
+[31m-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II</span>[m
+[32m+[m[32m                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II (Audit in Progress)</span>[m
+                   <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">GDPR Compliant</span>[m
+                 </div>[m
+                 <span className="text-rose-400 flex items-center gap-1">🔒 Full Session Isolation</span>[m
+[36m@@ -412,6 +433,48 @@[m [mexport default function HomePage() {[m
+         </section>[m
+       )}[m
+ [m
+[32m+[m[32m      {/* ─── SOCIAL PROOF SECTION ───────────────────────────────────────────── */}[m
+[32m+[m[32m      <section className="relative z-10 py-20 border-t border-white/5 bg-[#08081a]/40 backdrop-blur-sm">[m
+[32m+[m[32m        <div className="mx-auto max-w-6xl px-6 text-center">[m
+[32m+[m[32m          <p className="text-xs uppercase tracking-widest text-slate-500 mb-10 font-bold">[m
+[32m+[m[32m            Trusted by fast-growing revenue operations at scale[m
+[32m+[m[32m          </p>[m
+[32m+[m[41m          [m
+[32m+[m[32m          {/* Logo Strip with Glassmorphic Elements */}[m
+[32m+[m[32m          <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 opacity-40 hover:opacity-60 transition-opacity duration-300 mb-16">[m
+[32m+[m[32m            <span className="text-lg font-black tracking-tight text-white font-sans">[m
+[32m+[m[32m              stripe[m
+[32m+[m[32m            </span>[m
+[32m+[m[32m            <span className="text-lg font-black tracking-tight text-white font-sans">[m
+[32m+[m[32m              vercel[m
+[32m+[m[32m            </span>[m
+[32m+[m[32m            <span className="text-lg font-black tracking-tight text-white font-sans">[m
+[32m+[m[32m              hubspot[m
+[32m+[m[32m            </span>[m
+[32m+[m[32m            <span className="text-lg font-black tracking-tight text-white font-sans italic">[m
+[32m+[m[32m              salesforce[m
+[32m+[m[32m            </span>[m
+[32m+[m[32m            <span className="text-lg font-black tracking-tight text-white font-sans">[m
+[32m+[m[32m              snowflake[m
+[32m+[m[32m            </span>[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m          {/* Testimonial Quote in Glassmorphic Card */}[m
+[32m+[m[32m          <div className="relative p-8 md:p-12 rounded-[2rem] border border-white/5 bg-slate-950/40 backdrop-blur-md max-w-3xl mx-auto shadow-2xl shadow-violet-500/5 overflow-hidden group">[m
+[32m+[m[32m            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-violet-500/10 transition-colors" />[m
+[32m+[m[32m            <div className="absolute -top-4 -left-2 text-8xl text-teal-500/10 font-serif select-none pointer-events-none">“</div>[m
+[32m+[m[41m            [m
+[32m+[m[32m            <p className="text-base md:text-lg text-slate-300 italic font-light leading-relaxed mb-8 relative z-10">[m
+[32m+[m[32m              &quot;DealFlow AI transformed our sales development. We automated CRM updates completely, and the self-learning email sequences bumped our meeting booking rate by 38% in the first month alone.&quot;[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m            <div className="relative z-10">[m
+[32m+[m[32m              <strong className="text-white text-sm block tracking-wide">Sarah Jenkins</strong>[m
+[32m+[m[32m              <span className="text-xs text-slate-500 font-medium">VP of Revenue Operations, TechScale</span>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </section>[m
+[32m+[m
+       {/* ─── PRICING SECTION ───────────────────────────────────────────────── */}[m
+       <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">[m
+         <div className="mx-auto max-w-7xl px-6">[m
+[36m@@ -516,7 +579,7 @@[m [mexport default function HomePage() {[m
+                         <li key={i} className="flex items-start gap-2.5">[m
+                           <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-violet-400" : "text-teal-400"}`} />[m
+                           <span className={`text-xs font-light ${f.included ? "text-slate-300" : "text-slate-600 line-through"}`}>[m
+[31m-                            {f.text}[m
+[32m+[m[32m                            {renderFeatureText(f.text)}[m
+                           </span>[m
+                         </li>[m
+                       ))}[m
+[36m@@ -544,6 +607,7 @@[m [mexport default function HomePage() {[m
+           </div>[m
+         </div>[m
+       </section>[m
+[32m+[m
+     </main>[m
+   );[m
+ }[m
