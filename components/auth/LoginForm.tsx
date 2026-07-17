@@ -85,7 +85,7 @@ const heroStats = [
 const features = [
   { icon: Zap, text: "AI-powered revenue intelligence", sub: "Autonomous outreach at scale" },
   { icon: TrendingUp, text: "Pipeline automation & insights", sub: "ICP matching in real-time" },
-  { icon: Shield, text: "Enterprise-grade security", sub: "SOC 2 Type II certified" },
+  { icon: Shield, text: "Enterprise-grade security", sub: "SOC 2 Type II (Audit in Progress)" },
   { icon: BarChart3, text: "Real-time GTM analytics", sub: "360° customer visibility" },
 ];
 
@@ -505,7 +505,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
               >
                 <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/3 border border-white/6 text-xs text-slate-500">
                   <Shield className="h-3.5 w-3.5 text-teal-500/70" />
-                  Enterprise-grade security · SOC 2 ready · GDPR compliant
+                  Enterprise-grade security · SOC 2 audit in progress · GDPR compliant
                 </div>
               </motion.div>
             </div>

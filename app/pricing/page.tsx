@@ -8,6 +8,26 @@ import { GlassPanel } from "@/components/immersive/GlassPanel";
 import Link from "next/link";
 import { PLANS, CONVERSION_RATES, CURRENCY_SYMBOLS } from "@/lib/pricing";
 
+const renderFeatureText = (text: string) => {
+  if (text.includes("ALMA")) {
+    return (
+      <span className="relative inline-block group">
+        <Link
+          href="/features#alma"
+          className="underline decoration-dotted decoration-teal-400/50 hover:text-teal-300 transition-colors cursor-help"
+        >
+          {text}
+        </Link>
+        <span className="absolute bottom-full left-0 mb-2 w-64 p-3.5 rounded-xl bg-slate-950 border border-white/10 text-[11px] normal-case tracking-normal leading-relaxed text-slate-350 shadow-xl z-55 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          <strong className="text-teal-455 block mb-1">ALMA (Agent Learning & Memory Architecture)</strong>
+          Our proprietary self-supervised AI engine that fine-tunes email templates and outreach logic based on actual sales success rates in your CRM.
+        </span>
+      </span>
+    );
+  }
+  return text;
+};
+
 const faqItems = [
   {
     question: "Can I switch plans or cancel at any time?",
@@ -26,8 +46,8 @@ const faqItems = [
     answer: "We offer a 30-day money-back guarantee on all subscription plans. If you find that DealFlow.AI is not a fit for your revenue operations workflow, contact our support team within the first 30 days of activation for a full refund."
   },
   {
-    question: "How does the SOC2 compliance firewall (Clawpatrol) secure my customer data?",
-    answer: "Clawpatrol intercepts all outbound and inbound messages, automatically redacting PII (personally identifiable information), verifying context boundaries to prevent hallucinations, and recording audit transactions to an immutable log. Our infrastructure is hosted on AWS SOC2 certified networks."
+    question: "How does the compliance firewall secure my customer data?",
+    answer: "The Agent Security Firewall intercepts all outbound and inbound messages, automatically redacting PII (personally identifiable information), verifying context boundaries to prevent hallucinations, and recording audit transactions to an immutable log. Our infrastructure is hosted on AWS SOC 2 certified networks."
   }
 ];
 
@@ -53,7 +73,7 @@ const featureCategories = [
     name: "Security & Ops",
     items: [
       { name: "PII Redaction Guardrails", starter: "❌", growth: "Standard logs", enterprise: "Enterprise-wide compliance" },
-      { name: "Security Firewall (Clawpatrol)", starter: "Basic policy", growth: "Full isolation", enterprise: "Immutable compliance logs & SOC2" },
+      { name: "Agent Security Firewall", starter: "Basic policy", growth: "Full isolation", enterprise: "Immutable compliance logs (SOC 2 audit in progress)" },
       { name: "Support Channels", starter: "Email (24h)", growth: "Priority (4h SLA)", enterprise: "Dedicated account strategist" },
       { name: "Uptime SLA", starter: "❌", growth: "❌", enterprise: "99.9% guaranteed" },
     ]
@@ -246,7 +266,7 @@ export default function PricingPage() {
                             <X className="h-5 w-5 text-slate-400 dark:text-slate-655 shrink-0 mt-0.5" />
                           )}
                           <span className={`text-sm leading-tight ${feature.included ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500 line-through"}`}>
-                            {feature.text}
+                            {renderFeatureText(feature.text)}
                           </span>
                         </li>
                       ))}
@@ -342,7 +362,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-around gap-8 text-center text-slate-550 dark:text-slate-500 font-semibold uppercase tracking-widest text-[10px]">
           <div className="flex items-center gap-2.5">
             <Shield className="h-5 w-5 text-teal-600/70 dark:text-teal-500/50" />
-            <span>SOC2 Type II Compliant</span>
+            <span>SOC 2 Type II (Audit in Progress)</span>
           </div>
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-5 w-5 text-teal-600/70 dark:text-teal-500/50" />

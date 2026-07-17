@@ -27,7 +27,7 @@ export function Footer() {
   };
 
   const socialLinks = [
-    { name: "Email", icon: Mail, href: "mailto:praneethburada@gmail.com" },
+    { name: "Email", icon: Mail, href: "mailto:hello@dealsflow.ai" },
   ];
 
   return (
@@ -133,7 +133,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} DealFlow AI, Inc. All rights reserved.
           </p>
           <p className="text-xs text-slate-400 flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[9px] font-bold border border-emerald-500/20">SOC 2 Type II</span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[9px] font-bold border border-emerald-500/20">SOC 2 Type II (Audit in Progress)</span>
             Built with ❤️ for revenue teams
           </p>
         </div>

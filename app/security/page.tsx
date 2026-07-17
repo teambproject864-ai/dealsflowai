@@ -15,7 +15,7 @@ export default function SecurityPage() {
           <section className="space-y-4">
             <h2 className="text-xl font-bold text-white">1. Compliance & Certifications</h2>
             <p>
-              DealFlow AI is committed to establishing and maintaining enterprise-grade safety standards. We are SOC 2 Type II certified and adhere strictly to GDPR principles.
+              DealFlow AI is committed to establishing and maintaining enterprise-grade safety standards. Our SOC 2 Type II audit is in progress, and we adhere strictly to GDPR principles.
             </p>
           </section>
 
@@ -32,14 +32,14 @@ export default function SecurityPage() {
           <section className="space-y-4">
             <h2 className="text-xl font-bold text-white">3. Network & Infrastructure Security</h2>
             <p>
-              Our application infrastructure is hosted on secure cloud providers. We implement least-privilege IAM policies, automated firewalls (Clawpatrol), and real-time monitoring to intercept anomalies or malicious activity.
+              Our application infrastructure is hosted on secure cloud providers. We implement least-privilege IAM policies, automated security firewalls, and real-time monitoring to intercept anomalies or malicious activity.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-bold text-white">4. Threat Prevention</h2>
             <p>
-              Our proprietary Clawpatrol firewall runs inline on all multi-agent execution steps, scanning inputs and outputs for prompt injections, scripting attempts, or prototype pollution to guarantee clean execution boundaries.
+              Our proprietary Agent Security Firewall runs inline on all multi-agent execution steps, scanning inputs and outputs for prompt injections, scripting attempts, or prototype pollution to guarantee clean execution boundaries.
             </p>
           </section>
 

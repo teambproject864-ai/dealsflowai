@@ -111,7 +111,7 @@ const GTM_BLUEPRINT = {
     icon: ShieldAlert,
     insights: [
       { label: "AI Hallucination Risk", value: "Mitigated by strict retrieval guardrails linked to validated vector storage databases with a human-override option." },
-      { label: "Data Privacy & Compliance", value: "Zero data retention (ZDR) policies for sensitive customer data, SSL encryption, and GDPR/SOC-2 Type II standards compliance." },
+      { label: "Data Privacy & Compliance", value: "Zero data retention (ZDR) policies for sensitive customer data, SSL encryption, GDPR compliance, and SOC 2 Type II audit in progress." },
       { label: "API Throttling & Limits", value: "Implemented intelligent rate-limiting queues, localized lead caching, and dual-model redundancy fallbacks." }
     ]
   },
@@ -180,7 +180,7 @@ const getFormattedGtmText = () => {
 
 7. RISK MITIGATION FRAMEWORK:
 - AI Hallucination: Protected by tight vector retrieval guardrails and human-takeover fallbacks.
-- Privacy/Compliance: Zero Data Retention (ZDR) mode, SSL encryption, SOC-2 Type II standards.
+- Privacy/Compliance: Zero Data Retention (ZDR) mode, SSL encryption, SOC 2 Type II ready (audit in progress) standards.
 - Throttling: Local lead caching and query queue batching.
 
 8. KEY PERFORMANCE INDICATORS (KPIs):
@@ -219,7 +219,7 @@ const DEFAULT_GTM_OUTLINE = `=== GO-TO-MARKET (GTM) ANALYSIS OUTLINE ===
 - Enablement Assets: [e.g., Automated CRM case study decks, ROI calculators, playbooks]
 
 9. RISK MITIGATION STRATEGY:
-- Core Risks & Mitigations: [e.g., AI hallucination guardrails, GDPR/SOC-2 ZDR compliance]
+- Core Risks & Mitigations: [e.g., AI hallucination guardrails, GDPR/SOC-2 ready ZDR compliance]
 
 10. SUCCESS METRIC TRACKING FRAMEWORK:
 - Success Metrics / KPIs: [e.g., Lead-to-Booked Consultation rate, CAC:LTV, active session duration]`;

@@ -83,7 +83,7 @@ const BENEFITS = [
   {
     icon: <Globe className="h-6 w-6 text-amber-400" />,
     title: "Enterprise ready",
-    description: "SOC 2 & GDPR compliant, end-to-end encrypted",
+    description: "GDPR compliant & SOC 2 audit in progress, end-to-end encrypted",
   },
 ];
 

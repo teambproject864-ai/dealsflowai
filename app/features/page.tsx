@@ -94,7 +94,7 @@ const CORE_ARCHITECTURE = [
   },
   {
     id: "clawpatrol",
-    title: "Agent Security Firewall (Clawpatrol)",
+    title: "Agent Security Firewall",
     icon: Shield,
     glow: "glow-amber",
     accent: "text-amber-400",
@@ -108,7 +108,7 @@ const CORE_ARCHITECTURE = [
       "Immutable cryptographic audit trails stored in compliance vaults."
     ],
     synergy: "Intercepts all memory operations in Memory OS (Hermes), inspects vectors in MEM Palace, and validates learning iterations inside ALMA.",
-    benefit: "SOC2 and GDPR compliance by design, ensuring customer data remains secure, private, and audit-ready at all times."
+    benefit: "SOC 2 audit in progress & GDPR compliance by design, ensuring customer data remains secure, private, and audit-ready at all times."
   }
 ];
 

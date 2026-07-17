@@ -52,13 +52,13 @@ export const PLANS: PricingPlan[] = [
   {
     name: "Enterprise",
     price: null,
-    description: "For large companies requiring custom controls, SOC2 compliance, and SLAs.",
+    description: "For large companies requiring custom controls, SOC 2 audit in progress, and SLAs.",
     features: [
       { text: "Everything included in Growth", included: true },
       { text: "Unlimited active lead volume", included: true },
       { text: "Dedicated account strategist", included: true },
       { text: "Custom webhook & CRM integrations", included: true },
-      { text: "SOC2 Compliance Auditing (Clawpatrol)", included: true },
+      { text: "Compliance Auditing & Log Export (SOC 2 audit in progress)", included: true },
       { text: "99.9% availability SLA guarantee", included: true },
       { text: "On-premise secure deployment option", included: true },
       { text: "Custom system fine-tuning (ALMA)", included: true },
