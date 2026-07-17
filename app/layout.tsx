@@ -78,17 +78,32 @@ export default function RootLayout({
                     document.documentElement.setAttribute('data-banner-dismissed', 'true');
                   }
                 } catch (e) {}
+
+                // Automatically handle Next.js ChunkLoadErrors by reloading the page to fetch the correct chunks
+                try {
+                  window.addEventListener('error', function(e) {
+                    var target = e.target || e.srcElement;
+                    var isScript = target && target.nodeName === 'SCRIPT';
+                    if (isScript && target.src && target.src.indexOf('/_next/static/') !== -1) {
+                      console.warn('Next.js script chunk failed to load. Reloading page...');
+                      window.location.reload();
+                    }
+                  }, true);
+
+                  window.addEventListener('unhandledrejection', function(e) {
+                    if (e.reason && (e.reason.name === 'ChunkLoadError' || (e.reason.message && e.reason.message.indexOf('ChunkLoadError') !== -1))) {
+                      console.warn('Unhandled ChunkLoadError detected. Reloading page...');
+                      window.location.reload();
+                    }
+                  });
+                } catch (e) {}
               })();
             `
           }}
         />
-        <link rel="preconnect" href="https://cal.com" />
-        <link rel="dns-prefetch" href="https://cal.com" />
-        <link rel="preconnect" href="https://app.cal.com" />
-        <link rel="dns-prefetch" href="https://app.cal.com" />
-        <link rel="preload" as="script" href="https://app.cal.com/embed/embed.js" />
-        <link rel="preconnect" href="https://calendly.com" />
-        <link rel="dns-prefetch" href="https://calendly.com" />
+        {/* Preconnect for Calendly only since that's what we use */}
+      <link rel="preconnect" href="https://calendly.com" />
+      <link rel="dns-prefetch" href="https://calendly.com" />
       </head>
       <body
         className={`${sans.variable} min-h-screen bg-background font-sans text-foreground antialiased flex flex-col`}

@@ -55,6 +55,26 @@ const FloatingOrb = React.memo(function FloatingOrb({
   );
 });
 
+const renderFeatureText = (text: string) => {
+  if (text.includes("ALMA")) {
+    return (
+      <span className="relative inline-block group">
+        <Link
+          href="/features#alma"
+          className="underline decoration-dotted decoration-teal-400/50 hover:text-teal-300 transition-colors cursor-help"
+        >
+          {text}
+        </Link>
+        <span className="absolute bottom-full left-0 mb-2 w-64 p-3.5 rounded-xl bg-slate-950 border border-white/10 text-[11px] normal-case tracking-normal leading-relaxed text-slate-350 shadow-xl z-55 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          <strong className="text-teal-455 block mb-1">ALMA (Agent Learning & Memory Architecture)</strong>
+          Our proprietary self-supervised AI engine that fine-tunes email templates and outreach logic based on actual sales success rates in your CRM.
+        </span>
+      </span>
+    );
+  }
+  return text;
+};
+
 export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
 
@@ -126,15 +146,17 @@ export default function HomePage() {
 
       {/* ─── HERO SECTION ────────────────────────────────────────────────────── */}
       <section id="hero" className="relative z-10 pt-28 pb-16 flex flex-col items-center justify-center text-center px-6 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isClient ? 1 : 0, y: isClient ? 0 : 20 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 text-violet-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(124,58,237,0.15)]"
-        >
-          <Sparkles className="h-4.5 w-4.5 text-violet-400 animate-spin" />
-          Pipeline Orchestration OS
-        </motion.div>
+        {isClient && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 text-violet-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(124,58,237,0.15)]"
+          >
+            <Sparkles className="h-4.5 w-4.5 text-violet-400 animate-spin" />
+            Pipeline Orchestration OS
+          </motion.div>
+        )}
 
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
@@ -186,8 +208,9 @@ export default function HomePage() {
             View Pricing
           </a>
         </motion.div>
-        <span className="text-xs text-slate-500 tracking-wide">
-          Fully compliant with SOC-2 & GDPR · 14-day trial period · Instant results
+        
+        <span className="text-xs text-slate-500 tracking-wide mb-12">
+          SOC 2 Type II audit in progress · GDPR ready · 14-day trial period · Instant results
         </span>
       </section>
 
@@ -295,12 +318,12 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">GDPR & Compliance Firewall</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and SOC-2 compliant. Strict role-based layouts prevent unauthorized interactions.
+                  Enterprise-grade security settings. Every document access is audited, and client data flows are isolated and compliant (SOC 2 Type II audit in progress). Strict role-based layouts prevent unauthorized interactions.
                 </p>
               </div>
               <div className="mt-6 flex justify-between items-center flex-wrap gap-4 text-[10px] font-mono">
                 <div className="flex gap-2">
-                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II</span>
+                  <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">SOC 2 Type II (Audit in Progress)</span>
                   <span className="bg-slate-900 border border-white/10 px-2.5 py-1 rounded text-slate-400">GDPR Compliant</span>
                 </div>
                 <span className="text-rose-400 flex items-center gap-1">🔒 Full Session Isolation</span>
@@ -412,6 +435,48 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ─── SOCIAL PROOF SECTION ───────────────────────────────────────────── */}
+      <section className="relative z-10 py-20 border-t border-white/5 bg-[#08081a]/40 backdrop-blur-sm">
+        <div className="mx-auto max-w-6xl px-6 text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-500 mb-10 font-bold">
+            Trusted by fast-growing revenue operations at scale
+          </p>
+          
+          {/* Logo Strip with Glassmorphic Elements */}
+          <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 opacity-40 hover:opacity-60 transition-opacity duration-300 mb-16">
+            <span className="text-lg font-black tracking-tight text-white font-sans">
+              stripe
+            </span>
+            <span className="text-lg font-black tracking-tight text-white font-sans">
+              vercel
+            </span>
+            <span className="text-lg font-black tracking-tight text-white font-sans">
+              hubspot
+            </span>
+            <span className="text-lg font-black tracking-tight text-white font-sans italic">
+              salesforce
+            </span>
+            <span className="text-lg font-black tracking-tight text-white font-sans">
+              snowflake
+            </span>
+          </div>
+
+          {/* Testimonial Quote in Glassmorphic Card */}
+          <div className="relative p-8 md:p-12 rounded-[2rem] border border-white/5 bg-slate-950/40 backdrop-blur-md max-w-3xl mx-auto shadow-2xl shadow-violet-500/5 overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-violet-500/10 transition-colors" />
+            <div className="absolute -top-4 -left-2 text-8xl text-teal-500/10 font-serif select-none pointer-events-none">“</div>
+            
+            <p className="text-base md:text-lg text-slate-300 italic font-light leading-relaxed mb-8 relative z-10">
+              &quot;DealFlow AI transformed our sales development. We automated CRM updates completely, and the self-learning email sequences bumped our meeting booking rate by 38% in the first month alone.&quot;
+            </p>
+            <div className="relative z-10">
+              <strong className="text-white text-sm block tracking-wide">Sarah Jenkins</strong>
+              <span className="text-xs text-slate-500 font-medium">VP of Revenue Operations, TechScale</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── PRICING SECTION ───────────────────────────────────────────────── */}
       <section id="pricing" className="relative z-10 py-24 border-t border-white/5 flex flex-col justify-center">
         <div className="mx-auto max-w-7xl px-6">
@@ -516,7 +581,7 @@ export default function HomePage() {
                         <li key={i} className="flex items-start gap-2.5">
                           <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isPopular ? "text-violet-400" : "text-teal-400"}`} />
                           <span className={`text-xs font-light ${f.included ? "text-slate-300" : "text-slate-600 line-through"}`}>
-                            {f.text}
+                            {renderFeatureText(f.text)}
                           </span>
                         </li>
                       ))}
@@ -544,6 +609,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
     </main>
   );
 }
