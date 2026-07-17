@@ -16,18 +16,30 @@ export async function GET(request: NextRequest) {
 
     let tasks: any[] = [];
     if (db) {
-      let queryRef: any = db.collection("tasks");
+      const queryRef: any = db.collection("tasks");
 
       if (user.role === "customer") {
-        queryRef = queryRef.where("customerId", "==", user.id);
+        // Customers only see their own tasks
+        const snap = await queryRef.where("customerId", "==", user.id).get();
+        snap.forEach((doc: any) => {
+          tasks.push({ id: doc.id, ...doc.data() });
+        });
       } else if (user.role === "agent") {
-        queryRef = queryRef.where("assignedAgentId", "==", user.id);
+        // Agents see tasks assigned to them OR unassigned
+        const snap = await queryRef.get();
+        snap.forEach((doc: any) => {
+          const data = doc.data();
+          if (data.assignedAgentId === user.id || !data.assignedAgentId) {
+            tasks.push({ id: doc.id, ...data });
+          }
+        });
+      } else {
+        // Admins see all tasks
+        const snap = await queryRef.get();
+        snap.forEach((doc: any) => {
+          tasks.push({ id: doc.id, ...doc.data() });
+        });
       }
-
-      const snap = await queryRef.get();
-      snap.forEach((doc: any) => {
-        tasks.push({ id: doc.id, ...doc.data() });
-      });
 
       // Sort by createdAt descending
       tasks.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
@@ -38,6 +50,17 @@ export async function GET(request: NextRequest) {
     console.error("[api-portal-tasks-get] Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch tasks" }, { status: 500 });
   }
+}
+
+// Helper to normalize priority
+function normalizePriority(priority: string | undefined): string {
+  if (!priority) return "Medium";
+  const lower = priority.toLowerCase();
+  if (lower === "critical") return "Critical";
+  if (lower === "high") return "High";
+  if (lower === "medium") return "Medium";
+  if (lower === "low") return "Low";
+  return "Medium";
 }
 
 export async function POST(request: NextRequest) {
@@ -83,7 +106,7 @@ export async function POST(request: NextRequest) {
       assignedAgentName: assignedAgentName || "",
       customerId,
       customerName: customerName || "",
-      priority: priority || "medium",
+      priority: normalizePriority(priority),
       progressNotes: progressNotes || [],
       milestones: milestones || [],
       dueDate: dueDate || "",
@@ -122,12 +145,22 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request);
-    if (!user || user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admins only" }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get taskId from either search params or request body
+    let taskId: string | null = null;
     const url = new URL(request.url);
-    const taskId = url.searchParams.get("taskId");
+    taskId = url.searchParams.get("taskId");
+    if (!taskId) {
+      try {
+        const body = await request.json();
+        taskId = body.id;
+      } catch (e) {
+        // Body might be empty, that's okay
+      }
+    }
 
     if (!taskId) {
       return NextResponse.json({ success: false, error: "Task ID is required" }, { status: 400 });
@@ -137,12 +170,25 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 });
     }
 
+    // Get the task to check ownership/assignment
+    const taskDoc = await db.collection("tasks").doc(taskId).get();
+    if (!taskDoc.exists) {
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
+    }
+
+    const taskData = taskDoc.data();
+
+    // Check permissions: Admin can delete any, Agent can delete their own assigned tasks
+    if (user.role === "agent" && taskData?.assignedAgentId !== user.id) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     await db.collection("tasks").doc(taskId).delete();
 
     // Write audit log
     await db.collection("audit_logs").add({
       id: `audit-${Date.now()}`,
-      actionType: "other",
+      actionType: "task_delete",
       actionDetails: `${user.name} (${user.role}) deleted task ID: ${taskId}`,
       performedBy: user.id,
       performedByRole: user.role,

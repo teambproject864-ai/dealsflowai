@@ -1,15 +1,12 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { generateCampaignStrategy } from '@/lib/campaign-generator'
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
-  TrendingUp,
   Users,
   FileText,
   Settings,
-  Bell,
   Search,
   Plus,
   MoreHorizontal,
@@ -25,1367 +22,1548 @@ import {
   PieChart,
   BarChart3,
   Activity,
-  UserPlus,
-  FileSearch,
-  FileSpreadsheet,
-  BarChart2,
-  TrendingDown,
+  PhoneCall,
+  PhoneOff,
+  Mic,
+  MicOff,
+  Play,
+  Pause,
+  Trash2,
+  FolderOpen,
+  Upload,
+  Download,
+  Share2,
+  AlertCircle,
+  HelpCircle,
+  X,
+  ShieldAlert,
+  ArrowLeft,
+  Volume2,
   CheckCircle2,
-  Rocket,
   MessageSquare,
-  Video,
-  Smartphone
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+  Bookmark,
+  TrendingUp
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { LeadAnalysisDashboard } from '@/components/LeadAnalysisDashboard';
+import { MarketingStrategyModule } from '@/components/MarketingStrategyModule';
 
-// Sample data for demonstration
-const deals = [
+// ─── INITIAL MOCK DATA ────────────────────────────────────────────────────────
+
+const initialCustomers = [
   {
-    id: '1',
-    company: 'Stark Industries',
-    contact: 'Tony Stark',
-    value: 250000,
-    stage: 'proposal',
-    lastActivity: '2 days ago',
-    avatar: 'SI'
+    id: "cust-1",
+    name: "Acme Corp",
+    industry: "Enterprise SaaS",
+    contactName: "John Smith",
+    phone: "+1 (555) 123-4567",
+    email: "john.smith@acme.com",
+    history: [
+      { id: "h-1", type: "Call", summary: "Initial discovery call", detail: "Spoke with John about their current sales pipeline bottlenecks. They are interested in AI automations.", date: "2026-07-15 10:30 AM" },
+      { id: "h-2", type: "Email", summary: "Sent product deck", detail: "Emailed the latest enterprise overview slide deck and pricing summary.", date: "2026-07-15 11:15 AM" }
+    ],
+    cases: [
+      { id: "case-1", title: "API Integration Inquiry", description: "Customer wants to know if they can sync with a custom Postgres instance.", priority: "Medium", status: "Open", date: "2026-07-16" }
+    ],
+    documents: [
+      { id: "doc-1", title: "Acme-GTM-Scope-v2.pdf", size: "2.4 MB", date: "2026-07-16" }
+    ]
   },
   {
-    id: '2',
-    company: 'Wayne Enterprises',
-    contact: 'Bruce Wayne',
-    value: 450000,
-    stage: 'negotiation',
-    lastActivity: '5 hours ago',
-    avatar: 'WE'
+    id: "cust-2",
+    name: "TechSolutions",
+    industry: "Managed IT Services",
+    contactName: "Sarah Connor",
+    phone: "+1 (555) 987-6543",
+    email: "sconnor@techsolutions.io",
+    history: [
+      { id: "h-3", type: "Call", summary: "Billing discussion", detail: "Resolved invoicing discrepancy for the pilot phase. Everything synced.", date: "2026-07-14 02:00 PM" }
+    ],
+    cases: [
+      { id: "case-2", title: "CRM Sync Latency", description: "Noticed a 5-minute lag on Salesforce contacts updates.", priority: "High", status: "In Progress", date: "2026-07-17" }
+    ],
+    documents: [
+      { id: "doc-2", title: "Service-Agreement-Signed.pdf", size: "1.1 MB", date: "2026-07-14" }
+    ]
   },
   {
-    id: '3',
-    company: 'Wakanda Industries',
-    contact: "T'Challa",
-    value: 800000,
-    stage: 'closed-won',
-    lastActivity: '1 week ago',
-    avatar: 'WI'
+    id: "cust-3",
+    name: "Innovate LLC",
+    industry: "E-Commerce",
+    contactName: "David Miller",
+    phone: "+1 (555) 333-2222",
+    email: "david@innovate.co",
+    history: [
+      { id: "h-4", type: "Email", summary: "Meeting scheduling", detail: "Scheduled a walkthrough of the voice call agent workflow for next Tuesday.", date: "2026-07-16 04:45 PM" }
+    ],
+    cases: [],
+    documents: []
   }
-]
+];
 
-const stages = [
-  { id: 'lead', label: 'Lead', color: 'text-gray-400 bg-gray-900' },
-  { id: 'qualification', label: 'Qualification', color: 'text-blue-400 bg-blue-900/30' },
-  { id: 'proposal', label: 'Proposal', color: 'text-purple-400 bg-purple-900/30' },
-  { id: 'negotiation', label: 'Negotiation', color: 'text-orange-400 bg-orange-900/30' },
-  { id: 'closed-won', label: 'Closed Won', color: 'text-green-400 bg-green-900/30' },
-  { id: 'closed-lost', label: 'Closed Lost', color: 'text-red-400 bg-red-900/30' }
-]
-
-const contentAssets = [
+const kbArticles = [
   {
-    id: '1',
-    title: 'Enterprise Cold Email Template',
-    type: 'Email',
-    performance: 85,
-    lastModified: '2024-01-15',
-    tags: ['Enterprise', 'Cold Outreach']
+    id: "kb-1",
+    title: "Resolving CRM Synchronization Failures",
+    category: "Integrations",
+    summary: "Step-by-step instructions to re-authorize Salesforce, HubSpot, or custom database connectors when sync status drops.",
+    content: "If a sync fails, check the credentials under Workspace Settings first. Try clearing the connection cache by toggling the Sync Active switch off and on again. If issues persist, verify that your API token has read/write permissions for Lead and Opportunity entities."
   },
   {
-    id: '2',
-    title: 'Product One-Pager',
-    type: 'Document',
-    performance: 92,
-    lastModified: '2024-01-10',
-    tags: ['Sales Enablement']
+    id: "kb-2",
+    title: "Agent Voice Dialer Configurations",
+    category: "Calling",
+    summary: "Best practices for configuring microphone input, volume parameters, and handling active network handovers.",
+    content: "Make sure you have granted the browser microphone permissions. We recommend utilizing a USB headset. You can perform a real-time echo-test under Settings > Audio Test. If calls drop frequently, ensure your firewall permits outbound UDP connections on ports 10000-20000."
   },
   {
-    id: '3',
-    title: 'Case Study - TechCorp',
-    type: 'PDF',
-    performance: 78,
-    lastModified: '2024-01-05',
-    tags: ['Case Study', 'Tech']
+    id: "kb-3",
+    title: "GDPR Compliance & Call Isolation Policy",
+    category: "Security",
+    summary: "Understanding how DealFlow handles customer PII, call recordings, and isolated session workspaces.",
+    content: "All call recordings are encrypted at rest using AES-256 keys. Recordings are isolated per tenant session and stored inside designated secure buckets. Ensure that call participants consent to recording before starting the capture session."
   }
-]
+];
 
-const marketingTactics = [
-  {
-    id: '1',
-    name: 'LinkedIn Outreach',
-    status: 'active',
-    reach: 2500,
-    engagement: 12.5,
-    leads: 45,
-    budget: 5000
-  },
-  {
-    id: '2',
-    name: 'Email Campaign',
-    status: 'active',
-    reach: 10000,
-    engagement: 8.2,
-    leads: 120,
-    budget: 3000
-  },
-  {
-    id: '3',
-    name: 'Webinar Series',
-    status: 'draft',
-    reach: 0,
-    engagement: 0,
-    leads: 0,
-    budget: 8000
-  }
-]
+const initialChannels = {
+  general: [
+    { id: "msg-1", sender: "System", text: "Welcome to the internal team chat channel.", time: "09:00 AM" },
+    { id: "msg-2", sender: "David (Lead Agent)", text: "Hey team, recall to check lead queues before outbound campaigns today.", time: "10:14 AM" }
+  ],
+  escalations: [
+    { id: "msg-3", sender: "System", text: "Escalations alerts channel created.", time: "09:00 AM" },
+    { id: "msg-4", sender: "Sarah Jenkins (VP)", text: "Acme Corp integration is pending custom field approvals. Do not run campaign yet.", time: "11:30 AM" }
+  ],
+  "crm-updates": [
+    { id: "msg-5", sender: "System", text: "Automated CRM Sync events log.", time: "09:00 AM" },
+    { id: "msg-6", sender: "HubSpot Bot", text: "Synced 45 contacts for TechSolutions.", time: "01:25 PM" }
+  ]
+};
+
+const initialCallHistory = [
+  { id: "call-1", name: "John Smith (Acme)", phone: "+1 (555) 123-4567", direction: "Outbound", date: "2026-07-16 10:30 AM", duration: "03:45", status: "Completed", recording: true },
+  { id: "call-2", name: "Unknown", phone: "+1 (555) 777-8888", direction: "Inbound", date: "2026-07-15 02:15 PM", duration: "00:52", status: "Missed", recording: false },
+  { id: "call-3", name: "Sarah Connor (TechSolutions)", phone: "+1 (555) 987-6543", direction: "Outbound", date: "2026-07-14 01:10 PM", duration: "05:12", status: "Transferred", recording: true }
+];
 
 const categories = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, color: 'text-blue-400' },
-  { id: 'deals', label: 'Deals', icon: TrendingUp, color: 'text-green-400' },
-  { id: 'marketing-intake', label: 'Marketing Intake', icon: FileSearch, color: 'text-cyan-400' },
-  { id: 'marketing-profile', label: 'Marketing Profile', icon: FileSpreadsheet, color: 'text-emerald-400' },
-  { id: 'content', label: 'Content', icon: FileText, color: 'text-purple-400' },
-  { id: 'tactics', label: 'Tactics', icon: Target, color: 'text-orange-400' },
-  { id: 'contacts', label: 'Contacts', icon: Users, color: 'text-pink-400' },
+  { id: 'calls', label: 'Call Center', icon: Phone, color: 'text-cyan-400' },
+  { id: 'content-workspace', label: 'Content Workspace', icon: FileText, color: 'text-violet-400' },
+  { id: 'gtm-reports', label: 'GTM Reports', icon: TrendingUp, color: 'text-purple-400' },
   { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-400' }
-]
+] as const;
+
+// ─── COMPONENT DEFINITION ──────────────────────────────────────────────────────
 
 export default function WorkspaceContent() {
-  const searchParams = useSearchParams()
-  const leadId = searchParams.get('leadId')
-  const [customer, setCustomer] = useState<any>(null)
-  const [assets, setAssets] = useState<any[]>(contentAssets)
-  const [tactics, setTactics] = useState<any[]>(marketingTactics)
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const leadId = searchParams.get('leadId');
+  const { user: currentUser } = useCurrentUser();
 
-  const [selectedCategory, setSelectedCategory] = useState(categories[0])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [formStep, setFormStep] = useState(1)
-  const [marketingIntakeData, setMarketingIntakeData] = useState({
-    businessInfo: {
-      officialBusinessName: '',
-      primaryWebsiteUrl: '',
-      industryVertical: '',
-      businessType: 'B2B' as const,
-      companySize: { numberOfEmployees: '', revenueBracket: '' },
-      coreProductServiceName: '',
-      productServiceDescription: '',
-      uniqueValueProposition: '',
-      pricingModel: '',
-      targetMarket: '',
-      targetCountries: [] as string[],
-      targetLanguages: [] as string[]
-    },
-    customerInfo: {
-      idealCustomerProfile: '',
-      buyerPersonas: '',
-      keyDecisionMakers: '',
-      customerPainPoints: '',
-      customerChallenges: '',
-      buyingTriggers: '',
-      commonObjections: ''
-    },
-    marketingInfo: {
-      primaryBusinessGoal: '',
-      measurableMarketingObjectives: '',
-      currentMarketingChannels: [] as string[],
-      existingMarketingAssets: '',
-      competitors: '',
-      primaryKeywords: '',
-      longTailKeywords: '',
-      brandTone: '',
-      brandVoice: '',
-      marketingBudget: '',
-      salesCycleLength: ''
-    }
-  })
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [marketingProfile, setMarketingProfile] = useState<any>(null)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  // Agent State
+  const [agentStatus, setAgentStatus] = useState<"Online" | "Away" | "Busy">("Online");
+  const [showExitModal, setShowExitModal] = useState(false);
 
+  // General App State
+  const [selectedCategory, setSelectedCategory] = useState<typeof categories[number]>(categories[0]);
+  const [customers, setCustomers] = useState(initialCustomers);
+  const [selectedCustomer, setSelectedCustomer] = useState(initialCustomers[0]);
+
+  // Sync with leadId searchParam
   useEffect(() => {
-    if (!leadId) return;
-
-    async function loadCustomerAndAssets() {
-      try {
-        const res = await fetch("/api/admin/customers");
-        const data = await res.json();
-        if (data.success && Array.isArray(data.customers)) {
-          const found = data.customers.find((c: any) => c.id === leadId);
-          if (found) {
-            setCustomer(found);
-
-            const company = found.companyInformation || {};
-            const personal = found.personalIdentifiers || {};
-            const intake = found.intakeData || {};
-
-            setMarketingIntakeData({
-              businessInfo: {
-                officialBusinessName: found.companyName || company.companyName || '',
-                primaryWebsiteUrl: company.websiteUrl || '',
-                industryVertical: company.industry || found.industry || '',
-                businessType: (company.businessModel?.toUpperCase() || found.businessModel?.toUpperCase() || 'B2B') as any,
-                companySize: {
-                  numberOfEmployees: company.companySize || '',
-                  revenueBracket: company.revenueRange || ''
-                },
-                coreProductServiceName: intake.productsServices || intake.productName || '',
-                productServiceDescription: intake.companyDescription || '',
-                uniqueValueProposition: intake.uniqueValueProp || '',
-                pricingModel: intake.pricingModel || '',
-                targetMarket: intake.targetMarket || company.revenueRange || '',
-                targetCountries: intake.targetGeographics || [company.headquarters?.country || 'United States'],
-                targetLanguages: intake.preferredLanguages || ['English']
-              },
-              customerInfo: {
-                idealCustomerProfile: intake.icpDescription || '',
-                buyerPersonas: intake.buyingRoles ? intake.buyingRoles.join(', ') : '',
-                keyDecisionMakers: intake.targetDecisionMakers || (intake.buyingRoles && intake.buyingRoles.join(', ')) || '',
-                customerPainPoints: intake.painPoint || '',
-                customerChallenges: intake.keyChallenges || '',
-                buyingTriggers: intake.buyingSignals ? intake.buyingSignals.join(', ') : '',
-                commonObjections: intake.commonObjections || ''
-              },
-              marketingInfo: {
-                primaryBusinessGoal: intake.primaryOutcome || '',
-                measurableMarketingObjectives: intake.primaryOutcome || '',
-                currentMarketingChannels: intake.brandChannels || [],
-                existingMarketingAssets: intake.outreachAssets ? intake.outreachAssets.join(', ') : '',
-                competitors: intake.competitors || '',
-                primaryKeywords: intake.messagingThemes || '',
-                longTailKeywords: intake.messagingThemes || '',
-                brandTone: intake.publishingFrequency || '',
-                brandVoice: intake.publishingFrequency || '',
-                marketingBudget: intake.budgetDepartments ? intake.budgetDepartments.join(', ') : '',
-                salesCycleLength: intake.timeToValue || ''
-              }
-            });
-
-            if (found.campaignStrategy) {
-              const strategy = found.campaignStrategy;
-              setMarketingProfile({
-                businessSummary: strategy.businessSummary,
-                industryAnalysis: strategy.marketingStrategy,
-                strategicPositioning: strategy.targetAudienceInsights,
-                refinedUSP: strategy.targetAudienceInsights,
-                targetAudienceSummary: strategy.targetAudienceInsights,
-                prioritizedPainPoints: strategy.priorityRecommendations || [],
-                buyerJourney: strategy.customerJourney,
-                recommendedChannels: strategy.recommendedChannels || [],
-                recommendedContent: strategy.contentIdeas?.blogTopics || [],
-                seoOpportunities: strategy.contentIdeas?.seoContent || [],
-                paidOpportunities: strategy.contentIdeas?.adCopy || [],
-                communityOpportunities: [],
-                videoOpportunities: strategy.contentIdeas?.socialMediaPosts || [],
-                emailOpportunities: strategy.contentIdeas?.emailCampaigns || [],
-                aiOpportunities: [],
-                topTactics: (strategy.tactics || []).map((t: any) => ({
-                  name: t.name,
-                  effort: t.priority === "P1" ? "Low" : "Medium",
-                  impact: t.impact,
-                  priority: t.priority === "P1" ? "High" : "Medium",
-                  roi3mo: "15%",
-                  roi6mo: "35%",
-                  roi12mo: "80%"
-                }))
-              });
-
-              setTactics((strategy.tactics || []).map((t: any, idx: number) => ({
-                id: String(idx + 1),
-                name: t.name,
-                status: t.priority === "P1" ? "active" : "draft",
-                reach: t.priority === "P1" ? 2500 : 0,
-                engagement: t.priority === "P1" ? 12.5 : 0.0,
-                leads: t.priority === "P1" ? 45 : 0,
-                budget: t.priority === "P1" ? 5000 : 2000,
-              })));
-            } else {
-              setMarketingProfile(null);
-              setTactics(marketingTactics);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error loading customer in workspace:", err);
-      }
-
-      try {
-        const res = await fetch(`/api/portal/content?customerId=${leadId}`);
-        const data = await res.json();
-        if (data.success && Array.isArray(data.assets)) {
-          setAssets(data.assets.map((a: any) => ({
-            id: a.id,
-            title: a.title,
-            type: a.tactic || "Content",
-            performance: a.performanceMetrics?.conversionRate || 80,
-            lastModified: new Date(a.updatedAt || a.createdAt).toLocaleDateString(),
-            tags: [a.tactic || "Content"]
-          })));
-        } else {
-          setAssets([]);
-        }
-      } catch (err) {
-        console.error("Error loading content assets in workspace:", err);
+    if (leadId) {
+      const found = customers.find(c => c.id === leadId);
+      if (found) {
+        setSelectedCustomer(found);
+        setSelectedCategory(categories[2]); // Auto-open Content Workspace
       }
     }
+  }, [leadId, customers]);
 
-    loadCustomerAndAssets();
-  }, [leadId]);
+  // Derived Agent Info
+  const agentName = currentUser?.name || "Jane Doe";
+  const agentRole = currentUser?.role || "Sales Manager";
+  const agentDept = "Revenue Operations";
+  const agentId = currentUser?.id ? `AGENT-${currentUser.id.slice(0, 4).toUpperCase()}` : "AGENT-7492";
+  const agentInitials = agentName.split(" ").map(n => n[0]).join("").toUpperCase();
 
-  const handleSaveCustomer = async (updatedFields: any) => {
-    if (!leadId) return false;
+  // ─── CALL CENTER STATES & SIMULATION ───────────────────────────────────────
+  
+  const [dialedNumber, setDialedNumber] = useState("");
+  const [callState, setCallState] = useState<"idle" | "dialing" | "ringing" | "connected" | "on-hold">("idle");
+  const [callDuration, setCallDuration] = useState(0);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+  const [callHistory, setCallHistory] = useState(initialCallHistory);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [incomingCallData, setIncomingCallData] = useState<{ name: string; phone: string } | null>(null);
+
+  // Audio Context Ref for ringtone simulation
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const ringIntervalRef = useRef<any>(null);
+
+  const callTimerRef = useRef<any>(null);
+  const recordTimerRef = useRef<any>(null);
+
+  // Start Call timers
+  useEffect(() => {
+    if (callState === "connected") {
+      callTimerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+    }
+    return () => clearInterval(callTimerRef.current);
+  }, [callState]);
+
+  // Start Recording timers
+  useEffect(() => {
+    if (isRecording && !isRecordingPaused) {
+      recordTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (recordTimerRef.current) clearInterval(recordTimerRef.current);
+    }
+    return () => clearInterval(recordTimerRef.current);
+  }, [isRecording, isRecordingPaused]);
+
+  // Format time (MM:SS)
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Synthesize soft Alert/Ringtone
+  const startRingtone = () => {
     try {
-      const res = await fetch("/api/admin/customers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update",
-          customerId: leadId,
-          customer: updatedFields
-        })
-      });
-      const data = await res.json();
-      return data.success;
-    } catch (err) {
-      console.error("Error saving customer strategy:", err);
-      return false;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      audioContextRef.current = ctx;
+
+      const playBeep = () => {
+        if (ctx.state === "suspended") ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(550, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.85);
+      };
+
+      playBeep();
+      ringIntervalRef.current = setInterval(playBeep, 2000);
+    } catch (e) {
+      console.warn("Autoplay block or AudioContext unsupported:", e);
     }
+  };
+
+  const stopRingtone = () => {
+    if (ringIntervalRef.current) clearInterval(ringIntervalRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+  };
+
+  // Simulation: Trigger incoming call
+  const triggerIncomingCall = () => {
+    if (callState !== "idle") return;
+    const randomCust = customers[Math.floor(Math.random() * customers.length)];
+    setIncomingCallData({
+      name: randomCust.name,
+      phone: randomCust.phone
+    });
+    setCallState("ringing");
+    startRingtone();
+  };
+
+  // Accept Call
+  const handleAcceptCall = () => {
+    stopRingtone();
+    setCallState("connected");
+    setCallDuration(0);
+    setRecordingDuration(0);
+    setIsMuted(false);
+    setIsRecording(false);
+  };
+
+  // Reject / Hang up Call
+  const handleHangUpCall = () => {
+    stopRingtone();
+    
+    // Add call log
+    if (callState === "connected" || callState === "on-hold" || callState === "dialing") {
+      const activeName = incomingCallData ? incomingCallData.name : (dialedNumber || "Manual Call");
+      const activePhone = incomingCallData ? incomingCallData.phone : (dialedNumber || "+1 (555) 000-1111");
+      const durationStr = formatTime(callDuration);
+      
+      const newLog = {
+        id: `call-new-${Date.now()}`,
+        name: activeName,
+        phone: activePhone,
+        direction: incomingCallData ? "Inbound" as const : "Outbound" as const,
+        date: new Date().toLocaleString(),
+        duration: durationStr,
+        status: callDuration > 0 ? "Completed" as const : "Canceled" as const,
+        recording: isRecording
+      };
+      
+      setCallHistory(prev => [newLog, ...prev]);
+    }
+    
+    setCallState("idle");
+    setIncomingCallData(null);
+    setDialedNumber("");
+    setIsRecording(false);
+  };
+
+  // Dial Call Outbound
+  const handleDialCall = () => {
+    if (!dialedNumber) return;
+    setCallState("connected");
+    setCallDuration(0);
+    setRecordingDuration(0);
+    setIsMuted(false);
+    setIsRecording(false);
+  };
+
+  // Call Transfer logic
+  const handleTransferCall = (targetDept: string) => {
+    setShowTransferModal(false);
+    // Simulate transfer with minor delay
+    setTimeout(() => {
+      // Add call log
+      const activeName = incomingCallData ? incomingCallData.name : (dialedNumber || "Manual Call");
+      const activePhone = incomingCallData ? incomingCallData.phone : (dialedNumber || "+1 (555) 000-1111");
+      const durationStr = formatTime(callDuration);
+
+      const newLog = {
+        id: `call-new-${Date.now()}`,
+        name: activeName,
+        phone: activePhone,
+        direction: incomingCallData ? "Inbound" as const : "Outbound" as const,
+        date: new Date().toLocaleString(),
+        duration: durationStr,
+        status: "Transferred" as const,
+        recording: isRecording
+      };
+
+      setCallHistory(prev => [newLog, ...prev]);
+      setCallState("idle");
+      setIncomingCallData(null);
+      setDialedNumber("");
+      setIsRecording(false);
+      alert(`Call successfully transferred to ${targetDept}.`);
+    }, 1500);
+  };
+
+  // ─── CONTENT WORKSPACE SUBVIEWS & STATES ─────────────────────────────────
+
+  const [contentTab, setContentTab] = useState<"timeline" | "kb" | "cases" | "team-chat" | "documents">("timeline");
+  
+  // Note Form
+  const [newNoteText, setNewNoteText] = useState("");
+  
+  // KB Search
+  const [kbSearch, setKbSearch] = useState("");
+  const [selectedArticle, setSelectedArticle] = useState<typeof kbArticles[0] | null>(null);
+
+  // Case Form
+  const [newCaseTitle, setNewCaseTitle] = useState("");
+  const [newCaseDescription, setNewCaseDescription] = useState("");
+  const [newCasePriority, setNewCasePriority] = useState<"Low" | "Medium" | "High">("Medium");
+
+  // Team Chat
+  const [chatChannels, setChatChannels] = useState(initialChannels);
+  const [activeChannel, setActiveChannel] = useState<keyof typeof initialChannels>("general");
+  const [chatInput, setChatInput] = useState("");
+
+  // Document Upload
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  // Unsaved changes state computed dynamically
+  const hasUnsavedChanges = 
+    dialedNumber !== "" || 
+    callState !== "idle" || 
+    newNoteText !== "" || 
+    newCaseTitle !== "" || 
+    newCaseDescription !== "" || 
+    chatInput !== "";
+
+  // Exit workspace workflow (navigates back, no logout)
+  const handleExitWorkspace = async () => {
+    if (hasUnsavedChanges) {
+      setShowExitModal(true);
+    } else {
+      navigateToPortalList();
+    }
+  };
+
+  const navigateToPortalList = async () => {
+    // Navigate back to the main portal workspace list
+    router.push("/portal");
+  };
+
+  // Timeline: add interaction note
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteText.trim()) return;
+
+    const newHistoryItem = {
+      id: `h-new-${Date.now()}`,
+      type: "Note",
+      summary: "Manual Agent Log",
+      detail: newNoteText,
+      date: new Date().toLocaleString()
+    };
+
+    setCustomers(prev => prev.map(c => {
+      if (c.id === selectedCustomer.id) {
+        return {
+          ...c,
+          history: [newHistoryItem, ...c.history]
+        };
+      }
+      return c;
+    }));
+
+    // Update active view customer reference
+    setSelectedCustomer(prev => ({
+      ...prev,
+      history: [newHistoryItem, ...prev.history]
+    }));
+
+    setNewNoteText("");
+  };
+
+  // Cases: create case
+  const handleCreateCase = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCaseTitle.trim() || !newCaseDescription.trim()) return;
+
+    const newCaseItem = {
+      id: `case-new-${Date.now()}`,
+      title: newCaseTitle,
+      description: newCaseDescription,
+      priority: newCasePriority,
+      status: "Open",
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    setCustomers(prev => prev.map(c => {
+      if (c.id === selectedCustomer.id) {
+        return {
+          ...c,
+          cases: [newCaseItem, ...c.cases]
+        };
+      }
+      return c;
+    }));
+
+    setSelectedCustomer(prev => ({
+      ...prev,
+      cases: [newCaseItem, ...prev.cases]
+    }));
+
+    setNewCaseTitle("");
+    setNewCaseDescription("");
+    setNewCasePriority("Medium");
+  };
+
+  // Team Chat: send message
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const newMessageItem = {
+      id: `msg-new-${Date.now()}`,
+      sender: `${agentName} (Agent)`,
+      text: chatInput,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatChannels(prev => ({
+      ...prev,
+      [activeChannel]: [...prev[activeChannel], newMessageItem]
+    }));
+
+    setChatInput("");
+  };
+
+  // Document Upload simulator
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadProgress(0);
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev === null) return 0;
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            const newDoc = {
+              id: `doc-new-${Date.now()}`,
+              title: file.name,
+              size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+              date: new Date().toISOString().split('T')[0]
+            };
+
+            setCustomers(prevCust => prevCust.map(c => {
+              if (c.id === selectedCustomer.id) {
+                return {
+                  ...c,
+                  documents: [newDoc, ...c.documents]
+                };
+              }
+              return c;
+            }));
+
+            setSelectedCustomer(prevCust => ({
+              ...prevCust,
+              documents: [newDoc, ...prevCust.documents]
+            }));
+
+            setUploadProgress(null);
+          }, 400);
+          return 100;
+        }
+        return prev + 25;
+      });
+    }, 150);
   };
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-200">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-        <div className="flex h-16 items-center border-b border-slate-800 px-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
+      
+      {/* ─── SIDEBAR NAVIGATION ──────────────────────────────────────────────── */}
+      <aside className="w-64 border-r border-slate-800 bg-slate-900/40 backdrop-blur-md flex flex-col justify-between" role="navigation" aria-label="Sidebar Menu">
+        <div>
+          <div className="flex h-16 items-center border-b border-slate-800 px-6 justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                DealFlow OS
+              </span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              DealFlow
-            </span>
           </div>
+
+          <nav className="space-y-1.5 p-4">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500',
+                  selectedCategory.id === category.id
+                    ? 'bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border border-teal-500/30 text-white shadow-lg shadow-teal-500/10'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent hover:border-slate-700'
+                )}
+                aria-current={selectedCategory.id === category.id ? 'page' : undefined}
+              >
+                <category.icon className="h-5 w-5" />
+                <span className="font-semibold text-sm">{category.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
 
-        <nav className="space-y-1 p-4">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category)}
-              className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
-                selectedCategory.id === category.id
-                  ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-white shadow-lg shadow-blue-500/10'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent hover:border-slate-700'
-              )}
-            >
-              <category.icon className="h-5 w-5" />
-              <span className="font-medium">{category.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">
-              JD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Jane Doe</p>
-              <p className="text-xs text-slate-500 truncate">Sales Manager</p>
-            </div>
-          </div>
+        {/* Trigger incoming call simulation from sidebar */}
+        <div className="p-4 border-t border-slate-800/80">
+          <button
+            onClick={triggerIncomingCall}
+            disabled={callState !== "idle"}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-teal-500/30 hover:border-teal-500/80 text-teal-400 hover:text-teal-200 text-xs font-semibold bg-teal-950/10 hover:bg-teal-950/20 transition-all disabled:opacity-40"
+          >
+            <PhoneCall className="h-3.5 w-3.5" />
+            Simulate Incoming Call
+          </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-16 border-b border-slate-800 bg-slate-900/30 backdrop-blur-sm flex items-center justify-between px-6">
+      {/* ─── MAIN COLUMN ────────────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col min-w-0" role="main">
+        
+        {/* ─── VERIFIED AGENT HEADER ─────────────────────────────────────────── */}
+        <header className="h-20 border-b border-slate-800/90 bg-slate-900/20 backdrop-blur-md flex items-center justify-between px-8 z-10" aria-label="Agent Header">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search deals, contacts, or content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-10 w-96 rounded-xl border border-slate-700 bg-slate-900 pl-10 pr-4 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              {/* Profile Avatar with Status Dot */}
+              <div className="h-11 w-11 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm border-2 border-slate-850">
+                {agentInitials}
+              </div>
+              <span 
+                className={cn(
+                  "absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-slate-950",
+                  agentStatus === "Online" && "bg-green-400",
+                  agentStatus === "Away" && "bg-amber-400",
+                  agentStatus === "Busy" && "bg-rose-500"
+                )}
+                aria-label={`Status: ${agentStatus}`}
               />
+            </div>
+            
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white text-base leading-none">{agentName}</span>
+                <span className="text-[10px] font-semibold text-slate-500 font-mono tracking-wider bg-slate-855 border border-slate-800 px-1.5 py-0.5 rounded">
+                  {agentId}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-400">
+                <span>{agentRole}</span>
+                <span>·</span>
+                <span className="text-slate-500">{agentDept}</span>
+              </div>
+            </div>
+
+            {/* Status Select dropdown */}
+            <div className="ml-6 relative">
+              <label htmlFor="agent-status-selector" className="sr-only">Change Status</label>
+              <select
+                id="agent-status-selector"
+                value={agentStatus}
+                onChange={(e) => setAgentStatus(e.target.value as any)}
+                className="bg-slate-900 border border-slate-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-350 cursor-pointer hover:border-slate-700"
+              >
+                <option value="Online">🟢 Online</option>
+                <option value="Away">🟡 Away</option>
+                <option value="Busy">🔴 Busy</option>
+              </select>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-all">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg shadow-blue-500/20">
-              <Plus className="h-4 w-4" />
-              <span>New Deal</span>
+            <button
+              onClick={handleExitWorkspace}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500"
+              aria-label="Exit current workspace and log out"
+            >
+              <PhoneOff className="h-4 w-4" />
+              <span>Exit Workspace</span>
             </button>
           </div>
         </header>
 
-        {/* Content area */}
-        <div className="flex-1 overflow-auto p-6">
-          {/* Category Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-white mb-2">
-                  {selectedCategory.label} {customer ? `• ${customer.companyName || customer.name}` : ''}
-                </h1>
-                <p className="text-slate-400">
-                  {customer 
-                    ? `Manage ${customer.companyName || customer.name}'s ${selectedCategory.label.toLowerCase()} and track performance`
-                    : `Manage your ${selectedCategory.label.toLowerCase()} and track performance`
-                  }
-                </p>
+        {/* ─── ACTIVE INCOMING CALL ALERT BANNER ─────────────────────────────── */}
+        {callState === "ringing" && incomingCallData && (
+          <div className="bg-gradient-to-r from-teal-950/80 via-slate-900/90 to-teal-950/80 border-b border-teal-500/40 px-8 py-4 flex items-center justify-between animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-teal-500/20 text-teal-400 rounded-full animate-bounce">
+                <Volume2 className="h-6 w-6" />
               </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-teal-400 font-bold">Incoming Call Alert</p>
+                <h4 className="text-base font-bold text-white mt-0.5">
+                  {incomingCallData.name} ({incomingCallData.phone})
+                </h4>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleAcceptCall}
+                className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all flex items-center gap-1.5"
+              >
+                <Phone className="h-4 w-4" /> Accept
+              </button>
+              <button
+                onClick={handleHangUpCall}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all flex items-center gap-1.5"
+              >
+                <PhoneOff className="h-4 w-4" /> Reject
+              </button>
             </div>
           </div>
+        )}
 
-          {/* Overview Dashboard */}
+        {/* ─── PAGE CONTENT CONTAINER ────────────────────────────────────────── */}
+        <div className="flex-1 overflow-auto p-8">
+          
+          {/* ──────────────────────────────────────────────────────────────────
+              1. OVERVIEW DASHBOARD
+              ────────────────────────────────────────────────────────────────── */}
           {selectedCategory.id === 'overview' && (
-            <div className="space-y-6">
-              {/* Stats Grid */}
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">Performance & Queue Status</h2>
+                <p className="text-sm text-slate-400">Real-time indicators of agent calls and outbound operations.</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Revenue"
-                  value="$1.5M"
-                  change="+24%"
-                  positive={true}
-                  icon={TrendingUp}
-                />
-                <StatCard
-                  title="Active Deals"
-                  value="24"
-                  change="+5"
-                  positive={true}
-                  icon={Target}
-                />
-                <StatCard
-                  title="Conversion Rate"
-                  value="32%"
-                  change="+8%"
-                  positive={true}
-                  icon={CheckCircle}
-                />
-                <StatCard
-                  title="Pipeline Value"
-                  value="$4.2M"
-                  change="+12%"
-                  positive={true}
-                  icon={PieChart}
-                />
+                <StatCard title="My Outbound Calls" value="18" change="Active session" positive={true} icon={Phone} />
+                <StatCard title="Avg. Conversation" value="04:22" change="-12s from avg" positive={true} icon={Clock} />
+                <StatCard title="Target Leads Reached" value="76%" change="+4% progress" positive={true} icon={Target} />
+                <StatCard title="Active Queue" value="3 Waiting" change="Priority outbound" positive={false} icon={Activity} />
               </div>
 
-              {/* Recent Deals and Performance */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Recent Deals</h3>
-                    <div className="space-y-4">
-                      {deals.map((deal) => (
-                        <DealCard key={deal.id} deal={deal} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Stage Overview</h3>
-                  <div className="space-y-3">
-                    {stages.map((stage) => (
-                      <div key={stage.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className={cn('px-2 py-1 rounded-lg text-xs font-medium', stage.color)}>
-                            {stage.label}
-                          </span>
-                        </div>
-                        <span className="text-slate-400 text-sm">5 deals</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Deals Pipeline */}
-          {selectedCategory.id === 'deals' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
-                    <Filter className="h-4 w-4" />
-                    Filter
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
-                    <Calendar className="h-4 w-4" />
-                    Timeline
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                {stages.map((stage) => (
-                  <div key={stage.id} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className={cn('px-3 py-1 rounded-lg text-xs font-semibold', stage.color)}>
-                        {stage.label}
-                      </span>
-                      <span className="text-slate-500 text-sm">5</span>
-                    </div>
+              {/* CRM logs & call queues grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+                    <h3 className="text-base font-bold text-white mb-4">Queued Outbound Contacts</h3>
                     <div className="space-y-3">
-                      {deals.map((deal) => (
-                        <div
-                          key={deal.id}
-                          className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                              {deal.avatar}
+                      {customers.map((cust) => (
+                        <div key={cust.id} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800/80">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold">
+                              {cust.name.substring(0, 2).toUpperCase()}
                             </div>
-                            <span className="text-xs text-slate-500">{deal.lastActivity}</span>
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">{cust.name}</h4>
+                              <p className="text-xs text-slate-500">{cust.contactName} · {cust.phone}</p>
+                            </div>
                           </div>
-                          <p className="font-medium text-white mb-1">{deal.company}</p>
-                          <p className="text-sm text-slate-400 mb-3">{deal.contact}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-green-400">
-                              ${deal.value.toLocaleString()}
-                            </span>
-                            <button className="p-1.5 text-slate-500 hover:text-slate-300">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedCustomer(cust);
+                              setDialedNumber(cust.phone);
+                              setSelectedCategory(categories[1]); // open dialer
+                            }}
+                            className="flex items-center gap-1 text-xs font-bold text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/60 bg-teal-950/20 px-3 py-1.5 rounded-xl transition-all"
+                          >
+                            <Phone className="h-3 w-3" /> Dial Now
+                          </button>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
 
-          {/* Content Assets */}
-          {selectedCategory.id === 'content' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assets.map((asset) => (
-                  <div
-                    key={asset.id}
-                    className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-blue-500/30 transition-all hover:shadow-lg hover:shadow-blue-500/5"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
-                        <FileText className="h-6 w-6" />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-medium text-slate-500">
-                          {asset.type}
-                        </span>
-                      </div>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-base font-bold text-white mb-4">Workspace Sync Status</h3>
+                  <div className="space-y-4 text-sm">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-slate-400">Salesforce Integration</span>
+                      <span className="text-green-400 font-semibold flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" /> Connected
+                      </span>
                     </div>
-                    <h3 className="font-semibold text-white mb-2">{asset.title}</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-slate-400">Performance Score</span>
-                          <span className="text-green-400 font-medium">{asset.performance}%</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                            style={{ width: `${asset.performance}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {asset.tags.map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 rounded-lg text-xs bg-slate-800 text-slate-400"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        Last modified: {asset.lastModified}
-                      </p>
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-slate-400">Active Campaign Sync</span>
+                      <span className="text-green-400 font-semibold flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" /> Sync Active
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-slate-400">Local Cache integrity</span>
+                      <span className="text-teal-400 font-semibold flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" /> Verified
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Marketing Intake */}
-          {selectedCategory.id === 'marketing-intake' && (
-            <div className="space-y-6">
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-                <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-white">Marketing Strategy Intake Form</h2>
-                  <div className="flex gap-2">
-                    {[1,2,3].map(step => (
-                      <div 
-                        key={step}
-                        onClick={() => setFormStep(step)}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
-                          formStep === step
-                            ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                        }`}
-                      >
-                        Step {step}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-6">
-                  {/* Step 1: Business Info */}
-                  {formStep === 1 && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-4 lg:col-span-2">
-                        <h3 className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
-                          <FileText className="h-5 w-5" /> Business Information
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Official Business Name</label>
-                            <input 
-                              type="text" 
-                              value={marketingIntakeData.businessInfo.officialBusinessName}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: { ...prev.businessInfo, officialBusinessName: e.target.value }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                              placeholder="Acme Corporation"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Primary Website URL</label>
-                            <input 
-                              type="url" 
-                              value={marketingIntakeData.businessInfo.primaryWebsiteUrl}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: { ...prev.businessInfo, primaryWebsiteUrl: e.target.value }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                              placeholder="https://acme.com"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Industry Vertical</label>
-                            <input 
-                              type="text" 
-                              value={marketingIntakeData.businessInfo.industryVertical}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: { ...prev.businessInfo, industryVertical: e.target.value }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                              placeholder="e.g., SaaS, Healthcare, Fintech"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Business Type</label>
-                            <select
-                              value={marketingIntakeData.businessInfo.businessType}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: { 
-                                  ...prev.businessInfo, 
-                                  businessType: e.target.value as any
-                                }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                            >
-                              <option value="B2B">B2B</option>
-                              <option value="B2C">B2C</option>
-                              <option value="D2C">D2C</option>
-                              <option value="eCommerce">eCommerce</option>
-                              <option value="Other">Other</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Number of Employees</label>
-                            <input 
-                              type="text" 
-                              value={marketingIntakeData.businessInfo.companySize.numberOfEmployees}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: {
-                                  ...prev.businessInfo,
-                                  companySize: {
-                                    ...prev.businessInfo.companySize,
-                                    numberOfEmployees: e.target.value
-                                  }
-                                }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                              placeholder="e.g., 1-10, 11-50, 51-200"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Revenue Bracket</label>
-                            <input 
-                              type="text" 
-                              value={marketingIntakeData.businessInfo.companySize.revenueBracket}
-                              onChange={(e) => setMarketingIntakeData(prev => ({
-                                ...prev,
-                                businessInfo: {
-                                  ...prev.businessInfo,
-                                  companySize: {
-                                    ...prev.businessInfo.companySize,
-                                    revenueBracket: e.target.value
-                                  }
-                                }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                              placeholder="e.g., $0-1M, $1M-$5M"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Core Product/Service Name</label>
-                          <input 
-                            type="text" 
-                            value={marketingIntakeData.businessInfo.coreProductServiceName}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              businessInfo: { ...prev.businessInfo, coreProductServiceName: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                            placeholder="Acme Sales Tool"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Detailed Product/Service Description</label>
-                          <textarea
-                            value={marketingIntakeData.businessInfo.productServiceDescription}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              businessInfo: { ...prev.businessInfo, productServiceDescription: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[120px]"
-                            placeholder="What does your product or service do? What are core functionalities/use cases?"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Formal Unique Value Proposition (UVP)</label>
-                          <textarea
-                            value={marketingIntakeData.businessInfo.uniqueValueProposition}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              businessInfo: { ...prev.businessInfo, uniqueValueProposition: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[80px]"
-                            placeholder="What makes you unique?"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Current Pricing Model</label>
-                          <input 
-                            type="text" 
-                            value={marketingIntakeData.businessInfo.pricingModel}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              businessInfo: { ...prev.businessInfo, pricingModel: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                            placeholder="Subscription, one-time, freemium, tiered, etc."
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Defined Target Market</label>
-                          <textarea
-                            value={marketingIntakeData.businessInfo.targetMarket}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              businessInfo: { ...prev.businessInfo, targetMarket: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 min-h-[80px]"
-                            placeholder="Demographics, firmographics, etc."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 2: Customer Info */}
-                  {formStep === 2 && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
-                        <Users className="h-5 w-5" /> Customer Information
-                      </h3>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Formal Ideal Customer Profile (ICP)</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.idealCustomerProfile}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, idealCustomerProfile: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[100px]"
-                          placeholder="Who is your ideal customer?"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Documented Buyer Personas</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.buyerPersonas}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, buyerPersonas: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[100px]"
-                          placeholder="Include demographics, psychographics, behaviors, etc."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Key Decision Makers in Buying Process</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.keyDecisionMakers}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, keyDecisionMakers: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
-                          placeholder="Who makes the decisions?"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Verified Customer Pain Points</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.customerPainPoints}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, customerPainPoints: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
-                          placeholder="What pain points do you solve?"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Core Customer Challenges Preventing Purchase</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.customerChallenges}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, customerChallenges: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
-                          placeholder="What stops customers from buying?"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Confirmed Buying Triggers</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.buyingTriggers}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, buyingTriggers: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
-                          placeholder="What drives customers to look for your solution?"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Common Customer Objections</label>
-                        <textarea
-                          value={marketingIntakeData.customerInfo.commonObjections}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            customerInfo: { ...prev.customerInfo, commonObjections: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 min-h-[80px]"
-                          placeholder="What objections do you face?"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 3: Marketing Info */}
-                  {formStep === 3 && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
-                        <BarChart2 className="h-5 w-5" /> Marketing Information
-                      </h3>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Primary Business Goal for Next 12 Months</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.primaryBusinessGoal}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, primaryBusinessGoal: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="Revenue, customers, etc."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Measurable Marketing Objectives</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.measurableMarketingObjectives}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, measurableMarketingObjectives: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="E.g., Increase leads by 30% in 6 months"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Existing Marketing Assets</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.existingMarketingAssets}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, existingMarketingAssets: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="Content, creative, tools, etc."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Direct and Indirect Competitors</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.competitors}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, competitors: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="Who are your competitors?"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Primary Keywords</label>
-                          <textarea
-                            value={marketingIntakeData.marketingInfo.primaryKeywords}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              marketingInfo: { ...prev.marketingInfo, primaryKeywords: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                            placeholder="Keywords you target"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Long-Tail Keywords</label>
-                          <textarea
-                            value={marketingIntakeData.marketingInfo.longTailKeywords}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              marketingInfo: { ...prev.marketingInfo, longTailKeywords: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                            placeholder="Expanded, specific keywords"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Brand Tone Guidelines</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.brandTone}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, brandTone: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="Professional, fun, casual, etc."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Brand Voice Parameters</label>
-                        <textarea
-                          value={marketingIntakeData.marketingInfo.brandVoice}
-                          onChange={(e) => setMarketingIntakeData(prev => ({
-                            ...prev,
-                            marketingInfo: { ...prev.marketingInfo, brandVoice: e.target.value }
-                          }))}
-                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 min-h-[80px]"
-                          placeholder="How do you speak to your audience?"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Marketing Budget</label>
-                          <input 
-                            type="text" 
-                            value={marketingIntakeData.marketingInfo.marketingBudget}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              marketingInfo: { ...prev.marketingInfo, marketingBudget: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                            placeholder="Annual/quarterly budget"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-300">Average Sales Cycle Length</label>
-                          <input 
-                            type="text" 
-                            value={marketingIntakeData.marketingInfo.salesCycleLength}
-                            onChange={(e) => setMarketingIntakeData(prev => ({
-                              ...prev,
-                              marketingInfo: { ...prev.marketingInfo, salesCycleLength: e.target.value }
-                            }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                            placeholder="E.g., 2 weeks, 3 months"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Footer Actions */}
-                <div className="p-6 border-t border-slate-800 flex justify-between">
-                  <button 
-                    disabled={formStep === 1}
-                    onClick={() => setFormStep(prev => Math.max(1, prev - 1))}
-                    className="px-6 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-                  >
-                    Back
-                  </button>
-                  {formStep === 3 ? (
-                    <button 
-                      onClick={async () => {
-                        setIsGenerating(true);
-                        
-                        const bizParams = {
-                          officialBusinessName: marketingIntakeData.businessInfo.officialBusinessName,
-                          companyName: marketingIntakeData.businessInfo.officialBusinessName,
-                          industryVertical: marketingIntakeData.businessInfo.industryVertical,
-                          industry: marketingIntakeData.businessInfo.industryVertical,
-                          businessType: marketingIntakeData.businessInfo.businessType,
-                          businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
-                          idealCustomerProfile: marketingIntakeData.customerInfo.idealCustomerProfile,
-                          targetAudience: marketingIntakeData.customerInfo.idealCustomerProfile,
-                          primaryBusinessGoal: marketingIntakeData.marketingInfo.primaryBusinessGoal,
-                          businessGoals: marketingIntakeData.marketingInfo.primaryBusinessGoal,
-                          marketingObjectives: marketingIntakeData.marketingInfo.measurableMarketingObjectives,
-                          currentMarketingChannels: marketingIntakeData.marketingInfo.currentMarketingChannels,
-                          primaryKeywords: marketingIntakeData.marketingInfo.primaryKeywords,
-                          longTailKeywords: marketingIntakeData.marketingInfo.longTailKeywords,
-                          salesCycleLength: marketingIntakeData.marketingInfo.salesCycleLength,
-                        };
-
-                        const strategy = generateCampaignStrategy(bizParams);
-
-                        const profileData = {
-                          businessSummary: strategy.businessSummary,
-                          industryAnalysis: strategy.marketingStrategy,
-                          strategicPositioning: strategy.targetAudienceInsights,
-                          refinedUSP: strategy.targetAudienceInsights,
-                          targetAudienceSummary: strategy.targetAudienceInsights,
-                          prioritizedPainPoints: strategy.priorityRecommendations || [],
-                          buyerJourney: strategy.customerJourney,
-                          recommendedChannels: strategy.recommendedChannels || [],
-                          recommendedContent: strategy.contentIdeas?.blogTopics || [],
-                          seoOpportunities: strategy.contentIdeas?.seoContent || [],
-                          paidOpportunities: strategy.contentIdeas?.adCopy || [],
-                          communityOpportunities: [],
-                          videoOpportunities: strategy.contentIdeas?.socialMediaPosts || [],
-                          emailOpportunities: strategy.contentIdeas?.emailCampaigns || [],
-                          aiOpportunities: [],
-                          topTactics: (strategy.tactics || []).map((t: any) => ({
-                            name: t.name,
-                            effort: t.priority === "P1" ? "Low" : "Medium",
-                            impact: t.impact,
-                            priority: t.priority === "P1" ? "High" : "Medium",
-                            roi3mo: "15%",
-                            roi6mo: "35%",
-                            roi12mo: "80%"
-                          }))
-                        };
-
-                        setMarketingProfile(profileData);
-
-                        setTactics((strategy.tactics || []).map((t: any, idx: number) => ({
-                          id: String(idx + 1),
-                          name: t.name,
-                          status: t.priority === "P1" ? "active" : "draft",
-                          reach: t.priority === "P1" ? 2500 : 0,
-                          engagement: t.priority === "P1" ? 12.5 : 0.0,
-                          leads: t.priority === "P1" ? 45 : 0,
-                          budget: t.priority === "P1" ? 5000 : 2000,
-                        })));
-
-                        if (leadId) {
-                          const updatedFields = {
-                            companyName: marketingIntakeData.businessInfo.officialBusinessName,
-                            businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
-                            companyInformation: {
-                              ...(customer?.companyInformation || {}),
-                              companyName: marketingIntakeData.businessInfo.officialBusinessName,
-                              websiteUrl: marketingIntakeData.businessInfo.primaryWebsiteUrl,
-                              industry: marketingIntakeData.businessInfo.industryVertical,
-                              businessModel: marketingIntakeData.businessInfo.businessType.toLowerCase(),
-                            },
-                            campaignStrategy: strategy,
-                            updatedAt: new Date().toISOString()
-                          };
-                          await handleSaveCustomer(updatedFields);
-                        }
-
-                        setIsGenerating(false);
-                        setSelectedCategory(categories.find(c => c.id === 'marketing-profile')!);
-                      }}
-                      disabled={isGenerating}
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 font-semibold flex items-center gap-2"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Rocket className="h-4 w-4" />
-                          Generate Marketing Profile
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => setFormStep(prev => prev + 1)}
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 font-semibold"
-                    >
-                      Next Step
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Marketing Profile */}
-          {selectedCategory.id === 'marketing-profile' && (
-            <div className="space-y-6">
-              {!marketingProfile ? (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center">
-                  <FileSpreadsheet className="h-16 w-16 mx-auto text-slate-500 mb-4" />
-                  <h2 className="text-xl font-semibold text-white mb-2">No Marketing Profile Yet</h2>
-                  <p className="text-slate-400 max-w-md mx-auto">
-                    Complete the Marketing Intake form to generate a comprehensive marketing strategy profile.
-                  </p>
-                  <button 
-                    onClick={() => setSelectedCategory(categories.find(c => c.id === 'marketing-intake')!)}
-                    className="mt-6 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold"
-                  >
-                    Go to Intake Form
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-400" /> Marketing Profile Generated Successfully
-                    </h2>
+          {/* ──────────────────────────────────────────────────────────────────
+              2. CENTRALIZED CALL CENTER
+              ────────────────────────────────────────────────────────────────── */}
+          {selectedCategory.id === 'calls' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Dialer / Active Call Interface */}
+              <div className="lg:col-span-5 space-y-6">
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Dialer System</h3>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Business Summary</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.businessSummary}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Industry Analysis</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.industryAnalysis}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Strategic Positioning</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.strategicPositioning}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-cyan-400 mb-2">Refined USP</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.refinedUSP}</p>
-                        </div>
+                  {callState === "idle" ? (
+                    /* Manual dialer interface */
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="tel"
+                          placeholder="Enter phone number..."
+                          value={dialedNumber}
+                          onChange={(e) => setDialedNumber(e.target.value)}
+                          className="w-full h-11 bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
                       </div>
                       
-                      <div className="space-y-4">
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Target Audience</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.targetAudienceSummary}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Pain Points</h3>
-                          <ul className="space-y-1 text-sm text-slate-300">
-                            {marketingProfile.prioritizedPainPoints.map((pp: string, i: number) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <CheckCircle className="h-4 w-4 text-purple-400 mt-0.5" />
-                                {pp}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <h3 className="text-sm font-semibold text-purple-400 mb-2">Buyer Journey</h3>
-                          <p className="text-sm text-slate-300">{marketingProfile.buyerJourney}</p>
-                        </div>
-                        
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="text-xs font-semibold text-emerald-400 mb-2">Recommended Channels</h4>
-                            <ul className="space-y-1 text-xs text-slate-300">
-                              {marketingProfile.recommendedChannels.map((ch: string, i: number) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                                  {ch}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-semibold text-emerald-400 mb-2">Recommended Content</h4>
-                            <ul className="space-y-1 text-xs text-slate-300">
-                              {marketingProfile.recommendedContent.map((ct: string, i: number) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                                  {ct}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
+                      {/* Dial Pad Grid */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(digit => (
+                          <button
+                            key={digit}
+                            onClick={() => setDialedNumber(prev => prev + digit)}
+                            className="h-11 bg-slate-855/80 hover:bg-slate-800 text-white rounded-xl font-bold transition-all text-sm border border-slate-800"
+                          >
+                            {digit}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-2.5">
+                        <button
+                          onClick={handleDialCall}
+                          disabled={!dialedNumber}
+                          className="flex-1 h-11 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                        >
+                          <Phone className="h-4 w-4" /> Dial Number
+                        </button>
+                        {dialedNumber && (
+                          <button
+                            onClick={() => setDialedNumber("")}
+                            className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl transition-all border border-slate-750"
+                            title="Clear dialed number"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    
-                    <div className="mt-6 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <h3 className="text-sm font-semibold text-amber-400 mb-4 flex items-center gap-2">
-                        <Target className="h-5 w-5" />
-                        Top Recommended Marketing Tactics
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-slate-700">
-                              <th className="text-left py-3 text-slate-400 font-semibold">Tactic</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">Effort</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">Impact</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">Priority</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">3-Mo ROI</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">6-Mo ROI</th>
-                              <th className="text-center py-3 text-slate-400 font-semibold">12-Mo ROI</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-700">
-                            {marketingProfile.topTactics.map((tactic: any, i: number) => (
-                              <tr key={i} className="hover:bg-slate-700/30">
-                                <td className="py-3 text-white font-medium">{tactic.name}</td>
-                                <td className={`text-center py-3 font-semibold ${
-                                  tactic.effort === 'High' ? 'text-orange-400' : 
-                                  tactic.effort === 'Medium' ? 'text-amber-400' : 
-                                  'text-green-400'
-                                }`}>{tactic.effort}</td>
-                                <td className={`text-center py-3 font-semibold ${
-                                  tactic.impact === 'High' ? 'text-green-400' : 
-                                  tactic.impact === 'Medium' ? 'text-amber-400' : 
-                                  'text-orange-400'
-                                }`}>{tactic.impact}</td>
-                                <td className={`text-center py-3 font-semibold ${
-                                  tactic.priority === 'High' ? 'text-red-400' : 
-                                  tactic.priority === 'Medium' ? 'text-amber-400' : 
-                                  'text-green-400'
-                                }`}>{tactic.priority}</td>
-                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi3mo}</td>
-                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi6mo}</td>
-                                <td className="text-center py-3 text-emerald-400 font-semibold">{tactic.roi12mo}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                  ) : (
+                    /* Active/Connected call interface */
+                    <div className="space-y-6 text-center py-4 bg-slate-950/40 border border-slate-800 rounded-2xl p-6">
+                      <div className="flex justify-center mb-2">
+                        <div className="relative p-5 bg-teal-500/10 text-teal-400 rounded-full animate-pulse border border-teal-500/20">
+                          <Phone className="h-8 w-8" />
+                          <span className={cn(
+                            "absolute top-2 right-2 h-3.5 w-3.5 rounded-full border-2 border-slate-950",
+                            callState === "on-hold" ? "bg-amber-400" : "bg-green-400 animate-ping"
+                          )} />
+                        </div>
                       </div>
+
+                      <div>
+                        <h4 className="text-base font-bold text-white">
+                          {incomingCallData ? incomingCallData.name : "Manual Outbound Call"}
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {incomingCallData ? incomingCallData.phone : dialedNumber}
+                        </p>
+                        <div className="mt-3 flex items-center justify-center gap-1.5">
+                          <span className="text-xs font-bold font-mono tracking-wider bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-xl text-teal-400">
+                            {formatTime(callDuration)}
+                          </span>
+                          {callState === "on-hold" && (
+                            <span className="text-[10px] font-bold tracking-wider uppercase bg-amber-500/20 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-xl">
+                              On Hold
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Micro interaction - audio wave mockup when call is connected */}
+                      {callState === "connected" && !isMuted && (
+                        <div className="flex justify-center items-center gap-0.5 h-6">
+                          <div className="w-1 bg-teal-400 h-2 rounded-full animate-[pulse_0.4s_infinite]" />
+                          <div className="w-1 bg-teal-500 h-4 rounded-full animate-[pulse_0.6s_infinite]" />
+                          <div className="w-1 bg-cyan-400 h-3 rounded-full animate-[pulse_0.5s_infinite]" />
+                          <div className="w-1 bg-teal-400 h-5 rounded-full animate-[pulse_0.7s_infinite]" />
+                          <div className="w-1 bg-cyan-500 h-2 rounded-full animate-[pulse_0.4s_infinite]" />
+                        </div>
+                      )}
+
+                      {/* Active recording state banner */}
+                      {isRecording && (
+                        <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs mx-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn(
+                              "h-2.5 w-2.5 rounded-full bg-rose-500",
+                              !isRecordingPaused && "animate-ping"
+                            )} />
+                            <span className="text-slate-400">
+                              {isRecordingPaused ? "Recording Paused" : "Call Recording..."}
+                            </span>
+                          </div>
+                          <span className="font-mono text-slate-500">{formatTime(recordingDuration)}</span>
+                        </div>
+                      )}
+
+                      {/* Controls Grid */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Mute Button */}
+                        <button
+                          onClick={() => setIsMuted(!isMuted)}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-semibold transition-all",
+                            isMuted 
+                              ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                          )}
+                        >
+                          {isMuted ? <MicOff className="h-4.5 w-4.5 mb-1" /> : <Mic className="h-4.5 w-4.5 mb-1" />}
+                          {isMuted ? "Unmute" : "Mute"}
+                        </button>
+
+                        {/* Hold Button */}
+                        <button
+                          onClick={() => setCallState(prev => prev === "on-hold" ? "connected" : "on-hold")}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-semibold transition-all",
+                            callState === "on-hold"
+                              ? "bg-cyan-500/15 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                          )}
+                        >
+                          <Pause className="h-4.5 w-4.5 mb-1" />
+                          {callState === "on-hold" ? "Resume" : "Hold"}
+                        </button>
+
+                        {/* Record Button */}
+                        <button
+                          onClick={() => {
+                            if (!isRecording) {
+                              setIsRecording(true);
+                              setIsRecordingPaused(false);
+                              setRecordingDuration(0);
+                            } else {
+                              setIsRecording(false);
+                            }
+                          }}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-semibold transition-all",
+                            isRecording
+                              ? "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/25"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                          )}
+                        >
+                          <CheckCircle2 className="h-4.5 w-4.5 mb-1" />
+                          {isRecording ? "Stop Rec" : "Record"}
+                        </button>
+                      </div>
+
+                      {/* Secondary controls: recording pause/resume & transfer */}
+                      <div className="flex gap-2">
+                        {isRecording && (
+                          <button
+                            onClick={() => setIsRecordingPaused(!isRecordingPaused)}
+                            className="flex-1 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold hover:text-white transition-all hover:bg-slate-850"
+                          >
+                            {isRecordingPaused ? "Resume Rec" : "Pause Rec"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowTransferModal(true)}
+                          className="flex-1 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold hover:text-white transition-all hover:bg-slate-850"
+                        >
+                          Transfer Call
+                        </button>
+                      </div>
+
+                      {/* Hang up button */}
+                      <button
+                        onClick={handleHangUpCall}
+                        className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-1.5 mt-2"
+                      >
+                        <PhoneOff className="h-4 w-4" /> End Call
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Call History logs */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Call History Logs</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-500 font-semibold text-xs uppercase">
+                          <th className="pb-3 pr-4">Contact</th>
+                          <th className="pb-3 px-4">Type</th>
+                          <th className="pb-3 px-4">Date/Time</th>
+                          <th className="pb-3 px-4">Duration</th>
+                          <th className="pb-3 px-4">Status</th>
+                          <th className="pb-3 pl-4 text-right">Recording</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {callHistory.map((historyItem) => (
+                          <tr key={historyItem.id} className="border-b border-slate-800/80 hover:bg-slate-900/40 transition-colors">
+                            <td className="py-3 pr-4">
+                              <h5 className="font-semibold text-white text-xs truncate max-w-[130px]">{historyItem.name}</h5>
+                              <p className="text-[10px] text-slate-500 mt-0.5">{historyItem.phone}</p>
+                            </td>
+                            <td className="py-3 px-4 text-xs text-slate-400">{historyItem.direction}</td>
+                            <td className="py-3 px-4 text-xs text-slate-400 whitespace-nowrap">{historyItem.date}</td>
+                            <td className="py-3 px-4 font-mono text-xs text-slate-400">{historyItem.duration}</td>
+                            <td className="py-3 px-4">
+                              <span className={cn(
+                                "text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                                historyItem.status === "Completed" && "bg-green-500/10 border-green-500/20 text-green-400",
+                                historyItem.status === "Missed" && "bg-rose-500/10 border-rose-500/20 text-rose-400",
+                                historyItem.status === "Transferred" && "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
+                                historyItem.status === "Canceled" && "bg-slate-800 border-slate-700 text-slate-400"
+                              )}>
+                                {historyItem.status}
+                              </span>
+                            </td>
+                            <td className="py-3 pl-4 text-right">
+                              {historyItem.recording && <span className="text-xs text-slate-400">✅</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ──────────────────────────────────────────────────────────────────
+              3. CONTENT WORKSPACE
+              ────────────────────────────────────────────────────────────────── */}
+          {selectedCategory.id === 'content-workspace' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Customer selector sidebar - Only show if not locked by leadId */}
+              {!leadId && (
+                <div className="lg:col-span-3 space-y-4">
+                  <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4">
+                    <h3 className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-3 px-2">Customer Profiles</h3>
+                    <div className="space-y-2">
+                      {customers.map((cust) => (
+                        <button
+                          key={cust.id}
+                          onClick={() => setSelectedCustomer(cust)}
+                          className={cn(
+                            "w-full text-left p-3 rounded-xl border transition-all duration-200 flex flex-col gap-1 focus:outline-none focus:ring-2 focus:ring-teal-500",
+                            selectedCustomer.id === cust.id
+                              ? "bg-slate-850 border-slate-700 text-white"
+                              : "bg-transparent border-transparent hover:bg-slate-900 text-slate-400 hover:text-slate-200"
+                          )}
+                        >
+                          <h4 className="text-sm font-semibold truncate leading-none">{cust.name}</h4>
+                          <span className="text-[11px] text-slate-500">{cust.industry}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Right Tabbed module content - Expand to full width if locked */}
+              <div className={cn("space-y-6", leadId ? "lg:col-span-12" : "lg:col-span-9")}>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                  
+                  {/* Sub-tab Navigation */}
+                  <div className="flex border-b border-slate-800 bg-slate-900/20 p-2 gap-1" role="tablist">
+                    {[
+                      { id: "timeline", label: "Timeline History", icon: Calendar },
+                      { id: "kb", label: "Knowledge Base", icon: Bookmark },
+                      { id: "cases", label: "Cases & Tickets", icon: AlertCircle },
+                      { id: "team-chat", label: "Team Chat", icon: MessageSquare },
+                      { id: "documents", label: "Documents", icon: FolderOpen }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setContentTab(tab.id as any)}
+                        role="tab"
+                        aria-selected={contentTab === tab.id}
+                        className={cn(
+                          "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-teal-500",
+                          contentTab === tab.id
+                            ? "bg-slate-850 border border-slate-755 text-white"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+                        )}
+                      >
+                        <tab.icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="p-6">
+                    
+                    {/* A. TIMELINE HISTORY */}
+                    {contentTab === "timeline" && (
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-base font-bold text-white">Interaction Log: {selectedCustomer.name}</h4>
+                          <span className="text-xs text-slate-500">Contact: {selectedCustomer.contactName} ({selectedCustomer.email})</span>
+                        </div>
+
+                        {/* Add Note Form */}
+                        <form onSubmit={handleAddNote} className="space-y-3 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+                          <h5 className="text-xs font-bold text-slate-400">Log Outbound/Inbound Notes</h5>
+                          <textarea
+                            value={newNoteText}
+                            onChange={(e) => setNewNoteText(e.target.value)}
+                            placeholder="Add call summaries, follow-up emails, or interaction notes..."
+                            className="w-full h-20 bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                          />
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              disabled={!newNoteText.trim()}
+                              className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-40"
+                            >
+                              Log Note
+                            </button>
+                          </div>
+                        </form>
+
+                        {/* History Timeline */}
+                        <div className="relative border-l border-slate-800 pl-4 ml-2 space-y-5">
+                          {selectedCustomer.history.map((hItem) => (
+                            <div key={hItem.id} className="relative">
+                              <span className={cn(
+                                "absolute -left-[22px] top-1 h-3.5 w-3.5 rounded-full border-2 border-slate-950 flex items-center justify-center text-[8px]",
+                                hItem.type === "Call" && "bg-cyan-500",
+                                hItem.type === "Email" && "bg-purple-500",
+                                hItem.type === "Note" && "bg-teal-500"
+                              )} />
+                              <div className="bg-slate-900/30 border border-slate-800/80 p-3.5 rounded-xl">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-xs font-bold text-white">{hItem.summary}</span>
+                                  <span className="text-[10px] text-slate-500">{hItem.date}</span>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed font-light">{hItem.detail}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* B. KNOWLEDGE BASE */}
+                    {contentTab === "kb" && (
+                      <div className="space-y-6">
+                        <div className="flex gap-3">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                            <input
+                              type="text"
+                              placeholder="Search FAQ, SLA terms, configuration manuals..."
+                              value={kbSearch}
+                              onChange={(e) => setKbSearch(e.target.value)}
+                              className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                          </div>
+                        </div>
+
+                        {selectedArticle ? (
+                          /* Article Detail View */
+                          <div className="space-y-4 bg-slate-950/20 border border-slate-800 p-5 rounded-xl">
+                            <button
+                              onClick={() => setSelectedArticle(null)}
+                              className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                            >
+                              <ArrowLeft className="h-3 w-3" /> Back to Articles
+                            </button>
+                            <div className="border-b border-slate-800 pb-3">
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">
+                                {selectedArticle.category}
+                              </span>
+                              <h4 className="text-lg font-bold text-white mt-2">{selectedArticle.title}</h4>
+                            </div>
+                            <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-line font-light">
+                              {selectedArticle.content}
+                            </p>
+                          </div>
+                        ) : (
+                          /* Article Search List */
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {kbArticles
+                              .filter(art => 
+                                art.title.toLowerCase().includes(kbSearch.toLowerCase()) || 
+                                art.content.toLowerCase().includes(kbSearch.toLowerCase())
+                              )
+                              .map(art => (
+                                <div
+                                  key={art.id}
+                                  onClick={() => setSelectedArticle(art)}
+                                  className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-teal-500/20 hover:bg-slate-850/50 cursor-pointer transition-all flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <span className="text-[9px] font-bold uppercase text-teal-400">{art.category}</span>
+                                    <h5 className="font-bold text-sm text-white mt-1.5">{art.title}</h5>
+                                    <p className="text-xs text-slate-500 mt-2 line-clamp-2 font-light">{art.summary}</p>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-teal-400 mt-4 inline-flex items-center gap-1 hover:underline">
+                                    Read Article <ArrowRight className="h-3 w-3" />
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* C. CASES & TICKETS */}
+                    {contentTab === "cases" && (
+                      <div className="space-y-6">
+                        <h4 className="text-base font-bold text-white">Tickets for {selectedCustomer.name}</h4>
+                        
+                        {/* New Case Creator */}
+                        <form onSubmit={handleCreateCase} className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 border border-slate-800 p-4 rounded-xl items-start">
+                          <div className="space-y-3">
+                            <h5 className="text-xs font-bold text-slate-400">Open a Support Case</h5>
+                            <div>
+                              <input
+                                type="text"
+                                placeholder="Case title..."
+                                value={newCaseTitle}
+                                onChange={(e) => setNewCaseTitle(e.target.value)}
+                                className="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg px-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <span className="text-xs text-slate-500 self-center">Priority:</span>
+                              {["Low", "Medium", "High"].map(prio => (
+                                <button
+                                  key={prio}
+                                  type="button"
+                                  onClick={() => setNewCasePriority(prio as any)}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded text-[10px] font-semibold transition-all border",
+                                    newCasePriority === prio
+                                      ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                                      : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300"
+                                  )}
+                                >
+                                  {prio}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-3 flex flex-col justify-between h-full">
+                            <textarea
+                              value={newCaseDescription}
+                              onChange={(e) => setNewCaseDescription(e.target.value)}
+                              placeholder="Detailed explanation of CRM discrepancy or sync blocker..."
+                              className="w-full h-20 bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none flex-1"
+                            />
+                            <div className="flex justify-end mt-1">
+                              <button
+                                type="submit"
+                                disabled={!newCaseTitle.trim() || !newCaseDescription.trim()}
+                                className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-40"
+                              >
+                                Submit Case
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+
+                        {/* Case Lists */}
+                        <div className="space-y-3">
+                          {selectedCustomer.cases.length === 0 ? (
+                            <p className="text-xs text-slate-550 italic text-center py-4">No support tickets opened for this customer.</p>
+                          ) : (
+                            selectedCustomer.cases.map(cs => (
+                              <div key={cs.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800/80 flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-bold text-sm text-white">{cs.title}</h5>
+                                    <span className={cn(
+                                      "text-[9px] font-semibold px-2 py-0.5 rounded border uppercase",
+                                      cs.priority === "High" && "bg-rose-500/10 border-rose-500/20 text-rose-400",
+                                      cs.priority === "Medium" && "bg-amber-500/10 border-amber-500/20 text-amber-400",
+                                      cs.priority === "Low" && "bg-slate-800 border-slate-700 text-slate-400"
+                                    )}>
+                                      {cs.priority}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-400 leading-relaxed font-light">{cs.description}</p>
+                                  <span className="text-[10px] text-slate-500 block">Opened: {cs.date}</span>
+                                </div>
+                                <span className={cn(
+                                  "text-[10px] font-bold uppercase px-2 py-1 rounded-full border",
+                                  cs.status === "Open" && "bg-green-500/10 border-green-500/20 text-green-400",
+                                  cs.status === "In Progress" && "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+                                )}>
+                                  {cs.status}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* D. TEAM CHAT */}
+                    {contentTab === "team-chat" && (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+                        
+                        {/* Channel selector */}
+                        <div className="md:col-span-1 bg-slate-950/40 border border-slate-800 rounded-xl p-3 space-y-1">
+                          <span className="text-[10px] font-bold text-slate-550 uppercase tracking-wider px-2 block mb-2">Channels</span>
+                          {Object.keys(chatChannels).map(chName => (
+                            <button
+                              key={chName}
+                              onClick={() => setActiveChannel(chName as any)}
+                              className={cn(
+                                "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none",
+                                activeChannel === chName
+                                  ? "bg-slate-800 text-white"
+                                  : "text-slate-450 hover:bg-slate-900/50 hover:text-slate-200"
+                              )}
+                            >
+                              # {chName}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Chat Log & Message input */}
+                        <div className="md:col-span-3 space-y-4">
+                          <div className="border border-slate-800 bg-slate-950/20 rounded-xl p-4 h-64 overflow-y-auto space-y-3.5">
+                            {chatChannels[activeChannel].map((msg) => (
+                              <div key={msg.id} className="text-xs">
+                                <div className="flex items-baseline gap-2 mb-0.5">
+                                  <span className="font-bold text-teal-400">{msg.sender}</span>
+                                  <span className="text-[9px] text-slate-650 font-mono">{msg.time}</span>
+                                </div>
+                                <p className="text-slate-350 leading-relaxed font-light">{msg.text}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <form onSubmit={handleSendMessage} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={chatInput}
+                              onChange={(e) => setChatInput(e.target.value)}
+                              placeholder={`Send message to #${activeChannel}...`}
+                              className="flex-1 h-10 bg-slate-950 border border-slate-800 rounded-xl px-4 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                            <button
+                              type="submit"
+                              disabled={!chatInput.trim()}
+                              className="px-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-40"
+                            >
+                              Send
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* E. DOCUMENTS */}
+                    {contentTab === "documents" && (
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-base font-bold text-white">Document Vault: {selectedCustomer.name}</h4>
+                        </div>
+
+                        {/* File upload simulator */}
+                        <div className="relative border border-dashed border-slate-850 hover:border-teal-500/40 rounded-xl p-6 bg-slate-950/20 text-center transition-colors">
+                          <input
+                            type="file"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            disabled={uploadProgress !== null}
+                          />
+                          <Upload className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+                          <p className="text-xs text-slate-400 font-semibold">Drag & Drop or Click to share dynamic PDFs / contracts</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Upload capacity limit: 25MB per document</p>
+
+                          {uploadProgress !== null && (
+                            <div className="mt-4 max-w-xs mx-auto space-y-1.5">
+                              <div className="flex justify-between text-[10px] text-slate-450">
+                                <span>Uploading file...</span>
+                                <span>{uploadProgress}%</span>
+                              </div>
+                              <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                <div className="h-full bg-teal-500 transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* File list */}
+                        <div className="space-y-2">
+                          {selectedCustomer.documents.length === 0 ? (
+                            <p className="text-xs text-slate-555 italic text-center py-4">No documents shared yet.</p>
+                          ) : (
+                            selectedCustomer.documents.map(doc => (
+                              <div key={doc.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800/80 flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2.5">
+                                  <FileText className="h-5 w-5 text-teal-400" />
+                                  <div>
+                                    <h5 className="font-semibold text-white">{doc.title}</h5>
+                                    <span className="text-[10px] text-slate-500">{doc.size} · Uploaded: {doc.date}</span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => alert(`Simulating file download for: ${doc.title}`)}
+                                  className="p-2 border border-slate-800 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-950/40 text-slate-400 hover:text-white rounded-lg transition-all"
+                                  title="Download Document"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
 
-          {/* Marketing Tactics */}
-          {selectedCategory.id === 'tactics' && (
+          {/* ──────────────────────────────────────────────────────────────────
+              4. GTM REPORTS
+              ────────────────────────────────────────────────────────────────── */}
+          {selectedCategory.id === 'gtm-reports' && (
             <div className="space-y-6">
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-800">
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Campaign
-                        </th>
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Reach
-                        </th>
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Engagement
-                        </th>
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Leads
-                        </th>
-                        <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Budget
-                        </th>
-                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {tactics.map((tactic) => (
-                        <tr key={tactic.id} className="hover:bg-slate-800/50 transition-colors">
-                          <td className="py-4 px-6">
-                            <div className="font-medium text-white">{tactic.name}</div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className={cn(
-                              'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium',
-                              tactic.status === 'active'
-                                ? 'bg-green-500/10 text-green-400'
-                                : 'bg-slate-800 text-slate-400'
-                            )}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                              {tactic.status.charAt(0).toUpperCase() + tactic.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-slate-300">
-                            {tactic.reach.toLocaleString()}
-                          </td>
-                          <td className="py-4 px-6 text-slate-300">
-                            {tactic.engagement}%
-                          </td>
-                          <td className="py-4 px-6 text-slate-300">
-                            {tactic.leads}
-                          </td>
-                          <td className="py-4 px-6 text-slate-300">
-                            ${tactic.budget.toLocaleString()}
-                          </td>
-                          <td className="py-4 px-6 text-right">
-                            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-                              View details →
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">GTM Analysis Reports & Strategy</h2>
+                <p className="text-sm text-slate-400">Generate and review GTM reports, lead analysis, and marketing strategy recommendations for {selectedCustomer.name}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="lg:col-span-1">
+                  <LeadAnalysisDashboard leadId={selectedCustomer.id} />
+                </div>
+                <div className="lg:col-span-1">
+                  <MarketingStrategyModule initialIcpData={{
+                    industry: selectedCustomer.industry,
+                    companySize: "Enterprise"
+                  }} />
                 </div>
               </div>
             </div>
           )}
+
+          {/* ──────────────────────────────────────────────────────────────────
+              5. SETTINGS
+              ────────────────────────────────────────────────────────────────── */}
+          {selectedCategory.id === 'settings' && (
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">Workspace & Audio Settings</h2>
+                <p className="text-sm text-slate-400">Configure device inputs and CRM synchronization intervals.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Audio Setup */}
+                <div className="space-y-4 border border-slate-800 p-5 rounded-xl bg-slate-950/10">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                    <Volume2 className="h-4.5 w-4.5 text-teal-400" /> Real-time Echo Test
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed font-light">Verify latency and microphone feedback prior to outbound queues.</p>
+                  <button
+                    onClick={() => alert("Initiating echo-test sound loop. Speak to headset microphone.")}
+                    className="py-2 px-4 bg-slate-900 hover:bg-slate-855 border border-slate-800 hover:border-slate-750 text-xs font-semibold text-white rounded-xl transition-all"
+                  >
+                    Start Test Call
+                  </button>
+                </div>
+
+                {/* Hotkeys */}
+                <div className="space-y-4 border border-slate-800 p-5 rounded-xl bg-slate-950/10">
+                  <h3 className="text-sm font-semibold text-white">Workspace Shortcuts</h3>
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div className="flex justify-between">
+                      <span>Mute / Unmute Call</span>
+                      <kbd className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800 font-mono text-[10px]">Alt + M</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hold Call Session</span>
+                      <kbd className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800 font-mono text-[10px]">Alt + H</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dial / Answer Call</span>
+                      <kbd className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800 font-mono text-[10px]">Alt + D</kbd>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
+
+      {/* ─── CALL TRANSFER MODAL ─────────────────────────────────────────────── */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h4 className="font-bold text-white text-base">Select Transfer Target</h4>
+              <button onClick={() => setShowTransferModal(false)} className="text-slate-500 hover:text-white" aria-label="Close modal">
+                <X className="h-4.5 w-4.5" />
+              </button>
+            </div>
+            
+            <p className="text-xs text-slate-400 font-light leading-relaxed">
+              Active call will be held during transition. Select a department to hand over the session:
+            </p>
+
+            <div className="space-y-2">
+              {[
+                { name: "Support Escalations", detail: "Active tickets resolution" },
+                { name: "Billing & Invoicing", detail: "Commercial plans & orders" },
+                { name: "Executive Technical Desk", detail: "API & database integration issues" }
+              ].map(dept => (
+                <button
+                  key={dept.name}
+                  onClick={() => handleTransferCall(dept.name)}
+                  className="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-950/20 hover:bg-slate-805 hover:border-slate-700 transition-all flex flex-col gap-0.5 focus:outline-none"
+                >
+                  <span className="text-xs font-bold text-white">{dept.name}</span>
+                  <span className="text-[10px] text-slate-500">{dept.detail}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── EXIT CONFIRMATION MODAL ─────────────────────────────────────────── */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center gap-3 text-rose-400">
+              <ShieldAlert className="h-8 w-8 flex-shrink-0" />
+              <div>
+                <h4 className="font-bold text-white text-base">Unsaved changes detected!</h4>
+                <p className="text-[10px] text-rose-400 font-bold uppercase tracking-wider mt-0.5">Secure exit workflow</p>
+              </div>
+            </div>
+            
+            <p className="text-xs text-slate-350 leading-relaxed font-light">
+              You currently have unsaved chat drafts, active call states, or pending forms. Exiting will discard these states and terminate your active session.
+            </p>
+
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={navigateToPortalList}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-all"
+              >
+                Yes, Exit & Discard
+              </button>
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-755 text-slate-300 font-bold text-xs transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
-  )
+  );
 }
 
 function StatCard({
@@ -1395,55 +1573,26 @@ function StatCard({
   positive,
   icon: Icon
 }: {
-  title: string
-  value: string
-  change: string
-  positive: boolean
-  icon: any
+  title: string;
+  value: string;
+  change: string;
+  positive: boolean;
+  icon: any;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all">
+    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-slate-400">{title}</h3>
-        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-          <Icon className="h-5 w-5" />
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</h3>
+        <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
+          <Icon className="h-4.5 w-4.5" />
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold text-white mb-1">{value}</p>
-        <p className={cn('text-sm font-medium flex items-center gap-1', positive ? 'text-green-400' : 'text-red-400')}>
+        <p className="text-2xl font-bold text-white font-mono">{value}</p>
+        <p className={cn('text-xs font-medium flex items-center gap-1 mt-1.5', positive ? 'text-green-400' : 'text-slate-500')}>
           {change}
-          <ArrowRight className={cn('h-3 w-3', positive ? 'text-green-400' : 'text-red-400 rotate-[-90deg]')} />
         </p>
       </div>
     </div>
-  )
-}
-
-function DealCard({ deal }: { deal: typeof deals[0] }) {
-  const stage = stages.find(s => s.id === deal.stage)!
-
-  return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-all">
-      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-        {deal.avatar}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-white truncate">{deal.company}</p>
-        <p className="text-sm text-slate-400 truncate">{deal.contact}</p>
-      </div>
-      <div className="text-right">
-        <p className="font-bold text-green-400">${deal.value.toLocaleString()}</p>
-        <div className="flex items-center gap-2 justify-end mt-1">
-          <span className={cn('px-2 py-0.5 rounded-lg text-xs font-medium', stage.color)}>
-            {stage.label}
-          </span>
-          <span className="text-xs text-slate-500 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {deal.lastActivity}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
+  );
 }

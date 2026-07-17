@@ -151,34 +151,38 @@ function AgentPortalContent() {
   // Real-time synchronization polling
   const fetchAgentData = async () => {
     try {
-      const [tasksRes, reqsRes, chatRes, callsRes, feedbackRes, customersRes, workflowsRes, contentRes] = await Promise.all([
-        fetch("/api/portal/tasks"),
-        fetch("/api/portal/requirements"),
-        fetch("/api/portal/chat?sessionId=session-1"),
-        fetch("/api/portal/calls"),
-        fetch("/api/portal/feedback"),
-        fetch("/api/admin/customers"),
-        fetch("/api/portal/workflows"),
-        fetch("/api/portal/content"),
-      ]);
+      // Helper function to safely fetch and parse JSON
+      const safeFetchJson = async (url: string) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) {
+            console.warn(`[Agent Portal] Failed to fetch ${url}: ${res.statusText}`);
+            return { success: false };
+          }
+          return await res.json();
+        } catch (err) {
+          console.error(`[Agent Portal] Error fetching ${url}:`, err);
+          return { success: false };
+        }
+      };
 
       const [tasksData, reqsData, chatData, callsData, feedbackData, customersData, workflowsData, contentData] = await Promise.all([
-        tasksRes.json(),
-        reqsRes.json(),
-        chatRes.json(),
-        callsRes.json(),
-        feedbackRes.json(),
-        customersRes.json(),
-        workflowsRes.json(),
-        contentRes.json(),
+        safeFetchJson("/api/portal/tasks"),
+        safeFetchJson("/api/portal/requirements"),
+        safeFetchJson("/api/portal/chat?sessionId=session-1"),
+        safeFetchJson("/api/portal/calls"),
+        safeFetchJson("/api/portal/feedback"),
+        safeFetchJson("/api/admin/customers"),
+        safeFetchJson("/api/portal/workflows"),
+        safeFetchJson("/api/portal/content"),
       ]);
 
-      if (tasksData.success) setTasks(tasksData.tasks);
-      if (reqsData.success) setRequirements(reqsData.requirements);
-      if (chatData.success) setChatMessages(chatData.messages);
-      if (callsData.success) setCallsList(callsData.calls);
-      if (feedbackData.success) setFeedback(feedbackData.feedback);
-      if (contentData.success) {
+      if (tasksData.success && tasksData.tasks) setTasks(tasksData.tasks);
+      if (reqsData.success && reqsData.requirements) setRequirements(reqsData.requirements);
+      if (chatData.success && chatData.messages) setChatMessages(chatData.messages);
+      if (callsData.success && callsData.calls) setCallsList(callsData.calls);
+      if (feedbackData.success && feedbackData.feedback) setFeedback(feedbackData.feedback);
+      if (contentData.success && contentData.assets) {
         setContentAssets(contentData.assets);
         // Sync selected asset detail in real-time
         setSelectedAsset((curr: any) => {
@@ -187,7 +191,7 @@ function AgentPortalContent() {
           return updated || curr;
         });
       }
-      if (customersData.success) {
+      if (customersData.success && customersData.customers) {
         setCustomers(customersData.customers);
         // Pre-select first customer for workflow trigger if not set
         if (customersData.customers.length > 0 && !selectedWorkflowCustomer) {
@@ -199,8 +203,8 @@ function AgentPortalContent() {
         }
       }
       if (workflowsData.success) {
-        setWorkflows(workflowsData.workflows);
-        setWorkflowMetrics(workflowsData.performance);
+        if (workflowsData.workflows) setWorkflows(workflowsData.workflows);
+        if (workflowsData.performance) setWorkflowMetrics(workflowsData.performance);
       }
     } catch (error) {
       console.error("[Agent Portal] polling error:", error);
@@ -508,6 +512,24 @@ function AgentPortalContent() {
     }
   };
 
+  // Tasks Queue State
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState<"Low" | "Medium" | "High" | "Critical">("Medium");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("");
+  const [taskSearch, setTaskSearch] = useState("");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<"all" | "todo" | "in-progress" | "completed">("all");
+  const [taskPriorityFilter, setTaskPriorityFilter] = useState<"all" | "Low" | "Medium" | "High" | "Critical">("all");
+  const [taskSortField, setTaskSortField] = useState<"createdAt" | "priority" | "title">("createdAt");
+  const [taskSortOrder, setTaskSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTaskTitle, setEditTaskTitle] = useState("");
+  const [editTaskDescription, setEditTaskDescription] = useState("");
+  const [editTaskPriority, setEditTaskPriority] = useState<"Low" | "Medium" | "High" | "Critical">("Medium");
+  const [editTaskAssignee, setEditTaskAssignee] = useState("");
+  const [editTaskStatus, setEditTaskStatus] = useState<"todo" | "in-progress" | "completed">("todo");
+
   // Calculations
   const currentAgentId = user?.id || "";
   const myTasks = tasks.filter(t => t.assignedAgentId === currentAgentId || !t.assignedAgentId);
@@ -517,6 +539,128 @@ function AgentPortalContent() {
   const rating = feedback.length 
     ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) 
     : "4.8";
+
+  // Filter and Sort Tasks
+  const filteredTasks = myTasks.filter(t => {
+    const matchesSearch = t.title.toLowerCase().includes(taskSearch.toLowerCase()) || 
+                          (t.description && t.description.toLowerCase().includes(taskSearch.toLowerCase()));
+    const matchesStatus = taskStatusFilter === "all" || t.status === taskStatusFilter;
+    const matchesPriority = taskPriorityFilter === "all" || t.priority === taskPriorityFilter;
+    return matchesSearch && matchesStatus && matchesPriority;
+  }).sort((a, b) => {
+    if (taskSortField === "priority") {
+      const priorityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+      return taskSortOrder === "asc" 
+        ? (priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]) 
+        : (priorityOrder[b.priority as keyof typeof priorityOrder] - priorityOrder[a.priority as keyof typeof priorityOrder]);
+    } else if (taskSortField === "title") {
+      return taskSortOrder === "asc" 
+        ? a.title.localeCompare(b.title) 
+        : b.title.localeCompare(a.title);
+    } else { // createdAt
+      return taskSortOrder === "asc" 
+        ? new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime() 
+        : new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    }
+  });
+
+  // Task Actions
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    try {
+      const res = await fetch("/api/portal/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTaskTitle,
+          description: newTaskDescription,
+          priority: newTaskPriority,
+          assignedAgentId: newTaskAssignee || currentAgentId,
+          status: "todo"
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewTaskTitle("");
+        setNewTaskDescription("");
+        setNewTaskPriority("Medium");
+        setNewTaskAssignee("");
+        showToast("success", "Task Created", "New task added to queue successfully.");
+        fetchAgentData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const res = await fetch("/api/portal/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Task Deleted", "Task removed from queue.");
+        fetchAgentData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditTask = (task: any) => {
+    setEditingTaskId(task.id);
+    setEditTaskTitle(task.title);
+    setEditTaskDescription(task.description || "");
+    setEditTaskPriority(task.priority || "Medium");
+    setEditTaskAssignee(task.assignedAgentId || "");
+    setEditTaskStatus(task.status || "todo");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTaskId) return;
+    try {
+      const res = await fetch("/api/portal/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTaskId,
+          title: editTaskTitle,
+          description: editTaskDescription,
+          priority: editTaskPriority,
+          assignedAgentId: editTaskAssignee || currentAgentId,
+          status: editTaskStatus
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingTaskId(null);
+        showToast("success", "Task Updated", "Task details saved successfully.");
+        fetchAgentData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBulkMarkComplete = async () => {
+    for (const id of selectedTaskIds) {
+      await handleUpdateTaskStatus(id, "completed");
+    }
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Are you sure you want to delete ${selectedTaskIds.length} tasks?`)) {
+      for (const id of selectedTaskIds) {
+        await handleDeleteTask(id);
+      }
+      setSelectedTaskIds([]);
+    }
+  };
 
   // Search & Filter & Sort Customers List
   const filteredCustomers = customers
@@ -1647,42 +1791,258 @@ function AgentPortalContent() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -15 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <h2 className="text-2xl font-bold text-slate-100">Tasks Queue</h2>
-            {myTasks.length === 0 ? (
-              <p className="text-slate-500 text-sm py-12 text-center bg-slate-900/20 border border-slate-800 rounded-xl">No tasks assigned to your workspace.</p>
-            ) : (
-              myTasks.map(t => (
-                <GlassPanel key={t.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5">
-                  <div className="flex justify-between items-start flex-wrap gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-base font-bold text-slate-200">{t.title}</h4>
-                        <span className={cn(
-                          "px-2 py-0.5 rounded text-[10px] uppercase font-bold",
-                          t.status === "completed" ? "bg-emerald-500/10 text-emerald-400" :
-                          t.status === "in-progress" ? "bg-yellow-500/10 text-yellow-400 animate-pulse" :
-                          "bg-slate-500/10 text-slate-400"
-                        )}>{t.status}</span>
-                      </div>
-                      <p className="text-xs text-slate-450 mt-1.5">{t.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {t.status !== "completed" && (
-                        <ExtrudedButton size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleUpdateTaskStatus(t.id, "completed")}>
-                          Mark Completed
-                        </ExtrudedButton>
-                      )}
-                      {t.status === "todo" && (
-                        <ExtrudedButton size="sm" className="bg-yellow-600 hover:bg-yellow-700" onClick={() => handleUpdateTaskStatus(t.id, "in-progress")}>
-                          Start Work
-                        </ExtrudedButton>
-                      )}
-                    </div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <h2 className="text-2xl font-bold text-slate-100">Tasks Queue</h2>
+              {selectedTaskIds.length > 0 && (
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs text-slate-400">{selectedTaskIds.length} selected</span>
+                  <ExtrudedButton size="sm" onClick={handleBulkMarkComplete} className="bg-emerald-600">
+                    Mark Complete
+                  </ExtrudedButton>
+                  <ExtrudedButton size="sm" onClick={handleBulkDelete} className="bg-rose-600">
+                    Delete Selected
+                  </ExtrudedButton>
+                </div>
+              )}
+            </div>
+
+            {/* Top Controls */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Create Task Form */}
+              <GlassPanel tilt={false} className="lg:col-span-1 border-slate-800 p-5">
+                <h3 className="text-base font-bold text-slate-100 mb-4">Add New Task</h3>
+                <form onSubmit={handleCreateTask} className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">Task Title</Label>
+                    <Input
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      placeholder="Enter task title..."
+                      className="bg-slate-950 border-slate-850 rounded-xl text-xs"
+                    />
                   </div>
-                </GlassPanel>
-              ))
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">Description</Label>
+                    <textarea
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      placeholder="Task details..."
+                      rows={3}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">Priority</Label>
+                    <select
+                      value={newTaskPriority}
+                      onChange={(e) => setNewTaskPriority(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <ExtrudedButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-xs">
+                    Create Task
+                  </ExtrudedButton>
+                </form>
+              </GlassPanel>
+
+              {/* Filters, Search & Sort */}
+              <GlassPanel tilt={false} className="lg:col-span-3 border-slate-800 p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="lg:col-span-2">
+                    <Label className="text-slate-400 text-xs mb-1 block">Search Tasks</Label>
+                    <Input
+                      value={taskSearch}
+                      onChange={(e) => setTaskSearch(e.target.value)}
+                      placeholder="Search by title or description..."
+                      className="bg-slate-950 border-slate-850 rounded-xl text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-400 text-xs mb-1 block">Status</Label>
+                    <select
+                      value={taskStatusFilter}
+                      onChange={(e) => setTaskStatusFilter(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                    >
+                      <option value="all">All</option>
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-slate-400 text-xs mb-1 block">Priority</Label>
+                    <select
+                      value={taskPriorityFilter}
+                      onChange={(e) => setTaskPriorityFilter(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                    >
+                      <option value="all">All</option>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-slate-400 text-xs mb-1 block">Sort By</Label>
+                    <select
+                      value={taskSortField}
+                      onChange={(e) => setTaskSortField(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                    >
+                      <option value="createdAt">Date Created</option>
+                      <option value="priority">Priority</option>
+                      <option value="title">Title</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-slate-400 text-xs mb-1 block">Order</Label>
+                    <select
+                      value={taskSortOrder}
+                      onChange={(e) => setTaskSortOrder(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-200"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                  </div>
+                </div>
+              </GlassPanel>
+            </div>
+
+            {/* Task List */}
+            {filteredTasks.length === 0 ? (
+              <p className="text-slate-500 text-sm py-12 text-center bg-slate-900/20 border border-slate-800 rounded-xl">No tasks match your filters.</p>
+            ) : (
+              <div className="space-y-3">
+                {filteredTasks.map(t => (
+                  <GlassPanel key={t.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5">
+                    {editingTaskId === t.id ? (
+                      // Edit Mode
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-slate-400 text-xs">Title</Label>
+                            <Input
+                              value={editTaskTitle}
+                              onChange={(e) => setEditTaskTitle(e.target.value)}
+                              className="bg-slate-950 border-slate-850 rounded-xl text-xs"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-slate-400 text-xs">Priority</Label>
+                              <select
+                                value={editTaskPriority}
+                                onChange={(e) => setEditTaskPriority(e.target.value as any)}
+                                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200"
+                              >
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-slate-400 text-xs">Status</Label>
+                              <select
+                                value={editTaskStatus}
+                                onChange={(e) => setEditTaskStatus(e.target.value as any)}
+                                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200"
+                              >
+                                <option value="todo">To Do</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-slate-400 text-xs">Description</Label>
+                          <textarea
+                            value={editTaskDescription}
+                            onChange={(e) => setEditTaskDescription(e.target.value)}
+                            rows={2}
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2 text-xs text-slate-200"
+                          />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <ExtrudedButton size="sm" onClick={() => setEditingTaskId(null)} className="bg-slate-600">
+                            Cancel
+                          </ExtrudedButton>
+                          <ExtrudedButton size="sm" onClick={handleSaveEdit} className="bg-purple-600">
+                            Save Changes
+                          </ExtrudedButton>
+                        </div>
+                      </div>
+                    ) : (
+                      // View Mode
+                      <div className="flex items-start gap-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedTaskIds.includes(t.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTaskIds([...selectedTaskIds, t.id]);
+                            } else {
+                              setSelectedTaskIds(selectedTaskIds.filter(id => id !== t.id));
+                            }
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-slate-600 text-purple-600 focus:ring-purple-500 bg-slate-950"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-base font-bold text-slate-200">{t.title}</h4>
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[10px] uppercase font-bold border",
+                              t.priority === "Critical" ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                              t.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
+                              t.priority === "Medium" ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
+                              "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                            )}>{t.priority || "Medium"}</span>
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[10px] uppercase font-bold",
+                              t.status === "completed" ? "bg-emerald-500/10 text-emerald-400" :
+                              t.status === "in-progress" ? "bg-yellow-500/10 text-yellow-400 animate-pulse" :
+                              "bg-slate-500/10 text-slate-400"
+                            )}>{t.status}</span>
+                          </div>
+                          <p className="text-xs text-slate-450">{t.description}</p>
+                          {t.createdAt && (
+                            <p className="text-[10px] text-slate-500">Created: {new Date(t.createdAt).toLocaleString()}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {t.status !== "completed" && (
+                            <ExtrudedButton size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleUpdateTaskStatus(t.id, "completed")}>
+                              Complete
+                            </ExtrudedButton>
+                          )}
+                          {t.status === "todo" && (
+                            <ExtrudedButton size="sm" className="bg-yellow-600 hover:bg-yellow-700" onClick={() => handleUpdateTaskStatus(t.id, "in-progress")}>
+                              Start
+                            </ExtrudedButton>
+                          )}
+                          <ExtrudedButton size="sm" className="bg-slate-600 hover:bg-slate-700" onClick={() => handleEditTask(t)}>
+                            Edit
+                          </ExtrudedButton>
+                          <ExtrudedButton size="sm" className="bg-rose-600 hover:bg-rose-700" onClick={() => handleDeleteTask(t.id)}>
+                            Delete
+                          </ExtrudedButton>
+                        </div>
+                      </div>
+                    )}
+                  </GlassPanel>
+                ))}
+              </div>
             )}
           </motion.div>
         )}
