@@ -51,8 +51,11 @@ import { cn } from "@/lib/utils";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { DashboardWidget } from "@/components/portal/DashboardWidget";
+import { BarChart3 } from "lucide-react";
 
 const tabs = [
+  { id: "dashboard", label: "Dashboard", icon: BarChart3, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
   { id: "customers", label: "Customers", icon: Users, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
   { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "requirements", label: "Requirements", icon: FileText, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
@@ -67,13 +70,50 @@ function AgentPortalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("customers");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("dashboard");
 
   useEffect(() => {
     if (tabParam && tabs.some((t) => t.id === tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [tabParam]);
+
+  // Widget States for customizable dashboard
+  const [widgets, setWidgets] = useState<string[]>([
+    "chat-queue",
+    "active-conversations",
+    "ai-suggestions",
+    "performance",
+    "notifications"
+  ]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+  
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+  
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    const reordered = [...widgets];
+    const draggedItem = reordered[draggedIndex];
+    reordered.splice(draggedIndex, 1);
+    reordered.splice(index, 0, draggedItem);
+    setWidgets(reordered);
+    setDraggedIndex(null);
+  };
+
+  const handleRemoveWidget = (widgetId: string) => {
+    setWidgets(prev => prev.filter(w => w !== widgetId));
+  };
+
+  const handleResetWidgets = () => {
+    setWidgets(["chat-queue", "active-conversations", "ai-suggestions", "performance", "notifications"]);
+  };
   
   // Data States
   const [tasks, setTasks] = useState<any[]>([]);
@@ -902,6 +942,184 @@ function AgentPortalContent() {
       <div className="mt-4">
         <AnimatePresence mode="wait">
         
+        {/* 0. DASHBOARD TAB */}
+        {activeTab === "dashboard" && (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6 animate-in fade-in duration-300"
+          >
+            {widgets.length < 5 && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleResetWidgets}
+                  className="text-xs bg-slate-850 hover:bg-slate-800 border border-slate-800 text-teal-400 font-semibold px-3 py-1.5 rounded-xl transition-all"
+                >
+                  Reset Layout Grid
+                </button>
+              </div>
+            )}
+
+            <div className="df-widget-grid">
+              {widgets.map((widgetId, index) => {
+                if (widgetId === "chat-queue") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Chat Messenger Queue"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="text-xs text-slate-400 font-bold">Active Chat Queue</span>
+                          <button onClick={() => setActiveTab("chat")} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Open Messenger</button>
+                        </div>
+                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {customers.slice(0, 3).map((cust) => (
+                            <div key={cust.id} className="p-2.5 bg-slate-950/40 rounded-xl border border-white/5 text-xs flex justify-between items-center">
+                              <div>
+                                <p className="font-bold text-slate-200">{cust.companyName || cust.name}</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">{cust.email}</p>
+                              </div>
+                              <span className="bg-amber-500/10 text-amber-450 border border-amber-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">Pending</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "active-conversations") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Active Call Sessions"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="text-xs text-slate-400 font-bold">Recent Dial Logs</span>
+                          <button onClick={() => setActiveTab("calls")} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Open Dialer</button>
+                        </div>
+                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {callsList.slice(0, 3).map((call) => (
+                            <div key={call.id} className="p-2.5 bg-slate-950/40 rounded-xl border border-white/5 text-xs flex justify-between items-center">
+                              <div>
+                                <p className="font-bold text-slate-200">{call.receiverPhone}</p>
+                                <p className="text-[9px] text-slate-550 mt-0.5">Started: {new Date(call.startedAt).toLocaleTimeString()}</p>
+                              </div>
+                              <span className="bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">{call.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "ai-suggestions") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="AI Outreach Suggestions"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-3.5">
+                        <div className="p-3 bg-teal-950/20 border border-teal-500/20 rounded-xl text-xs space-y-1.5">
+                          <p className="font-bold text-teal-300 flex items-center gap-1.5">
+                            <Zap className="h-4 w-4 fill-teal-400 animate-pulse" /> Suggested Lead Followup
+                          </p>
+                          <p className="text-slate-355 leading-relaxed text-[11px]">
+                            &quot;Based on recent API latency queries from TechSolutions, suggest scheduling a call to walk through the custom Postgres configurations.&quot;
+                          </p>
+                          <button onClick={() => setActiveTab("chat")} className="text-[10px] text-teal-400 font-bold underline hover:text-teal-300 mt-1 block">Apply to Messenger</button>
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "performance") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Agent Operations Performance"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-slate-950/45 p-3.5 rounded-xl border border-white/5 text-center">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Task Progress</span>
+                            <span className="text-2xl font-black text-indigo-400">
+                              {totalTasks > 0 ? Math.round((completedTasks/totalTasks)*100) : 100}%
+                            </span>
+                          </div>
+                          <div className="bg-slate-950/45 p-3.5 rounded-xl border border-white/5 text-center">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Feedback Rating</span>
+                            <span className="text-2xl font-black text-emerald-400">{rating} / 5</span>
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-slate-500 text-center uppercase font-mono italic">
+                          Target SLAs Met: 98.4% this quarter
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                return (
+                  <DashboardWidget
+                    key={widgetId}
+                    id={widgetId}
+                    title="Active Alerts & Notifications"
+                    onRemove={() => handleRemoveWidget(widgetId)}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span className="text-xs text-slate-400 font-bold">System Alerts</span>
+                        <span className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="p-2 bg-slate-950/40 border border-white/5 rounded-xl flex gap-2 items-center">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-slate-300 text-[11px]">Next.js SDR pipelines compiled successfully</span>
+                        </div>
+                        <div className="p-2 bg-slate-950/40 border border-white/5 rounded-xl flex gap-2 items-center">
+                          <Users className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                          <span className="text-slate-300 text-[11px]">{customers.length} total customer accounts synced</span>
+                        </div>
+                      </div>
+                    </div>
+                  </DashboardWidget>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* 0. CUSTOMERS TAB */}
         {activeTab === "customers" && (
           <motion.div

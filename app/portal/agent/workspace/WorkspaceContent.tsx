@@ -242,6 +242,16 @@ export default function WorkspaceContent() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // GTM Intakes
+  const [gtmIntakes, setGtmIntakes] = useState<any[]>([]);
+  const [gtmIntakesLoading, setGtmIntakesLoading] = useState(false);
+  const [gtmSearch, setGtmSearch] = useState("");
+  const [gtmPage, setGtmPage] = useState(1);
+  const [gtmLimit, setGtmLimit] = useState(10);
+  const [gtmTotal, setGtmTotal] = useState(0);
+  const [gtmTotalPages, setGtmTotalPages] = useState(0);
+  const [selectedGtmIntake, setSelectedGtmIntake] = useState<any>(null);
+
   // Fetch GTM Intakes
   const fetchGtmIntakes = async () => {
     setGtmIntakesLoading(true);
@@ -426,16 +436,6 @@ export default function WorkspaceContent() {
 
   // Document Upload
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-
-  // GTM Intakes
-  const [gtmIntakes, setGtmIntakes] = useState<any[]>([]);
-  const [gtmIntakesLoading, setGtmIntakesLoading] = useState(false);
-  const [gtmSearch, setGtmSearch] = useState("");
-  const [gtmPage, setGtmPage] = useState(1);
-  const [gtmLimit, setGtmLimit] = useState(10);
-  const [gtmTotal, setGtmTotal] = useState(0);
-  const [gtmTotalPages, setGtmTotalPages] = useState(0);
-  const [selectedGtmIntake, setSelectedGtmIntake] = useState<any>(null);
 
   // Unsaved changes state computed dynamically
   const hasUnsavedChanges = 

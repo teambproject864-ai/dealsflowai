@@ -778,3 +778,137 @@ html[data-banner-dismissed="true"] .announcement-banner {
   box-shadow: 0 0 0 2px rgba(20,184,166,0.5), 0 0 15px rgba(20,184,166,0.2);
   border-color: rgba(20,184,166,0.6);
 }
+
+/* ─── Redesigned Portal Grid & Sidebar Layouts ───── */
+.df-portal-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background-color: hsl(var(--background));
+}
+
+@media (max-width: 1024px) {
+  .df-portal-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.df-sidebar {
+  background: hsla(var(--card) / 0.8);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid hsla(var(--border) / 0.5);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Customizable & Draggable Dashboard Widgets ─── */
+.df-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.df-widget {
+  background: hsla(var(--card) / 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsla(var(--border) / 0.4);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.df-widget:hover {
+  border-color: hsla(var(--primary) / 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 15px hsla(var(--primary) / 0.1);
+}
+
+.df-widget.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  border: 2px dashed hsla(var(--primary) / 0.5);
+}
+
+.df-widget-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid hsla(var(--border) / 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+}
+
+.df-widget-header:active {
+  cursor: grabbing;
+}
+
+.df-widget-content {
+  padding: 1.25rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Custom Scrollbars for Widgets */
+.df-widget-content::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.df-widget-content::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.df-widget-content::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsla(var(--border) / 0.6);
+  border-radius: 9999px;
+}
+
+.df-widget-content::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsla(var(--primary) / 0.5);
+}
+
+/* Drag indicator outline overlay */
+.df-drop-indicator {
+  height: 4px;
+  background: hsl(var(--primary));
+  border-radius: 2px;
+  margin: -2px 0;
+  transition: all 0.2s;
+}
+
+/* Contextual Tooltip Styles */
+.df-tooltip {
+  position: absolute;
+  z-index: 50;
+  background: hsl(var(--card));
+  border: 1px solid hsla(var(--border) / 0.8);
+  color: hsl(var(--foreground));
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(var(--radius) - 4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  max-width: 220px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.df-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+

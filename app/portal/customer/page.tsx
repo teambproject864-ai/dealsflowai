@@ -41,6 +41,7 @@ import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
+import { DashboardWidget } from "@/components/portal/DashboardWidget";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
@@ -138,6 +139,44 @@ function CustomerPortalContent() {
     title: string;
     message: string;
   } | null>(null);
+
+  // Widget States for customizable dashboard
+  const [widgets, setWidgets] = useState<string[]>([
+    "credit-usage",
+    "projects",
+    "conversations",
+    "analytics",
+    "billing",
+    "notifications"
+  ]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+  
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+  
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    const reordered = [...widgets];
+    const draggedItem = reordered[draggedIndex];
+    reordered.splice(draggedIndex, 1);
+    reordered.splice(index, 0, draggedItem);
+    setWidgets(reordered);
+    setDraggedIndex(null);
+  };
+
+  const handleRemoveWidget = (widgetId: string) => {
+    setWidgets(prev => prev.filter(w => w !== widgetId));
+  };
+
+  const handleResetWidgets = () => {
+    setWidgets(["credit-usage", "projects", "conversations", "analytics", "billing", "notifications"]);
+  };
 
   const showToast = (type: "success" | "error" | "info", title: string, message: string) => {
     setNotification({ type, title, message });
@@ -632,60 +671,240 @@ function CustomerPortalContent() {
               </div>
             </GlassPanel>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <GlassPanel tilt={true} className="border-emerald-500/20 bg-gradient-to-br from-slate-900/80 to-emerald-950/20 p-5">
-                <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Active Campaigns</p>
-                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">{icpEntries.length} Profiles</h3>
-              </GlassPanel>
+            {widgets.length < 6 && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleResetWidgets}
+                  className="text-xs bg-slate-850 hover:bg-slate-800 border border-slate-800 text-teal-400 font-semibold px-3 py-1.5 rounded-xl transition-all"
+                >
+                  Reset Layout Grid
+                </button>
+              </div>
+            )}
 
-              <GlassPanel tilt={true} className="border-indigo-500/20 bg-gradient-to-br from-slate-900/80 to-indigo-950/20 p-5">
-                <p className="text-xs text-indigo-400 font-bold uppercase tracking-wider">Pending Tickets</p>
-                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">
-                  {tickets.filter(t => t.status !== "resolved").length} Active
-                </h3>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-purple-500/20 bg-gradient-to-br from-slate-900/80 to-purple-950/20 p-5">
-                <p className="text-xs text-purple-400 font-bold uppercase tracking-wider">Campaign Revenue</p>
-                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">$24,500</h3>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-amber-500/20 bg-gradient-to-br from-slate-900/80 to-amber-950/20 p-5">
-                <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Platform Credits</p>
-                <h3 className="text-3xl font-extrabold text-slate-100 mt-2">{creditsCount} Units</h3>
-              </GlassPanel>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GlassPanel tilt={false} className="border-slate-800 p-5">
-                <h3 className="text-lg font-bold text-slate-200 mb-4">Your Support Tickets</h3>
-                <div className="space-y-3">
-                  {tickets.slice(0, 3).map(t => (
-                    <div key={t.id} className="p-3 bg-slate-950/40 rounded-xl border border-slate-850 flex justify-between items-center text-xs">
-                      <div>
-                        <p className="font-bold text-slate-200">{t.subject}</p>
-                        <p className="text-slate-500 mt-0.5">{new Date(t.createdAt).toLocaleDateString()}</p>
+            <div className="df-widget-grid">
+              {widgets.map((widgetId, index) => {
+                if (widgetId === "credit-usage") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Platform Credit Usage"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-6">
+                        <div className="bg-slate-950/60 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Available Balance</span>
+                            <span className="text-3xl font-extrabold text-amber-400 block mt-1">{creditsCount} Credits</span>
+                          </div>
+                          <div className="h-10 w-10 bg-amber-500/10 rounded-xl border border-amber-500/25 flex items-center justify-center text-amber-400 font-extrabold">
+                            {creditsCount > 100 ? "OK" : "LOW"}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-slate-400">
+                            <span>SDR Outbound Dialer</span>
+                            <span>Spent: 120 / 750 Units</span>
+                          </div>
+                          <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-teal-500 to-amber-500 rounded-full" style={{ width: "16%" }} />
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("billing")}
+                          className="w-full text-center bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-white/5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                        >
+                          Buy More Credits
+                        </button>
                       </div>
-                      <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-350 font-bold capitalize">{t.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </GlassPanel>
+                    </DashboardWidget>
+                  );
+                }
 
-              <GlassPanel tilt={false} className="border-slate-800 p-5">
-                <h3 className="text-lg font-bold text-slate-200 mb-4">GTM Reports</h3>
-                <div className="space-y-3">
-                  {gtmReports.slice(0, 3).map(r => (
-                    <div key={r.id} className="p-3 bg-slate-950/40 rounded-xl border border-slate-850 flex justify-between items-center text-xs">
-                      <div>
-                        <p className="font-bold text-slate-200">{r.reportName}</p>
-                        <p className="text-slate-500 mt-0.5">{r.region} • {r.segment}</p>
+                if (widgetId === "projects") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Campaign Profiles (ICP)"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                          <span className="text-xs text-slate-400 font-bold">{icpEntries.length} Active ICP Profiles</span>
+                          <button onClick={() => setActiveTab("icp-entries")} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Manage</button>
+                        </div>
+                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {icpEntries.slice(0, 3).map((icp) => (
+                            <div key={icp.id} className="p-2.5 bg-slate-950/40 rounded-lg border border-white/5 text-xs flex justify-between items-center">
+                              <div>
+                                <p className="font-bold text-slate-200">{icp.name}</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[180px]">{icp.description}</p>
+                              </div>
+                              <span className="bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">Active</span>
+                            </div>
+                          ))}
+                          {icpEntries.length === 0 && (
+                            <p className="text-xs text-slate-500 italic py-6 text-center">No campaign profiles defined yet.</p>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-emerald-400 font-bold">{r.conversionRate || r.leadConversionRate}% Conv</span>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "conversations") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Recent Conversations"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="text-xs text-slate-400 font-bold">Account Manager Session</span>
+                          <button onClick={() => setActiveTab("chat")} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Open Chat</button>
+                        </div>
+                        <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {chatMessages.slice(-3).map((msg) => (
+                            <div key={msg.id} className="p-2 bg-slate-950/40 border border-white/5 rounded-xl text-xs space-y-1">
+                              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+                                <span className="font-bold text-slate-350">{msg.senderName}</span>
+                                <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <p className="text-slate-300 truncate">{msg.content}</p>
+                            </div>
+                          ))}
+                          {chatMessages.length === 0 && (
+                            <p className="text-xs text-slate-500 italic py-6 text-center">No messages exchanged yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "analytics") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="GTM Strategy Analytics"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-slate-950/45 p-3.5 rounded-xl border border-white/5 text-center">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Average Conversion</span>
+                            <span className="text-2xl font-black text-emerald-400">
+                              {(gtmReports.reduce((acc, curr) => acc + (curr.conversionRate || curr.leadConversionRate || 0), 0) / (gtmReports.length || 1)).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="bg-slate-950/45 p-3.5 rounded-xl border border-white/5 text-center">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Pipeline Created</span>
+                            <span className="text-2xl font-black text-blue-400">
+                              ${(gtmReports.reduce((acc, curr) => acc + (curr.pipelineValue || curr.revenue || 0), 0) / 1000).toFixed(1)}k
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">Top Reporting Region</p>
+                          <div className="flex justify-between items-center text-xs bg-slate-950/30 p-2.5 rounded-xl border border-white/5">
+                            <span className="text-slate-300 font-semibold">{gtmReports[0]?.reportName || "N/A"}</span>
+                            <span className="text-emerald-400 font-bold">{gtmReports[0]?.conversionRate || 0}% Conv</span>
+                          </div>
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "billing") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Billing & Invoicing"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                          <span className="text-xs text-slate-400 font-bold">Recent Billing Actions</span>
+                          <button onClick={() => setActiveTab("billing")} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Billing Tab</button>
+                        </div>
+                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {transactions.slice(0, 3).map((tx) => (
+                            <div key={tx.id} className="p-2.5 bg-slate-950/40 rounded-xl border border-white/5 flex justify-between items-center text-xs">
+                              <div>
+                                <p className="font-bold text-slate-200 truncate max-w-[180px]">{tx.details}</p>
+                                <p className="text-[9px] text-slate-550 font-mono mt-0.5">{tx.date}</p>
+                              </div>
+                              <span className={cn(
+                                "font-bold font-mono",
+                                tx.type === "purchase" ? "text-emerald-400" : "text-slate-455"
+                              )}>
+                                {tx.type === "purchase" ? "+" : ""}{tx.amount}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                return (
+                  <DashboardWidget
+                    key={widgetId}
+                    id={widgetId}
+                    title="Active Alerts & Notifications"
+                    onRemove={() => handleRemoveWidget(widgetId)}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <div className="space-y-3.5">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span className="text-xs text-slate-400 font-bold">Live Portal Stream</span>
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="p-2.5 bg-slate-950/40 border border-white/5 rounded-xl flex gap-2.5 items-start">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-slate-200 font-bold">Workspace Ready</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Secure session initialized successfully</p>
+                          </div>
+                        </div>
+                        <div className="p-2.5 bg-slate-950/40 border border-white/5 rounded-xl flex gap-2.5 items-start">
+                          <Star className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-slate-200 font-bold">Campaign Status</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{icpEntries.length} active targeting parameters loaded</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </GlassPanel>
+                  </DashboardWidget>
+                );
+              })}
             </div>
           </div>
         )}

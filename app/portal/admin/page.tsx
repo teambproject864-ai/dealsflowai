@@ -33,11 +33,15 @@ import {
   Settings,
   TrendingUp,
   Cpu,
+  Menu,
+  Globe,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LogoutButton from "@/components/auth/LogoutButton";
+import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { getDb } from "@/lib/firebase-client";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import type { AgentSession, AgentAssignmentNotification } from "@/lib/types";
@@ -61,6 +65,46 @@ const tabs = [
 function AdminPortalContent() {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("dashboard");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
+  // Widget States for customizable dashboard
+  const [widgets, setWidgets] = useState<string[]>([
+    "llm-metrics",
+    "revenue-credits",
+    "system-health",
+    "website-monitoring",
+    "users",
+    "audit-logs",
+    "alerts"
+  ]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+  
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+  
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    const reordered = [...widgets];
+    const draggedItem = reordered[draggedIndex];
+    reordered.splice(draggedIndex, 1);
+    reordered.splice(index, 0, draggedItem);
+    setWidgets(reordered);
+    setDraggedIndex(null);
+  };
+
+  const handleRemoveWidget = (widgetId: string) => {
+    setWidgets(prev => prev.filter(w => w !== widgetId));
+  };
+
+  const handleResetWidgets = () => {
+    setWidgets(["llm-metrics", "revenue-credits", "system-health", "website-monitoring", "users", "audit-logs", "alerts"]);
+  };
   const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [agents, setAgents] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -728,89 +772,108 @@ function AdminPortalContent() {
     : "4.8";
 
   return (
-    <div className="space-y-8 relative pb-12">
-      {/* Toast Notification */}
-      {notification && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-4 duration-300">
-          <GlassPanel tilt={false} depth="front" className={cn(
-            "w-80 shadow-2xl border backdrop-blur-2xl",
-            notification.type === "success" ? "border-emerald-500/40 bg-emerald-950/90 text-emerald-200" :
-            notification.type === "error" ? "border-rose-500/40 bg-rose-950/90 text-rose-200" :
-            "border-blue-500/40 bg-blue-950/90 text-blue-200"
-          )}>
-            <CardContent className="p-4 flex items-start gap-3">
-              {notification.type === "success" ? <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5" /> :
-               notification.type === "error" ? <AlertCircle className="h-5 w-5 text-rose-400 mt-0.5" /> :
-               <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />}
-              <div className="flex-1">
-                <p className="font-semibold text-sm">{notification.title}</p>
-                <p className="text-xs opacity-90 mt-1">{notification.message}</p>
-              </div>
-              <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-white">
-                <X className="h-4 w-4" />
-              </button>
-            </CardContent>
-          </GlassPanel>
-        </div>
-      )}
-
-      {/* Main Title Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-6">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
-            Administrator Dashboard
-          </h1>
-          <p className="text-slate-400 mt-1 text-sm font-medium">
-            Centralized orchestration dashboard for real-time customer, agent, and AI bot management
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <ExtrudedButton
-            variant="outline"
-            onClick={() => setShowChangeOwnPassword(true)}
-            className="border-slate-800 hover:border-slate-700 bg-slate-900/60 text-slate-200"
+    <div className="df-portal-layout relative">
+      {/* Left Sidebar Navigation */}
+      <aside className={cn("df-sidebar", isSidebarCollapsed ? "w-16" : "w-64")}>
+        <div className="flex items-center justify-between p-4 border-b border-white/5">
+          {!isSidebarCollapsed && (
+            <span className="text-xs font-bold text-slate-100 uppercase tracking-widest bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">
+              Admin Operations
+            </span>
+          )}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+            className="p-1.5 rounded hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors mx-auto outline-none"
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            <KeyRound className="h-4 w-4 mr-2 text-teal-400" />
-            Change Password
-          </ExtrudedButton>
-          <ExtrudedButton variant="outline" className="relative border-slate-800 hover:border-slate-700 bg-slate-900/60">
-            <Bell className="h-5 w-5 mr-2 text-teal-400" />
-            Notifications
-            {(agentAssignments.length + localAuditLogs.length) > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-indigo-500 text-[10px] text-white px-2 py-0.5 rounded-full font-bold">
-                {agentAssignments.length + localAuditLogs.length}
-              </span>
-            )}
-          </ExtrudedButton>
-          <LogoutButton />
+            <Menu className="h-4 w-4" />
+          </button>
         </div>
-      </div>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto custom-scrollbar">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border border-transparent outline-none",
+                  isActive 
+                    ? "bg-teal-500/10 border-teal-500/20 text-teal-350 shadow-md shadow-teal-500/5" 
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                )}
+                title={tab.label}
+              >
+                <Icon className={cn("h-4 w-4 shrink-0", tab.color.split(" ")[0])} />
+                {!isSidebarCollapsed && <span>{tab.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
 
-      {/* Tab Control Selection */}
-      <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
+      {/* Right Content Area */}
+      <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-screen custom-scrollbar relative">
+        {/* Toast Notification */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-4 duration-300">
+            <GlassPanel tilt={false} depth="front" className={cn(
+              "w-80 shadow-2xl border backdrop-blur-2xl",
+              notification.type === "success" ? "border-emerald-500/40 bg-emerald-950/90 text-emerald-200" :
+              notification.type === "error" ? "border-rose-500/40 bg-rose-950/90 text-rose-200" :
+              "border-blue-500/40 bg-blue-950/90 text-blue-200"
+            )}>
+              <CardContent className="p-4 flex items-start gap-3">
+                {notification.type === "success" ? <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5" /> :
+                 notification.type === "error" ? <AlertCircle className="h-5 w-5 text-rose-400 mt-0.5" /> :
+                 <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />}
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{notification.title}</p>
+                  <p className="text-xs opacity-90 mt-1">{notification.message}</p>
+                </div>
+                <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </CardContent>
+            </GlassPanel>
+          </div>
+        )}
+
+        {/* Main Title Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-6">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+              Administrator Dashboard
+            </h1>
+            <p className="text-slate-400 mt-1 text-sm font-medium">
+              Centralized orchestration dashboard for real-time customer, agent, and AI bot management
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
             <ExtrudedButton
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3",
-                activeTab === tab.id
-                  ? "bg-gradient-to-br from-teal-600 to-indigo-600 text-white shadow-lg shadow-teal-500/20"
-                  : "border-transparent bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
-              )}
+              variant="outline"
+              onClick={() => setShowChangeOwnPassword(true)}
+              className="border-slate-800 hover:border-slate-700 bg-slate-900/60 text-slate-200"
             >
-              <Icon className={cn("h-4 w-4", tab.color.split(" ")[0])} />
-              {tab.label}
+              <KeyRound className="h-4 w-4 mr-2 text-teal-400" />
+              Change Password
             </ExtrudedButton>
-          );
-        })}
-      </div>
+            <ExtrudedButton variant="outline" className="relative border-slate-800 hover:border-slate-700 bg-slate-900/60">
+              <Bell className="h-5 w-5 mr-2 text-teal-400" />
+              Notifications
+              {(agentAssignments.length + localAuditLogs.length) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-indigo-500 text-[10px] text-white px-2 py-0.5 rounded-full font-bold">
+                  {agentAssignments.length + localAuditLogs.length}
+                </span>
+              )}
+            </ExtrudedButton>
+            <LogoutButton />
+          </div>
+        </div>
 
-      {/* Tab Content Display Panels */}
-      <div className="mt-4">
+        {/* Tab Content Display Panels */}
+        <div className="mt-4">
         
         {/* Create Agent Modal */}
         {showCreateAgent && (
@@ -1021,9 +1084,9 @@ function AdminPortalContent() {
                     <ExtrudedButton type="button" variant="outline" className="flex-1" onClick={() => setShowOnboardCustomer(false)}>
                       Cancel
                     </ExtrudedButton>
-                    <ExtrudedButton type="submit" className="flex-1 bg-gradient-to-br from-teal-600 to-indigo-600">
+                    <button type="submit" className="flex-1 h-10 rounded-xl font-bold bg-gradient-to-br from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-950/20 active:scale-[0.98] transition-all">
                       Onboard Customer
-                    </ExtrudedButton>
+                    </button>
                   </div>
                 </form>
               </CardContent>
@@ -1050,9 +1113,9 @@ function AdminPortalContent() {
                     </p>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="resign-reason" className="text-slate-350">Termination Reason</Label>
+                    <Label htmlFor="resignation-reason" className="text-slate-350">Termination Reason</Label>
                     <Input
-                      id="resign-reason"
+                      id="resignation-reason"
                       placeholder="e.g. Budget constraints, project finished"
                       value={resignationFormData.terminationReason}
                       onChange={(e) => setResignationFormData({ ...resignationFormData, terminationReason: e.target.value })}
@@ -1061,9 +1124,9 @@ function AdminPortalContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="resign-notes" className="text-slate-350">Additional Notes</Label>
+                    <Label htmlFor="resignation-notes" className="text-slate-350">Additional Notes</Label>
                     <textarea
-                      id="resign-notes"
+                      id="resignation-notes"
                       placeholder="Notes for archiving..."
                       value={resignationFormData.notes}
                       onChange={(e) => setResignationFormData({ ...resignationFormData, notes: e.target.value })}
@@ -1075,9 +1138,9 @@ function AdminPortalContent() {
                     <ExtrudedButton type="button" variant="outline" className="flex-1" onClick={() => setShowProcessResignation(false)}>
                       Cancel
                     </ExtrudedButton>
-                    <ExtrudedButton type="submit" className="flex-1 bg-rose-650 hover:bg-rose-700">
-                      Set Resigned
-                    </ExtrudedButton>
+                    <button type="submit" className="flex-1 h-10 rounded-xl font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg active:scale-[0.98] transition-all">
+                      Process Resignation
+                    </button>
                   </div>
                 </form>
               </CardContent>
@@ -1088,160 +1151,254 @@ function AdminPortalContent() {
         {/* 1. DASHBOARD TAB */}
         {activeTab === "dashboard" && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Real-time statistics cards grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <GlassPanel tilt={true} className="border-emerald-500/20 bg-gradient-to-br from-slate-900/80 to-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Platform Agents</p>
-                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{agents.length}</h3>
-                    </div>
-                    <Users className="h-10 w-10 text-emerald-500 opacity-80" />
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-400/80 mt-4">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    <span>Real-time active routing</span>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-indigo-500/20 bg-gradient-to-br from-slate-900/80 to-indigo-950/20 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-indigo-400 font-bold uppercase tracking-wider">Active Customers</p>
-                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{customers.length}</h3>
-                    </div>
-                    <Users className="h-10 w-10 text-indigo-500 opacity-80" />
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-indigo-300 mt-4">
-                    <span>B2B: <strong>{b2bCount}</strong></span>
-                    <span>B2C: <strong>{b2cCount}</strong></span>
-                    <span>D2C: <strong>{d2cCount}</strong></span>
-                  </div>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-purple-500/20 bg-gradient-to-br from-slate-900/80 to-purple-950/20 shadow-[0_0_15px_rgba(168,85,247,0.05)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-purple-400 font-bold uppercase tracking-wider">Tasks Completion</p>
-                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">
-                        {totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : "0%"}
-                      </h3>
-                    </div>
-                    <ClipboardList className="h-10 w-10 text-purple-500 opacity-80" />
-                  </div>
-                  <p className="text-xs text-purple-300 mt-4 font-semibold">
-                    {completedTasks} completed / {totalTasks} total tasks
-                  </p>
-                </CardContent>
-              </GlassPanel>
-
-              <GlassPanel tilt={true} className="border-amber-500/20 bg-gradient-to-br from-slate-900/80 to-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Customer Rating</p>
-                      <h3 className="text-4xl font-extrabold text-slate-100 mt-2">{avgRating}</h3>
-                    </div>
-                    <Star className="h-10 w-10 text-amber-500 fill-amber-500 opacity-80" />
-                  </div>
-                  <div className="flex gap-0.5 mt-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={cn(
-                          "h-3.5 w-3.5",
-                          star <= Math.round(Number(avgRating)) ? "text-amber-400 fill-amber-400" : "text-slate-700"
-                        )}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </GlassPanel>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Audit trail activity log */}
-              <GlassPanel tilt={false} className="border-slate-800 lg:col-span-2">
-                <CardHeader className="border-b border-slate-800/80 pb-4">
-                  <CardTitle className="text-lg text-slate-100 font-bold flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-teal-400" />
-                    System Operations & Audit Trail
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {localAuditLogs.length === 0 ? (
-                    <p className="text-slate-500 text-sm text-center py-12">No recent log actions recorded.</p>
-                  ) : (
-                    <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin">
-                      {localAuditLogs.map((log) => (
-                        <div key={log.id} className="flex items-start justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900/90 transition-colors">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-200">{log.actionDetails}</p>
-                            <p className="text-[10px] text-slate-500">
-                              By: {log.performedBy || log.email} ({log.performedByRole || log.role}) • {new Date(log.createdAt || log.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                          <span className={cn(
-                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase",
-                            log.success !== false ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                          )}>
-                            {log.success !== false ? "Success" : "Failed"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </GlassPanel>
-
-              {/* Dynamic Quick Actions Panel */}
-              <div className="space-y-6">
-                <GlassPanel tilt={false} className="border-slate-800">
-                  <CardHeader className="border-b border-slate-800 pb-4">
-                    <CardTitle className="text-lg text-slate-100 font-bold">Quick Administrative Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-3">
-                    <Button onClick={() => setShowOnboardCustomer(true)} className="w-full justify-start bg-gradient-to-r from-teal-500/20 to-cyan-500/10 border border-teal-500/30 hover:border-teal-500/60 text-slate-200 rounded-xl">
-                      <UserPlus className="h-4 w-4 mr-2.5 text-teal-400" />
-                      Onboard New Customer
-                    </Button>
-                    <Button onClick={() => setShowCreateAgent(true)} className="w-full justify-start bg-gradient-to-r from-purple-500/20 to-indigo-500/10 border border-purple-500/30 hover:border-purple-500/60 text-slate-200 rounded-xl">
-                      <UserPlus className="h-4 w-4 mr-2.5 text-purple-400" />
-                      Add New Platform Agent
-                    </Button>
-                    <Button onClick={() => setActiveTab("llm-manager")} className="w-full justify-start bg-gradient-to-r from-blue-500/20 to-sky-500/10 border border-blue-500/30 hover:border-blue-500/60 text-slate-200 rounded-xl">
-                      <BarChart3 className="h-4 w-4 mr-2.5 text-blue-400" />
-                      Manage LLM Configuration
-                    </Button>
-                  </CardContent>
-                </GlassPanel>
-
-                {/* Agent assignments listing */}
-                <GlassPanel tilt={false} className="border-slate-800">
-                  <CardHeader className="border-b border-slate-800 pb-4">
-                    <CardTitle className="text-base text-slate-100 font-bold">Active Agent Assignments</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-2">
-                    {agentAssignments.length === 0 ? (
-                      <p className="text-slate-500 text-xs text-center py-6">No active notifications/assignments</p>
-                    ) : (
-                      agentAssignments.slice(0, 3).map((assignment) => (
-                        <div key={assignment.sessionId} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/40 text-xs space-y-1">
-                          <p className="text-slate-300 font-bold">{assignment.agentKey} assigned</p>
-                          <p className="text-slate-500">Customer: {assignment.customerName} ({assignment.companyName})</p>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </GlassPanel>
+            {widgets.length < 7 && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleResetWidgets}
+                  className="text-xs bg-slate-850 hover:bg-slate-800 border border-slate-800 text-teal-400 font-semibold px-3 py-1.5 rounded-xl transition-all"
+                >
+                  Reset Layout Grid
+                </button>
               </div>
+            )}
 
+            <div className="df-widget-grid">
+              {widgets.map((widgetId, index) => {
+                if (widgetId === "llm-metrics") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="LLM API Latency & Metrics"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="bg-slate-950/60 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Avg Latency</span>
+                            <span className="text-xl font-extrabold text-teal-400 mt-1 block">342ms</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Cache Hit Rate</span>
+                            <span className="text-xl font-extrabold text-indigo-400 mt-1 block">78.4%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex justify-between text-[11px] text-slate-400">
+                            <span>API Usage Cost (Est.)</span>
+                            <span>$12.45 / $100 Limit</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-500 rounded-full" style={{ width: "12%" }} />
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("llm-manager")}
+                          className="w-full text-center bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-white/5 py-2 rounded-xl text-xs font-bold transition-all"
+                        >
+                          LLM Config Manager
+                        </button>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "revenue-credits") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Operating Models"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="bg-slate-950/60 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Estimated Revenue</span>
+                            <span className="text-xl font-extrabold text-emerald-400 mt-1 block">$24,500</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Average Rating</span>
+                            <span className="text-xl font-extrabold text-amber-400 mt-1 block">{avgRating} / 5</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-between text-xs pt-1">
+                          <span className="text-slate-400">B2B: <strong className="text-slate-200">{b2bCount}</strong></span>
+                          <span className="text-slate-400">B2C: <strong className="text-slate-200">{b2cCount}</strong></span>
+                          <span className="text-slate-400">D2C: <strong className="text-slate-200">{d2cCount}</strong></span>
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "system-health") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="System Operations Uptime"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
+                          <span className="text-slate-400">Tasks Completed</span>
+                          <span className="text-indigo-400 font-bold">{completedTasks} / {totalTasks} Tasks ({totalTasks > 0 ? Math.round((completedTasks/totalTasks)*100) : 100}%)</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-center">
+                          <div className="bg-slate-950/40 p-2 rounded border border-white/5 text-xs">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold">Active Spans</span>
+                            <span className="text-lg font-black text-blue-400">{orchestratorStats?.activeSpans ?? 2}</span>
+                          </div>
+                          <div className="bg-slate-950/40 p-2 rounded border border-white/5 text-xs">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold">Total Events</span>
+                            <span className="text-lg font-black text-purple-400">{orchestratorStats?.totalEvents ?? 12}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("orchestrator")}
+                          className="w-full text-center bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-white/5 py-2 rounded-xl text-xs font-bold transition-all"
+                        >
+                          Open Orchestrator
+                        </button>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "website-monitoring") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Website Monitoring (SDR Live)"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-4">
+                        <div className="bg-slate-950/60 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Uptime</span>
+                            <span className="text-lg font-extrabold text-emerald-400 mt-1 block">99.98%</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">SSL Status</span>
+                            <span className="text-lg font-extrabold text-teal-400 mt-1 block">Valid (245d)</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-xs bg-slate-950/30 p-2.5 rounded-xl border border-white/5">
+                          <span className="text-slate-400 flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-teal-400" /> dealflow.ai</span>
+                          <span className="bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Online</span>
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "users") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="Top Customer Accounts"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2 text-xs">
+                          <span className="text-slate-400 font-bold">{customers.length} Onboarded</span>
+                          <button onClick={() => setActiveTab("customers")} className="text-teal-400 hover:underline font-bold">Directory</button>
+                        </div>
+                        <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                          {customers.slice(0, 3).map((cust) => (
+                            <div key={cust.id} className="p-2.5 bg-slate-950/40 rounded-xl border border-white/5 text-xs flex justify-between items-center">
+                              <div>
+                                <p className="font-bold text-slate-200">{cust.companyName || cust.name}</p>
+                                <p className="text-[9px] text-slate-550 mt-0.5">{cust.industry}</p>
+                              </div>
+                              <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-slate-400 font-bold uppercase">{cust.businessModel}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                if (widgetId === "audit-logs") {
+                  return (
+                    <DashboardWidget
+                      key={widgetId}
+                      id={widgetId}
+                      title="System Audit Trail Logs"
+                      onRemove={() => handleRemoveWidget(widgetId)}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2 text-xs">
+                          <span className="text-slate-450 font-bold">Live Stream</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
+                        </div>
+                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                          {localAuditLogs.slice(0, 3).map((log) => (
+                            <div key={log.id} className="p-2 bg-slate-950/40 border border-white/5 rounded-xl text-[11px] space-y-1">
+                              <p className="font-bold text-slate-300 leading-tight">{log.actionDetails}</p>
+                              <p className="text-[9px] text-slate-550 truncate">{log.performedBy || log.email}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </DashboardWidget>
+                  );
+                }
+
+                return (
+                  <DashboardWidget
+                    key={widgetId}
+                    id={widgetId}
+                    title="Active Alerts & Assignments"
+                    onRemove={() => handleRemoveWidget(widgetId)}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <div className="space-y-3.5">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2 text-xs">
+                        <span className="text-slate-400 font-bold">SDR Live Routing</span>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        {agentAssignments.slice(0, 2).map((assign) => (
+                          <div key={assign.sessionId} className="p-2 bg-slate-950/40 border border-white/5 rounded-xl flex gap-2 items-start">
+                            <ShieldAlert className="h-4 w-4 text-teal-400 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-slate-200 font-bold">Agent Assigned</p>
+                              <p className="text-[10px] text-slate-550 mt-0.5">{assign.agentKey} for {assign.customerName}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {agentAssignments.length === 0 && (
+                          <p className="text-xs text-slate-550 italic py-6 text-center">No active assignments in stream.</p>
+                        )}
+                      </div>
+                    </div>
+                  </DashboardWidget>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1389,7 +1546,25 @@ function AdminPortalContent() {
         {/* 2. LLM MANAGER TAB */}
         {activeTab === "llm-manager" && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <h2 className="text-2xl font-bold text-slate-100">LLM Manager Dashboard</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-100">LLM Manager Dashboard</h2>
+              <ExtrudedButton
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/llm-manager/retrain", { method: "POST" });
+                    const data = await res.json();
+                    if (data.success) {
+                      alert("Retraining initiated!");
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="bg-gradient-to-r from-teal-500 to-indigo-500 text-xs font-bold py-2"
+              >
+                Retrain Model
+              </ExtrudedButton>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <GlassPanel tilt={true} className="border-slate-800">
@@ -1562,9 +1737,9 @@ function AdminPortalContent() {
         {activeTab === "customers" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-slate-100">Customers Directory</h2>
+              <h2 className="text-2xl font-bold text-slate-100">Customer Management</h2>
               <ExtrudedButton className="bg-gradient-to-r from-teal-500 to-indigo-500 text-xs font-bold py-2" onClick={() => setShowOnboardCustomer(true)}>
-                Onboard Customer
+                Onboard New Customer
               </ExtrudedButton>
             </div>
 
@@ -1603,7 +1778,7 @@ function AdminPortalContent() {
                       </div>
                       {c.status !== "resigned" && (
                         <ExtrudedButton size="sm" className="bg-rose-600 hover:bg-rose-700 text-[10px]" onClick={() => handleInitiateResignation(c)}>
-                          Resign Customer
+                          Process Resignation
                         </ExtrudedButton>
                       )}
                     </div>
@@ -1758,7 +1933,7 @@ function AdminPortalContent() {
         {/* 9. GTM REPORTS TAB */}
         {activeTab === "gtm-reports" && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <h2 className="text-2xl font-bold text-slate-100">GTM Analysis & Marketing Strategy Reports</h2>
+            <h2 className="text-2xl font-bold text-slate-100">All GTM Reports</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {gtmReports.map(report => (
                 <GlassPanel key={report.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
@@ -2155,6 +2330,7 @@ function AdminPortalContent() {
           </GlassPanel>
         </div>
       )}
+      </div>
     </div>
   );
 }
