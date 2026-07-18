@@ -55,124 +55,111 @@ export const test = base.extend<CustomFixtures>({
       role: 'admin',
     };
 
-    // --- Auth ---
-    await page.route('**/api/auth/me', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, user: MOCK_ADMIN_USER }),
-      });
-    });
-
-    // --- Customers GET + POST ---
+    // Flat customer format that matches what admin/page.tsx renders (c.name, c.status, c.businessModel, etc.)
     const mockCustomer = {
       id: 'customer-e2e-001',
-      personalIdentifiers: { fullName: 'E2E Mock Customer', email: 'e2e-mock@example.com', phoneNumber: '+1-555-000-0000' },
-      companyInformation: { companyName: 'E2E Corp', industry: 'SaaS', businessModel: 'b2b' },
-      accountHistory: { status: 'active', onboardedAt: new Date().toISOString(), totalInteractions: 0 },
+      name: 'E2E Mock Customer',
+      email: 'e2e-mock@example.com',
+      phone: '+1-555-000-0000',
+      companyName: 'E2E Corp',
+      industry: 'SaaS',
+      businessModel: 'b2b',
+      status: 'active',
       assignedAgentId: '',
       assignedAgentName: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    const ok = (body: object) => ({
+      status: 200 as const,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
+
+    // --- Auth ---
+    await page.route('**/api/auth/me', (route) =>
+      route.fulfill(ok({ success: true, user: MOCK_ADMIN_USER }))
+    );
+
+    // --- Customers GET + POST ---
     await page.route('**/api/admin/customers', async (route) => {
       const method = route.request().method();
       if (method === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true, customers: [mockCustomer] }),
-        });
+        await route.fulfill(ok({ success: true, customers: [mockCustomer] }));
       } else if (method === 'POST') {
-        // Parse request to get the submitted name for the success message
         let submittedName = 'E2E Test Customer';
         try {
           const body = JSON.parse(route.request().postData() || '{}');
           if (body.name) submittedName = body.name;
-        } catch { /* ignore parse errors */ }
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            message: 'Customer onboarded successfully',
-            customer: { ...mockCustomer, personalIdentifiers: { ...mockCustomer.personalIdentifiers, fullName: submittedName }, name: submittedName },
-            defaultPassword: 'Customer@E2EAcmeCorp!2026',
-          }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // --- Resignations ---
-    await page.route('**/api/portal/resignations', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true, resignations: [] }),
-        });
-      } else if (route.request().method() === 'POST') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true, message: 'Resignation processed' }),
-        });
+        } catch { /* ignore */ }
+        await route.fulfill(ok({
+          success: true,
+          message: 'Customer onboarded successfully',
+          customer: { ...mockCustomer, name: submittedName },
+          defaultPassword: 'Customer@E2EAcmeCorp!2026',
+        }));
       } else {
         await route.continue();
       }
     });
 
     // --- Agents ---
-    await page.route('**/api/admin/agents', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, agents: [] }),
-      });
-    });
+    await page.route('**/api/admin/agents', (route) =>
+      route.fulfill(ok({ success: true, agents: [] }))
+    );
 
-    // --- LLM Manager / Retrain ---
-    await page.route('**/api/llm-manager/retrain', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, message: 'Retraining initiated!' }),
-      });
+    // --- Portal: Tasks, Requirements, Resignations, Documents, Feedback, Calls, Chat, GTM Reports ---
+    await page.route('**/api/portal/tasks', (route) =>
+      route.fulfill(ok({ success: true, tasks: [] }))
+    );
+    await page.route('**/api/portal/requirements', (route) =>
+      route.fulfill(ok({ success: true, requirements: [] }))
+    );
+    await page.route('**/api/portal/resignations', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill(ok({ success: true, message: 'Resignation processed' }));
+      } else {
+        await route.fulfill(ok({ success: true, resignations: [] }));
+      }
     });
+    await page.route('**/api/portal/documents', (route) =>
+      route.fulfill(ok({ success: true, documents: [] }))
+    );
+    await page.route('**/api/portal/gtm-reports', (route) =>
+      route.fulfill(ok({ success: true, reports: [] }))
+    );
+    await page.route('**/api/portal/feedback', (route) =>
+      route.fulfill(ok({ success: true, feedback: [] }))
+    );
+    await page.route('**/api/portal/calls', (route) =>
+      route.fulfill(ok({ success: true, calls: [] }))
+    );
+    await page.route('**/api/portal/chat**', (route) =>
+      route.fulfill(ok({ success: true, messages: [] }))
+    );
 
-    // --- GTM Reports ---
-    await page.route('**/api/admin/gtm-reports', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, reports: [] }),
-      });
-    });
+    // --- Admin: Audit Logs, GTM Reports, Bot Monitor ---
+    await page.route('**/api/admin/audit-logs', (route) =>
+      route.fulfill(ok({ success: true, logs: [] }))
+    );
+    await page.route('**/api/admin/gtm-reports', (route) =>
+      route.fulfill(ok({ success: true, reports: [] }))
+    );
+    await page.route('**/api/admin/bot-monitor**', (route) =>
+      route.fulfill(ok({ success: true, meetings: [], totalMeetings: 0 }))
+    );
+    await page.route('**/api/admin/interactions**', (route) =>
+      route.fulfill(ok({ success: true, interactions: [] }))
+    );
 
-    // --- Bot Monitor ---
-    await page.route('**/api/admin/bot-monitor**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, meetings: [], totalMeetings: 0 }),
-      });
-    });
-
-    // --- Interactions / Tasks / Documents / Requirements ---
-    await page.route('**/api/admin/interactions**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, interactions: [] }) });
-    });
-    await page.route('**/api/tasks**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, tasks: [] }) });
-    });
-    await page.route('**/api/documents**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, documents: [] }) });
-    });
-    await page.route('**/api/requirements**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, requirements: [] }) });
-    });
+    // --- LLM Manager ---
+    await page.route('**/api/llm-manager/metrics', (route) =>
+      route.fulfill(ok({ success: true, metrics: { totalQueries: 0, avgLatency: 0, accuracy: 0 } }))
+    );
+    await page.route('**/api/llm-manager/retrain', (route) =>
+      route.fulfill(ok({ success: true, message: 'Retraining initiated!' }))
+    );
 
     await use(page);
   },
