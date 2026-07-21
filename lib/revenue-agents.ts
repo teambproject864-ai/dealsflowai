@@ -52,8 +52,39 @@ async function countActiveSessionsByPersona(): Promise<Record<string, number>> {
 export async function listRevenueAgentsWithAvailability(): Promise<RevenueAgentProfile[]> {
   const activeCounts = await countActiveSessionsByPersona();
   const maxPerAgent = Number(process.env.MAX_SESSIONS_PER_AGENT) || 2;
+  const catalog = getRevenueAgentCatalog();
 
-  return getRevenueAgentCatalog().map((agent) => {
+  // Dynamically load active agent users created by Admin
+  let dbAgents: RevenueAgentProfile[] = [];
+  try {
+    const db = getDb();
+    if (db) {
+      const snap = await db.collection("users").where("role", "==", "agent").get();
+      snap.forEach((doc) => {
+        const d = doc.data();
+        if (d.isActive !== false) {
+          const key = d.id || doc.id;
+          dbAgents.push({
+            key: key as any,
+            name: d.name || "Agent",
+            fullName: d.name || "Agent",
+            role: "AI Revenue Agent",
+            expertise: d.expertise || ["gtm", "sales"],
+            activeSessions: activeCounts[key] || 0,
+            available: (activeCounts[key] || 0) < maxPerAgent,
+          });
+        }
+      });
+    }
+  } catch (e) {
+    // Fallback if DB query fails in dev environment
+  }
+
+  if (dbAgents.length > 0) {
+    return dbAgents;
+  }
+
+  return catalog.map((agent) => {
     const activeSessions = activeCounts[agent.key] || 0;
     return {
       ...agent,

@@ -163,6 +163,22 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
 
   const { user } = useCurrentUser();
+  const [availableAgents, setAvailableAgents] = useState<Array<{ key: string; name: string; fullName?: string }>>([]);
+
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.agents)) {
+          setAvailableAgents(data.agents);
+        }
+      } catch (e) {
+        console.error("Failed to fetch dynamic agents for intake form:", e);
+      }
+    }
+    fetchAgents();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -965,6 +981,24 @@ export function IntakeForm({ onComplete }: { onComplete?: () => void }) {
                     className="bg-[#16181f] border-[#24252a] text-[#f4f3f0] placeholder-[#9f9f93] focus:border-[#d4a017] focus:ring-0 rounded-md transition-colors h-10 mt-2"
                   />
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="assignedAgent" className="text-xs font-semibold text-slate-355">Assigned AI Revenue Agent / Specialist</Label>
+                <select
+                  id="assignedAgent"
+                  value={data.assignedAgentId || ""}
+                  onChange={(e) => setData({ ...data, assignedAgentId: e.target.value })}
+                  className="w-full bg-[#16181f] border border-[#24252a] text-[#f4f3f0] focus:border-[#d4a017] rounded-md px-3 py-2.5 text-xs transition-colors"
+                >
+                  <option value="">Auto-Assign Fair Optimal Agent (Default)</option>
+                  {availableAgents.map((ag) => (
+                    <option key={ag.key} value={ag.key}>
+                      {ag.fullName || ag.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-500">List dynamically updates when agents are added or deleted by administrators.</p>
               </div>
 
               <div className="space-y-2">

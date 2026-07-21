@@ -147,6 +147,9 @@ function AdminPortalContent() {
       gtmReports: true,
       leadScoring: false,
       aiCalls: false,
+      wrenChatbot: true,
+      automatedGtmAnalysis: true,
+      playbookGeneration: true,
     },
   });
 
@@ -463,7 +466,14 @@ function AdminPortalContent() {
           industry: "",
           assignedAgentId: "",
           businessModel: "b2b",
-          serviceConfigs: { gtmReports: true, leadScoring: false, aiCalls: false },
+          serviceConfigs: {
+            gtmReports: true,
+            leadScoring: false,
+            aiCalls: false,
+            wrenChatbot: true,
+            automatedGtmAnalysis: true,
+            playbookGeneration: true,
+          },
         });
         setNotification({
           type: "success",
@@ -868,7 +878,6 @@ function AdminPortalContent() {
                 </span>
               )}
             </ExtrudedButton>
-            <LogoutButton />
           </div>
         </div>
 
@@ -1041,8 +1050,8 @@ function AdminPortalContent() {
                   </div>
                   <div className="space-y-2 pt-2">
                     <Label className="text-slate-350 font-bold block mb-1">Service Modules Configuration</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
+                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.gtmReports}
@@ -1052,9 +1061,9 @@ function AdminPortalContent() {
                           })}
                           className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                         />
-                        GTM Reports
+                        GTM Reports (Legacy)
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-slate-300">
+                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.leadScoring}
@@ -1066,7 +1075,7 @@ function AdminPortalContent() {
                         />
                         Lead Scoring
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-slate-300">
+                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
                         <input
                           type="checkbox"
                           checked={onboardFormData.serviceConfigs.aiCalls}
@@ -1077,6 +1086,43 @@ function AdminPortalContent() {
                           className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                         />
                         AI Voice calls
+                      </label>
+                      <div className="h-px bg-slate-800/60 col-span-full my-1" />
+                      <label className="flex items-center gap-2 text-sm text-fuchsia-300 font-bold cursor-pointer hover:text-fuchsia-200 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={onboardFormData.serviceConfigs.wrenChatbot}
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, wrenChatbot: e.target.checked }
+                          })}
+                          className="rounded border-slate-700 bg-slate-900 text-fuchsia-500 focus:ring-fuchsia-500"
+                        />
+                        Chatbot (Wren AI)
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-blue-300 font-bold cursor-pointer hover:text-blue-200 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={onboardFormData.serviceConfigs.automatedGtmAnalysis}
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, automatedGtmAnalysis: e.target.checked }
+                          })}
+                          className="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-blue-500"
+                        />
+                        Automated GTM Analysis
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-purple-300 font-bold cursor-pointer hover:text-purple-200 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={onboardFormData.serviceConfigs.playbookGeneration}
+                          onChange={(e) => setOnboardFormData({
+                            ...onboardFormData,
+                            serviceConfigs: { ...onboardFormData.serviceConfigs, playbookGeneration: e.target.checked }
+                          })}
+                          className="rounded border-slate-700 bg-slate-900 text-purple-500 focus:ring-purple-500"
+                        />
+                        Playbook Generation
                       </label>
                     </div>
                   </div>

@@ -141,8 +141,30 @@ export async function POST(req: NextRequest) {
 
       // Block unverified customer accounts
       if (role === "customer" && dbUser.isVerified === false) {
+        let code = dbUser.verificationCode;
+        if (!code) {
+          code = Math.floor(100000 + Math.random() * 900000).toString();
+          const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+          dbUser.verificationCode = code;
+          dbUser.verificationExpiresAt = expiresAt;
+          try {
+            const { db: fDb } = await import("@/lib/firebase-admin");
+            if (fDb) {
+              await fDb.collection("users").doc(dbUser.id).update({
+                verificationCode: code,
+                verificationExpiresAt: expiresAt,
+              });
+            }
+          } catch (e) {}
+        }
         return NextResponse.json(
-          { success: false, error: "Please verify your email to activate your account.", requiresVerification: true, email },
+          { 
+            success: false, 
+            error: "Please verify your email to activate your account.", 
+            requiresVerification: true, 
+            email,
+            verificationCode: code
+          },
           { status: 403 }
         );
       }
@@ -263,7 +285,13 @@ export async function POST(req: NextRequest) {
           // Block unverified customer accounts
           if ((customer as any).isVerified === false) {
             return NextResponse.json(
-              { success: false, error: "Please verify your email to activate your account.", requiresVerification: true, email },
+              { 
+                success: false, 
+                error: "Please verify your email to activate your account.", 
+                requiresVerification: true, 
+                email,
+                verificationCode: (customer as any).verificationCode
+              },
               { status: 403 }
             );
           }

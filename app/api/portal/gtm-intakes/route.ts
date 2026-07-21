@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!db) {
-      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 });
+      return NextResponse.json({ success: true, intakes: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } });
     }
 
     // Parse query params for pagination, search, filter
@@ -20,17 +20,21 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
-    const startDate = searchParams.get("startDate") || "";
-    const endDate = searchParams.get("endDate") || "";
+    const customerIdParam = searchParams.get("customerId") || "";
 
-    let query = db.collection("gtm_intakes").orderBy("createdAt", "desc");
+    let query: FirebaseFirestore.Query = db.collection("gtm_intakes").orderBy("createdAt", "desc");
 
-    // Get total count first
+    // Auth scoping:
+    // - customers: only their own intakes
+    // - agents/admins: all intakes, optionally filtered by customerId param
+    if (user.role === "customer") {
+      query = query.where("customerId", "==", user.id);
+    } else if (customerIdParam) {
+      query = query.where("customerId", "==", customerIdParam);
+    }
+
     const totalSnapshot = await query.get();
-    let total = totalSnapshot.size;
 
-    // Apply search/filters (client-side for now since Firestore doesn't support complex queries easily without indexes)
     let intakes: any[] = [];
     totalSnapshot.forEach((doc: any) => {
       const data = doc.data();
@@ -38,7 +42,7 @@ export async function GET(request: NextRequest) {
 
       if (search) {
         const searchLower = search.toLowerCase();
-        matches = 
+        matches =
           data.companyName?.toLowerCase().includes(searchLower) ||
           data.productName?.toLowerCase().includes(searchLower) ||
           data.productOwnerName?.toLowerCase().includes(searchLower) ||
@@ -51,16 +55,36 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    total = intakes.length;
+    const total = intakes.length;
 
     // Apply pagination
     const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedIntakes = intakes.slice(startIndex, endIndex);
+    const paginatedIntakes = intakes.slice(startIndex, startIndex + limit);
+
+    // Enrich with linked playbook status
+    const enriched = await Promise.all(
+      paginatedIntakes.map(async (intake) => {
+        try {
+          const playbookDoc = await db!.collection("gtm_playbooks").doc(intake.id).get();
+          return {
+            ...intake,
+            playbookStatus: playbookDoc.exists
+              ? {
+                  status: (playbookDoc.data() as any).status,
+                  generatedAt: (playbookDoc.data() as any).generatedAt,
+                  confidence: (playbookDoc.data() as any).confidence,
+                }
+              : null,
+          };
+        } catch {
+          return { ...intake, playbookStatus: null };
+        }
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      intakes: paginatedIntakes,
+      intakes: enriched,
       pagination: {
         page,
         limit,

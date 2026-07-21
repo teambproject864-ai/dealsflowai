@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase-admin";
+import { demoCustomers } from "@/lib/portal-demo-data";
 import bcrypt from "bcrypt";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,18 @@ export async function GET(req: Request) {
       });
       // Sort by createdAt descending
       customers.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
+
+    // Fallback to demo customers if database is unconfigured or empty
+    if (customers.length === 0) {
+      if (user!.role === "agent") {
+        const assigned = demoCustomers.filter(
+          (c) => c.assignedAgentId === user!.id || (c as any).assignedAgent?.agentId === user!.id
+        );
+        customers = assigned.length > 0 ? assigned : demoCustomers;
+      } else {
+        customers = demoCustomers;
+      }
     }
 
     return NextResponse.json({

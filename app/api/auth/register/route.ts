@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       requiresVerification: true,
+      verificationCode,
       message: "Registration successful. A verification code has been sent to your registered address."
     });
   } catch (error) {

@@ -9,6 +9,7 @@ import { Loader3D } from "@/components/immersive/Loader3D";
 import { Magnetic } from "@/components/immersive/Magnetic";
 import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 export default function PortalLayout({
   children,
@@ -97,27 +98,7 @@ export default function PortalLayout({
                 <span className="text-slate-500"> · {currentUser.role}</span>
               </span>
             )}
-            <ExtrudedButton
-              variant="outline"
-              size="sm"
-              disabled={isLoggingOut}
-              onClick={async () => {
-                setIsLoggingOut(true);
-                try {
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  await fetch("/api/auth/logout", { method: "POST" });
-                  window.location.replace("/");
-                } catch (e) {
-                  console.error("Logout failed:", e);
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  window.location.replace("/");
-                }
-              }}
-            >
-              {isLoggingOut ? "Logging out..." : "Logout"}
-            </ExtrudedButton>
+            <LogoutButton />
           </div>
         </div>
       </GlassPanel>

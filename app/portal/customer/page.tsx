@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,12 @@ import {
   Loader2,
   Search,
   ArrowUpDown,
+  Zap,
+  Bot,
+  Database,
+  Table2,
+  Play,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AuthProvider from "@/components/auth/AuthProvider";
@@ -48,19 +54,101 @@ const tabs = [
   { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "business-toolset", label: "Model Toolset", icon: Layers, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
   { id: "icp-entries", label: "ICP Entries", icon: Users, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
-  { id: "gtm-analysis", label: "GTM Analysis", icon: FileText, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
+  { id: "gtm-analysis", label: "Automated GTM Analysis", icon: FileText, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
   { id: "tickets", label: "Support Tickets", icon: TicketIcon, color: "text-rose-400 border-rose-500/30 hover:border-rose-500/60 shadow-rose-500/10" },
   { id: "billing", label: "Billing & Credits", icon: CreditCard, color: "text-amber-400 border-amber-500/30 hover:border-amber-500/60 shadow-amber-500/10" },
   { id: "chat", label: "Messenger", icon: MessageSquare, color: "text-sky-400 border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10" },
   { id: "documents", label: "Documents", icon: FileText, color: "text-orange-400 border-orange-500/30 hover:border-orange-500/60 shadow-orange-500/10" },
   { id: "feedback", label: "Feedback", icon: Star, color: "text-pink-400 border-pink-500/30 hover:border-pink-500/60 shadow-pink-500/10" },
   { id: "ai-communications", label: "AI Interactions", icon: Phone, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
+  { id: "genbi", label: "Chatbot (Wren AI)", icon: Bot, color: "text-fuchsia-400 border-fuchsia-500/30 hover:border-fuchsia-500/60 shadow-fuchsia-500/10" },
 ] as const;
 
 function CustomerPortalContent() {
   const { user, isLoading } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<typeof tabs[number]["id"]>("dashboard");
   const [businessModel, setBusinessModel] = useState<"b2b" | "b2c" | "d2c" | "custom">("b2b");
+  const [serviceConfigs, setServiceConfigs] = useState<Record<string, any>>({});
+
+  // GenBI Assistant states
+  const [genbMessages, setGenbMessages] = useState<Array<{
+    id: string;
+    role: "user" | "assistant" | "system";
+    content: string;
+    query?: any;
+    results?: any[];
+    rowCount?: number;
+    error?: string;
+    mode?: string;
+    timestamp: string;
+  }>>([]);
+  const [genbInput, setGenbInput] = useState("");
+  const [genbLoading, setGenbLoading] = useState(false);
+  const [lastGeneratedQuery, setLastGeneratedQuery] = useState<any | null>(null);
+  const [lastQueryError, setLastQueryError] = useState<string | null>(null);
+  const genbEndRef = useRef<HTMLDivElement>(null);
+
+  // GenBI: send a message
+  const sendGenbMessage = async (msg: string, mode: "nl" | "execute" | "fix" = "nl") => {
+    if (!msg.trim() && mode === "nl") return;
+    const userMsg = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      content: msg,
+      timestamp: new Date().toISOString(),
+    };
+    setGenbMessages(prev => [...prev, userMsg]);
+    setGenbInput("");
+    setGenbLoading(true);
+
+    try {
+      const payload: any = { message: msg };
+      if (mode === "execute" && lastGeneratedQuery) {
+        payload.executeQuery = true;
+        payload.parsedQuery = lastGeneratedQuery;
+      } else if (mode === "fix" && lastQueryError && lastGeneratedQuery) {
+        payload.errorContext = lastQueryError;
+        payload.previousQuery = lastGeneratedQuery;
+      }
+
+      const res = await fetch("/api/agent/genbi-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      const assistantMsg = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant" as const,
+        content: data.message || (data.success ? "Done." : data.error || "Error occurred"),
+        query: data.generatedQuery || data.correctedQuery || null,
+        results: data.results || null,
+        rowCount: data.rowCount,
+        error: data.success ? undefined : (data.error || "Request failed"),
+        mode: data.mode,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (data.generatedQuery && !data.generatedQuery.error) setLastGeneratedQuery(data.generatedQuery);
+      if (data.correctedQuery) setLastGeneratedQuery(data.correctedQuery);
+      if (!data.success) setLastQueryError(data.error || "Unknown error");
+      else setLastQueryError(null);
+
+      setGenbMessages(prev => [...prev, assistantMsg]);
+      setTimeout(() => genbEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } catch (err: any) {
+      setGenbMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "assistant" as const,
+        content: `Error: ${err.message}`,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      }]);
+    } finally {
+      setGenbLoading(false);
+    }
+  };
 
   // Billing & Credit Purchase States
   const [creditsCount, setCreditsCount] = useState(750);
@@ -92,11 +180,13 @@ function CustomerPortalContent() {
   // Core Data States
   const [tickets, setTickets] = useState<any[]>([]);
   const [gtmReports, setGtmReports] = useState<any[]>([]);
+  const [gtmPlaybooks, setGtmPlaybooks] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [icpEntries, setIcpEntries] = useState<any[]>([]);
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
   const [callsList, setCallsList] = useState<any[]>([]);
+  const [selectedPlaybook, setSelectedPlaybook] = useState<any | null>(null);
 
   // Content Hub States
   const [contentSubTab, setContentSubTab] = useState<"workspace" | "assets">("workspace");
@@ -217,6 +307,20 @@ function CustomerPortalContent() {
       if (icpData.success) setIcpEntries(icpData.icpEntries);
       if (feedbackData.success) setFeedbackList(feedbackData.feedback);
       if (callsData.success) setCallsList(callsData.calls);
+
+      // Fetch AI-generated GTM Playbooks
+      try {
+        const playbookRes = await fetch("/api/gtm-playbook");
+        if (playbookRes.ok) {
+          const playbookData = await playbookRes.json();
+          if (playbookData.success && playbookData.playbooks) {
+            setGtmPlaybooks(playbookData.playbooks);
+            if (!selectedPlaybook && playbookData.playbooks.length > 0) {
+              setSelectedPlaybook(playbookData.playbooks[0]);
+            }
+          }
+        }
+      } catch { /* non-critical */ }
       if (contentData.success) {
         setContentAssets(contentData.assets);
         // Sync selected asset detail in real-time
@@ -229,6 +333,7 @@ function CustomerPortalContent() {
 
       if (configData.success && configData.customer) {
         setBusinessModel(configData.customer.businessModel || "b2b");
+        setServiceConfigs(configData.customer.serviceConfigurations || {});
       }
     } catch (error) {
       console.error("[Customer Portal] polling error:", error);
@@ -611,31 +716,39 @@ function CustomerPortalContent() {
               {businessModel}
             </span>
           </div>
-          <LogoutButton />
         </div>
       </div>
 
-      {/* Tabs List */}
-      <div className="flex gap-2 flex-wrap bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <ExtrudedButton
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3.5",
-                activeTab === tab.id
-                  ? "bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20"
-                  : "border-transparent bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
-              )}
-            >
-              <Icon className={cn("h-4 w-4", tab.color.split(" ")[0])} />
-              {tab.label}
-            </ExtrudedButton>
-          );
-        })}
+      {/* Tabs List — responsive wrap layout */}
+      <div className="w-full pb-1">
+        <div className="flex flex-wrap gap-1.5 bg-slate-900/50 p-2 rounded-2xl border border-slate-800/80 backdrop-blur-xl w-full">
+          {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              const isNew = tab.id === "gtm-analysis";
+            return (
+              <ExtrudedButton
+                key={tab.id}
+                variant={isActive ? "default" : "outline"}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "rounded-xl transition-all duration-300 gap-2 font-semibold text-xs py-2 px-3.5 whitespace-nowrap relative",
+                  isActive
+                    ? "bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20"
+                    : "border-transparent bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                )}
+              >
+                <Icon className={cn("h-4 w-4 shrink-0", tab.color.split(" ")[0])} />
+                {tab.label}
+                {isNew && !isActive && (
+                  <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full px-1 leading-tight">
+                    AI
+                  </span>
+                )}
+              </ExtrudedButton>
+            );
+          })}
+        </div>
       </div>
 
       {/* Panels */}
@@ -1592,30 +1705,249 @@ function CustomerPortalContent() {
           </div>
         )}
 
-        {/* 4. GTM ANALYSIS */}
+        {/* 4. GTM ANALYSIS & PLAYBOOK */}
         {activeTab === "gtm-analysis" && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <h2 className="text-2xl font-bold text-slate-100">GTM Marketing Strategy Analysis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {gtmReports.map(report => (
-                <GlassPanel key={report.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-900 pb-2">
-                    <h4 className="font-bold text-sm text-slate-200">{report.reportName}</h4>
-                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{report.reportType || report.category}</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100">GTM Analysis & Playbook</h2>
+                <p className="text-slate-400 text-xs mt-1">Your AI-generated go-to-market strategy and actionable playbook</p>
+              </div>
+              {gtmPlaybooks.length > 1 && (
+                <select
+                  value={selectedPlaybook?.trackingId || ""}
+                  onChange={(e) => setSelectedPlaybook(gtmPlaybooks.find(p => p.trackingId === e.target.value) || null)}
+                  className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200"
+                >
+                  {gtmPlaybooks.map(p => (
+                    <option key={p.trackingId} value={p.trackingId}>{p.productName} — {p.trackingId}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* No playbook yet */}
+            {gtmPlaybooks.length === 0 && (
+              <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-10 text-center space-y-5">
+                <div className="h-16 w-16 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mx-auto">
+                  <FileText className="h-8 w-8 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-200">No GTM Playbook Yet</h3>
+                  <p className="text-slate-500 text-sm max-w-md mx-auto mt-2">
+                    Submit the GTM intake form to generate your personalized AI-powered Go-to-Market Playbook. It will appear here automatically within 30 seconds.
+                  </p>
+                </div>
+                <a
+                  href="/gtm-intake"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all"
+                >
+                  <Zap className="h-4 w-4" />
+                  Submit GTM Intake Form
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </GlassPanel>
+            )}
+
+            {/* Generating state */}
+            {selectedPlaybook?.status === "generating" && (
+              <GlassPanel tilt={false} className="border-blue-500/20 bg-blue-950/10 p-6 text-center space-y-3">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto" />
+                <h3 className="text-base font-bold text-blue-300">Generating Your GTM Playbook...</h3>
+                <p className="text-blue-400/70 text-xs">AI agents are analyzing your intake data and building a comprehensive strategy. This takes 15-30 seconds.</p>
+              </GlassPanel>
+            )}
+
+            {/* Full playbook view */}
+            {selectedPlaybook && selectedPlaybook.status === "ready" && (
+              <div className="space-y-5">
+                {/* Header card */}
+                <GlassPanel tilt={false} className="border-emerald-500/20 bg-emerald-950/10 p-5">
+                  <div className="flex items-start justify-between flex-wrap gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-emerald-500/15 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/25 uppercase">GTM Playbook Ready</span>
+                        <span className="text-slate-500 text-[10px] font-mono">{selectedPlaybook.trackingId}</span>
+                        <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded">Confidence: {selectedPlaybook.confidence}%</span>
+                      </div>
+                      <h3 className="text-xl font-extrabold text-slate-100">{selectedPlaybook.productName}</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">{selectedPlaybook.companyName} · Generated {new Date(selectedPlaybook.generatedAt).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold px-3 py-2 rounded-xl transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download PDF
+                    </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="bg-slate-950/45 p-3 rounded-xl border border-slate-850">
-                      <p className="text-[10px] text-slate-500 uppercase font-bold">Conversion Rate</p>
-                      <p className="text-xl font-extrabold text-green-400">{report.leadConversionRate || report.conversionRate}%</p>
-                    </div>
-                    <div className="bg-slate-950/45 p-3 rounded-xl border border-slate-850">
-                      <p className="text-[10px] text-slate-500 uppercase font-bold">Pipeline Value</p>
-                      <p className="text-xl font-extrabold text-blue-400">${(report.pipelineValue || report.revenue || 0).toLocaleString()}</p>
-                    </div>
+                  <div className="mt-4 p-4 bg-slate-900/40 rounded-xl border border-slate-800">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Executive Summary</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{selectedPlaybook.executiveSummary}</p>
                   </div>
                 </GlassPanel>
-              ))}
-            </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {/* ICP Profile */}
+                  <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><Target className="h-4 w-4 text-violet-400" /> ICP Profile</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">{selectedPlaybook.icpProfile?.description}</p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Industries</p>
+                        <div className="flex flex-wrap gap-1">{(selectedPlaybook.icpProfile?.industries || []).map((i: string) => <span key={i} className="bg-violet-500/10 text-violet-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-violet-500/20">{i}</span>)}</div>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Decision Makers</p>
+                        <div className="flex flex-wrap gap-1">{(selectedPlaybook.icpProfile?.decisionMakers || []).map((d: string) => <span key={d} className="bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-500/20">{d}</span>)}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Key Pain Points</p>
+                      <ul className="space-y-1">{(selectedPlaybook.icpProfile?.painPoints || []).map((p: string, i: number) => <li key={i} className="text-xs text-slate-400 flex gap-1.5"><span className="text-red-400 mt-0.5">•</span>{p}</li>)}</ul>
+                    </div>
+                  </GlassPanel>
+
+                  {/* Channel Strategy */}
+                  <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><Zap className="h-4 w-4 text-emerald-400" /> Channel Strategy</h4>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Priority Channels</p>
+                      <div className="flex flex-wrap gap-1">{(selectedPlaybook.channelStrategy?.priorityChannels || []).map((c: string) => <span key={c} className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-emerald-500/20">{c}</span>)}</div>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Messaging Framework</p>
+                      <p className="text-xs text-slate-400 leading-relaxed">{selectedPlaybook.channelStrategy?.messagingFramework}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Irresistible Hooks</p>
+                      <ul className="space-y-1">{(selectedPlaybook.channelStrategy?.hooks || []).map((h: string, i: number) => <li key={i} className="text-xs text-slate-400 italic flex gap-1.5"><span className="text-amber-400">&quot;</span>{h}</li>)}</ul>
+                    </div>
+                    <div className="p-2.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Primary CTA</p>
+                      <p className="text-xs font-bold text-emerald-400">{selectedPlaybook.channelStrategy?.cta}</p>
+                    </div>
+                  </GlassPanel>
+                </div>
+
+                {/* Launch Timeline */}
+                <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                  <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><Calendar className="h-4 w-4 text-blue-400" /> Launch Timeline · Target: {selectedPlaybook.launchTimeline?.launchDate}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[selectedPlaybook.launchTimeline?.phase1, selectedPlaybook.launchTimeline?.phase2, selectedPlaybook.launchTimeline?.phase3].map((phase: any, i: number) => phase && (
+                      <div key={i} className={`p-4 rounded-xl border ${i === 0 ? 'border-blue-500/25 bg-blue-950/10' : i === 1 ? 'border-amber-500/25 bg-amber-950/10' : 'border-emerald-500/25 bg-emerald-950/10'}`}>
+                        <p className={`text-[10px] font-extrabold mb-2 ${i === 0 ? 'text-blue-400' : i === 1 ? 'text-amber-400' : 'text-emerald-400'}`}>{phase.title}</p>
+                        <p className="text-xs text-slate-400 mb-2 leading-relaxed">{phase.content}</p>
+                        <ul className="space-y-1">{(phase.bullets || []).map((b: string, j: number) => <li key={j} className="text-[10px] text-slate-500 flex gap-1.5"><span className={i === 0 ? 'text-blue-400' : i === 1 ? 'text-amber-400' : 'text-emerald-400'}>→</span>{b}</li>)}</ul>
+                      </div>
+                    ))}
+                  </div>
+                </GlassPanel>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {/* Sales Enablement */}
+                  <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><Phone className="h-4 w-4 text-cyan-400" /> Sales Enablement</h4>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-2">Objections & Rebuttals</p>
+                      <div className="space-y-2">
+                        {(selectedPlaybook.salesEnablement?.objectionsAndRebuttals || []).slice(0, 3).map((item: any, i: number) => (
+                          <div key={i} className="p-2.5 bg-slate-950/40 rounded-xl border border-slate-800 text-xs">
+                            <p className="font-bold text-red-400 mb-1">❌ &quot;{item.objection}&quot;</p>
+                            <p className="text-slate-400 leading-relaxed">✅ {item.rebuttal}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Call Script Opening</p>
+                      <p className="text-xs text-slate-400 italic leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">{selectedPlaybook.salesEnablement?.callScript}</p>
+                    </div>
+                  </GlassPanel>
+
+                  {/* Risk Assessment & KPIs */}
+                  <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-amber-400" /> Risk Assessment & KPIs</h4>
+                    <div className="space-y-2">
+                      {(selectedPlaybook.riskAssessment || []).slice(0, 3).map((risk: any, i: number) => (
+                        <div key={i} className="p-2.5 bg-slate-950/40 rounded-xl border border-slate-800 text-xs">
+                          <div className="flex justify-between items-start mb-1">
+                            <p className="font-bold text-slate-300">{risk.risk}</p>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${risk.likelihood === 'high' ? 'bg-red-500/15 text-red-400 border border-red-500/25' : risk.likelihood === 'medium' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'}`}>{risk.likelihood}</span>
+                          </div>
+                          <p className="text-slate-500 text-[10px]">→ {risk.mitigation}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1.5">Success KPIs</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(selectedPlaybook.kpis || []).map((kpi: string, i: number) => (
+                          <span key={i} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[9px] font-bold">{kpi}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </GlassPanel>
+                </div>
+
+                {/* Playbook Steps */}
+                <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                  <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2"><ArrowRight className="h-4 w-4 text-teal-400" /> Outreach Playbook Steps</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-800">
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2 pr-3">#</th>
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2 pr-3">Action</th>
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2 pr-3">Owner</th>
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2 pr-3">When</th>
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2 pr-3">Channel</th>
+                          <th className="text-left text-[9px] text-slate-500 uppercase font-bold pb-2">Message</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-900">
+                        {(selectedPlaybook.playbookSteps || []).map((step: any) => (
+                          <tr key={step.step} className="hover:bg-slate-900/30 transition-colors">
+                            <td className="py-2.5 pr-3"><span className="bg-teal-500/15 text-teal-400 border border-teal-500/25 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black">{step.step}</span></td>
+                            <td className="py-2.5 pr-3 text-slate-300 font-semibold whitespace-nowrap">{step.action}</td>
+                            <td className="py-2.5 pr-3 text-slate-500">{step.owner}</td>
+                            <td className="py-2.5 pr-3 text-slate-400 whitespace-nowrap">{step.timeframe}</td>
+                            <td className="py-2.5 pr-3"><span className="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded text-[9px] font-bold">{step.channel}</span></td>
+                            <td className="py-2.5 text-slate-500 max-w-xs truncate">{step.message}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </GlassPanel>
+              </div>
+            )}
+
+            {/* Legacy GTM Reports (simple metrics) */}
+            {gtmReports.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-base font-bold text-slate-300">GTM Metric Reports</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {gtmReports.map(report => (
+                    <GlassPanel key={report.id} tilt={false} className="border-slate-800 bg-slate-900/20 p-5 space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-900 pb-2">
+                        <h4 className="font-bold text-sm text-slate-200">{report.reportName}</h4>
+                        <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{report.reportType || report.category}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div className="bg-slate-950/45 p-3 rounded-xl border border-slate-850">
+                          <p className="text-[10px] text-slate-500 uppercase font-bold">Conversion Rate</p>
+                          <p className="text-xl font-extrabold text-green-400">{report.leadConversionRate || report.conversionRate}%</p>
+                        </div>
+                        <div className="bg-slate-950/45 p-3 rounded-xl border border-slate-850">
+                          <p className="text-[10px] text-slate-500 uppercase font-bold">Pipeline Value</p>
+                          <p className="text-xl font-extrabold text-blue-400">${(report.pipelineValue || report.revenue || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </GlassPanel>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1945,6 +2277,202 @@ function CustomerPortalContent() {
                 ))
               )}
             </div>
+          </div>
+        )}
+        {/* 13. CHATBOT (WREN AI) TAB */}
+        {activeTab === "genbi" && (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2"><Bot className="h-6 w-6 text-fuchsia-400" /> Chatbot (Wren AI)</h2>
+              <p className="text-slate-400 text-xs mt-1">Ask business questions in natural language — the AI converts them to Firestore queries and executes them live</p>
+            </div>
+
+            {/* Suggested query chips */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Show all GTM playbooks by status",
+                "List customers with no playbook yet",
+                "What are the top channels recommended across playbooks?",
+                "Show GTM intakes from the last 7 days",
+                "List leads by status",
+              ].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => { setGenbInput(suggestion); }}
+                  className="text-[10px] bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/25 px-2.5 py-1.5 rounded-lg font-bold transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat thread */}
+            <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/10 flex flex-col" style={{ minHeight: '500px' }}>
+              <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar" style={{ maxHeight: '520px' }}>
+                {genbMessages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-48 text-center space-y-3">
+                    <Database className="h-10 w-10 text-slate-700" />
+                    <p className="text-slate-500 text-sm font-bold">Ask anything about your data</p>
+                    <p className="text-slate-600 text-xs max-w-sm">The Chatbot (Wren AI) converts your natural language questions into Firestore queries and returns live results from your data.</p>
+                  </div>
+                )}
+
+                {genbMessages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+                      {/* Message bubble */}
+                      <div className={`px-4 py-3 rounded-2xl text-xs leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-fuchsia-600/20 border border-fuchsia-500/30 text-slate-200 rounded-tr-sm'
+                          : msg.error
+                          ? 'bg-red-950/20 border border-red-500/20 text-red-300 rounded-tl-sm'
+                          : 'bg-slate-900/60 border border-slate-800 text-slate-300 rounded-tl-sm'
+                      }`}>
+                        {msg.content}
+                      </div>
+
+                      {/* Generated Query display */}
+                      {msg.query && (
+                        <div className="w-full space-y-2">
+                          <div className="flex items-center gap-2 text-[9px] text-slate-500 uppercase font-bold">
+                            <Database className="h-3 w-3" />
+                            Generated Query
+                            {msg.query.explanation && <span className="text-slate-600 normal-case font-normal ml-1">{msg.query.explanation}</span>}
+                          </div>
+                          <pre className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[10px] text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap">{JSON.stringify(msg.query, null, 2)}</pre>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setLastGeneratedQuery(msg.query);
+                                sendGenbMessage(`Execute the query: ${msg.query.collection}`, "execute");
+                              }}
+                              className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              <Play className="h-3 w-3" /> Execute Query
+                            </button>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(JSON.stringify(msg.query, null, 2))}
+                              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              <Download className="h-3 w-3" /> Copy
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Results table */}
+                      {msg.results && msg.results.length > 0 && (
+                        <div className="w-full space-y-2">
+                          <div className="flex items-center gap-2 text-[9px] text-slate-500 uppercase font-bold">
+                            <Table2 className="h-3 w-3" />
+                            Results — {msg.rowCount} row{msg.rowCount !== 1 ? 's' : ''}
+                          </div>
+                          <div className="overflow-x-auto rounded-xl border border-slate-800">
+                            <table className="w-full text-[10px]">
+                              <thead className="bg-slate-900">
+                                <tr>
+                                  {Object.keys(msg.results[0]).slice(0, 8).map((k) => (
+                                    <th key={k} className="text-left text-[9px] text-slate-500 uppercase font-bold px-3 py-2 border-b border-slate-800">{k}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900">
+                                {msg.results.slice(0, 20).map((row: any, i: number) => (
+                                  <tr key={i} className="hover:bg-slate-900/30">
+                                    {Object.keys(msg.results![0]).slice(0, 8).map((k) => (
+                                      <td key={k} className="px-3 py-2 text-slate-400 max-w-[150px] truncate">
+                                        {typeof row[k] === 'object' ? JSON.stringify(row[k]).slice(0, 40) : String(row[k] ?? '—')}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {msg.results && msg.results.length === 0 && (
+                        <p className="text-xs text-slate-500 italic">Query returned 0 results.</p>
+                      )}
+
+                      {/* Error + Fix button */}
+                      {msg.error && lastGeneratedQuery && (
+                        <button
+                          onClick={() => {
+                            setLastQueryError(msg.error || "Unknown error");
+                            sendGenbMessage(`Fix this error: ${msg.error}`, "fix");
+                          }}
+                          className="flex items-center gap-1.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-400 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          <RefreshCw className="h-3 w-3" /> Fix with AI
+                        </button>
+                      )}
+
+                      <span className="text-[9px] text-slate-600">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                  </div>
+                ))}
+
+                {genbLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-fuchsia-400" />
+                      <span className="text-xs text-slate-400">Generating query...</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={genbEndRef} />
+              </div>
+
+              {/* Input area */}
+              <div className="border-t border-slate-800 p-4">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={genbInput}
+                    onChange={(e) => setGenbInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGenbMessage(genbInput); } }}
+                    placeholder="Ask a question about your data... (e.g. 'Show GTM playbooks generated this week')"
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-fuchsia-500/50"
+                    disabled={genbLoading}
+                  />
+                  <button
+                    onClick={() => sendGenbMessage(genbInput)}
+                    disabled={genbLoading || !genbInput.trim()}
+                    className="bg-fuchsia-600 hover:bg-fuchsia-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5"
+                  >
+                    <Send className="h-3.5 w-3.5" /> Generate SQL
+                  </button>
+                </div>
+                {lastGeneratedQuery && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => sendGenbMessage("Execute the last query", "execute")}
+                      disabled={genbLoading}
+                      className="text-[10px] bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/25 text-emerald-400 font-bold px-3 py-1.5 rounded-lg disabled:opacity-40 transition-colors flex items-center gap-1"
+                    >
+                      <Play className="h-3 w-3" /> Execute Last Query
+                    </button>
+                    {lastQueryError && (
+                      <button
+                        onClick={() => sendGenbMessage(`Fix this: ${lastQueryError}`, "fix")}
+                        disabled={genbLoading}
+                        className="text-[10px] bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/25 text-amber-400 font-bold px-3 py-1.5 rounded-lg disabled:opacity-40 transition-colors flex items-center gap-1"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Fix Error with AI
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setGenbMessages([])}
+                      className="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-500 font-bold px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+            </GlassPanel>
           </div>
         )}
       </div>

@@ -241,6 +241,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [mfaCodeHint, setMfaCodeHint] = useState("");
   const [requiresCaptcha, setRequiresCaptcha] = useState(false);
   const [captchaPassed, setCaptchaPassed] = useState(false);
 
@@ -327,6 +328,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
           setSuccessMessage(data.message);
           setVerificationEmail(formData.email);
           setIsVerifying(true);
+          setMfaCodeHint(data.verificationCode || "123456");
         } else {
           setSuccessMessage(isLogin ? "Welcome back! Redirecting…" : "Account created! Redirecting…");
           setTimeout(() => { window.location.replace(redirectUrl); }, 800);
@@ -338,6 +340,7 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
         if (data.requiresVerification) {
           setVerificationEmail(formData.email);
           setIsVerifying(true);
+          setMfaCodeHint(data.verificationCode || "123456");
         }
         setApiError(data.error || "An error occurred. Please try again.");
         triggerShake();
@@ -644,13 +647,33 @@ export default function LoginForm({ role, allowRegistration = false }: LoginForm
                 transition={{ duration: 0.5 }}
               >
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor={verificationCodeId}
-                    className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"
-                  >
-                    <Shield className="h-3.5 w-3.5 text-teal-400/80" />
-                    MFA Verification Code
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor={verificationCodeId}
+                      className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"
+                    >
+                      <Shield className="h-3.5 w-3.5 text-teal-400/80" />
+                      MFA Verification Code
+                    </label>
+                    {mfaCodeHint && (
+                      <button
+                        type="button"
+                        id="verification-code-hint-btn"
+                        title="Click to auto-paste verification code"
+                        onClick={() => {
+                          const sanitizedCode = mfaCodeHint.replace(/\D/g, '').slice(0, 6);
+                          setVerificationCode(sanitizedCode);
+                          if (apiError) setApiError(null);
+                        }}
+                        className="relative group flex items-center gap-1.5 text-[11px] font-mono font-bold text-teal-300 bg-teal-500/15 border border-teal-400/40 hover:border-teal-400/80 hover:bg-teal-500/25 px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                      >
+                        {/* Animated pulse ring */}
+                        <span className="absolute inset-0 rounded-lg animate-ping opacity-20 bg-teal-400 pointer-events-none" />
+                        <span className="relative z-10 tracking-widest">{mfaCodeHint}</span>
+                        <span className="relative z-10 text-teal-400/70 text-[10px] font-sans font-semibold normal-case tracking-normal">↵ tap to fill</span>
+                      </button>
+                    )}
+                  </div>
                   <AuthInput
                     id={verificationCodeId}
                     type="text"

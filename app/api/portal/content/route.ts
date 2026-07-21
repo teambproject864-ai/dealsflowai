@@ -73,27 +73,25 @@ export async function GET(request: NextRequest) {
     const status = url.searchParams.get("status");
     const search = url.searchParams.get("search");
 
-    if (!db) {
-      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 });
-    }
-
-    let queryRef: any = db.collection("content_assets");
-
-    // RBAC: Customers can ONLY see their own content assets
-    if (user.role === "customer") {
-      queryRef = queryRef.where("customerId", "==", user.id);
-    } else if (user.role === "agent" || user.role === "admin") {
-      // Agents and Admins can view any customer or filter by customerId
-      if (customerId) {
-        queryRef = queryRef.where("customerId", "==", customerId);
-      }
-    }
-
-    const snap = await queryRef.get();
     let assets: any[] = [];
-    snap.forEach((doc: any) => {
-      assets.push({ id: doc.id, ...doc.data() });
-    });
+    if (db) {
+      let queryRef: any = db.collection("content_assets");
+
+      // RBAC: Customers can ONLY see their own content assets
+      if (user.role === "customer") {
+        queryRef = queryRef.where("customerId", "==", user.id);
+      } else if (user.role === "agent" || user.role === "admin") {
+        // Agents and Admins can view any customer or filter by customerId
+        if (customerId) {
+          queryRef = queryRef.where("customerId", "==", customerId);
+        }
+      }
+
+      const snap = await queryRef.get();
+      snap.forEach((doc: any) => {
+        assets.push({ id: doc.id, ...doc.data() });
+      });
+    }
 
     // In-memory filtering for more complex/optional queries to avoid needing composite indexes in dev
     if (tactic && tactic !== "all") {

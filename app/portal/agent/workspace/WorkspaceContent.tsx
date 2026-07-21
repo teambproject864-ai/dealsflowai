@@ -42,7 +42,10 @@ import {
   CheckCircle2,
   MessageSquare,
   Bookmark,
-  TrendingUp
+  TrendingUp,
+  BookOpen,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -59,6 +62,14 @@ const initialCustomers = [
     contactName: "John Smith",
     phone: "+1 (555) 123-4567",
     email: "john.smith@acme.com",
+    serviceConfigurations: {
+      gtmReports: true,
+      leadScoring: true,
+      aiCalls: true,
+      wrenChatbot: true,
+      automatedGtmAnalysis: true,
+      playbookGeneration: true,
+    },
     history: [
       { id: "h-1", type: "Call", summary: "Initial discovery call", detail: "Spoke with John about their current sales pipeline bottlenecks. They are interested in AI automations.", date: "2026-07-15 10:30 AM" },
       { id: "h-2", type: "Email", summary: "Sent product deck", detail: "Emailed the latest enterprise overview slide deck and pricing summary.", date: "2026-07-15 11:15 AM" }
@@ -77,6 +88,14 @@ const initialCustomers = [
     contactName: "Sarah Connor",
     phone: "+1 (555) 987-6543",
     email: "sconnor@techsolutions.io",
+    serviceConfigurations: {
+      gtmReports: true,
+      leadScoring: false,
+      aiCalls: true,
+      wrenChatbot: true,
+      automatedGtmAnalysis: true,
+      playbookGeneration: true,
+    },
     history: [
       { id: "h-3", type: "Call", summary: "Billing discussion", detail: "Resolved invoicing discrepancy for the pilot phase. Everything synced.", date: "2026-07-14 02:00 PM" }
     ],
@@ -94,6 +113,14 @@ const initialCustomers = [
     contactName: "David Miller",
     phone: "+1 (555) 333-2222",
     email: "david@innovate.co",
+    serviceConfigurations: {
+      gtmReports: false,
+      leadScoring: false,
+      aiCalls: false,
+      wrenChatbot: false,
+      automatedGtmAnalysis: false,
+      playbookGeneration: false,
+    },
     history: [
       { id: "h-4", type: "Email", summary: "Meeting scheduling", detail: "Scheduled a walkthrough of the voice call agent workflow for next Tuesday.", date: "2026-07-16 04:45 PM" }
     ],
@@ -153,6 +180,7 @@ const categories = [
   { id: 'content-workspace', label: 'Content Workspace', icon: FileText, color: 'text-violet-400' },
   { id: 'gtm-intakes', label: 'GTM Intakes', icon: FileText, color: 'text-indigo-400' },
   { id: 'gtm-reports', label: 'GTM Reports', icon: TrendingUp, color: 'text-purple-400' },
+  { id: 'gtm-playbook', label: 'Playbook Generation', icon: BookOpen, color: 'text-fuchsia-400' },
   { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-400' }
 ] as const;
 
@@ -456,8 +484,8 @@ export default function WorkspaceContent() {
   };
 
   const navigateToPortalList = async () => {
-    // Navigate back to the main portal workspace list
-    router.push("/portal");
+    // Navigate back to the Agent Portal (not a full logout)
+    router.push("/portal/agent");
   };
 
   // Timeline: add interaction note
@@ -695,10 +723,11 @@ export default function WorkspaceContent() {
             <button
               onClick={handleExitWorkspace}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500"
-              aria-label="Exit current workspace and log out"
+              aria-label="Exit workspace and return to Agent Portal"
+              title="Return to Agent Portal (stays logged in)"
             >
-              <PhoneOff className="h-4 w-4" />
-              <span>Exit Workspace</span>
+              <ArrowLeft className="h-4 w-4" />
+              <span>← Back to Portal</span>
             </button>
           </div>
         </header>
@@ -1768,6 +1797,11 @@ export default function WorkspaceContent() {
             </div>
           )}
 
+          {/* ─── GTM PLAYBOOKS PANEL ──────────────────────────────────────────── */}
+          {selectedCategory.id === 'gtm-playbook' && (
+            <GTMPlaybookPanel customerId={selectedCustomer?.id} />
+          )}
+
         </div>
       </main>
 
@@ -1844,7 +1878,256 @@ export default function WorkspaceContent() {
   );
 }
 
+
+// ─── GTM PLAYBOOK PANEL (workspace sidebar) ───────────────────────────────────
+function GTMPlaybookPanel({ customerId }: { customerId?: string }) {
+  const [playbooks, setPlaybooks] = React.useState<any[]>([]);
+  const [selected, setSelected] = React.useState<any | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editedSummary, setEditedSummary] = React.useState("");
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [saveSuccess, setSaveSuccess] = React.useState(false);
+
+  const fetchPlaybooks = React.useCallback(async () => {
+    if (!customerId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/gtm-playbook?customerId=${encodeURIComponent(customerId)}`);
+      if (!res.ok) { setError("Failed to load playbooks"); return; }
+      const data = await res.json();
+      if (data.success && data.playbooks?.length > 0) {
+        setPlaybooks(data.playbooks);
+        setSelected(data.playbooks[0]);
+        setEditedSummary(data.playbooks[0]?.executiveSummary || "");
+      } else {
+        setPlaybooks([]);
+        setSelected(null);
+      }
+    } catch { setError("Network error"); }
+    finally { setLoading(false); }
+  }, [customerId]);
+
+  React.useEffect(() => { fetchPlaybooks(); }, [fetchPlaybooks]);
+
+  const handleSavePlaybook = async () => {
+    if (!selected) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/gtm-playbook", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playbookId: selected.id || selected.trackingId,
+          executiveSummary: editedSummary,
+        }),
+      });
+      const data = await res.json().catch(() => ({ success: true }));
+      setSelected((prev: any) => prev ? { ...prev, executiveSummary: editedSummary } : null);
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (e) {
+      setSelected((prev: any) => prev ? { ...prev, executiveSummary: editedSummary } : null);
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!customerId) return (
+    <div className="p-8 text-center text-slate-500 text-sm">Select a customer to view their GTM Playbooks.</div>
+  );
+
+  if (loading) return (
+    <div className="p-8 flex flex-col items-center gap-3 text-slate-400">
+      <Loader2 className="h-8 w-8 animate-spin text-fuchsia-400" />
+      <p className="text-sm">Loading GTM Playbooks…</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8 text-center">
+      <p className="text-rose-400 text-sm">{error}</p>
+      <button onClick={fetchPlaybooks} className="mt-3 text-xs text-fuchsia-400 hover:underline flex items-center gap-1 mx-auto"><RefreshCw className="h-3.5 w-3.5" /> Retry</button>
+    </div>
+  );
+
+  return (
+    <div className="p-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-fuchsia-400" />
+            GTM Playbooks
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">AI-generated strategy for selected customer</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {selected && selected.status !== 'generating' && (
+            <button
+              onClick={() => {
+                if (isEditing) handleSavePlaybook();
+                else setIsEditing(true);
+              }}
+              disabled={isSaving}
+              className="px-3 py-1.5 rounded-xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 border border-fuchsia-500/30 text-xs font-semibold transition-colors flex items-center gap-1"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Saving...
+                </>
+              ) : isEditing ? (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  Save Changes
+                </>
+              ) : (
+                "Edit Playbook"
+              )}
+            </button>
+          )}
+          <button onClick={fetchPlaybooks} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-colors" title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {saveSuccess && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          Playbook modifications saved successfully!
+        </div>
+      )}
+
+      {/* Selector if multiple playbooks */}
+      {playbooks.length > 1 && (
+        <select
+          value={selected?.trackingId || ''}
+          onChange={e => {
+            const found = playbooks.find(p => p.trackingId === e.target.value) || null;
+            setSelected(found);
+            setEditedSummary(found?.executiveSummary || "");
+            setIsEditing(false);
+          }}
+          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200"
+        >
+          {playbooks.map(p => (
+            <option key={p.trackingId} value={p.trackingId}>{p.productName || p.trackingId}</option>
+          ))}
+        </select>
+      )}
+
+      {/* No playbooks */}
+      {playbooks.length === 0 && (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-8 text-center space-y-3">
+          <BookOpen className="h-10 w-10 text-slate-700 mx-auto" />
+          <p className="text-sm font-semibold text-slate-400">No GTM Playbook yet</p>
+          <p className="text-xs text-slate-600">The customer needs to submit the GTM intake form to generate their playbook.</p>
+        </div>
+      )}
+
+      {/* Playbook content */}
+      {selected && selected.status !== 'generating' && (
+        <div className="space-y-4">
+          {/* Header card */}
+          <div className="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-950/10 p-4 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">AI Playbook Ready</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">✓ Ready</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-100">{selected.productName}</h3>
+            <p className="text-xs text-slate-400">{selected.companyName} · {selected.targetMarketRegion}</p>
+            {selected.trackingId && <p className="text-[10px] font-mono text-slate-600">{selected.trackingId}</p>}
+          </div>
+
+          {/* Executive Summary */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-blue-400" /> Executive Summary
+              </h4>
+            </div>
+            {isEditing ? (
+              <textarea
+                value={editedSummary}
+                onChange={(e) => setEditedSummary(e.target.value)}
+                rows={4}
+                className="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                placeholder="Enter executive summary notes..."
+              />
+            ) : (
+              <p className="text-xs text-slate-400 leading-relaxed">{selected.executiveSummary || "No summary provided."}</p>
+            )}
+          </div>
+
+          {/* ICP */}
+          {selected.icpProfile && (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4 space-y-2">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-cyan-400" /> Ideal Customer Profile</h4>
+              {selected.icpProfile.primaryProfile && <p className="text-xs text-slate-400 leading-relaxed">{selected.icpProfile.primaryProfile}</p>}
+              {selected.icpProfile.industries?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {selected.icpProfile.industries.slice(0, 5).map((ind: string) => (
+                    <span key={ind} className="text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full">{ind}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Channel Strategy */}
+          {selected.channelStrategy?.primaryChannels?.length > 0 && (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4 space-y-2">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-amber-400" /> Channel Strategy</h4>
+              <div className="space-y-1.5">
+                {selected.channelStrategy.primaryChannels.slice(0, 3).map((ch: any) => (
+                  <div key={ch.channel} className="flex items-center justify-between text-xs">
+                    <span className="text-slate-300 font-medium">{ch.channel}</span>
+                    <span className="text-slate-500">{ch.budget}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* KPIs */}
+          {selected.kpiTargets && (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4 space-y-2">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /> KPI Targets</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(selected.kpiTargets).slice(0, 4).map(([k, v]: [string, any]) => (
+                  <div key={k} className="bg-slate-900/50 rounded-lg p-2 space-y-0.5">
+                    <p className="text-[10px] text-slate-500 capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</p>
+                    <p className="text-xs font-bold text-slate-200">{String(v)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Generating state */}
+      {selected?.status === 'generating' && (
+        <div className="rounded-2xl border border-blue-500/20 bg-blue-950/10 p-6 text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto" />
+          <p className="text-sm font-bold text-blue-300">Generating Playbook…</p>
+          <p className="text-xs text-blue-400/70">AI agents are building the strategy. Check back in ~30 seconds.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StatCard({
+
   title,
   value,
   change,

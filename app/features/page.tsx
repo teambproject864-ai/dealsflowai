@@ -15,7 +15,19 @@ import {
   ArrowRight,
   TrendingUp,
   Zap,
-  Star
+  Star,
+  Bot,
+  Terminal,
+  FileText,
+  Users,
+  Briefcase,
+  Lock,
+  Workflow,
+  MessageSquare,
+  Check,
+  Code2,
+  Activity,
+  Layers
 } from "lucide-react";
 import { 
   IconAlertObjection, 
@@ -44,7 +56,7 @@ const CORE_ARCHITECTURE = [
     icon: Brain,
     glow: "glow-violet",
     accent: "text-violet-400",
-    borderColor: "border-violet-500/30",
+    borderColor: "dark:border-violet-500/30",
     bgGradient: "from-violet-500/10",
     definition: "The foundational operating system for unified memory management across the entire DealFlow.AI ecosystem.",
     capabilities: [
@@ -62,7 +74,7 @@ const CORE_ARCHITECTURE = [
     icon: Database,
     glow: "glow-teal",
     accent: "text-teal-400",
-    borderColor: "border-teal-500/30",
+    borderColor: "dark:border-teal-500/30",
     bgGradient: "from-teal-500/10",
     definition: "The centralized, highly organized semantic storage layer that structures and indexes long-term memory assets.",
     capabilities: [
@@ -80,7 +92,7 @@ const CORE_ARCHITECTURE = [
     icon: Cpu,
     glow: "glow-cyan",
     accent: "text-cyan-400",
-    borderColor: "border-cyan-500/30",
+    borderColor: "dark:border-cyan-500/30",
     bgGradient: "from-cyan-500/10",
     definition: "The intelligent cognitive and adaptive learning engine that enables continuous optimization of agent decision-making.",
     capabilities: [
@@ -98,7 +110,7 @@ const CORE_ARCHITECTURE = [
     icon: Shield,
     glow: "glow-amber",
     accent: "text-amber-400",
-    borderColor: "border-amber-500/30",
+    borderColor: "dark:border-amber-500/30",
     bgGradient: "from-amber-500/10",
     definition: "The enterprise-grade guardrails and security layer overseeing all agent execution, memory access, and data compliance.",
     capabilities: [
@@ -111,6 +123,242 @@ const CORE_ARCHITECTURE = [
     benefit: "SOC 2 audit in progress & GDPR compliance by design, ensuring customer data remains secure, private, and audit-ready at all times."
   }
 ];
+
+// Recently Deployed Implementations Catalog
+const RECENT_IMPLEMENTATIONS = [
+  {
+    id: "wren-ai-chatbot",
+    name: "Chatbot (Wren AI / GenBI Agent)",
+    category: "AI & Automation",
+    badge: "v2.0 Active",
+    icon: Bot,
+    accent: "text-fuchsia-400",
+    borderColor: "border-fuchsia-500/30",
+    bgColor: "bg-fuchsia-950/10",
+    purpose: "Converts natural language questions into structured Firestore queries and executes live analytics in real-time.",
+    userBenefits: "Eliminates custom SQL export bottlenecks, giving agents and clients instant data-backed decision capabilities.",
+    techSpecs: "NL-to-Firestore translator engine, `/api/agent/genbi-chat` endpoint, schema-aware field mapper.",
+    mediaReqs: "Interactive query playground widget, live execution preview, schema mapping diagram."
+  },
+  {
+    id: "gtm-playbook-engine",
+    name: "Customer GTM Playbook Engine",
+    category: "AI & Automation",
+    badge: "v2.0 Active",
+    icon: FileText,
+    accent: "text-indigo-400",
+    borderColor: "border-indigo-500/30",
+    bgColor: "bg-indigo-950/10",
+    purpose: "Interactive playbook studio enabling agents to view, edit, save executive summaries, and generate strategic resources.",
+    userBenefits: "Empowers revenue teams to customize GTM positioning, messaging hooks, and battlecards dynamically.",
+    techSpecs: "RESTful `/api/gtm-playbook` API, reactive state synchronization, inline editor with autosave.",
+    mediaReqs: "Playbook editor interface mockup, executive summary card preview, PDF export flow animation."
+  },
+  {
+    id: "automated-gtm-analysis",
+    name: "Automated GTM Analysis",
+    category: "Analytics & Reporting",
+    badge: "v2.0 Active",
+    icon: TrendingUp,
+    accent: "text-blue-400",
+    borderColor: "border-blue-500/30",
+    bgColor: "bg-blue-950/10",
+    purpose: "Real-time revenue intelligence dashboard tracking lead quality scores, automated pipeline values, and conversion bottlenecks.",
+    userBenefits: "Delivers executive-ready performance metrics and automated pipeline health monitoring at a glance.",
+    techSpecs: "Aggregate calculation pipeline, intent scoring algorithms, responsive metrics grid.",
+    mediaReqs: "Dashboard analytics screenshot, lead intent distribution chart, metric pill infographics."
+  },
+  {
+    id: "verification-code-hint",
+    name: "Smart Verification Code Overwrite",
+    category: "Security & Compliance",
+    badge: "v2.0 Active",
+    icon: Lock,
+    accent: "text-emerald-400",
+    borderColor: "border-emerald-500/30",
+    bgColor: "bg-emerald-950/10",
+    purpose: "Server-side 6-digit verification code generation displayed as a one-tap hint button that auto-fills and validates input fields.",
+    userBenefits: "Streamlines user onboarding and registration while maintaining strict 6-digit MFA security standards.",
+    techSpecs: "Crypto-secure random generator, auto-fill event listener (`#verification-code-hint-btn`), input sanitizer.",
+    mediaReqs: "Clickable hint button UI recording, input validation state diagram, auth flow sequence chart."
+  },
+  {
+    id: "dynamic-agent-sync",
+    name: "Dynamic Agent Intake Sync",
+    category: "Core Platform",
+    badge: "v2.0 Active",
+    icon: Users,
+    accent: "text-cyan-400",
+    borderColor: "border-cyan-500/30",
+    bgColor: "bg-cyan-950/10",
+    purpose: "Real-time synchronization between Admin agent management and the Customer Intake Form dropdown selectors.",
+    userBenefits: "Guarantees newly provisioned revenue specialists appear instantly for prospect selection without code deploys.",
+    techSpecs: "Firestore `users` collection query (`role == 'agent'`), `/api/agents` endpoint, reactive select hook.",
+    mediaReqs: "Admin agent creation workflow video, intake form dropdown screenshot, sync flow diagram."
+  },
+  {
+    id: "agent-workspace-hub",
+    name: "Unified Agent Campaign Workspace",
+    badge: "v2.0 Active",
+    category: "Core Platform",
+    icon: Briefcase,
+    accent: "text-violet-400",
+    borderColor: "border-violet-500/30",
+    bgColor: "bg-violet-950/10",
+    purpose: "Dedicated workspace environment featuring live campaign management, GTM intakes, report generation, and dialer controls.",
+    userBenefits: "Centralizes agent productivity in a single high-performance workspace with non-destructive session exit routing.",
+    techSpecs: "`WorkspaceContent` module, sub-navigation router, isolated session state manager.",
+    mediaReqs: "Workspace sidebar interface preview, exit workspace routing animation, tab switcher breakdown."
+  }
+];
+
+// Interactive Wren AI Live Query Simulator Component
+function WrenAiSimulator() {
+  const [selectedPromptIndex, setSelectedPromptIndex] = useState(0);
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  const samplePrompts = [
+    {
+      query: "Show all GTM playbooks by status",
+      intent: "Filter playbooks by operational status",
+      sqlOutput: "SELECT status, COUNT(*) FROM gtm_playbooks GROUP BY status;",
+      resultSummary: "3 Playbooks Active · 1 Draft · 0 Archived",
+      details: [
+        { name: "Acme Enterprise SaaS", status: "Active", score: "94/100" },
+        { name: "TechSolutions Cloud Migration", status: "Active", score: "88/100" },
+        { name: "FinTech Compliance Suite", status: "Draft", score: "91/100" }
+      ]
+    },
+    {
+      query: "List customers with no playbook yet",
+      intent: "Identify pipeline bottlenecks",
+      sqlOutput: "SELECT customerId, name FROM customers WHERE playbookId IS NULL;",
+      resultSummary: "2 Customers Pending Playbook Generation",
+      details: [
+        { name: "Global Logistics Corp", status: "Intake Submitted", score: "82/100" },
+        { name: "HealthTech Innovations", status: "Review Required", score: "79/100" }
+      ]
+    },
+    {
+      query: "What are the top channels recommended across playbooks?",
+      intent: "Aggregate GTM channel strategy distribution",
+      sqlOutput: "SELECT channel, COUNT(*) FROM playbook_channels GROUP BY channel ORDER BY count DESC;",
+      resultSummary: "Top 3 Channels: Outbound LinkedIn (85%), Cold Email (78%), Executive Events (62%)",
+      details: [
+        { name: "Outbound LinkedIn & InMail", status: "85% Usage", score: "Rank #1" },
+        { name: "Personalized Cold Email", status: "78% Usage", score: "Rank #2" },
+        { name: "Executive Briefing Events", status: "62% Usage", score: "Rank #3" }
+      ]
+    },
+    {
+      query: "Show GTM intakes from the last 7 days",
+      intent: "Track recent lead intake volume",
+      sqlOutput: "SELECT * FROM gtm_intakes WHERE createdAt >= NOW() - INTERVAL 7 DAY;",
+      resultSummary: "14 Intakes Processed · 100% Validation Passed",
+      details: [
+        { name: "DataScale AI", status: "Completed", score: "96/100" },
+        { name: "CyberGuard Systems", status: "Completed", score: "92/100" }
+      ]
+    }
+  ];
+
+  const currentPrompt = samplePrompts[selectedPromptIndex];
+
+  const handleSelectPrompt = (index: number) => {
+    setIsExecuting(true);
+    setSelectedPromptIndex(index);
+    setTimeout(() => {
+      setIsExecuting(false);
+    }, 400);
+  };
+
+  return (
+    <div className="p-6 md:p-8 rounded-3xl border border-fuchsia-500/30 bg-slate-950/80 backdrop-blur-xl space-y-6 shadow-2xl shadow-fuchsia-950/20">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+            <Bot className="h-6 w-6" />
+          </div>
+          <div>
+            <h4 className="text-base font-bold text-white flex items-center gap-2">
+              Wren AI Query Simulator
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 rounded-full px-2 py-0.5">
+                Live Interactive Demo
+              </span>
+            </h4>
+            <p className="text-xs text-slate-400">Select a prompt below to see how Wren AI translates natural language into structured database intelligence.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 font-mono">
+          <Activity className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+          <span>Latency: ~42ms</span>
+        </div>
+      </div>
+
+      {/* Query Selector Chips */}
+      <div className="flex flex-wrap gap-2">
+        {samplePrompts.map((p, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleSelectPrompt(idx)}
+            className={`text-xs font-semibold px-3 py-2 rounded-xl border transition-all text-left flex items-center gap-2 ${
+              selectedPromptIndex === idx
+                ? "bg-fuchsia-600 text-white border-fuchsia-500 shadow-md shadow-fuchsia-500/25"
+                : "bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-slate-800 hover:border-slate-700"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-fuchsia-300 shrink-0" />
+            <span>&ldquo;{p.query}&rdquo;</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Output Console Simulation */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 font-mono text-xs overflow-hidden">
+        {isExecuting ? (
+          <div className="flex items-center justify-center py-10 space-x-3 text-fuchsia-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="font-sans font-medium text-sm">Wren AI parsing natural language query & generating execution plan...</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between text-slate-400 border-b border-slate-800/80 pb-2">
+              <span className="flex items-center gap-1.5 text-fuchsia-400 font-bold">
+                <Terminal className="h-4 w-4" /> User Query: &quot;{currentPrompt.query}&quot;
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider">{currentPrompt.intent}</span>
+            </div>
+
+            <div className="p-3 bg-slate-950 rounded-xl border border-slate-850 text-slate-300 overflow-x-auto">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 font-sans">Generated Database Query Plan</p>
+              <code className="text-emerald-400">{currentPrompt.sqlOutput}</code>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-sans">Execution Result Summary</p>
+              <div className="p-3 bg-fuchsia-950/20 border border-fuchsia-500/20 rounded-xl text-fuchsia-300 font-sans text-xs font-bold flex items-center justify-between">
+                <span>{currentPrompt.resultSummary}</span>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">200 OK</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-sans">
+              {currentPrompt.details.map((d, i) => (
+                <div key={i} className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-1">
+                  <p className="text-xs font-bold text-slate-200 truncate">{d.name}</p>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-slate-400">{d.status}</span>
+                    <span className="text-fuchsia-400 font-bold">{d.score}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function FeaturesContent() {
   const { features, loading, error } = useFeatures();
@@ -147,7 +395,7 @@ function FeaturesContent() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           {isTimedOut ? "Request Timed Out" : "Unable to load features"}
         </h2>
-        <p className="mt-2 text-slate-605 dark:text-slate-400">
+        <p className="mt-2 text-slate-600 dark:text-slate-400">
           {isTimedOut ? "The features directory took too long to respond. Please try reloading." : error}
         </p>
         <Button onClick={() => window.location.reload()} variant="outline" className="mt-6 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white">
@@ -178,10 +426,10 @@ function FeaturesContent() {
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-600 dark:text-teal-300 text-xs font-semibold uppercase tracking-wider mb-2"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 text-xs font-semibold uppercase tracking-wider mb-2"
           >
-            <Sparkles className="h-3.5 w-3.5 text-teal-500 dark:text-teal-400" />
-            <span>Product capabilities</span>
+            <Sparkles className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-400" />
+            <span>Updated v2.0 Platform Capabilities</span>
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
@@ -189,19 +437,31 @@ function FeaturesContent() {
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight"
           >
-            Autonomous Sales Powered by{" "}
-            <span className="bg-gradient-to-r from-teal-600 via-cyan-600 to-violet-750 dark:from-teal-400 dark:via-cyan-400 dark:to-violet-500 bg-clip-text text-transparent">
-              Cognitive AI Architecture
+            Autonomous Revenue Operations Powered by{" "}
+            <span className="bg-gradient-to-r from-fuchsia-500 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+              Wren AI & Memory OS
             </span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-slate-605 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
-            Scale your pipeline operations with memory-infused sales agents that coordinate, adapt, and drive conversions securely.
+            Scale your sales pipeline with natural language database intelligence, automated GTM playbooks, and secure agent orchestration.
           </motion.p>
+          <div className="flex flex-wrap gap-4 justify-center pt-2">
+            <Link href="/portal/agent">
+              <Button size="lg" className="h-12 px-6 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-fuchsia-500/20">
+                Explore Agent Portal <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/book-demo">
+              <Button size="lg" variant="outline" className="h-12 px-6 rounded-xl border-slate-300 dark:border-white/10 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 font-semibold">
+                Schedule Demo
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -209,7 +469,7 @@ function FeaturesContent() {
       <section className="py-20 sm:py-28 max-w-7xl mx-auto px-6 border-b border-slate-200 dark:border-white/5">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-3xl sm:text-5xl font-bold text-slate-900 dark:text-white">The Core Systems</h2>
-          <p className="text-slate-605 dark:text-slate-400 text-lg">
+          <p className="text-slate-600 dark:text-slate-400 text-lg">
             Our platform is built upon four foundational technologies working in perfect synchronization to power intelligent revenue operations.
           </p>
         </div>
@@ -222,7 +482,7 @@ function FeaturesContent() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className={`group relative p-8 rounded-3xl border border-slate-200 dark:${core.borderColor} bg-slate-50 dark:bg-slate-900 transition-all duration-500 overflow-hidden flex flex-col justify-between`}
+              className={`group relative p-8 rounded-3xl border border-slate-200 ${core.borderColor} bg-slate-50 dark:bg-slate-900 transition-all duration-500 overflow-hidden flex flex-col justify-between`}
             >
               {/* Card visual accent glow */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors pointer-events-none" />
@@ -253,15 +513,194 @@ function FeaturesContent() {
 
               <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/5 space-y-4">
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 mb-1">Integration & Synergy</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Integration & Synergy</h4>
                   <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">{core.synergy}</p>
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 mb-1">Tangible Business Impact</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tangible Business Impact</h4>
                   <p className="text-emerald-600 dark:text-emerald-400 text-xs font-medium leading-relaxed">{core.benefit}</p>
                 </div>
               </div>
             </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURE SPOTLIGHT: CHATBOT (WREN AI / GENBI AGENT) ───────────────── */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-6 border-b border-slate-200 dark:border-white/5">
+        <div className="space-y-12">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-400 text-xs font-bold uppercase tracking-wider">
+              <Bot className="h-4 w-4" />
+              <span>Feature Spotlight: Conversational Intelligence</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Chatbot (Wren AI / GenBI Agent)
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+              Ask business questions in natural language. Wren AI instantly converts your intent into structured Firestore database queries and executes live analytics without manual SQL writing.
+            </p>
+          </div>
+
+          {/* Interactive Live Query Simulator */}
+          <WrenAiSimulator />
+
+          {/* 3 Step-by-Step Deal Management Use Cases */}
+          <div className="space-y-6">
+            <div className="text-center max-w-xl mx-auto space-y-2">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Deal Management Use Cases</h3>
+              <p className="text-xs text-slate-400">How Wren AI transforms daily sales workflows for agents and revenue leaders.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  step: "01",
+                  title: "Lead Qualification & Intake Analysis",
+                  desc: "Ask 'Show me new B2B leads from the last 48 hours with quality scores above 85.' Wren AI queries Firestore intakes, aggregates metrics, and returns prioritized call lists instantly.",
+                  icon: Users,
+                  color: "text-fuchsia-400",
+                  borderColor: "border-fuchsia-500/30",
+                  bgColor: "bg-fuchsia-950/10"
+                },
+                {
+                  step: "02",
+                  title: "Real-time Playbook Status Inspection",
+                  desc: "Ask 'List customers with active playbooks lacking video avatars.' Wren AI cross-references GTM playbook documents, pinpointing content gaps so agents can trigger asset creation.",
+                  icon: FileText,
+                  color: "text-indigo-400",
+                  borderColor: "border-indigo-500/30",
+                  bgColor: "bg-indigo-950/10"
+                },
+                {
+                  step: "03",
+                  title: "Outreach & Conversion Diagnostics",
+                  desc: "Ask 'Which channels generated the highest meeting booking rates this week?' Wren AI computes channel performance analytics across SMS, Email, and Voice in under 50ms.",
+                  icon: TrendingUp,
+                  color: "text-cyan-400",
+                  borderColor: "border-cyan-500/30",
+                  bgColor: "bg-cyan-950/10"
+                }
+              ].map((useCase) => (
+                <div key={useCase.step} className={`p-6 rounded-3xl border ${useCase.borderColor} ${useCase.bgColor} backdrop-blur-xl space-y-3 relative overflow-hidden`}>
+                  <div className="flex items-center justify-between">
+                    <div className={`p-3 rounded-2xl bg-slate-900 ${useCase.color} border border-slate-800`}>
+                      <useCase.icon className="h-6 w-6" />
+                    </div>
+                    <span className="text-2xl font-extrabold font-mono text-slate-700 dark:text-slate-600">{useCase.step}</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">{useCase.title}</h4>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">{useCase.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Technical Integration Architecture & Visual Asset Requirements Callouts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Technical Integration */}
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/40 space-y-4">
+              <h4 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <Code2 className="h-5 w-5 text-fuchsia-400" /> Technical Integration Architecture
+              </h4>
+              <ul className="space-y-3 text-xs text-slate-400">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-fuchsia-400 shrink-0 mt-0.5" />
+                  <span><strong>Endpoint &amp; Handler:</strong> Interfaces via `/api/agent/genbi-chat` (POST payload &#123; prompt: string &#125;), calling schema-aware Firestore query resolvers.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-fuchsia-400 shrink-0 mt-0.5" />
+                  <span><strong>Role-Based Security:</strong> Enforces Clawpatrol firewall rules, preventing cross-tenant data leaks and redacting confidential lead PII automatically.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-fuchsia-400 shrink-0 mt-0.5" />
+                  <span><strong>Universal Accessibility:</strong> Integrated across Customer Portal, Agent Portal, and Agent Campaign Workspace tabs.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Visual Asset Requirements & Media Callouts */}
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/40 space-y-4">
+              <h4 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <Layers className="h-5 w-5 text-teal-400" /> Visual Assets &amp; Demonstration Media
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                  <p className="font-bold text-teal-400">Interactive Playground</p>
+                  <p className="text-[11px] text-slate-400">Live query chip simulation widget embedded in product documentation.</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                  <p className="font-bold text-indigo-400">Workflow Infographics</p>
+                  <p className="text-[11px] text-slate-400">NL-to-Firestore translation pipeline diagrams and schema mappers.</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                  <p className="font-bold text-fuchsia-400">UI Screen Previews</p>
+                  <p className="text-[11px] text-slate-400">High-resolution previews of Chatbot (Wren AI) in Agent and Customer portals.</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                  <p className="font-bold text-cyan-400">Demo Video Callouts</p>
+                  <p className="text-[11px] text-slate-400">End-to-end 30-second walkthrough showing real-time query execution.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── RECENTLY DEPLOYED PLATFORM IMPLEMENTATIONS ───────────────────────── */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-6 border-b border-slate-200 dark:border-white/5">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-bold uppercase tracking-wider">
+            <Zap className="h-4 w-4" />
+            <span>Platform Release Inventory</span>
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-bold text-slate-900 dark:text-white">
+            Recently Deployed Implementations
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-lg">
+            Complete inventory of newly completed platform features, security upgrades, and revenue workspace tools deployed in the DealFlow system.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {RECENT_IMPLEMENTATIONS.map((item) => (
+            <div
+              key={item.id}
+              className={`p-6 rounded-3xl border ${item.borderColor} ${item.bgColor} backdrop-blur-xl flex flex-col justify-between space-y-5 hover:scale-[1.01] transition-transform duration-300`}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className={`p-3 rounded-2xl bg-slate-900/80 ${item.accent} border border-slate-800`}>
+                    <item.icon className="h-6 w-6" />
+                  </div>
+                  <Badge className="bg-slate-900 text-slate-200 border-slate-700 text-[10px] uppercase font-bold tracking-wider">
+                    {item.badge}
+                  </Badge>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{item.name}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">{item.purpose}</p>
+                </div>
+
+                <div className="space-y-2 border-t border-slate-800/60 pt-4 text-xs">
+                  <div>
+                    <span className="font-bold text-slate-300 block mb-0.5">User Benefits:</span>
+                    <p className="text-slate-400 text-[11px] leading-relaxed">{item.userBenefits}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-300 block mb-0.5">Technical Specs:</span>
+                    <p className="text-slate-500 font-mono text-[10px] leading-relaxed">{item.techSpecs}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                <span>{item.category}</span>
+                <span className={item.accent}>Verified Production</span>
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -271,7 +710,7 @@ function FeaturesContent() {
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between border-b border-slate-200 dark:border-white/5 pb-12 mb-12">
           <div className="space-y-2">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Capabilities Directory</h2>
-            <p className="text-slate-605 dark:text-slate-400">Filter and explore the complete standard suite of DealFlow.AI modules.</p>
+            <p className="text-slate-600 dark:text-slate-400">Filter and explore the complete standard suite of DealFlow.AI modules.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
@@ -364,7 +803,7 @@ function FeaturesContent() {
               icon: IconAwardRoi,
               color: "text-amber-600 dark:text-amber-400",
               bg: "bg-amber-100 dark:bg-amber-400/10",
-              borderColor: "border-amber-200 dark:border-amber-500/10"
+              borderColor: "dark:border-amber-500/10"
             },
             {
               title: "Infinite Scalability",
@@ -372,7 +811,7 @@ function FeaturesContent() {
               icon: IconLaunchGtm,
               color: "text-emerald-600 dark:text-emerald-400",
               bg: "bg-emerald-100 dark:bg-emerald-400/10",
-              borderColor: "border-emerald-200 dark:border-emerald-500/10"
+              borderColor: "dark:border-emerald-500/10"
             },
             {
               title: "Data Intelligence",
@@ -380,7 +819,7 @@ function FeaturesContent() {
               icon: IconTargetAccount,
               color: "text-sky-600 dark:text-sky-400",
               bg: "bg-sky-100 dark:bg-sky-400/10",
-              borderColor: "border-sky-200 dark:border-sky-500/10"
+              borderColor: "dark:border-sky-500/10"
             }
           ].map((item, i) => (
             <motion.div
@@ -389,7 +828,7 @@ function FeaturesContent() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className={`p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:${item.borderColor} hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300`}
+              className={`p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 ${item.borderColor} hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300`}
             >
               <div className={`p-3 rounded-2xl w-fit mb-6 ${item.bg} ${item.color} border border-slate-200 dark:border-white/5`}>
                 <item.icon className="h-8 w-8" />
@@ -419,7 +858,7 @@ function FeaturesContent() {
                 <div key={stat.label} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15">
                   <div className="text-3xl md:text-4xl font-extrabold text-teal-600 dark:text-teal-400 mb-1">{stat.value}</div>
                   <div className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-0.5">{stat.label}</div>
-                  <div className="text-[11px] text-slate-550 dark:text-slate-500">{stat.desc}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-500">{stat.desc}</div>
                 </div>
               ))}
             </div>
@@ -463,4 +902,3 @@ export default function FeaturesPage() {
     </div>
   );
 }
-

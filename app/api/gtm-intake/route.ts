@@ -3,8 +3,11 @@ import { z } from "zod";
 import { db } from "@/lib/firebase-admin";
 import { checkRateLimitSensitive } from "@/lib/rate-limiter-middleware";
 import { sanitizeObject } from "@/lib/sanitize";
-import { initializeIntegratedSystem, getOrchestrator, getMessageBus } from "@/lib/integrated-system";
+import { initializeIntegratedSystem } from "@/lib/integrated-system";
 import { A2AMessageBus, A2AMessageType } from "@/lib/a2a";
+import { generateAndPersistPlaybook } from "@/lib/gtm-playbook-generator";
+import { getAuthenticatedUser } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +98,9 @@ export async function POST(req: Request) {
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
+    // Resolve the authenticated user (optional — forms may be submitted unauthenticated)
+    const authUser = await getAuthenticatedUser(req).catch(() => null);
+
     const rawBody = await req.json();
     const sanitized = sanitizeObject(rawBody);
 
@@ -131,38 +137,63 @@ export async function POST(req: Request) {
     }
 
     const validated = validation.data;
-    
+
     // Generate a unique tracking ID
     const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
     const trackingId = `GTM-${randomSuffix}`;
 
+    // Attach authenticated user's ID as customerId for portal scoping
+    const customerId = authUser?.id || sanitized.customerId || null;
+
     const intakeRecord = {
       id: trackingId,
       ...validated,
+      customerId,
+      playbookStatus: "generating",
       createdAt: new Date().toISOString(),
     };
 
-    // Save to Firestore if available
+    // Save to Firestore immediately
     if (db) {
       await db.collection("gtm_intakes").doc(trackingId).set(intakeRecord);
     }
 
-    // Initialize integrated system
-    const { messageBus, orchestrator } = initializeIntegratedSystem();
-
-    // Delegate process_intake_form task to Vexa agent
-    console.log(`[api-gtm-intake] Delegating task to Vexa agent for trackingId: ${trackingId}`);
-    const vexaResult = await delegateTask(messageBus, "vexa-agent", "process_intake_form", {
-      formData: validated,
-      leadId: trackingId,
+    // ── Trigger GTM Playbook Generation asynchronously (non-blocking) ──
+    // Responds immediately; playbook appears in portals within ~10-30 seconds.
+    setImmediate(async () => {
+      try {
+        console.log(`[api-gtm-intake] Triggering async GTM playbook generation for ${trackingId}`);
+        await generateAndPersistPlaybook({
+          id: trackingId,
+          customerId,
+          ...validated,
+        } as any);
+        console.log(`[api-gtm-intake] ✓ GTM Playbook ready for ${trackingId}`);
+      } catch (playbookError) {
+        console.error(`[api-gtm-intake] ✗ Playbook generation failed for ${trackingId}:`, playbookError);
+        if (db) {
+          await db.collection("gtm_intakes").doc(trackingId).update({ playbookStatus: "error" }).catch(() => {});
+        }
+      }
     });
+
+    // Also attempt the Vexa agent delegation (fire-and-forget, non-critical)
+    try {
+      const { messageBus } = initializeIntegratedSystem();
+      delegateTask(messageBus, "vexa-agent", "process_intake_form", {
+        formData: validated,
+        leadId: trackingId,
+      }).catch(() => {
+        console.warn(`[api-gtm-intake] Vexa delegation non-critical failure for ${trackingId}`);
+      });
+    } catch { /* integrated system unavailable — non-critical */ }
 
     return NextResponse.json({
       success: true,
       trackingId,
       data: intakeRecord,
-      gtmAnalysis: vexaResult.gtmAnalysis,
-      playbook: vexaResult.playbook,
+      message: "GTM intake submitted. Your AI Playbook is being generated and will appear in your portal shortly.",
+      playbookStatus: "generating",
     }, { status: 200 });
 
   } catch (error) {
