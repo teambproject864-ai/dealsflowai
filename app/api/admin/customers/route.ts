@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         const assigned = demoCustomers.filter(
           (c) => c.assignedAgentId === user!.id || (c as any).assignedAgent?.agentId === user!.id
         );
-        customers = assigned.length > 0 ? assigned : demoCustomers;
+        customers = assigned;
       } else {
         customers = demoCustomers;
       }
