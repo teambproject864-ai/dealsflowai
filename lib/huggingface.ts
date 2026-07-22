@@ -16,9 +16,9 @@ export async function hfInfer(
   options = {} 
 ): Promise<string> { 
   const hfToken = (process.env.HUGGINGFACE_API_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim();
-  if (!hfToken) {
-    console.warn("HUGGINGFACE_API_KEY is missing or empty.");
-    return "AI Analysis is currently unavailable due to missing API configuration.";
+  if (!hfToken || !hfToken.startsWith("hf_")) {
+    console.warn("HUGGINGFACE_API_KEY is missing, empty, or invalid (must start with 'hf_').");
+    throw new Error("AI Analysis Service Error: Invalid or missing Hugging Face API key.");
   }
   const hf = new HfInference(hfToken);
 

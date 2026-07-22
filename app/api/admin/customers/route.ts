@@ -12,22 +12,26 @@ export async function GET(req: Request) {
 
   try {
     let customers: any[] = [];
+    let databaseHasData = false;
 
     if (db) {
       const snapshot = await db.collection("customers").get();
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        // Restrict agent to only see assigned customers
-        if (user!.role !== "agent" || data.assignedAgentId === user!.id || (data.assignedAgent && data.assignedAgent.agentId === user!.id)) {
-          customers.push({ id: doc.id, ...data });
-        }
-      });
-      // Sort by createdAt descending
-      customers.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      if (!snapshot.empty) {
+        databaseHasData = true;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          // Restrict agent to only see assigned customers
+          if (user!.role !== "agent" || data.assignedAgentId === user!.id || (data.assignedAgent && data.assignedAgent.agentId === user!.id)) {
+            customers.push({ id: doc.id, ...data });
+          }
+        });
+        // Sort by createdAt descending
+        customers.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      }
     }
 
-    // Fallback to demo customers if database is unconfigured or empty
-    if (customers.length === 0) {
+    // Fallback to demo customers ONLY if database is unconfigured or empty
+    if (!databaseHasData) {
       if (user!.role === "agent") {
         const assigned = demoCustomers.filter(
           (c) => c.assignedAgentId === user!.id || (c as any).assignedAgent?.agentId === user!.id

@@ -2,10 +2,10 @@ import OpenAI from "openai";
 
 type NvMessage = { role: "system" | "user" | "assistant"; content: string };
 
-const DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
+const DEFAULT_MODEL = "meta/llama-3.3-70b-instruct";
 const FALLBACK_MODELS = [
-  "mistralai/mistral-large-2407",
-  "meta/llama-3.1-70b-instruct",
+  "nvidia/llama-3.1-nemotron-70b-instruct",
+  "mistralai/mistral-large-2-instruct",
   "google/gemma-2-27b-it"
 ];
 
