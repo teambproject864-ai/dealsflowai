@@ -1,10 +1,11 @@
 import { hfInfer, hfInferJSON } from './huggingface';
 import { nvInfer, nvInferJSON } from './nvidia';
 import { kimiInfer, kimiInferJSON } from './kimi';
+import { gmLLM } from './gm-llm';
 import { startLLMJob, completeLLMJob } from './llm-job-tracker';
 
 // Define supported AI providers
-export const SUPPORTED_PROVIDERS = ['huggingface', 'nvidia', 'kimi'] as const;
+export const SUPPORTED_PROVIDERS = ['huggingface', 'nvidia', 'kimi', 'gm-llm'] as const;
 export type SupportedAIProvider = typeof SUPPORTED_PROVIDERS[number];
 
 // Request attributes that can determine provider selection
@@ -39,6 +40,12 @@ const DEFAULT_PROVIDER: SupportedAIProvider = 'huggingface';
 
 // Provider mapping rules
 const PROVIDER_MAPPING_RULES: ProviderMappingRule[] = [
+  // Use GM LLM for go-to-market tasks (highest priority)
+  {
+    condition: (attrs) => attrs.requestType?.startsWith('gtm-') || attrs.requestType?.startsWith('marketing-') || attrs.requestType === 'campaign',
+    provider: 'gm-llm',
+    priority: 20,
+  },
   // Enterprise tier: use nvidia for highest performance
   {
     condition: (attrs) => attrs.tierLevel === 'enterprise',
@@ -152,6 +159,14 @@ export function getProviderInferenceFunctions(provider: SupportedAIProvider) {
       return { infer: nvInfer, inferJSON: nvInferJSON };
     case 'kimi':
       return { infer: kimiInfer, inferJSON: kimiInferJSON };
+    case 'gm-llm':
+      return { 
+        infer: async (prompt: string, systemPrompt: string, options: any) => {
+          const result = await gmLLM.infer(prompt, systemPrompt, options);
+          return result.fusedOutput;
+        }, 
+        inferJSON: hfInferJSON 
+      };
     default:
       // This should never happen with TypeScript checks
       throw new Error(`Unsupported AI provider: ${provider}`);
@@ -188,6 +203,7 @@ export async function performDynamicInference(
       case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
       case 'nvidia': return 'nvidia/nemotron';
       case 'kimi': return 'kimi-v1';
+      case 'gm-llm': return 'gm-llm-v1';
       default: return 'unknown-model';
     }
   };
@@ -267,6 +283,7 @@ export async function performDynamicInferenceJSON(
       case 'huggingface': return 'mistralai/Mistral-7B-Instruct-v0.3';
       case 'nvidia': return 'nvidia/nemotron';
       case 'kimi': return 'kimi-v1';
+      case 'gm-llm': return 'gm-llm-v1';
       default: return 'unknown-model';
     }
   };
