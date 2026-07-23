@@ -229,14 +229,14 @@ function AgentPortalContent() {
       // Helper function to safely fetch and parse JSON
       const safeFetchJson = async (url: string) => {
         try {
-          const res = await fetch(url);
-          if (!res.ok) {
-            console.warn(`[Agent Portal] Failed to fetch ${url}: ${res.statusText}`);
+          const res = await fetch(url).catch(() => null);
+          if (!res || !res.ok) {
+            console.warn(`[Agent Portal] Failed to fetch ${url}: ${res?.statusText || "Network/Server error"}`);
             return { success: false };
           }
-          return await res.json();
+          return await res.json().catch(() => ({ success: false }));
         } catch (err) {
-          console.error(`[Agent Portal] Error fetching ${url}:`, err);
+          console.warn(`[Agent Portal] Error fetching ${url}:`, err);
           return { success: false };
         }
       };

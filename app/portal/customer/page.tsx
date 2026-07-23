@@ -279,28 +279,26 @@ function CustomerPortalContent() {
   // Real-time synchronization polling (3s interval)
   const fetchCustomerData = async () => {
     try {
-      const [ticketsRes, gtmRes, docsRes, chatRes, icpRes, feedbackRes, callsRes, configRes, contentRes] = await Promise.all([
-        fetch("/api/portal/tickets"),
-        fetch("/api/portal/gtm-reports"),
-        fetch("/api/portal/documents"),
-        fetch("/api/portal/chat?sessionId=session-1"),
-        fetch("/api/customer/icp"),
-        fetch("/api/portal/feedback"),
-        fetch("/api/portal/calls"),
-        fetch("/api/customer/config"),
-        fetch("/api/portal/content"),
-      ]);
+      const safeFetchJson = async (url: string) => {
+        try {
+          const res = await fetch(url).catch(() => null);
+          if (!res || !res.ok) return { success: false };
+          return await res.json().catch(() => ({ success: false }));
+        } catch {
+          return { success: false };
+        }
+      };
 
       const [ticketsData, gtmData, docsData, chatData, icpData, feedbackData, callsData, configData, contentData] = await Promise.all([
-        ticketsRes.json(),
-        gtmRes.json(),
-        docsRes.json(),
-        chatRes.json(),
-        icpRes.json(),
-        feedbackRes.json(),
-        callsRes.json(),
-        configRes.json(),
-        contentRes.json(),
+        safeFetchJson("/api/portal/tickets"),
+        safeFetchJson("/api/portal/gtm-reports"),
+        safeFetchJson("/api/portal/documents"),
+        safeFetchJson("/api/portal/chat?sessionId=session-1"),
+        safeFetchJson("/api/customer/icp"),
+        safeFetchJson("/api/portal/feedback"),
+        safeFetchJson("/api/portal/calls"),
+        safeFetchJson("/api/customer/config"),
+        safeFetchJson("/api/portal/content"),
       ]);
 
       if (ticketsData.success) setTickets(ticketsData.tickets);
