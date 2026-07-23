@@ -50,7 +50,7 @@ export class DealflowGAN {
   }
 
   // Train generator and discriminator
-  train(realData: DealflowMarketDataPoint, vaeLatent: DealflowLatentVector, learningRate = 0.001): DealflowLearningState['loss'] {
+  train(realData: DealflowMarketDataPoint, vaeLatent: DealflowLatentVector, learningRate = 0.001): { ganGenerator: number; ganDiscriminator: number } {
     // Generate fake data from VAE latent
     const fakeData = this.generate(vaeLatent.vector);
 
