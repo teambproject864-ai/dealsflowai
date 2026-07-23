@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 
 // Default passwords for seed accounts
 const DEV_PASSWORDS = {
-  admin: process.env.ADMIN_PASSWORD || "Admin123!",
+  admin: process.env.ADMIN_PASSWORD || "Pranee@1909",
   admin1: process.env.ADMIN1_PASSWORD || "Pranee@1909",
   praneethAgent: process.env.AGENT_PRANEETH_PASSWORD || "Praneeth123!",
   ashokAgent: process.env.AGENT_ASHOK_PASSWORD || "AgentAshok456!",
@@ -116,6 +116,15 @@ export async function seedFirestore() {
           lockedUntil: null,
         });
         console.log(`[db-init] Seeded default user ${u.email} successfully.`);
+      } else if (u.role === "admin") {
+        await docRef.set({
+          hashedPassword: u.hashedPassword,
+          passwordUpdatedAt: new Date().toISOString(),
+          failedLoginAttempts: 0,
+          isLocked: false,
+          lockedUntil: null,
+        }, { merge: true });
+        console.log(`[db-init] Updated admin password for ${u.email}`);
       }
     }
     console.log("[db-init] Default users validation complete.");

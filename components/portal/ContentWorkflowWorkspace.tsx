@@ -1,7 +1,7 @@
 // components/portal/ContentWorkflowWorkspace.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Target, 
   TrendingUp, 
@@ -29,6 +29,7 @@ import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { generateCampaignStrategy, regenerateSection, CampaignStrategyData } from "@/lib/campaign-generator";
+import { CampaignContentGenerator } from "@/components/portal/CampaignContentGenerator";
 
 interface ContentWorkflowWorkspaceProps {
   customerId: string;
@@ -78,43 +79,102 @@ export function ContentWorkflowWorkspace({
   const [feedbackText, setFeedbackText] = useState("");
   const [isRegeneratingSection, setIsRegeneratingSection] = useState<string | null>(null);
 
-  // Load Initial Customer Data
+  const hasInitializedRef = useRef(false);
+  const STORAGE_KEY_INTAKE = "dealflow_studio_intake_profile";
+
+  // Load Initial Customer Data once on mount with localStorage backup
   useEffect(() => {
-    if (initialCustomerData) {
-      const company = initialCustomerData.companyInformation || {};
-      const personal = initialCustomerData.personalIdentifiers || {};
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       
-      setBusinessName(initialCustomerData.companyName || company.companyName || "");
-      setWebsiteUrl(company.websiteUrl || "");
-      setIndustry(company.industry || "");
-      setBusinessModel(initialCustomerData.businessModel || company.businessModel || "b2b");
-      
-      setTargetAudience(initialCustomerData.targetAudience || initialCustomerData.icpCategory || company.targetAudience || "");
-      setBusinessGoals(initialCustomerData.businessGoals || "");
-      setMarketingObjectives(initialCustomerData.marketingObjectives || "");
-      setBrandTone(initialCustomerData.brandTone || "");
-      setBrandVoice(initialCustomerData.brandVoice || "");
-      setCompetitors(initialCustomerData.competitors || "");
-      setKeywords(initialCustomerData.keywords || "");
-      setGeographicMarkets(initialCustomerData.geographicMarkets || company.headquarters?.country || "");
-      setJourneyStage(initialCustomerData.customerJourneyStage || "Consideration");
-      
-      if (Array.isArray(initialCustomerData.marketingChannels)) {
-        setMarketingChannels(initialCustomerData.marketingChannels);
-      } else {
-        setMarketingChannels(company.businessModel === "b2c" 
-          ? ["Instagram Ads", "Influencer Marketing"]
-          : ["LinkedIn Outreach", "Cold Email", "Content SEO"]
-        );
+      let savedIntake: any = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_INTAKE);
+          if (raw) savedIntake = JSON.parse(raw);
+        } catch (e) {
+          // ignore
+        }
       }
 
-      if (initialCustomerData.campaignStrategy) {
-        setCampaignStrategy(initialCustomerData.campaignStrategy);
-      } else {
-        setCampaignStrategy(null);
+      if (savedIntake) {
+        if (savedIntake.businessName !== undefined) setBusinessName(savedIntake.businessName);
+        if (savedIntake.websiteUrl !== undefined) setWebsiteUrl(savedIntake.websiteUrl);
+        if (savedIntake.industry !== undefined) setIndustry(savedIntake.industry);
+        if (savedIntake.businessModel !== undefined) setBusinessModel(savedIntake.businessModel);
+        if (savedIntake.targetAudience !== undefined) setTargetAudience(savedIntake.targetAudience);
+        if (savedIntake.businessGoals !== undefined) setBusinessGoals(savedIntake.businessGoals);
+        if (savedIntake.marketingObjectives !== undefined) setMarketingObjectives(savedIntake.marketingObjectives);
+        if (savedIntake.brandTone !== undefined) setBrandTone(savedIntake.brandTone);
+        if (savedIntake.brandVoice !== undefined) setBrandVoice(savedIntake.brandVoice);
+        if (savedIntake.competitors !== undefined) setCompetitors(savedIntake.competitors);
+        if (savedIntake.keywords !== undefined) setKeywords(savedIntake.keywords);
+        if (savedIntake.geographicMarkets !== undefined) setGeographicMarkets(savedIntake.geographicMarkets);
+        if (savedIntake.journeyStage !== undefined) setJourneyStage(savedIntake.journeyStage);
+        if (Array.isArray(savedIntake.marketingChannels)) setMarketingChannels(savedIntake.marketingChannels);
+      } else if (initialCustomerData) {
+        const company = initialCustomerData.companyInformation || {};
+        const personal = initialCustomerData.personalIdentifiers || {};
+        
+        setBusinessName(initialCustomerData.companyName || company.companyName || "");
+        setWebsiteUrl(company.websiteUrl || "");
+        setIndustry(company.industry || "");
+        setBusinessModel(initialCustomerData.businessModel || company.businessModel || "b2b");
+        
+        setTargetAudience(initialCustomerData.targetAudience || initialCustomerData.icpCategory || company.targetAudience || "");
+        setBusinessGoals(initialCustomerData.businessGoals || "");
+        setMarketingObjectives(initialCustomerData.marketingObjectives || "");
+        setBrandTone(initialCustomerData.brandTone || "");
+        setBrandVoice(initialCustomerData.brandVoice || "");
+        setCompetitors(initialCustomerData.competitors || "");
+        setKeywords(initialCustomerData.keywords || "");
+        setGeographicMarkets(initialCustomerData.geographicMarkets || company.headquarters?.country || "");
+        setJourneyStage(initialCustomerData.customerJourneyStage || "Consideration");
+        
+        if (Array.isArray(initialCustomerData.marketingChannels)) {
+          setMarketingChannels(initialCustomerData.marketingChannels);
+        } else {
+          setMarketingChannels(company.businessModel === "b2c" 
+            ? ["Instagram Ads", "Influencer Marketing"]
+            : ["LinkedIn Outreach", "Cold Email", "Content SEO"]
+          );
+        }
+
+        if (initialCustomerData.campaignStrategy) {
+          setCampaignStrategy(initialCustomerData.campaignStrategy);
+        }
       }
     }
   }, [initialCustomerData]);
+
+  // Persist intake profile state changes to localStorage
+  useEffect(() => {
+    if (!hasInitializedRef.current || typeof window === "undefined") return;
+    try {
+      localStorage.setItem(STORAGE_KEY_INTAKE, JSON.stringify({
+        businessName,
+        websiteUrl,
+        industry,
+        businessModel,
+        targetAudience,
+        businessGoals,
+        marketingObjectives,
+        brandTone,
+        brandVoice,
+        competitors,
+        keywords,
+        geographicMarkets,
+        journeyStage,
+        marketingChannels
+      }));
+    } catch (e) {
+      // ignore
+    }
+  }, [
+    businessName, websiteUrl, industry, businessModel, targetAudience,
+    businessGoals, marketingObjectives, brandTone, brandVoice, competitors,
+    keywords, geographicMarkets, journeyStage, marketingChannels
+  ]);
 
   // Handle Profile Update & Save
   const handleSaveProfile = async (e?: React.FormEvent) => {
@@ -326,7 +386,10 @@ export function ContentWorkflowWorkspace({
             {/* Grid 1: Basic Business Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="biz-name" className="text-slate-400 text-xs">Official Business Name</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-name" className="text-slate-400 text-xs">Official Business Name</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{businessName.length} / 300</span>
+                </div>
                 <Input
                   id="biz-name"
                   value={businessName}
@@ -336,7 +399,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-url" className="text-slate-400 text-xs">Primary Website URL</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-url" className="text-slate-400 text-xs">Primary Website URL</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{websiteUrl.length} / 300</span>
+                </div>
                 <Input
                   id="biz-url"
                   value={websiteUrl}
@@ -346,7 +412,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-industry" className="text-slate-400 text-xs">Industry Vertical</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-industry" className="text-slate-400 text-xs">Industry Vertical</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{industry.length} / 300</span>
+                </div>
                 <Input
                   id="biz-industry"
                   value={industry}
@@ -379,7 +448,10 @@ export function ContentWorkflowWorkspace({
             {/* Grid 2: Core parameters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="biz-audience" className="text-slate-400 text-xs">Target Audience (ICP)</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-audience" className="text-slate-400 text-xs">Target Audience (ICP)</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{targetAudience.length} / 2000</span>
+                </div>
                 <textarea
                   id="biz-audience"
                   value={targetAudience}
@@ -390,7 +462,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-goals" className="text-slate-400 text-xs">Primary Business Goals</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-goals" className="text-slate-400 text-xs">Primary Business Goals</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{businessGoals.length} / 2000</span>
+                </div>
                 <textarea
                   id="biz-goals"
                   value={businessGoals}
@@ -405,7 +480,10 @@ export function ContentWorkflowWorkspace({
             {/* Grid 3: Advanced Marketing Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="biz-objectives" className="text-slate-400 text-xs">Marketing Objectives</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-objectives" className="text-slate-400 text-xs">Marketing Objectives</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{marketingObjectives.length} / 500</span>
+                </div>
                 <Input
                   id="biz-objectives"
                   value={marketingObjectives}
@@ -415,7 +493,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-competitors" className="text-slate-400 text-xs">Competitors</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-competitors" className="text-slate-400 text-xs">Competitors</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{competitors.length} / 500</span>
+                </div>
                 <Input
                   id="biz-competitors"
                   value={competitors}
@@ -425,7 +506,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-keywords" className="text-slate-400 text-xs">Keywords</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-keywords" className="text-slate-400 text-xs">Keywords</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{keywords.length} / 500</span>
+                </div>
                 <Input
                   id="biz-keywords"
                   value={keywords}
@@ -438,7 +522,10 @@ export function ContentWorkflowWorkspace({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="biz-tone" className="text-slate-400 text-xs">Brand Tone</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-tone" className="text-slate-400 text-xs">Brand Tone</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{brandTone.length} / 300</span>
+                </div>
                 <Input
                   id="biz-tone"
                   value={brandTone}
@@ -448,7 +535,10 @@ export function ContentWorkflowWorkspace({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="biz-markets" className="text-slate-400 text-xs">Geographic Markets</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="biz-markets" className="text-slate-400 text-xs">Geographic Markets</Label>
+                  <span className="text-[10px] font-mono text-slate-500">{geographicMarkets.length} / 300</span>
+                </div>
                 <Input
                   id="biz-markets"
                   value={geographicMarkets}
@@ -1061,9 +1151,23 @@ export function ContentWorkflowWorkspace({
 
             </div>
           </div>
-
         </div>
       )}
+
+      {/* V. DYNAMIC CAMPAIGN CONTENT GENERATOR & SUB-LIST WORKFLOWS */}
+      <div className="pt-6 border-t border-slate-850">
+        <CampaignContentGenerator
+          customerData={initialCustomerData}
+          customerName={customerName}
+          onSaveContent={async (contentData) => {
+            const updatedFields = {
+              lastGeneratedCampaignContent: contentData,
+              updatedAt: new Date().toISOString()
+            };
+            return await onSaveCustomer(updatedFields);
+          }}
+        />
+      </div>
 
     </div>
   );

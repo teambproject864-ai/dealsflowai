@@ -35,8 +35,12 @@ import {
   Cpu,
   Menu,
   Globe,
-  ShieldAlert
+  ShieldAlert,
+  Layers,
+  Sparkles,
+  Briefcase,
 } from "lucide-react";
+import { DealflowCRMWorkspace } from "@/components/portal/DealflowCRMWorkspace";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import AuthProvider from "@/components/auth/AuthProvider";
@@ -60,6 +64,7 @@ const tabs = [
   { id: "agents", label: "Agents", icon: UserPlus, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "interactions", label: "Interactions", icon: MessageSquare, color: "text-sky-400 border-sky-500/30 hover:border-sky-500/60 shadow-sky-500/10" },
   { id: "password-requests", label: "Password Requests", icon: KeyRound, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
+  { id: "dealflow-crm", label: "Dealflow CRM", icon: Briefcase, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
 
 function AdminPortalContent() {
@@ -2376,6 +2381,13 @@ function AdminPortalContent() {
           </GlassPanel>
         </div>
       )}
+        {/* 14. DEALFLOW CRM TAB */}
+        {activeTab === "dealflow-crm" && (
+          <div className="animate-in fade-in duration-300">
+            <DealflowCRMWorkspace userRole="admin" />
+          </div>
+        )}
+
       </div>
     </div>
   );

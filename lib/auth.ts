@@ -62,7 +62,7 @@ export interface DemoAdmin {
 
 // Plaintext passwords for demo users (dynamically hashed in memory on startup)
 const DEV_PASSWORDS = {
-  admin: process.env.ADMIN_PASSWORD || "Admin123!",
+  admin: process.env.ADMIN_PASSWORD || "Pranee@1909",
   admin1: process.env.ADMIN1_PASSWORD || "Pranee@1909",
   praneethAgent: process.env.AGENT_PRANEETH_PASSWORD || "Praneeth123!",
   ashokAgent: process.env.AGENT_ASHOK_PASSWORD || "AgentAshok456!",

@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
             }
           } else {
             // Fallback for local development when ADMIN_PASSWORD_HASH is not set
-            const isValidPassword = await verifyPassword(password, bcrypt.hashSync("Admin123!", 10)); // default fallback password
+            const isValidPassword = await verifyPassword(password, bcrypt.hashSync("Pranee@1909", 10)); // default fallback password
             if (isValidPassword) {
               user = { ...DEMO_ADMIN, role: "admin" as const };
             }

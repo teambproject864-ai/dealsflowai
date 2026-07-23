@@ -41,6 +41,7 @@ import {
   Table2,
   Play,
   RefreshCw,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AuthProvider from "@/components/auth/AuthProvider";
@@ -48,6 +49,7 @@ import LogoutButton from "@/components/auth/LogoutButton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
+import { DealflowCRMWorkspace } from "@/components/portal/DealflowCRMWorkspace";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
@@ -62,6 +64,7 @@ const tabs = [
   { id: "feedback", label: "Feedback", icon: Star, color: "text-pink-400 border-pink-500/30 hover:border-pink-500/60 shadow-pink-500/10" },
   { id: "ai-communications", label: "AI Interactions", icon: Phone, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
   { id: "genbi", label: "Chatbot (Wren AI)", icon: Bot, color: "text-fuchsia-400 border-fuchsia-500/30 hover:border-fuchsia-500/60 shadow-fuchsia-500/10" },
+  { id: "dealflow-crm", label: "Dealflow CRM", icon: Briefcase, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
 
 function CustomerPortalContent() {
@@ -2475,6 +2478,14 @@ function CustomerPortalContent() {
             </GlassPanel>
           </div>
         )}
+
+        {/* 14. DEALFLOW CRM TAB */}
+        {activeTab === "dealflow-crm" && (
+          <div className="animate-in fade-in duration-300">
+            <DealflowCRMWorkspace userRole="customer" userId={user?.id} />
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GlassPanel } from "@/components/immersive/GlassPanel";
 import { ExtrudedButton } from "@/components/immersive/ExtrudedButton";
 import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
+import { DealflowCRMWorkspace } from "@/components/portal/DealflowCRMWorkspace";
 import {
   Phone,
   MessageSquare,
@@ -72,6 +73,7 @@ const tabs = [
   { id: "gtm-playbook", label: "Playbook Generation", icon: Calendar, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
   { id: "gtm-analysis", label: "Automated GTM Analysis", icon: TrendingUp, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
   { id: "genbi", label: "Chatbot (Wren AI)", icon: Bot, color: "text-fuchsia-400 border-fuchsia-500/30 hover:border-fuchsia-500/60 shadow-fuchsia-500/10" },
+  { id: "dealflow-crm", label: "Dealflow CRM", icon: Briefcase, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
 
 function AgentPortalContent() {
@@ -3037,7 +3039,14 @@ function AgentPortalContent() {
         )}
 
     </AnimatePresence>
-  </div>
+        {/* 8. DEALFLOW CRM TAB */}
+        {activeTab === "dealflow-crm" && (
+          <div className="animate-in fade-in duration-300">
+            <DealflowCRMWorkspace userRole="agent" userId={user?.id} />
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

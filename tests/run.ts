@@ -34,6 +34,9 @@ import { runAgentEcosystemTests } from "@/tests/agent-ecosystem.test";
 import { runGtmIntakeTests } from "@/tests/gtm-intake.test";
 import { runMicrosoftAgentFrameworkTests } from "./microsoft-agent-framework.test";
 import { runCustomerPortalSyncTests } from "./customer-portal-sync.test";
+import { runCampaignTaxonomyTests } from "./campaign-taxonomy.test";
+import { runContentStudioInputValidationTests } from "./content-studio-input-validation.test";
+import { runDealflowCRMTests } from "./dealflow-crm.test";
 
 async function testIcsParsing() {
   const raw = [
@@ -312,7 +315,10 @@ async function main() {
     runAgentEcosystemTests,
     runGtmIntakeTests,
     runMicrosoftAgentFrameworkTests,
-    runCustomerPortalSyncTests
+    runCustomerPortalSyncTests,
+    runCampaignTaxonomyTests,
+    runContentStudioInputValidationTests,
+    runDealflowCRMTests
   ];
 
   for (const t of tests) {
