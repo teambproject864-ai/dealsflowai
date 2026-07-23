@@ -2,31 +2,49 @@
 import { hfInfer } from '../huggingface';
 import { GMVAE } from './vae';
 import { GMGAN } from './gan';
+import { GMEvaluator } from './evaluation';
+import { GMDataIngestionPipeline, SyntheticDataSample } from './data-ingestion';
 import type { GMOutput, GMLatentVector, GMLearningState, GMMarketDataPoint, GMLLMConfig } from './gm-llm.types';
+import type { ThresholdConfig } from './evaluation';
 
 export class GMLLM {
   private vae: GMVAE;
   private gan: GMGAN;
-  private config: GMLLMConfig;
+  private evaluator: GMEvaluator;
+  private dataPipeline: GMDataIngestionPipeline;
+  private config: GMLLMConfig & Partial<ThresholdConfig>;
   private learningState: GMLearningState;
   private trainingData: GMMarketDataPoint[];
+  private retrainingInProgress: boolean;
 
-  constructor(config?: Partial<GMLLMConfig>) {
+  constructor(config?: Partial<GMLLMConfig & ThresholdConfig>) {
     this.config = {
       maxLatentDim: 64,
       numEpochs: 100,
       learningRate: 0.001,
       fusionStrategy: 'llm_primary_with_enhancements',
+      minOverallScore: 0.7,
+      minDomainRelevance: 0.6,
+      minEngagementScore: 0.5,
+      maxPerplexity: 50,
       ...config,
     };
     this.vae = new GMVAE(this.config.maxLatentDim);
     this.gan = new GMGAN(this.config.maxLatentDim);
+    this.evaluator = new GMEvaluator({
+      minOverallScore: this.config.minOverallScore,
+      minDomainRelevance: this.config.minDomainRelevance,
+      minEngagementScore: this.config.minEngagementScore,
+      maxPerplexity: this.config.maxPerplexity,
+    });
+    this.dataPipeline = new GMDataIngestionPipeline();
     this.learningState = {
       epoch: 0,
       loss: { llm: 0, ganGenerator: 0, ganDiscriminator: 0, vae: 0, total: 0 },
       modeCollapseRisk: 0,
     };
     this.trainingData = [];
+    this.retrainingInProgress = false;
   }
 
   // Extract features from text for VAE
@@ -148,6 +166,80 @@ export class GMLLM {
   // Get learning state
   getLearningState(): GMLearningState {
     return { ...this.learningState };
+  }
+
+  // Get evaluator instance
+  getEvaluator(): GMEvaluator {
+    return this.evaluator;
+  }
+
+  // Get data pipeline instance
+  getDataPipeline(): GMDataIngestionPipeline {
+    return this.dataPipeline;
+  }
+
+  // Ingest and train on synthetic baseline data
+  async ingestAndTrainFromBaselines(prompts: string[]): Promise<GMLearningState> {
+    console.log('[GMLLM] Generating synthetic training data from baselines...');
+    const syntheticData = await this.dataPipeline.generateSyntheticData(prompts);
+    const trainingPoints = this.dataPipeline.convertToTrainingData(syntheticData);
+    
+    trainingPoints.forEach(point => this.addTrainingData(point));
+    
+    console.log('[GMLLM] Training GM LLM on synthetic data...');
+    return this.train();
+  }
+
+  // Evaluate and conditionally retrain
+  async evaluateAndConditionallyRetrain(
+    prompt: string,
+    referenceContent: string,
+    systemPrompt?: string
+  ): Promise<{ retrained: boolean; comparisonResults: any[] }> {
+    if (this.retrainingInProgress) {
+      console.warn('[GMLLM] Retraining already in progress, skipping...');
+      return { retrained: false, comparisonResults: [] };
+    }
+
+    // Generate baseline outputs
+    const syntheticData = await this.dataPipeline.generateSyntheticData([prompt], systemPrompt);
+    const sample = syntheticData[0];
+    if (!sample) throw new Error('No synthetic data generated');
+
+    const baselineOutputs = Object.entries(sample.baselineOutputs).map(([modelName, content]) => ({
+      modelName,
+      content,
+    }));
+
+    // Generate GM LLM output
+    const gmllmOutput = await this.infer(prompt, systemPrompt);
+
+    // Compare models
+    const comparisonResults = this.evaluator.compareModels(
+      gmllmOutput,
+      baselineOutputs,
+      referenceContent || sample.referenceContent
+    );
+
+    const gmllmResult = comparisonResults.find(r => r.modelName === 'gm-llm');
+    if (!gmllmResult) throw new Error('GM LLM result not found');
+
+    // Check if retraining is needed
+    const needsRetraining = !gmllmResult.passesThresholds;
+
+    if (needsRetraining) {
+      console.log('[GMLLM] GM LLM failed thresholds, initiating retraining...');
+      this.retrainingInProgress = true;
+      try {
+        await this.ingestAndTrainFromBaselines([prompt, ...baselineOutputs.map(b => b.content)]);
+      } finally {
+        this.retrainingInProgress = false;
+      }
+      return { retrained: true, comparisonResults };
+    }
+
+    console.log('[GMLLM] GM LLM passed thresholds, no retraining needed');
+    return { retrained: false, comparisonResults };
   }
 }
 
