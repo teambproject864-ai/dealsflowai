@@ -68,11 +68,18 @@ function ensureFirebaseApp(): admin.app.App | null {
   }
 }
 
-/** Returns Firestore bound to the named Admin app, or null if Firebase not configured */
+let firestoreQuotaExhausted = false;
+
+export function markFirestoreQuotaExhausted(): void {
+  firestoreQuotaExhausted = true;
+  (globalThis as any).firestoreQuotaExhausted = true;
+}
+
+/** Returns Firestore bound to the named Admin app, or null if Firebase not configured or quota exhausted */
 export function getDb(): admin.firestore.Firestore | null {
   const mock = (globalThis as any).firestoreMock;
   if (mock) return mock;
-  if (process.env.DISABLE_FIRESTORE === "true") return null;
+  if (process.env.DISABLE_FIRESTORE === "true" || firestoreQuotaExhausted || (globalThis as any).firestoreQuotaExhausted) return null;
   if (!firestoreInstance) {
     const app = ensureFirebaseApp();
     if (app) {
@@ -92,17 +99,40 @@ export const db: admin.firestore.Firestore | null =
           const mock = (globalThis as any).firestoreMock;
           const real = mock || getDb();
           if (!real) {
-            logger.warn("Firebase not configured; skipping operation on", prop);
+            logger.warn("Firebase not configured or quota exceeded; skipping operation on", prop);
             return makeNoopChain();
           }
           const value = (real as unknown as Record<string | symbol, unknown>)[prop];
           if (typeof value === "function") {
-            return (value as (...args: unknown[]) => unknown).bind(real);
+            return (...args: unknown[]) => {
+              try {
+                const res = (value as (...args: unknown[]) => unknown).apply(real, args);
+                if (res && typeof (res as any).catch === "function") {
+                  return (res as any).catch((err: any) => {
+                    if (err?.code === 8 || err?.message?.includes("RESOURCE_EXHAUSTED") || err?.details?.includes("Quota exceeded")) {
+                      logger.warn("[Firebase Admin] Firestore quota exceeded; switching to local fallback mode.");
+                      markFirestoreQuotaExhausted();
+                      return null;
+                    }
+                    throw err;
+                  });
+                }
+                return res;
+              } catch (err: any) {
+                if (err?.code === 8 || err?.message?.includes("RESOURCE_EXHAUSTED") || err?.details?.includes("Quota exceeded")) {
+                  logger.warn("[Firebase Admin] Firestore quota exceeded; switching to local fallback mode.");
+                  markFirestoreQuotaExhausted();
+                  return null;
+                }
+                throw err;
+              }
+            };
           }
           return value;
         },
       })
     : null;
+
 
 export function getStorage(): admin.storage.Storage | null {
   const app = ensureFirebaseApp();

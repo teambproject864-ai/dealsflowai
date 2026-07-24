@@ -37,6 +37,14 @@ import { runCustomerPortalSyncTests } from "./customer-portal-sync.test";
 import { runCampaignTaxonomyTests } from "./campaign-taxonomy.test";
 import { runContentStudioInputValidationTests } from "./content-studio-input-validation.test";
 import { runDealflowCRMTests } from "./dealflow-crm.test";
+import { runLLMEndToEndTestSuite } from "./llm-e2e-suite.test";
+import { runModelSelectionTests } from "./model-selection.test";
+import { runDealflowCRMFunctionalTests } from "./dealflow-crm-functional.test";
+import { runLLMPipelineTests } from "./dealflow-llm-pipeline.test";
+import { runDeliverableStudioTests } from "./deliverable-studio.test";
+
+
+
 
 async function testIcsParsing() {
   const raw = [
@@ -318,8 +326,15 @@ async function main() {
     runCustomerPortalSyncTests,
     runCampaignTaxonomyTests,
     runContentStudioInputValidationTests,
-    runDealflowCRMTests
+    runDealflowCRMTests,
+    runLLMEndToEndTestSuite,
+    runModelSelectionTests,
+    runDealflowCRMFunctionalTests,
+    runLLMPipelineTests,
+    runDeliverableStudioTests
   ];
+
+
 
   for (const t of tests) {
     await t();

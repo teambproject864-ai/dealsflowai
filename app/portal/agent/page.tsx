@@ -61,8 +61,11 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { BarChart3 } from "lucide-react";
 
+import { CustomerContactProfiles } from "@/components/portal/CustomerContactProfiles";
+
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
+  { id: "contact-profiles", label: "Customer Contact Profiles", icon: Users, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "customers", label: "Customers", icon: Users, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
   { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
   { id: "requirements", label: "Requirements", icon: FileText, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
@@ -75,6 +78,7 @@ const tabs = [
   { id: "genbi", label: "Chatbot (Wren AI)", icon: Bot, color: "text-fuchsia-400 border-fuchsia-500/30 hover:border-fuchsia-500/60 shadow-fuchsia-500/10" },
   { id: "dealflow-crm", label: "Dealflow CRM", icon: Briefcase, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
+
 
 function AgentPortalContent() {
   const { user, isLoading: userLoading } = useCurrentUser();
@@ -1124,9 +1128,24 @@ function AgentPortalContent() {
       {/* Tab Panels */}
       <div className="mt-4">
         <AnimatePresence mode="wait">
-        
+
+          {/* 0. CUSTOMER CONTACT PROFILES TAB */}
+
+        {activeTab === "contact-profiles" && (
+          <motion.div
+            key="contact-profiles"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <CustomerContactProfiles />
+          </motion.div>
+        )}
+
         {/* 0. DASHBOARD TAB */}
         {activeTab === "dashboard" && (
+
           <motion.div
             key="dashboard"
             initial={{ opacity: 0, x: 15 }}
@@ -1483,15 +1502,14 @@ function AgentPortalContent() {
 
             {contentSubTab === "workspace" ? (
               (() => {
-                const activeCust = customers.find(c => c.id === activeStrategyCustomerId);
-                if (!activeCust) {
-                  return (
-                    <div className="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
-                      <p className="text-sm text-slate-400">Please select or onboard a customer account to begin.</p>
-                    </div>
-                  );
-                }
+                const activeCust = customers.find(c => c.id === activeStrategyCustomerId) || customers[0] || {
+                  id: "agent_default_workspace",
+                  companyName: "Strategy Workspace",
+                  name: "Strategy Workspace",
+                  businessModel: "b2b"
+                };
                 return (
+
                   <ContentWorkflowWorkspace
                     customerId={activeCust.id}
                     customerName={activeCust.companyName || activeCust.name}
@@ -3038,18 +3056,25 @@ function AgentPortalContent() {
           </div>
         )}
 
-    </AnimatePresence>
         {/* 8. DEALFLOW CRM TAB */}
         {activeTab === "dealflow-crm" && (
-          <div className="animate-in fade-in duration-300">
+          <motion.div
+            key="dealflow-crm"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
             <DealflowCRMWorkspace userRole="agent" userId={user?.id} />
-          </div>
+          </motion.div>
         )}
-
+        </AnimatePresence>
       </div>
     </div>
   );
 }
+
+
 
 export default function AgentPortal() {
   return (

@@ -121,14 +121,47 @@ const CORE_ARCHITECTURE = [
     ],
     synergy: "Intercepts all memory operations in Memory OS (Hermes), inspects vectors in MEM Palace, and validates learning iterations inside ALMA.",
     benefit: "SOC 2 audit in progress & GDPR compliance by design, ensuring customer data remains secure, private, and audit-ready at all times."
+  },
+  {
+    id: "dealflow-llm",
+    title: "Dealflow LLM (Dealflow AI Core v1)",
+    icon: Sparkles,
+    glow: "glow-indigo",
+    accent: "text-indigo-400",
+    borderColor: "dark:border-indigo-500/30",
+    bgGradient: "from-indigo-500/10",
+    definition: "Our proprietary, fine-tuned high-precision intelligence engine engineered specifically for B2B SaaS deal analysis, financial metric extraction, and automated strategy & campaign content generation.",
+    capabilities: [
+      "Financial metric extraction (ARR, NRR, CAC, LTV) from pitch decks and financial statements.",
+      "Automated strategy generation & outbound campaign content synthesis with 97.2%+ accuracy.",
+      "Multi-model orchestration supporting NVIDIA & Hugging Face inference pipelines.",
+      "Customer-provided AES-256 encrypted API key integration & role-based model authorization."
+    ],
+    synergy: "Powers the Strategy & Content Generation workspace in Content Hub, queries MEM Palace vectors, and interacts with ALMA learning loops.",
+    benefit: "Delivers enterprise-grade B2B strategy recommendations in under 40ms, drastically accelerating deal evaluation and campaign execution."
   }
 ];
 
 // Recently Deployed Implementations Catalog
 const RECENT_IMPLEMENTATIONS = [
   {
+    id: "dealflow-llm-engine",
+    name: "Dealflow LLM Strategy & Content Engine",
+    category: "AI & Automation",
+    badge: "v2.0 Active",
+    icon: Sparkles,
+    accent: "text-indigo-400",
+    borderColor: "border-indigo-500/30",
+    bgColor: "bg-indigo-950/10",
+    purpose: "Fine-tuned Dealflow AI Core v1 model integrated directly into the Strategy & Content Generation workspace for 1-click model selection and instant campaign generation.",
+    userBenefits: "Enables customers, agents, and admins to select the proprietary Dealflow LLM model for high-precision GTM strategies, deal scoring, and outbound campaign assets.",
+    techSpecs: "`dealflow-llm-v1` model ID in `/api/content/generate`, model registry access control, 65k context window.",
+    mediaReqs: "AI Model selector interface mockup, Dealflow LLM performance card, prompt execution flow."
+  },
+  {
     id: "wren-ai-chatbot",
     name: "Chatbot (Wren AI / GenBI Agent)",
+
     category: "AI & Automation",
     badge: "v2.0 Active",
     icon: Bot,

@@ -1,4 +1,5 @@
-import { db } from "./firebase-admin";
+import { db, markFirestoreQuotaExhausted } from "./firebase-admin";
+
 import bcrypt from "bcrypt";
 
 // Default passwords for seed accounts
@@ -1333,8 +1334,14 @@ export async function seedFirestore() {
       console.log("[db-init] Seeded content_assets collection successfully.");
     }
 
-  } catch (error) {
+  } catch (error: any) {
     isSeeded = false;
-    console.error("[db-init] Error seeding Firestore:", error);
+    if (error?.code === 8 || error?.message?.includes("RESOURCE_EXHAUSTED") || error?.details?.includes("Quota exceeded")) {
+      markFirestoreQuotaExhausted();
+      console.warn("[db-init] Firestore quota exceeded. System operating in local seed fallback mode.");
+    } else {
+      console.error("[db-init] Error seeding Firestore:", error);
+    }
   }
 }
+

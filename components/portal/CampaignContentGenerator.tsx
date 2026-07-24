@@ -52,6 +52,9 @@ import {
   getTaxonomyMetrics,
   validateFieldInputs
 } from "@/lib/campaign-options-schema";
+import { DeliverableBuilder } from "@/lib/deliverable-builder";
+import { PrePublishValidationReport } from "@/lib/pre-publish-validator";
+
 
 interface CampaignContentGeneratorProps {
   customerData?: any;
@@ -142,8 +145,10 @@ export function CampaignContentGenerator({
   const [copiedState, setCopiedState] = useState(false);
   const [isEditingOutput, setIsEditingOutput] = useState(false);
   const [editedText, setEditedText] = useState("");
+  const [deliverableReport, setDeliverableReport] = useState<PrePublishValidationReport | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
 
   // Filter Categories Logic
   const filteredCategories = COMPLETE_CAMPAIGN_SCHEMA.map(cat => {
@@ -310,26 +315,36 @@ export function CampaignContentGenerator({
     if (!validateInputs()) return;
 
     setIsGenerating(true);
-    setGenerationProgress(25);
+    setGenerationProgress(20);
     setGenerationStage("Indexing campaign parameters & ICP context...");
+    await new Promise(r => setTimeout(r, 350));
+
+    setGenerationProgress(50);
+    setGenerationStage(`Synthesizing deliverable-ready copy for ${activeSubType.title}...`);
     await new Promise(r => setTimeout(r, 450));
 
-    setGenerationProgress(65);
-    setGenerationStage(`Synthesizing ${activeSubType.title} deliverable...`);
-    await new Promise(r => setTimeout(r, 550));
+    setGenerationProgress(80);
+    setGenerationStage("Curating high-resolution images & running pre-publishing validation...");
+    await new Promise(r => setTimeout(r, 350));
 
-    setGenerationProgress(90);
-    setGenerationStage("Optimizing call-to-action & channel alignment...");
-    await new Promise(r => setTimeout(r, 400));
-
-    const result = generateDynamicContent(activeCategory, activeSubType, formValues, customerName);
+    const deliverable = DeliverableBuilder.buildDeliverable({
+      categoryKey: activeCategory.id,
+      categoryTitle: activeCategory.title,
+      subTypeKey: activeSubType.id,
+      subTypeTitle: activeSubType.title,
+      badge: activeSubType.badge,
+      customerName,
+      formValues
+    });
 
     setGenerationProgress(100);
-    setGeneratedOutput(result);
-    setEditedText(result);
+    setGeneratedOutput(deliverable.rawMarkdown);
+    setEditedText(deliverable.rawMarkdown);
+    setDeliverableReport(deliverable.validationReport);
     setIsGenerating(false);
     setIsEditingOutput(false);
   };
+
 
   // Manual Save for Option Deliverable Inputs
   const [isSavingInputs, setIsSavingInputs] = useState(false);
@@ -855,12 +870,62 @@ export function CampaignContentGenerator({
             </div>
           )}
 
-          {/* GENERATED OUTPUT PREVIEW PANEL */}
+          {/* GENERATED OUTPUT PREVIEW PANEL & PRE-PUBLISHING VALIDATION REPORT */}
           {generatedOutput && !isGenerating && (
-            <div className="bg-slate-900/40 border border-violet-500/40 p-6 lg:p-8 rounded-2xl space-y-5 shadow-xl shadow-violet-950/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="bg-slate-900/40 border border-violet-500/40 p-6 lg:p-8 rounded-2xl space-y-6 shadow-xl shadow-violet-950/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
               
+              {/* PRE-PUBLISHING READINESS SCORE CARD */}
+              {deliverableReport && (
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 font-sans">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-850">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-2 rounded-lg ${deliverableReport.isDeliverableReady ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-bold text-white flex items-center gap-2">
+                          Pre-Publishing Validation Score
+                          <span className={`text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full border ${deliverableReport.isDeliverableReady ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border-amber-500/30"}`}>
+                            {deliverableReport.statusBadge}
+                          </span>
+                        </h6>
+                        <p className="text-[11px] text-slate-400">Technical specification & format compliance check</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="text-xl font-black text-emerald-400">{deliverableReport.overallScore}</span>
+                        <span className="text-xs text-slate-500 font-bold"> / 100</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Validation Checks Breakdown Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 text-[11px]">
+                    {deliverableReport.checks.map(c => (
+                      <div key={c.id} className={`p-2 rounded-lg border flex items-start gap-2 ${c.passed ? "bg-emerald-950/20 border-emerald-850/50 text-emerald-200" : "bg-amber-950/20 border-amber-850/50 text-amber-200"}`}>
+                        {c.passed ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" /> : <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />}
+                        <div>
+                          <span className="font-bold block text-[10px] uppercase tracking-wider">{c.name}</span>
+                          <span className="text-[10px] text-slate-300">{c.message}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Platform Specifications Banner */}
+                  <div className="pt-2 flex flex-wrap justify-between items-center text-[10px] font-mono text-slate-400 border-t border-slate-850/60">
+                    <span>Platform Spec: <strong className="text-white uppercase">{deliverableReport.platformSpec.targetPlatform}</strong></span>
+                    <span>Length: <strong className="text-white">{deliverableReport.characterCount} chars</strong> / {deliverableReport.platformSpec.maxRecommendedLength} max</span>
+                    <span>Image Embeds: <strong className="text-emerald-400">{deliverableReport.imageEmbedCount} Asset(s)</strong></span>
+                  </div>
+                </div>
+              )}
+
               {/* Output Header Toolbar */}
               <div className="flex justify-between items-center border-b border-slate-850 pb-4 flex-wrap gap-3">
+
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                   <div>

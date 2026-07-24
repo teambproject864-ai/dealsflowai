@@ -1,18 +1,37 @@
 import { NextResponse } from "next/server";
 import { analyzeGTMStrategy, validateGTMAnalysis } from "@/lib/gtm-llm/gtm-llm-service";
 import { GTMInputSchema } from "@/lib/gtm-llm/types";
+import { isModelAllowedForRole, getModelById } from "@/lib/model-registry";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    const user = await getAuthenticatedUser(request);
     const body = await request.json();
-    const input = GTMInputSchema.parse(body);
+    
+    if (body.modelId) {
+      const userRole = user?.role || "customer";
+      if (!isModelAllowedForRole(body.modelId, userRole)) {
+        const model = getModelById(body.modelId);
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Model '${model?.name || body.modelId}' is not authorized for role '${userRole}'.`
+          },
+          { status: 403 }
+        );
+      }
+    }
 
+    const input = GTMInputSchema.parse(body);
     const result = await analyzeGTMStrategy(input);
 
     return NextResponse.json({
       success: true,
       data: result,
+      modelUsed: body.modelId || "default"
     });
+
   } catch (error) {
     console.error("GTM Analysis Error:", error);
     return NextResponse.json(

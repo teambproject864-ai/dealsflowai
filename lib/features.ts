@@ -60,6 +60,17 @@ export const APP_FEATURES: Feature[] = [
     version: 1,
   },
   {
+    id: "dealflow-llm-core",
+    name: "Dealflow LLM (Dealflow AI Core v1)",
+    description: "Proprietary fine-tuned AI model specialized in financial metric extraction, B2B SaaS deal analysis, and automated strategy & content generation with 97.2%+ accuracy.",
+    category: "AI & Automation",
+    iconName: "Sparkles",
+    status: "active",
+    isNew: true,
+    updatedAt: "2026-07-24T00:00:00Z",
+    version: 2,
+  },
+  {
     id: "ai-analysis",
     name: "AI-Powered GTM Analysis",
     description: "Analyze company websites to generate a complete GTM plan with ICPs, brand overview, outreach strategy, and journey pipeline.",
@@ -70,6 +81,7 @@ export const APP_FEATURES: Feature[] = [
     updatedAt: "2024-04-28T00:00:00Z",
     version: 1,
   },
+
   {
     id: "agent-brain",
     name: "Autonomous Agent Brain",

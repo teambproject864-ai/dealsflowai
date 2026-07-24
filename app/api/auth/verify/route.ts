@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
       const { db } = await import("@/lib/firebase-admin");
       if (db) {
         const snap = await db.collection("users").where("email", "==", sanitizedEmail).get();
-        if (!snap.empty) {
+        if (snap && !snap.empty) {
+
           const doc = snap.docs[0];
           matchedUser = { id: doc.id, ...doc.data() };
           isDbUser = true;

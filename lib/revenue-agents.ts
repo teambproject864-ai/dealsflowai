@@ -19,6 +19,17 @@ export function getRevenueAgentCatalog(): Omit<RevenueAgentProfile, "activeSessi
   }));
 }
 
+export const REVENUE_AGENTS = [
+  { key: "ashok", name: "Ashok", title: "Outbound Lead Specialist", bio: "Expert in outbound pipeline generation, enterprise B2B sales development, and cold outreach.", specialties: ["B2B SaaS", "Outbound", "Pipeline"] },
+  { key: "harsha", name: "Harsha", title: "Content & GTM Architect", bio: "Specializes in product-led growth, content automation pipelines, and ICP alignment.", specialties: ["Content", "GTM", "Product-Led"] },
+  { key: "kiran", name: "Kiran", title: "Growth & Performance Strategist", bio: "Focuses on paid ad optimization, conversion funnel analytics, and CAC reduction.", specialties: ["Growth", "Paid Ads", "Metrics"] },
+  { key: "vijay", name: "Vijay", title: "Enterprise Sales Director", bio: "Strategic account executive managing multi-stakeholder enterprise deals and contract negotiations.", specialties: ["Enterprise Sales", "Strategic Planning"] },
+  { key: "avinash", name: "Avinash", title: "Customer Success & Expansion Lead", bio: "Drives account retention, expansion playbooks, and post-sale onboarding experience.", specialties: ["Account Management", "Customer Success"] },
+  { key: "kunal", name: "Kunal", title: "Marketing Automation Lead", bio: "Engineers automated lead generation workflows and multi-channel drip campaigns.", specialties: ["Marketing Automation", "Lead Generation"] },
+  { key: "praneeth", name: "Praneeth", title: "Chief RevOps & Pipeline Specialist", bio: "Pioneers B2B RevOps optimization, deal velocity acceleration, and custom GTM frameworks.", specialties: ["B2B SaaS", "GTM Strategy", "RevOps", "Pipeline Optimization"] }
+];
+
+
 async function countActiveSessionsByPersona(): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
   for (const key of Object.keys(AGENT_FULL_NAMES)) {
@@ -26,23 +37,30 @@ async function countActiveSessionsByPersona(): Promise<Record<string, number>> {
   }
 
   try {
-    const snapshot = await getDb()
-      .collection("calls")
-      .where("status", "==", "in-progress")
-      .limit(50)
-      .get();
+    const dbInstance = getDb();
+    if (dbInstance) {
+      const snapshot = await dbInstance
+        .collection("calls")
+        .where("status", "==", "in-progress")
+        .limit(50)
+        .get();
 
-    const now = Date.now();
-    const recentThresholdMs = now - 2 * 60 * 1000;
+      const now = Date.now();
+      const recentThresholdMs = now - 2 * 60 * 1000;
 
-    snapshot.docs.forEach((doc) => {
-      const data = doc.data() as CallRecord;
-      const persona = data.agentPersona || "ashok";
-      const lastSeenMs = data.updatedAtMs || 0;
-      if (lastSeenMs && lastSeenMs < recentThresholdMs) return;
-      counts[persona] = (counts[persona] || 0) + 1;
-    });
-  } catch {
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data() as CallRecord;
+        if (!data) return;
+        const personaKey = (data.agentPersona || "").toLowerCase().trim();
+        const lastHeartbeat = data.lastHeartbeat ? new Date(data.lastHeartbeat).getTime() : 0;
+        const isActive = data.status === "in-progress" || (lastHeartbeat > 0 && lastHeartbeat >= recentThresholdMs);
+        if (personaKey && counts[personaKey] !== undefined && isActive) {
+          counts[personaKey] += 1;
+        }
+      });
+    }
+  } catch (error) {
+
     // Firestore may be unavailable in dev — return zero counts
   }
 

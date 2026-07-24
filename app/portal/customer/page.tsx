@@ -50,10 +50,15 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ContentWorkflowWorkspace } from "@/components/portal/ContentWorkflowWorkspace";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { DealflowCRMWorkspace } from "@/components/portal/DealflowCRMWorkspace";
+import { AgentAssignmentModule } from "@/components/portal/AgentAssignmentModule";
+import { APIKeyManagementModule } from "@/components/portal/APIKeyManagementModule";
+import { UserCheck, Key } from "lucide-react";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
   { id: "content-hub", label: "Content & Workflow Hub", icon: Target, color: "text-violet-400 border-violet-500/30 hover:border-violet-500/60 shadow-violet-500/10" },
+  { id: "agent-assignment", label: "Agent Assignment", icon: UserCheck, color: "text-cyan-400 border-cyan-500/30 hover:border-cyan-500/60 shadow-cyan-500/10" },
+  { id: "api-keys", label: "API Key Vault", icon: Key, color: "text-emerald-400 border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10" },
   { id: "business-toolset", label: "Model Toolset", icon: Layers, color: "text-indigo-400 border-indigo-500/30 hover:border-indigo-500/60 shadow-indigo-500/10" },
   { id: "icp-entries", label: "ICP Entries", icon: Users, color: "text-purple-400 border-purple-500/30 hover:border-purple-500/60 shadow-purple-500/10" },
   { id: "gtm-analysis", label: "Automated GTM Analysis", icon: FileText, color: "text-blue-400 border-blue-500/30 hover:border-blue-500/60 shadow-blue-500/10" },
@@ -66,6 +71,7 @@ const tabs = [
   { id: "genbi", label: "Chatbot (Wren AI)", icon: Bot, color: "text-fuchsia-400 border-fuchsia-500/30 hover:border-fuchsia-500/60 shadow-fuchsia-500/10" },
   { id: "dealflow-crm", label: "Dealflow CRM", icon: Briefcase, color: "text-teal-400 border-teal-500/30 hover:border-teal-500/60 shadow-teal-500/10" },
 ] as const;
+
 
 function CustomerPortalContent() {
   const { user, isLoading } = useCurrentUser();
@@ -1609,8 +1615,23 @@ function CustomerPortalContent() {
           </div>
         )}
 
+        {/* AGENT ASSIGNMENT MODULE TAB */}
+        {activeTab === "agent-assignment" && (
+          <div className="animate-in fade-in duration-300">
+            <AgentAssignmentModule />
+          </div>
+        )}
+
+        {/* API KEY VAULT MODULE TAB */}
+        {activeTab === "api-keys" && (
+          <div className="animate-in fade-in duration-300">
+            <APIKeyManagementModule />
+          </div>
+        )}
+
         {/* 2. OPERATING MODEL TOOLSET */}
         {activeTab === "business-toolset" && (
+
           <div className="space-y-6 animate-in fade-in duration-300">
             <h2 className="text-2xl font-bold text-slate-100">Business Operating Model Configurations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

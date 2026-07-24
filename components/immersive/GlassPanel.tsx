@@ -17,6 +17,7 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   style?: CSSProperties;
   "aria-label"?: string;
   parallax?: boolean;
+  overflowVisible?: boolean;
 }
 
 const depthClass = {
@@ -35,6 +36,7 @@ export function GlassPanel({
   style,
   "aria-label": ariaLabel,
   parallax = false,
+  overflowVisible = false,
   ...props
 }: GlassPanelProps) {
   const { light, reducedMotion } = useImmersive();
@@ -42,7 +44,8 @@ export function GlassPanel({
   const panel = (
     <div
       className={cn(
-        "df-glass rounded-2xl relative overflow-hidden",
+        "df-glass rounded-2xl relative",
+        overflowVisible || className?.includes("overflow-visible") ? "overflow-visible" : "overflow-hidden",
         depthClass[depth],
         material === "neon" && "immersive-glow-primary",
         material === "metallic" && "bg-gradient-to-br from-slate-800/80 to-slate-950/90",
@@ -51,6 +54,7 @@ export function GlassPanel({
         !reducedMotion && "immersive-breathe-idle",
         className
       )}
+
       style={{
         ...style,
         ["--light-x" as string]: `${light.x * 100}%`,

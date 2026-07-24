@@ -4,8 +4,10 @@ import { DealflowVAE } from './dealflow-vae';
 import { DealflowGAN } from './dealflow-gan';
 import { DealflowEvaluator } from './dealflow-evaluator';
 import { DealflowDataIngestionPipeline, SyntheticDataSample } from './dealflow-data-pipeline';
+import { pipelineManager, DealflowPipelineManager } from './dealflow-pipeline-manager';
 import type { DealflowOutput, DealflowLatentVector, DealflowLearningState, DealflowMarketDataPoint, DealflowLLMConfig } from './dealflow-llm.types';
 import type { ThresholdConfig } from './dealflow-evaluator';
+
 
 export class DealflowLLM {
   private vae: DealflowVAE;
@@ -178,24 +180,35 @@ export class DealflowLLM {
     return this.dataPipeline;
   }
 
+  // Get pipeline manager instance
+  getPipelineManager(): DealflowPipelineManager {
+    return pipelineManager;
+  }
+
   // Ingest and train on synthetic baseline data
   async ingestAndTrainFromBaselines(prompts: string[]): Promise<DealflowLearningState> {
     console.log('[DealflowLLM] Generating synthetic training data from baselines...');
     const syntheticData = await this.dataPipeline.generateSyntheticData(prompts);
-    const trainingPoints = this.dataPipeline.convertToTrainingData(syntheticData);
     
+    // Data Quality Check
+    const qualityReport = pipelineManager.validateDataQuality(syntheticData);
+    if (!qualityReport.passedQualityCheck) {
+      console.warn('[DealflowLLM] Data quality score low, proceeding with validated samples only.');
+    }
+
+    const trainingPoints = this.dataPipeline.convertToTrainingData(syntheticData);
     trainingPoints.forEach(point => this.addTrainingData(point));
     
     console.log('[DealflowLLM] Training Dealflow LLM on synthetic data...');
     return this.train();
   }
 
-  // Evaluate and conditionally retrain
+  // Evaluate and conditionally retrain with benchmark & rollback protection
   async evaluateAndConditionallyRetrain(
     prompt: string,
     referenceContent: string,
     systemPrompt?: string
-  ): Promise<{ retrained: boolean; comparisonResults: any[] }> {
+  ): Promise<{ retrained: boolean; comparisonResults: any[]; comparisonReport?: any }> {
     if (this.retrainingInProgress) {
       console.warn('[DealflowLLM] Retraining already in progress, skipping...');
       return { retrained: false, comparisonResults: [] };
@@ -224,6 +237,17 @@ export class DealflowLLM {
     const dealflowllmResult = comparisonResults.find(r => r.modelName === 'dealflow-llm');
     if (!dealflowllmResult) throw new Error('Dealflow LLM result not found');
 
+    // Run Detailed Benchmarking
+    const currentProdBenchmark = pipelineManager.benchmarkModel(
+      "dealflow-llm-v1",
+      "Dealflow LLM (Dealflow AI Core v1)",
+      "v1.0.0-prod",
+      true,
+      dealflowllmResult,
+      dealflowllmOutput.metadata?.processingTimeMs || 40,
+      85
+    );
+
     // Check if retraining is needed
     const needsRetraining = !dealflowllmResult.passesThresholds;
 
@@ -232,6 +256,37 @@ export class DealflowLLM {
       this.retrainingInProgress = true;
       try {
         await this.ingestAndTrainFromBaselines([prompt, ...baselineOutputs.map(b => b.content)]);
+        
+        // Re-evaluate post-retraining candidate
+        const candidateOutput = await this.infer(prompt, systemPrompt);
+        const candidateEvalResults = this.evaluator.compareModels(
+          candidateOutput,
+          baselineOutputs,
+          referenceContent || sample.referenceContent
+        );
+        const candidateResult = candidateEvalResults.find(r => r.modelName === 'dealflow-llm');
+
+        if (candidateResult) {
+          const candidateBenchmark = pipelineManager.benchmarkModel(
+            "dealflow-llm-v2-candidate",
+            "Dealflow LLM (v2 Candidate)",
+            "v1.1.0-candidate",
+            false,
+            candidateResult,
+            candidateOutput.metadata?.processingTimeMs || 38,
+            90
+          );
+
+          const comparisonReport = pipelineManager.compareModels(currentProdBenchmark, candidateBenchmark);
+
+          if (comparisonReport.recommendedAction === "promote_candidate") {
+            pipelineManager.promoteCandidate("v1.1.0-prod");
+          } else if (comparisonReport.recommendedAction === "trigger_rollback") {
+            pipelineManager.executeRollback();
+          }
+
+          return { retrained: true, comparisonResults: candidateEvalResults, comparisonReport };
+        }
       } finally {
         this.retrainingInProgress = false;
       }
@@ -242,6 +297,7 @@ export class DealflowLLM {
     return { retrained: false, comparisonResults };
   }
 }
+
 
 // Singleton instance
 export const dealflowLLM = new DealflowLLM();

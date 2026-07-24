@@ -65,9 +65,10 @@ export async function POST(req: NextRequest) {
       const { db } = await import("@/lib/firebase-admin");
       if (db) {
         const snapshot = await db.collection("users").where("email", "==", sanitizedEmail).get();
-        if (!snapshot.empty) {
+        if (snapshot && !snapshot.empty) {
           emailExists = true;
         }
+
       }
     } catch (e) {
       console.warn("[Register] Firebase not configured, skipping Firestore email check", e);

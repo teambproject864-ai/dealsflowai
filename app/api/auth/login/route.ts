@@ -102,10 +102,11 @@ export async function POST(req: NextRequest) {
           .where("email", "==", email.toLowerCase())
           .where("role", "==", role)
           .get();
-        if (!snap.empty) {
+        if (snap && !snap.empty && snap.docs?.length > 0) {
           const doc = snap.docs[0];
           dbUser = { id: doc.id, ...doc.data() } as any;
         }
+
       }
     } catch (e) {
       logger.warn("[Login] Firestore not configured or failed to connect", e);

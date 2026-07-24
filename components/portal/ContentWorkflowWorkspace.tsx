@@ -30,6 +30,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { generateCampaignStrategy, regenerateSection, CampaignStrategyData } from "@/lib/campaign-generator";
 import { CampaignContentGenerator } from "@/components/portal/CampaignContentGenerator";
+import { ModelSelector } from "@/components/ModelSelector";
+import { getDefaultModelForRole, ModelConfig } from "@/lib/model-registry";
+
 
 interface ContentWorkflowWorkspaceProps {
   customerId: string;
@@ -66,8 +69,12 @@ export function ContentWorkflowWorkspace({
   const [geographicMarkets, setGeographicMarkets] = useState("");
   const [journeyStage, setJourneyStage] = useState("");
 
+  // AI Model Selection State
+  const [selectedModel, setSelectedModel] = useState<ModelConfig>(() => getDefaultModelForRole(userRole));
+
   // Strategy State
   const [campaignStrategy, setCampaignStrategy] = useState<CampaignStrategyData | null>(null);
+
   
   // Loading & Generation States
   const [isGenerating, setIsGenerating] = useState(false);
@@ -371,7 +378,19 @@ export function ContentWorkflowWorkspace({
         </div>
       </GlassPanel>
 
+      {/* AI Model Selection Panel */}
+      <GlassPanel tilt={false} overflowVisible={true} className="border-slate-800 p-5 bg-slate-900/30 relative z-30 overflow-visible">
+        <ModelSelector
+
+          selectedModelId={selectedModel.id}
+          onSelectModel={setSelectedModel}
+          userRole={userRole}
+          label="AI Model Selection for Strategy & Content Generation"
+        />
+      </GlassPanel>
+
       {/* Intake Profile Editor (Collapsible) */}
+
       {profileOpen && (
         <GlassPanel tilt={false} className="border-slate-800 bg-slate-900/20 p-6 space-y-6">
           <div className="flex justify-between items-center border-b border-slate-800 pb-3">

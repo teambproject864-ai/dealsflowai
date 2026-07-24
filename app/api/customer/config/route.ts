@@ -60,7 +60,17 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
+
+    // Cross-customer data isolation check
+    if (body.customerId && body.customerId !== user!.id && user!.role === "customer") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Cannot modify another customer's data" },
+        { status: 403 }
+      );
+    }
+
     const {
+
       businessModel,
       serviceConfigurations,
       companyName,
