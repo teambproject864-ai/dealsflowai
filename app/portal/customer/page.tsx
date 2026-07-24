@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -283,7 +284,7 @@ function CustomerPortalContent() {
   };
 
   // Real-time synchronization polling (3s interval)
-  const fetchCustomerData = async () => {
+  const fetchCustomerData = useCallback(async () => {
     try {
       const safeFetchJson = async (url: string) => {
         try {
@@ -345,13 +346,14 @@ function CustomerPortalContent() {
     } catch (error) {
       console.error("[Customer Portal] polling error:", error);
     }
-  };
+  }, [selectedPlaybook]);
 
   useEffect(() => {
     fetchCustomerData();
     const interval = setInterval(fetchCustomerData, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchCustomerData]);
+
 
   // Actions
   const handleUpdateBusinessModel = async (newModel: string) => {

@@ -281,7 +281,7 @@ export default function WorkspaceContent() {
   const [selectedGtmIntake, setSelectedGtmIntake] = useState<any>(null);
 
   // Fetch GTM Intakes
-  const fetchGtmIntakes = async () => {
+  const fetchGtmIntakes = useCallback(async () => {
     setGtmIntakesLoading(true);
     try {
       const params = new URLSearchParams();
@@ -302,14 +302,15 @@ export default function WorkspaceContent() {
     } finally {
       setGtmIntakesLoading(false);
     }
-  };
+  }, [gtmPage, gtmLimit, gtmSearch]);
 
   // Effect to fetch GTM intakes when category or filters change
   useEffect(() => {
     if (selectedCategory.id === "gtm-intakes") {
       fetchGtmIntakes();
     }
-  }, [selectedCategory.id, gtmPage, gtmLimit, gtmSearch]);
+  }, [selectedCategory.id, fetchGtmIntakes]);
+
 
   // Synthesize soft Alert/Ringtone
   const startRingtone = () => {

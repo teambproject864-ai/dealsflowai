@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+
 import {
   Search,
   Users,
@@ -52,7 +53,7 @@ export function CustomerContactProfiles() {
   const [pagination, setPagination] = useState({ totalCount: 0, page: 1, limit: 10, totalPages: 1 });
   const [selectedProfile, setSelectedProfile] = useState<CustomerContactProfile | null>(null);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -72,11 +73,12 @@ export function CustomerContactProfiles() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query, stage, page]);
 
   useEffect(() => {
     fetchProfiles();
-  }, [query, stage, page]);
+  }, [fetchProfiles]);
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

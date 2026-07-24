@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, useCallback, Suspense } from "react";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,8 +229,9 @@ function AgentPortalContent() {
   };
 
   // Real-time synchronization polling
-  const fetchAgentData = async () => {
+  const fetchAgentData = useCallback(async () => {
     try {
+
       // Helper function to safely fetch and parse JSON
       const safeFetchJson = async (url: string) => {
         try {
@@ -288,7 +290,7 @@ function AgentPortalContent() {
     } catch (error) {
       console.error("[Agent Portal] polling error:", error);
     }
-  };
+  }, [selectedWorkflowCustomer, activeStrategyCustomerId]);
 
   // Fetch GTM Playbook for selected customer
   const fetchPlaybookForCustomer = async (cId: string) => {
@@ -376,7 +378,8 @@ function AgentPortalContent() {
     fetchAgentData();
     const interval = setInterval(fetchAgentData, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAgentData]);
+
 
   // Call timer ticking
   useEffect(() => {

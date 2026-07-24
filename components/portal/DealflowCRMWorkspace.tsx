@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+
 import { 
   Building2, 
   Users, 
@@ -99,7 +100,7 @@ export function DealflowCRMWorkspace({
   });
 
   // Fetch CRM Data
-  const fetchCRMData = async () => {
+  const fetchCRMData = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -125,11 +126,12 @@ export function DealflowCRMWorkspace({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, stageFilter]);
 
   useEffect(() => {
     fetchCRMData();
-  }, [searchQuery, stageFilter]);
+  }, [fetchCRMData]);
+
 
   // Handle Save Record with Client & Server Validation
   const handleSaveRecord = async (type: "customer" | "company" | "deal", payload: any) => {

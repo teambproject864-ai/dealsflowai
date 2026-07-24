@@ -225,7 +225,8 @@ export function CampaignContentGenerator({
     setFieldErrors({});
     setFormTouched(false);
     setGeneratedOutput(null);
-  }, [selectedSubTypeId]);
+  }, [selectedSubTypeId, activeSubType, customerData, customerName]);
+
 
   // Expand/Collapse category
   const toggleCategoryExpand = (catId: string) => {

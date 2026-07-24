@@ -39,8 +39,9 @@ export async function runMicrosoftAgentFrameworkTests() {
   assert.ok(workflow.steps[0].name.includes("Crawl"), "First step should be Crawl");
   assert.ok(workflow.steps[1].name.includes("Analyze"), "Second step should be Analyze");
 
-  // Wait for the background workflow to progress a bit
-  await new Promise((resolve) => setTimeout(resolve, 3500));
+  // Wait for the background workflow to progress and complete all 4 steps
+  await new Promise((resolve) => setTimeout(resolve, 5500));
+
 
   const updatedWorkflow = framework.getWorkflow(workflow.id);
   assert.ok(updatedWorkflow, "Should retrieve workflow from cache/store");
