@@ -190,6 +190,9 @@ export function getModelsForRole(role: string = 'customer'): ModelConfig[] {
   return SUPPORTED_MODELS.filter(model => model.allowedRoles.includes(normalizedRole));
 }
 
+export const filterModelsByRole = getModelsForRole;
+
+
 /**
  * Validates if a user role is authorized to use a specific model.
  */

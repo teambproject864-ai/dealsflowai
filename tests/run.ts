@@ -42,6 +42,8 @@ import { runModelSelectionTests } from "./model-selection.test";
 import { runDealflowCRMFunctionalTests } from "./dealflow-crm-functional.test";
 import { runLLMPipelineTests } from "./dealflow-llm-pipeline.test";
 import { runDeliverableStudioTests } from "./deliverable-studio.test";
+import { runComprehensiveE2ETestSuite } from "./comprehensive-e2e-suite.test";
+
 
 
 
@@ -331,8 +333,10 @@ async function main() {
     runModelSelectionTests,
     runDealflowCRMFunctionalTests,
     runLLMPipelineTests,
-    runDeliverableStudioTests
+    runDeliverableStudioTests,
+    runComprehensiveE2ETestSuite
   ];
+
 
 
 
