@@ -88,9 +88,12 @@ export async function GET(request: NextRequest) {
       }
 
       const snap = await queryRef.get();
-      snap.forEach((doc: any) => {
-        assets.push({ id: doc.id, ...doc.data() });
-      });
+      if (snap && snap.forEach) {
+        snap.forEach((doc: any) => {
+          assets.push({ id: doc.id, ...doc.data() });
+        });
+      }
+
     }
 
     // In-memory filtering for more complex/optional queries to avoid needing composite indexes in dev

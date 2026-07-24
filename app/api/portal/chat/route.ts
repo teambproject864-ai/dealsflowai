@@ -24,9 +24,12 @@ export async function GET(request: NextRequest) {
         .orderBy("timestamp", "asc")
         .get();
 
-      snap.forEach((doc: any) => {
-        messages.push({ id: doc.id, ...doc.data() });
-      });
+      if (snap && snap.forEach) {
+        snap.forEach((doc: any) => {
+          messages.push({ id: doc.id, ...doc.data() });
+        });
+      }
+
     }
 
     return NextResponse.json({ success: true, messages }, { status: 200 });

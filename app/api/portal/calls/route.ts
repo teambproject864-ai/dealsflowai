@@ -25,9 +25,12 @@ export async function GET(request: NextRequest) {
       }
 
       const snap = await queryRef.orderBy("startedAt", "desc").get();
-      snap.forEach((doc: any) => {
-        calls.push({ id: doc.id, ...doc.data() });
-      });
+      if (snap && snap.forEach) {
+        snap.forEach((doc: any) => {
+          calls.push({ id: doc.id, ...doc.data() });
+        });
+      }
+
     }
 
     return NextResponse.json({ success: true, calls }, { status: 200 });

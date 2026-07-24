@@ -21,25 +21,32 @@ export async function GET(request: NextRequest) {
       if (user.role === "customer") {
         // Customers only see their own tasks
         const snap = await queryRef.where("customerId", "==", user.id).get();
-        snap.forEach((doc: any) => {
-          tasks.push({ id: doc.id, ...doc.data() });
-        });
+        if (snap && snap.forEach) {
+          snap.forEach((doc: any) => {
+            tasks.push({ id: doc.id, ...doc.data() });
+          });
+        }
       } else if (user.role === "agent") {
         // Agents see tasks assigned to them OR unassigned
         const snap = await queryRef.get();
-        snap.forEach((doc: any) => {
-          const data = doc.data();
-          if (data.assignedAgentId === user.id || !data.assignedAgentId) {
-            tasks.push({ id: doc.id, ...data });
-          }
-        });
+        if (snap && snap.forEach) {
+          snap.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.assignedAgentId === user.id || !data.assignedAgentId) {
+              tasks.push({ id: doc.id, ...data });
+            }
+          });
+        }
       } else {
         // Admins see all tasks
         const snap = await queryRef.get();
-        snap.forEach((doc: any) => {
-          tasks.push({ id: doc.id, ...doc.data() });
-        });
+        if (snap && snap.forEach) {
+          snap.forEach((doc: any) => {
+            tasks.push({ id: doc.id, ...doc.data() });
+          });
+        }
       }
+
 
       // Sort by createdAt descending
       tasks.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());

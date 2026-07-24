@@ -108,7 +108,8 @@ export async function seedFirestore() {
       const docRef = db.collection("users").doc(u.id);
       const docSnap = await docRef.get();
       // Write user if missing OR if they have corrupted field values
-      if (!docSnap.exists || !docSnap.data()?.email) {
+      if (!docSnap || !docSnap.exists || !docSnap.data()?.email) {
+
         await docRef.set({
           ...u,
           passwordUpdatedAt: new Date().toISOString(),
